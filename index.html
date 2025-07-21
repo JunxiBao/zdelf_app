@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>健康管理 App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/framer-motion@10.16.1/dist/framer-motion.umd.js"></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Arial Rounded MT Bold', 'Helvetica Neue', sans-serif;
+        background: #fef9f4;
+      }
+      .active {
+        color: #f97316;
+      }
+    </style>
+  </head>
+  <body class="text-gray-700">
+    <div class="flex flex-col h-screen">
+      <!-- 内容区域 -->
+      <div id="pages" class="flex-1 overflow-auto transition-all duration-500 ease-in-out">
+        <div id="home" class="p-4 animate-fade-in block">
+          <h2 class="text-xl font-bold mb-4 text-orange-500">日常记录</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white rounded-2xl shadow-md p-4 hover:scale-105 transition transform">尿常规</div>
+            <div class="bg-white rounded-2xl shadow-md p-4 hover:scale-105 transition transform">体温</div>
+            <div class="bg-white rounded-2xl shadow-md p-4 hover:scale-105 transition transform">体重</div>
+            <div class="bg-white rounded-2xl shadow-md p-4 hover:scale-105 transition transform">出血点</div>
+          </div>
+        </div>
+
+        <div id="record" class="p-4 hidden animate-fade-in">
+          <h2 class="text-xl font-bold mb-4 text-green-500">就诊记录</h2>
+          <button class="bg-green-400 text-white px-4 py-2 rounded-xl shadow hover:bg-green-500 transition">上传病历</button>
+          <p class="mt-4">AI 结构化分析功能即将上线！</p>
+        </div>
+
+        <div id="community" class="p-4 hidden animate-fade-in">
+          <h2 class="text-xl font-bold mb-4 text-pink-500">社区广场</h2>
+          <div class="space-y-4">
+            <div class="bg-white rounded-xl shadow p-4">科普贴：如何看懂体检报告？</div>
+            <div class="bg-white rounded-xl shadow p-4">#每日记录挑战</div>
+          </div>
+        </div>
+
+        <div id="mine" class="p-4 hidden animate-fade-in">
+          <h2 class="text-xl font-bold mb-4 text-blue-500">我的</h2>
+          <ul class="space-y-2">
+            <li class="bg-white rounded-xl p-3 shadow">健康总结报告</li>
+            <li class="bg-white rounded-xl p-3 shadow">收藏夹</li>
+            <li class="bg-white rounded-xl p-3 shadow">设置</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 底部导航栏 -->
+      <nav class="flex justify-around items-center bg-white border-t p-2 shadow-md text-sm">
+        <button onclick="switchPage('home')" class="flex flex-col items-center text-orange-500" id="btn-home">
+          <span>🏠</span>
+          <span>记录</span>
+        </button>
+        <button onclick="switchPage('record')" class="flex flex-col items-center" id="btn-record">
+          <span>📝</span>
+          <span>病历</span>
+        </button>
+        <button onclick="switchPage('community')" class="flex flex-col items-center" id="btn-community">
+          <span>💬</span>
+          <span>社区</span>
+        </button>
+        <button onclick="switchPage('mine')" class="flex flex-col items-center" id="btn-mine">
+          <span>👤</span>
+          <span>我的</span>
+        </button>
+      </nav>
+    </div>
+
+    <script>
+      const pages = ['home', 'record', 'community', 'mine'];
+
+      function switchPage(target) {
+        pages.forEach((id) => {
+          document.getElementById(id).classList.add('hidden');
+          document.getElementById(id).classList.remove('block');
+          document.getElementById('btn-' + id).classList.remove('text-orange-500');
+        });
+        document.getElementById(target).classList.remove('hidden');
+        document.getElementById(target).classList.add('block');
+        document.getElementById('btn-' + target).classList.add('text-orange-500');
+      }
+    </script>
+
+    <style>
+      .animate-fade-in {
+        animation: fadeIn 0.4s ease-in-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </body>
+</html>
