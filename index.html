@@ -1,113 +1,160 @@
 <!DOCTYPE html>
-<html lang="zh">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>健康管理 App</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/framer-motion@10.16.1/dist/framer-motion.umd.js"></script>
-    <style>
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: 'Arial Rounded MT Bold', 'Helvetica Neue', sans-serif;
-        background: #fef9f4;
-      }
-      .active {
-        color: #f97316;
-      }
-    </style>
-  </head>
-  <body class="text-gray-700">
-    <div class="flex flex-col h-screen">
-      <!-- 内容区域 -->
-      <div id="pages" class="flex-1 overflow-auto transition-all duration-500 ease-in-out">
-        <div id="home" class="p-4 animate-fade-in block">
-          <h2 class="text-xl font-bold mb-4 text-orange-500">日常记录</h2>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="bg-white rounded-2xl shadow-md p-4 hover:scale-105 transition transform">尿常规</div>
-            <div class="bg-white rounded-2xl shadow-md p-4 hover:scale-105 transition transform">体温</div>
-            <div class="bg-white rounded-2xl shadow-md p-4 hover:scale-105 transition transform">体重</div>
-            <div class="bg-white rounded-2xl shadow-md p-4 hover:scale-105 transition transform">出血点</div>
-          </div>
-        </div>
+<html lang="en">
 
-        <div id="record" class="p-4 hidden animate-fade-in">
-          <h2 class="text-xl font-bold mb-4 text-green-500">就诊记录</h2>
-          <button class="bg-green-400 text-white px-4 py-2 rounded-xl shadow hover:bg-green-500 transition">上传病历</button>
-          <p class="mt-4">AI 结构化分析功能即将上线！</p>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animated Navigation</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        <div id="community" class="p-4 hidden animate-fade-in">
-          <h2 class="text-xl font-bold mb-4 text-pink-500">社区广场</h2>
-          <div class="space-y-4">
-            <div class="bg-white rounded-xl shadow p-4">科普贴：如何看懂体检报告？</div>
-            <div class="bg-white rounded-xl shadow p-4">#每日记录挑战</div>
-          </div>
-        </div>
+    body {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      background: linear-gradient(135deg, #e0f7fa, #e1bee7);
+      font-family: sans-serif;
+    }
 
-        <div id="mine" class="p-4 hidden animate-fade-in">
-          <h2 class="text-xl font-bold mb-4 text-blue-500">我的</h2>
-          <ul class="space-y-2">
-            <li class="bg-white rounded-xl p-3 shadow">健康总结报告</li>
-            <li class="bg-white rounded-xl p-3 shadow">收藏夹</li>
-            <li class="bg-white rounded-xl p-3 shadow">设置</li>
-          </ul>
-        </div>
-      </div>
+    .nav-container {
+      position: relative;
+      height: 80px;
+      background: white;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+    }
 
-      <!-- 底部导航栏 -->
-      <nav class="flex justify-around items-center bg-white border-t p-2 shadow-md text-sm">
-        <button onclick="switchPage('home')" class="flex flex-col items-center text-orange-500" id="btn-home">
-          <span>🏠</span>
-          <span>记录</span>
-        </button>
-        <button onclick="switchPage('record')" class="flex flex-col items-center" id="btn-record">
-          <span>📝</span>
-          <span>病历</span>
-        </button>
-        <button onclick="switchPage('community')" class="flex flex-col items-center" id="btn-community">
-          <span>💬</span>
-          <span>社区</span>
-        </button>
-        <button onclick="switchPage('mine')" class="flex flex-col items-center" id="btn-mine">
-          <span>👤</span>
-          <span>我的</span>
-        </button>
-      </nav>
+    .nav-item {
+      flex: 1;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .nav-item button {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #aaa;
+      transition: color 0.3s;
+    }
+
+    .nav-item.active button {
+      color: #6200ea;
+    }
+
+    .indicator {
+      position: absolute;
+      bottom: 0;
+      height: 4px;
+      width: 25%;
+      background: #6200ea;
+      border-radius: 4px 4px 0 0;
+      transition: transform 0.3s;
+      left: 0;
+    }
+
+    .center-button-wrapper {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+    }
+
+    .center-button {
+      width: 60px;
+      height: 60px;
+      background: #6200ea;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 30px;
+      cursor: pointer;
+      transition: transform 0.4s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .center-button.rotate {
+      transform: translateX(-0%) rotate(360deg);
+    }
+
+    .icon {
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .icon:hover {
+      transform: scale(1.2);
+      opacity: 0.8;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="nav-container">
+    <div class="nav-item" data-index="0">
+      <button class="icon">🏠</button>
+    </div>
+    <div class="nav-item" data-index="1">
+      <button class="icon">💬</button>
     </div>
 
-    <script>
-      const pages = ['home', 'record', 'community', 'mine'];
+    <div class="center-button-wrapper">
+      <div class="center-button" id="centerBtn">＋</div>
+    </div>
 
-      function switchPage(target) {
-        pages.forEach((id) => {
-          document.getElementById(id).classList.add('hidden');
-          document.getElementById(id).classList.remove('block');
-          document.getElementById('btn-' + id).classList.remove('text-orange-500');
-        });
-        document.getElementById(target).classList.remove('hidden');
-        document.getElementById(target).classList.add('block');
-        document.getElementById('btn-' + target).classList.add('text-orange-500');
-      }
-    </script>
+    <div class="nav-item" data-index="2">
+      <button class="icon">🔔</button>
+    </div>
+    <div class="nav-item" data-index="3">
+      <button class="icon">👤</button>
+    </div>
 
-    <style>
-      .animate-fade-in {
-        animation: fadeIn 0.4s ease-in-out;
-      }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-    </style>
-  </body>
+    <div class="indicator" id="indicator"></div>
+  </div>
+
+  <script>
+    const navItems = document.querySelectorAll(".nav-item");
+    const indicator = document.getElementById("indicator");
+    const centerBtn = document.getElementById("centerBtn");
+
+    let activeIndex = 0;
+
+    function updateActive(index) {
+      navItems.forEach((item, i) => {
+        item.classList.toggle("active", i === index);
+      });
+
+      indicator.style.transform = `translateX(${index * 100}%)`;
+      activeIndex = index;
+    }
+
+    navItems.forEach((item, index) => {
+      item.addEventListener("click", () => {
+        updateActive(index);
+      });
+    });
+
+    centerBtn.addEventListener("click", () => {
+      centerBtn.classList.toggle("rotate");
+    });
+
+    // 初始状态
+    updateActive(0);
+  </script>
+</body>
+
 </html>
