@@ -6,7 +6,7 @@
     const loader = document.getElementById("loader");
 
     const pageMap = [
-      "home.html",
+      "src/home.html",
       "chat.html",
       "notification.html",
       "profile.html"
