@@ -1,139 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./statics/css/index.css">
   <title>Navigation App</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: sans-serif;
-    }
-
-    .content {
-      margin-bottom: 100px;
-      min-height: 200px;
-      padding: 20px;
-    }
-
-    .nav-container {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 80px;
-      background: white;
-      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      border-top-left-radius: 20px;
-      border-top-right-radius: 20px;
-      z-index: 10;
-    }
-
-    .nav-item {
-      flex: 1;
-      text-align: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    .nav-item button {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #aaa;
-      transition: color 0.3s;
-    }
-
-    .nav-item.active button {
-      color: #6200ea;
-    }
-
-    .indicator {
-      position: absolute;
-      bottom: 0;
-      height: 4px;
-      width: 25%;
-      background: #6200ea;
-      border-radius: 4px 4px 0 0;
-      transition: transform 0.3s;
-      left: 0;
-    }
-
-    .center-button-wrapper {
-      position: absolute;
-      top: -30px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 2;
-    }
-
-    .center-button {
-      width: 60px;
-      height: 60px;
-      background: #6200ea;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 30px;
-      cursor: pointer;
-      transition: transform 0.4s ease, background-color 0.3s ease;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
-
-    .center-button.rotate {
-      transform: translateX(-0%) rotate(360deg);
-    }
-
-    .icon {
-      transition: transform 0.3s ease, opacity 0.3s ease;
-    }
-
-    .icon:hover {
-      transform: scale(1.2);
-      opacity: 0.8;
-    }
-
-    /* 加载动画样式 */
-    .loader-wrapper {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
-      display: none;
-    }
-
-    .loader {
-      border: 6px solid #eee;
-      border-top: 6px solid #6200ea;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
 </head>
+
 <body>
 
   <div class="content" id="content">
@@ -167,73 +41,7 @@
 
     <div class="indicator" id="indicator"></div>
   </div>
-
-  <script>
-    const navItems = document.querySelectorAll(".nav-item");
-    const indicator = document.getElementById("indicator");
-    const centerBtn = document.getElementById("centerBtn");
-    const content = document.getElementById("content");
-    const loader = document.getElementById("loader");
-
-    const pageMap = [
-      "home.html",
-      "chat.html",
-      "notification.html",
-      "profile.html"
-    ];
-
-    let activeIndex = 0;
-
-    function loadPage(index) {
-      loader.style.display = "flex";
-
-      fetch(pageMap[index])
-        .then(res => res.text())
-        .then(html => {
-          content.innerHTML = html;
-        })
-        .catch(err => {
-          content.innerHTML = "<p>Error loading page.</p>";
-          console.error(err);
-        })
-        .finally(() => {
-          setTimeout(() => {
-            loader.style.display = "none";
-          }, 400); // 增加加载动效显示时长
-        });
-    }
-
-    function updateActive(index) {
-      navItems.forEach((item, i) => {
-        item.classList.toggle("active", i === index);
-      });
-
-      indicator.style.transform = `translateX(${index * 100}%)`;
-      activeIndex = index;
-
-      loadPage(index);
-    }
-
-    navItems.forEach((item, index) => {
-      item.addEventListener("click", () => {
-        updateActive(index);
-      });
-    });
-
-    centerBtn.addEventListener("click", () => {
-      centerBtn.classList.toggle("rotate");
-
-      if (centerBtn.textContent === "＋") {
-        centerBtn.textContent = "❌";
-        centerBtn.style.backgroundColor = "red";
-      } else {
-        centerBtn.textContent = "＋";
-        centerBtn.style.backgroundColor = "#6200ea";
-      }
-    });
-
-    // 初始化加载首页
-    updateActive(0);
-  </script>
+  <script src="./statics/js/index.js"></script>
 </body>
+
 </html>
