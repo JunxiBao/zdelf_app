@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Record</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', 'PingFang SC', Arial, sans-serif;
+      background: #fff;
+      margin: 0;
+      padding: 0;
+      color: #222;
+    }
+
+    .record-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 0 0 0;
+      width: 100%;
+      max-width: 98vw;
+      /* 让容器最大宽度接近视口宽度 */
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+
+    .record-title {
+      font-size: 1.3em;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: #6200ea;
+      letter-spacing: 1px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .record-textarea {
+      width: 100%;
+      max-width: 100%;
+      min-width: 80px;
+      min-height: 48px;
+      max-height: 300px;
+      padding: 14px 16px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1.1em;
+      outline: none;
+      transition: border 0.2s;
+      margin-bottom: 18px;
+      background: #fafaff;
+      box-shadow: 0 2px 8px rgba(98, 0, 234, 0.04);
+      resize: none;
+      box-sizing: border-box;
+      line-height: 1.6;
+    }
+
+    .record-textarea:focus {
+      border: 1.5px solid #6200ea;
+      background: #fff;
+    }
+
+    .record-btn {
+      background: #6200ea;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 36px;
+      font-size: 1em;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(98, 0, 234, 0.08);
+      transition: background 0.2s;
+      width: 90%;
+      max-width: 500px;
+      min-width: 180px;
+    }
+
+    .record-btn:hover {
+      background: #4b00b5;
+    }
+
+    @media (max-width: 600px) {
+
+      .record-textarea,
+      .record-btn {
+        max-width: 98vw;
+        min-width: 0;
+        width: 98vw;
+        font-size: 1em;
+      }
+
+      .record-container {
+        padding: 16px 0 0 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="record-container">
+    <div class="record-title">请记录你的饮食</div>
+    <textarea class="record-textarea" placeholder="例如：早餐：燕麦牛奶、鸡蛋" oninput="autoGrow(this)"></textarea>
+    <button class="record-btn">保存</button>
+  </div>
+  <script>
+    function autoGrow(element) {
+      element.style.height = "auto";
+      element.style.height = (element.scrollHeight) + "px";
+    }
+    // 初始化高度
+    document.querySelectorAll('.record-textarea').forEach(autoGrow);
+  </script>
+</body>
+
+</html>

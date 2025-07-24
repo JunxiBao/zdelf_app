@@ -1,128 +1,209 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+body {
+  font-family: sans-serif;
+}
 
-    body {
-      font-family: sans-serif;
-    }
+.content {
+  margin-bottom: 100px;
+  min-height: 200px;
+  padding: 20px;
+}
 
-    .content {
-      margin-bottom: 100px;
-      min-height: 200px;
-      padding: 20px;
-    }
+.nav-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background: white;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  z-index: 10;
+}
 
-    .nav-container {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 80px;
-      background: white;
-      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      border-top-left-radius: 20px;
-      border-top-right-radius: 20px;
-      z-index: 10;
-    }
+.nav-item {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
 
-    .nav-item {
-      flex: 1;
-      text-align: center;
-      position: relative;
-      z-index: 1;
-    }
+.nav-item button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #aaa;
+  transition: color 0.3s;
+}
 
-    .nav-item button {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #aaa;
-      transition: color 0.3s;
-    }
+.nav-item.active button {
+  color: #6200ea;
+}
 
-    .nav-item.active button {
-      color: #6200ea;
-    }
+.indicator {
+  position: absolute;
+  bottom: 0;
+  height: 4px;
+  width: 25%;
+  background: #6200ea;
+  border-radius: 4px 4px 0 0;
+  transition: transform 0.3s;
+  left: 0;
+}
 
-    .indicator {
-      position: absolute;
-      bottom: 0;
-      height: 4px;
-      width: 25%;
-      background: #6200ea;
-      border-radius: 4px 4px 0 0;
-      transition: transform 0.3s;
-      left: 0;
-    }
+.center-button-wrapper {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+}
 
-    .center-button-wrapper {
-      position: absolute;
-      top: -30px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 2;
-    }
+.center-button {
+  width: 60px;
+  height: 60px;
+  background: #6200ea;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 30px;
+  cursor: pointer;
+  transition: transform 0.4s ease, background-color 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
 
-    .center-button {
-      width: 60px;
-      height: 60px;
-      background: #6200ea;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 30px;
-      cursor: pointer;
-      transition: transform 0.4s ease, background-color 0.3s ease;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
+.center-button.rotate {
+  transform: translateX(-0%) rotate(360deg);
+}
 
-    .center-button.rotate {
-      transform: translateX(-0%) rotate(360deg);
-    }
+.icon {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
 
-    .icon {
-      transition: transform 0.3s ease, opacity 0.3s ease;
-    }
+.icon:hover {
+  transform: scale(1.2);
+  opacity: 0.8;
+}
 
-    .icon:hover {
-      transform: scale(1.2);
-      opacity: 0.8;
-    }
+/* 加载动画样式 */
+.loader-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  display: none;
+}
 
-    /* 加载动画样式 */
-    .loader-wrapper {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
-      display: none;
-    }
+.loader {
+  border: 6px solid #eee;
+  border-top: 6px solid #6200ea;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
 
-    .loader {
-      border: 6px solid #eee;
-      border-top: 6px solid #6200ea;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-    }
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Modal 背景 */
+.modal {
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: background 0.3s;
+  pointer-events: auto;
+}
+
+/* 弹窗内容动画：从底部滑到顶部 */
+@keyframes slideFullUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0.5;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 100px;
+  bottom: 120px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 18px;
+  padding: 32px 16px 24px 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  animation: slideFullUp 0.45s cubic-bezier(0.4, 1.7, 0.6, 0.8);
+  font-family: 'Segoe UI', 'PingFang SC', Arial, sans-serif;
+  overflow-y: auto;
+  z-index: 1001;
+  pointer-events: auto;
+  width: auto;
+  min-width: unset;
+  max-width: unset;
+}
+
+/* 响应式优化：超小屏幕更窄边距 */
+@media (max-width: 480px) {
+  .modal-content {
+    left: 4px;
+    right: 4px;
+    padding: 16px 4px 16px 4px;
+  }
+}
+
+/* 关闭时的动画 */
+@keyframes slideFullDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateY(100%);
+    opacity: 0.5;
+  }
+}
+
+.modal-content.closing {
+  animation: slideFullDown 0.35s cubic-bezier(0.4, 1.7, 0.6, 0.8) forwards;
+}
+
