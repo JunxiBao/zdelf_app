@@ -6,10 +6,10 @@
     const loader = document.getElementById("loader");
 
     const pageMap = [
-      "src/daily.html",
-      "src/case.html",
-      "src/square.html",
-      "src/me.html"
+      "../../src/daily.html",
+      "../../src/case.html",
+      "../../src/square.html",
+      "../../src/me.html"
     ];
 
     let activeIndex = 0;
