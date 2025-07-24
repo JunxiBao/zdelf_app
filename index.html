@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Navigation App</title>
   <style>
     * {
@@ -16,8 +16,9 @@
     }
 
     .content {
-      margin-bottom: 100px; /* 防止被底部菜单栏遮住 */
+      margin-bottom: 100px;
       min-height: 200px;
+      padding: 20px;
     }
 
     .nav-container {
@@ -102,6 +103,35 @@
       transform: scale(1.2);
       opacity: 0.8;
     }
+
+    /* 加载动画样式 */
+    .loader-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      display: none;
+    }
+
+    .loader {
+      border: 6px solid #eee;
+      border-top: 6px solid #6200ea;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -110,6 +140,12 @@
     <p>Loading...</p>
   </div>
 
+  <!-- 加载动画 -->
+  <div class="loader-wrapper" id="loader">
+    <div class="loader"></div>
+  </div>
+
+  <!-- 底部导航栏 -->
   <div class="nav-container">
     <div class="nav-item" data-index="0">
       <button class="icon">🏠</button>
@@ -137,6 +173,7 @@
     const indicator = document.getElementById("indicator");
     const centerBtn = document.getElementById("centerBtn");
     const content = document.getElementById("content");
+    const loader = document.getElementById("loader");
 
     const pageMap = [
       "home.html",
@@ -148,6 +185,8 @@
     let activeIndex = 0;
 
     function loadPage(index) {
+      loader.style.display = "flex";
+
       fetch(pageMap[index])
         .then(res => res.text())
         .then(html => {
@@ -156,6 +195,11 @@
         .catch(err => {
           content.innerHTML = "<p>Error loading page.</p>";
           console.error(err);
+        })
+        .finally(() => {
+          setTimeout(() => {
+            loader.style.display = "none";
+          }, 400); // 增加加载动效显示时长
         });
     }
 
