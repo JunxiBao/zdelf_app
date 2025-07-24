@@ -7,9 +7,9 @@
 
     const pageMap = [
       "src/daily.html",
-      "case.html",
-      "square.html",
-      "me.html"
+      "src/case.html",
+      "src/square.html",
+      "src/me.html"
     ];
 
     let activeIndex = 0;
