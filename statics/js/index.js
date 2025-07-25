@@ -15,8 +15,18 @@ const pageMap = [
 
 let activeIndex = 0;
 
-function loadPage(index) {
+function showLoader() {
   loader.style.display = "flex";
+}
+
+function hideLoader() {
+  setTimeout(() => {
+    loader.style.display = "none";
+  }, 400); // 增加加载动效显示时长
+}
+
+function loadPage(index) {
+  showLoader();
 
   fetch(pageMap[index])
     .then(res => res.text())
@@ -24,13 +34,11 @@ function loadPage(index) {
       content.innerHTML = html;
     })
     .catch(err => {
-      content.innerHTML = "<p>Error loading page.</p>";
-      console.error(err);
+      content.innerHTML = "<p style='padding: 2em; text-align:center;'>⚠️ 页面加载失败</p>";
+      console.error("加载页面出错:", err);
     })
     .finally(() => {
-      setTimeout(() => {
-        loader.style.display = "none";
-      }, 400); // 增加加载动效显示时长
+      hideLoader();
     });
 }
 
@@ -54,18 +62,18 @@ navItems.forEach((item, index) => {
 function openModal() {
   modal.style.display = "flex";
   modalContent.innerHTML = '<div style="text-align:center;padding:2em;">加载中...</div>';
+
   fetch("../../src/add.html")
     .then(res => res.text())
     .then(html => {
       modalContent.innerHTML = html;
     })
     .catch(() => {
-      modalContent.innerHTML = "<p>无法加载内容</p>";
+      modalContent.innerHTML = "<p style='text-align:center;'>⚠️ 无法加载内容</p>";
     });
 }
 
 function closeModal() {
-  // 添加关闭动画
   modalContent.classList.add("closing");
   modalContent.addEventListener("animationend", function handler() {
     modal.style.display = "none";
@@ -79,6 +87,8 @@ centerBtn.addEventListener("click", () => {
   centerBtn.classList.toggle("rotate");
 
   if (centerBtn.textContent === "＋") {
+    centerBtn.textContent = "❌";
+    centerBtn.style.backgroundColor = "#d32f2f";
     openModal();
   } else {
     centerBtn.textContent = "＋";
@@ -87,7 +97,6 @@ centerBtn.addEventListener("click", () => {
   }
 });
 
-// 点击弹窗外区域关闭弹窗
 modal.addEventListener("click", (e) => {
   if (e.target === modal) {
     centerBtn.textContent = "＋";
@@ -96,11 +105,7 @@ modal.addEventListener("click", (e) => {
   }
 });
 
-document.getElementById('modalCloseBtn').onclick = function() {
-  centerBtn.textContent = "＋";
-  centerBtn.style.backgroundColor = "#6200ea";
-  closeModal();
-};
-
-// 初始化加载首页
-updateActive(0);
+// 确保页面完全加载后再初始化首页内容
+document.addEventListener("DOMContentLoaded", () => {
+  updateActive(0);
+});
