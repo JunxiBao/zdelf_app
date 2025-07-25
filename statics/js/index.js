@@ -87,8 +87,8 @@ centerBtn.addEventListener("click", () => {
   centerBtn.classList.toggle("rotate");
 
   if (centerBtn.textContent === "＋") {
-    centerBtn.textContent = "❌";
-    centerBtn.style.backgroundColor = "#d32f2f";
+    centerBtn.textContent = "＋";
+    centerBtn.style.backgroundColor = "#6200ea";
     openModal();
   } else {
     centerBtn.textContent = "＋";
