@@ -207,3 +207,55 @@ body {
   animation: slideFullDown 0.35s cubic-bezier(0.4, 1.7, 0.6, 0.8) forwards;
 }
 
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #18181c;
+    color: #e5e5e5;
+  }
+
+  .content {
+    background: #23232a;
+    color: #e5e5e5;
+  }
+
+  .nav-container {
+    background: #23232a;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.6);
+  }
+
+  .nav-item button {
+    color: #888;
+  }
+
+  .nav-item.active button {
+    color: #bb86fc;
+  }
+
+  .indicator {
+    background: #bb86fc;
+  }
+
+  .center-button {
+    background: #bb86fc;
+    color: #18181c;
+  }
+
+  .loader-wrapper {
+    background: rgba(24, 24, 28, 0.8);
+  }
+
+  .loader {
+    border: 6px solid #333;
+    border-top: 6px solid #bb86fc;
+  }
+
+  .modal {
+    background: rgba(24, 24, 28, 0.5);
+  }
+
+  .modal-content {
+    background: #23232a;
+    color: #e5e5e5;
+  }
+}
