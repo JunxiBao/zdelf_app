@@ -5,8 +5,8 @@
 
   @media (prefers-color-scheme: dark) {
     body {
-      background-color: #111;
-      color: #eee;
+      background-color: black;
+      color: white;
     }
   }
 
