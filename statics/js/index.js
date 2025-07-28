@@ -67,6 +67,10 @@ function openModal() {
     .then(res => res.text())
     .then(html => {
       modalContent.innerHTML = html;
+      // 动态加载 add.js
+      const script = document.createElement("script");
+      script.src = "../../statics/js/add.js";
+      modalContent.appendChild(script);
     })
     .catch(() => {
       modalContent.innerHTML = "<p style='text-align:center;'>⚠️ 无法加载内容</p>";
