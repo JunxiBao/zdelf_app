@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About the developer / 关于开发者</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 1.5rem;
+      line-height: 1.6;
+      background-color: white;
+      color: #222;
+      transition: background-color 0.3s, color 0.3s;
+      max-width: 90%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #111;
+        color: #ddd;
+      }
+    }
+
+    .lang-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 999;
+      background-color: #007aff;
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 999px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <button class="lang-toggle" onclick="toggleLang()">中文</button>
+
+  <section id="en-support">
+    <h1>About the developer</h1>
+    <p>English name: JunxiBao</p>
+    <p>Chinese name: 鲍俊希</p>
+    <p>Email: junxibao@junxibao.com</p>
+    <p>Chinese Phone: +86 13567453221</p>
+    <p>US Phone: +1 (646) 685-7342</p>
+  </section>
+
+  <section id="zh-support" style="display: none;">
+    <h1>关于开发者</h1>
+    <p>英文名：JunxiBao</p>
+    <p>中文名：鲍俊希</p>
+    <p>邮箱：junxibao@junxibao.com</p>
+    <p>中国手机：+86 13567453221</p>
+    <p>美国手机：+1 (646) 685-7342</p>
+  </section>
+
+  <script>
+    let currentLang = "en";
+    function toggleLang() {
+      const en = document.getElementById("en-support");
+      const zh = document.getElementById("zh-support");
+      const btn = document.querySelector(".lang-toggle");
+      if (currentLang === "en") {
+        en.style.display = "none";
+        zh.style.display = "block";
+        btn.textContent = "English";
+        currentLang = "zh";
+      } else {
+        zh.style.display = "none";
+        en.style.display = "block";
+        btn.textContent = "中文";
+        currentLang = "en";
+      }
+    }
+  </script>
+
+</body>
+</html>
