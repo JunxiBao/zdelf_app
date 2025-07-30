@@ -47,4 +47,11 @@ def login():
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(
+    host='0.0.0.0',
+    port=5000,
+    ssl_context=(
+        '/etc/letsencrypt/live/zhucan.xyz/fullchain.pem',
+        '/etc/letsencrypt/live/zhucan.xyz/privkey.pem'
+    )
+)
