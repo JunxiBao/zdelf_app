@@ -4,7 +4,7 @@ import mysql.connector
 import uuid
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://47.117.186.20"}})  # CORS允许
+CORS(app, resources={r"/*": {"origins": "https://zhucan.xyz"}})
 
 db_config = {
     "host": "localhost",  # 或者改成你数据库实际主机名
