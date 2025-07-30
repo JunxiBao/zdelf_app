@@ -8,9 +8,9 @@ CORS(app, resources={r"/*": {"origins": "http://47.117.186.20"}})  # CORS允许
 
 db_config = {
     "host": "localhost",  # 或者改成你数据库实际主机名
-    "user": "your_mysql_user",
-    "password": "your_mysql_password",
-    "database": "your_database_name"
+    "user": "junxibao",
+    "password": "Bjx81402",
+    "database": "health"
 }
 
 @app.route('/login', methods=['POST'])
