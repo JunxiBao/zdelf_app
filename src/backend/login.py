@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
 import mysql.connector
 import uuid
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "http://47.117.186.20"}})
 
 # 数据库连接配置
 db_config = {
