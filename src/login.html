@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>登录</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* 你提供的完整样式 */
+    body {
+      font-family: 'Segoe UI', 'PingFang SC', Arial, sans-serif;
+      background: #fff;
+      margin: 0;
+      padding: 0;
+      color: #222;
+    }
+
+    .record-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 0 16px;
+      width: 100%;
+      max-width: 98vw;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+
+    .record-title {
+      font-size: 1.3em;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: #6200ea;
+      letter-spacing: 1px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .record-textarea {
+      width: 100%;
+      max-width: 100%;
+      min-width: 80px;
+      min-height: 48px;
+      max-height: 300px;
+      padding: 14px 16px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1.1em;
+      outline: none;
+      transition: border 0.2s;
+      margin-bottom: 18px;
+      background: #fafaff;
+      box-shadow: 0 2px 8px rgba(98, 0, 234, 0.04);
+      resize: none;
+      box-sizing: border-box;
+      line-height: 1.6;
+    }
+
+    .record-textarea:focus {
+      border: 1.5px solid #6200ea;
+      background: #fff;
+    }
+
+    .record-btn {
+      background: #6200ea;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 36px;
+      font-size: 1em;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(98, 0, 234, 0.08);
+      transition: background 0.2s;
+      width: 90%;
+      max-width: 500px;
+      min-width: 180px;
+    }
+
+    .record-btn:hover {
+      background: #4b00b5;
+    }
+
+    @media (max-width: 600px) {
+      .record-container {
+        padding: 16px 16px 0 16px;
+      }
+
+      .record-textarea,
+      .record-btn {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        font-size: 1em;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #121212;
+        color: #eee;
+      }
+
+      .record-textarea {
+        background: #1e1e1e;
+        border-color: #333;
+        color: #eee;
+      }
+
+      .record-textarea:focus {
+        background: #222;
+        border-color: #bb86fc;
+      }
+
+      .record-btn {
+        background: #bb86fc;
+        color: #000;
+      }
+
+      .record-btn:hover {
+        background: #9c66d6;
+      }
+
+      .record-title {
+        color: #bb86fc;
+      }
+    }
+
+    .popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 999;
+    }
+
+    .popup.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .popup-content {
+      background: #fff;
+      color: #6200ea;
+      padding: 24px 40px;
+      border-radius: 14px;
+      box-shadow: 0 4px 24px rgba(98, 0, 234, 0.12);
+      font-size: 1.2em;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .popup-content {
+        background: #222;
+        color: #bb86fc;
+        box-shadow: 0 4px 24px rgba(187, 134, 252, 0.18);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="record-container">
+    <div class="record-title">用户登录</div>
+    <input class="record-textarea" id="username" placeholder="用户名（最多20字）" maxlength="20">
+    <input class="record-textarea" id="password" type="password" placeholder="密码（8-20位，含大小写和数字）" maxlength="20">
+    <button class="record-btn" id="loginBtn">登录</button>
+  </div>
+
+  <div class="popup" id="popup">
+    <div class="popup-content" id="popupText">加载中...</div>
+  </div>
+
+  <script>
+    const popup = document.getElementById("popup");
+    const popupText = document.getElementById("popupText");
+
+    function showPopup(message, time = 2000) {
+      popupText.textContent = message;
+      popup.classList.add("show");
+      setTimeout(() => {
+        popup.classList.remove("show");
+      }, time);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const userId = localStorage.getItem("userId");
+      if (userId) {
+        window.location.href = "../index.html";
+        return;
+      }
+
+      const loginBtn = document.getElementById("loginBtn");
+      loginBtn.addEventListener("click", () => {
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value;
+
+        if (!username || username.length > 20) {
+          showPopup("用户名不能为空且不超过20位");
+          return;
+        }
+
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,20}$/;
+        if (!passwordRegex.test(password)) {
+          showPopup("密码需8-20位，包含大小写和数字");
+          return;
+        }
+
+        fetch("http://127.0.0.1:5000/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              localStorage.setItem("userId", data.userId);
+              window.location.href = "../index.html";
+            } else {
+              showPopup("用户名或密码错误");
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            showPopup("服务器连接失败");
+          });
+      });
+    });
+  </script>
+</body>
+
+</html>
