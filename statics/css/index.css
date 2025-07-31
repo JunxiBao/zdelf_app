@@ -50,6 +50,24 @@ body {
   color: #6200ea;
 }
 
+.nav-label {
+  font-family: 'PingFang SC', 'Segoe UI', Arial, sans-serif;
+  font-size: 13.5px;
+  color: #888;
+  margin-top: 2px;
+  text-align: center;
+  line-height: 1.2;
+  user-select: none;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: color 0.3s, font-weight 0.3s;
+}
+
+.nav-item.active .nav-label {
+  color: #6200ea;
+  font-weight: 600;
+}
+
 .indicator {
   position: absolute;
   bottom: 0;
@@ -254,5 +272,14 @@ body {
   .modal-content {
     background: #23232a;
     color: #e5e5e5;
+  }
+
+  .nav-label {
+    color: #888;
+    font-family: 'PingFang SC', 'Segoe UI', Arial, sans-serif;
+  }
+  .nav-item.active .nav-label {
+    color: #bb86fc;
+    font-weight: 600;
   }
 }
