@@ -36,13 +36,32 @@ document.getElementById('registerBtn').addEventListener('click', function () {
     return;
   }
 
-  if (!age || isNaN(age) || age <= 0) {
-    showPopup('请输入有效的年龄');
+  // 年龄校验：必须是1-120的整数
+  const ageNum = Number(age);
+  if (!age || isNaN(ageNum) || !Number.isInteger(ageNum) || ageNum < 1 || ageNum > 120) {
+    showPopup('年龄必须是1-120之间的整数');
     return;
   }
 
-  showPopup('注册成功！');
-  setTimeout(() => {
-    window.location.href = 'login.html';
-  }, 1500);
+  fetch('https://zhucan.xyz:5000/register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ username, password, age })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showPopup('注册成功！');
+      setTimeout(() => {
+        window.location.href = 'login.html';
+      }, 1500);
+    } else {
+      showPopup('注册失败: ' + data.message);
+    }
+  })
+  .catch(error => {
+    showPopup('网络错误: ' + error);
+  });
 });

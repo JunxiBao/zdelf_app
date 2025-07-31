@@ -46,6 +46,46 @@ def login():
         print("❌ 错误：", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
+@app.route('/register', methods=['POST'])
+def register():
+    try:
+        data = request.get_json(force=True)
+        print("注册收到的数据：", data)
+
+        username = data.get("username")
+        password = data.get("password")
+        age = data.get("age")  # 新增
+
+        if not username or not password or age is None:
+            return jsonify({"success": False, "message": "缺少用户名、密码或年龄"}), 400
+
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+
+        # 检查用户名是否已存在
+        cursor.execute("SELECT * FROM users WHERE username=%s", (username,))
+        existing_user = cursor.fetchone()
+        if existing_user:
+            cursor.close()
+            conn.close()
+            return jsonify({"success": False, "message": "用户名已存在"}), 409
+
+        # 插入新用户（包含age）
+        cursor.execute(
+            "INSERT INTO users (username, password, age) VALUES (%s, %s, %s)",
+            (username, password, age)
+        )
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True, "message": "注册成功"})
+
+    except Exception as e:
+        print("❌ 注册错误：", e)
+        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(
     host='0.0.0.0',
