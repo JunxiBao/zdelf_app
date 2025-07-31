@@ -4,7 +4,7 @@ import mysql.connector
 import uuid
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "https://zhucan.xyz"}})
+CORS(app, resources={r"/*": {"origins": "https://zhucan.xyz"}}, supports_credentials=True)
 
 db_config = {
     "host": "localhost",  # 或者改成你数据库实际主机名
@@ -13,7 +13,7 @@ db_config = {
     "database": "health"
 }
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['POST', 'OPTIONS'])
 def login():
     try:
         # ✅ 尝试读取 JSON（加 force=True 以确保 Flask 不依赖 headers 判断）
@@ -46,8 +46,10 @@ def login():
         print("❌ 错误：", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
-@app.route('/register', methods=['POST'])
+@app.route('/register', methods=['POST', 'OPTIONS'])
 def register():
+    if request.method == 'OPTIONS':
+        return '', 200
     try:
         data = request.get_json(force=True)
         print("注册收到的数据：", data)
