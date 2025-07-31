@@ -15,6 +15,8 @@ db_config = {
 
 @app.route('/login', methods=['POST', 'OPTIONS'])
 def login():
+     if request.method == 'OPTIONS':
+        return '', 200
     try:
         # ✅ 尝试读取 JSON（加 force=True 以确保 Flask 不依赖 headers 判断）
         data = request.get_json(force=True)
