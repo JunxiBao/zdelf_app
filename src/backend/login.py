@@ -56,7 +56,13 @@ def register():
 
         username = data.get("username")
         password = data.get("password")
-        age = data.get("age")  # 新增
+        age = data.get("age")
+        try:
+            age = int(age)
+            if age < 1 or age > 120:
+                return jsonify({"success": False, "message": "年龄必须是1-120之间的整数"}), 400
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "message": "年龄格式不正确"}), 400
 
         if not username or not password or age is None:
             return jsonify({"success": False, "message": "缺少用户名、密码或年龄"}), 400
@@ -64,7 +70,6 @@ def register():
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)
 
-        # 检查用户名是否已存在
         cursor.execute("SELECT * FROM users WHERE username=%s", (username,))
         existing_user = cursor.fetchone()
         if existing_user:
@@ -72,10 +77,10 @@ def register():
             conn.close()
             return jsonify({"success": False, "message": "用户名已存在"}), 409
 
-        # 插入新用户（包含age）
+        user_id = str(uuid.uuid4())
         cursor.execute(
-            "INSERT INTO users (username, password, age) VALUES (%s, %s, %s)",
-            (username, password, age)
+            "INSERT INTO users (user_id, username, password, age) VALUES (%s, %s, %s, %s)",
+            (user_id, username, password, age)
         )
         conn.commit()
 
