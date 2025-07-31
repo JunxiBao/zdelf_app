@@ -10,12 +10,7 @@ function showPopup(message, time = 2000) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const userId = localStorage.getItem("userId");
-  if (userId) {
-    window.location.href = "../index.html";
-    return;
-  }
-
+ 
   const loginBtn = document.getElementById("loginBtn");
   loginBtn.addEventListener("click", () => {
     const username = document.getElementById("username").value.trim();
