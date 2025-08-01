@@ -22,7 +22,14 @@ function showLoader() {
 
 // 隐藏加载动画
 function hideLoader() {
-  document.getElementById('loader').style.display = 'none';
+  console.log("🔧 尝试隐藏加载动画");
+  const loader = document.getElementById('loader');
+  if (loader) {
+    loader.style.display = 'none';
+    console.log("✅ 加载动画已隐藏");
+  } else {
+    console.error("❌ 未找到 loader 元素");
+  }
 }
 
 // 获取用户名
@@ -39,16 +46,8 @@ function getUsername() {
     return;
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-    console.error("⏰ 请求超时，已中断");
-    displayGreeting("访客");
-    hideLoader();
-  }, 8000);
-
-  console.log("📡 正在请求用户信息...");
-
+  // 测试网络连接
+  console.log("🌐 测试网络连接...");
   fetch('https://zhucan.xyz:5000/readdata', {
     method: 'POST',
     headers: {
@@ -57,29 +56,30 @@ function getUsername() {
     body: JSON.stringify({
       table_name: "users",
       user_id: userId
-    }),
-    signal: controller.signal
+    })
   })
-    .then(response => {
-      clearTimeout(timeoutId);
-      console.log("✅ 收到服务器响应");
-      return response.json();
-    })
-    .then(data => {
-      console.log("📦 返回数据：", data);
-      if (data.success && data.data.length > 0) {
-        const username = data.data[0].username || "访客";
-        displayGreeting(username);
-      } else {
-        displayGreeting("访客");
-      }
-      hideLoader();
-    })
-    .catch(error => {
-      console.error('❌ 获取用户信息失败:', error);
+  .then(response => {
+    console.log("📡 收到响应，状态码:", response.status);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log("📦 返回数据：", data);
+    if (data.success && data.data.length > 0) {
+      const username = data.data[0].username || "访客";
+      displayGreeting(username);
+    } else {
       displayGreeting("访客");
-      hideLoader();
-    });
+    }
+    hideLoader();
+  })
+  .catch(error => {
+    console.error('❌ 获取用户信息失败:', error);
+    displayGreeting("访客");
+    hideLoader();
+  });
 }
 
 // 显示问候语
@@ -91,4 +91,22 @@ function displayGreeting(username) {
 // 页面加载时初始化
 document.addEventListener('DOMContentLoaded', function() {
   getUsername();
+  
+  // 调试：5秒后强制隐藏加载动画
+  setTimeout(() => {
+    console.log("🕐 5秒后强制隐藏加载动画");
+    hideLoader();
+  }, 5000);
 });
+
+// 调试函数：强制隐藏加载动画
+function forceHideLoader() {
+  console.log("🔧 强制隐藏加载动画");
+  const loader = document.getElementById('loader');
+  if (loader) {
+    loader.style.display = 'none';
+    console.log("✅ 强制隐藏成功");
+  } else {
+    console.error("❌ 未找到 loader 元素");
+  }
+}
