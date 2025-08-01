@@ -15,27 +15,21 @@ function getGreeting() {
   }
 }
 
+// 显示/隐藏加载动画的函数
+function showLoader() {
+  const loader = document.getElementById('loader');
+  if (loader) loader.style.display = "flex";
+}
+
+function hideLoader() {
+  setTimeout(() => {
+    const loader = document.getElementById('loader');
+    if (loader) loader.style.display = "none";
+  }, 400);
+}
 
 // 获取用户名
 function getUsername() {
-  // 检查showLoader函数是否存在，如果不存在则定义它
-  if (typeof showLoader === 'undefined') {
-    window.showLoader = function() {
-      const loader = document.getElementById('loader');
-      if (loader) loader.style.display = "flex";
-    };
-  }
-  
-  // 检查hideLoader函数是否存在，如果不存在则定义它
-  if (typeof hideLoader === 'undefined') {
-    window.hideLoader = function() {
-      setTimeout(() => {
-        const loader = document.getElementById('loader');
-        if (loader) loader.style.display = "none";
-      }, 400);
-    };
-  }
-  
   showLoader();
 
   const userId = localStorage.getItem('userId');
@@ -87,21 +81,20 @@ function getUsername() {
 // 显示问候语
 function displayGreeting(username) {
   const greeting = getGreeting();
-  document.getElementById('greeting').textContent = `${greeting}，${username}`;
+  const greetingElement = document.getElementById('greeting');
+  if (greetingElement) {
+    greetingElement.textContent = `${greeting}，${username}`;
+  } else {
+    console.error("❌ 未找到 greeting 元素");
+  }
 }
 
 // 页面加载时初始化
 document.addEventListener('DOMContentLoaded', function() {
   getUsername();
-  
-  // 调试：5秒后强制隐藏加载动画
-  setTimeout(() => {
-    console.log("🕐 5秒后强制隐藏加载动画");
-    hideLoader();
-  }, 5000);
 });
 
-// 调试函数：强制隐藏加载动画
+// 调试函数：强制隐藏加载动画（仅在开发环境使用）
 function forceHideLoader() {
   console.log("🔧 强制隐藏加载动画");
   const loader = document.getElementById('loader');
@@ -113,5 +106,7 @@ function forceHideLoader() {
   }
 }
 
-// 全局函数，供其他脚本调用
-window.forceHideLoader = forceHideLoader;
+// 仅在开发环境暴露调试函数
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  window.forceHideLoader = forceHideLoader;
+}
