@@ -1,3 +1,34 @@
+const loadingOverlay = document.createElement('div');
+loadingOverlay.id = 'loading-overlay';
+loadingOverlay.innerHTML = '<div class="spinner"></div>';
+document.body.appendChild(loadingOverlay);
+
+const style = document.createElement('style');
+style.innerHTML = `
+#loading-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 6px solid #ccc;
+  border-top-color: #7b2cbf;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+`;
+document.head.appendChild(style);
+
 const popup = document.getElementById("popup");
 const popupText = document.getElementById("popupText");
 
@@ -43,6 +74,7 @@ document.getElementById('registerBtn').addEventListener('click', function () {
     return;
   }
 
+  showLoading();
   fetch('https://zhucan.xyz:5000/register', {
     method: 'POST',
     headers: {
@@ -56,12 +88,26 @@ document.getElementById('registerBtn').addEventListener('click', function () {
       showPopup('注册成功！');
       setTimeout(() => {
         window.location.href = 'login.html';
+        hideLoading();
       }, 1500);
     } else {
       showPopup('注册失败: ' + data.message);
+      hideLoading();
     }
   })
   .catch(error => {
     showPopup('网络错误: ' + error);
+    hideLoading();
   });
 });
+
+function showLoading() {
+  loadingOverlay.style.display = 'flex';
+}
+
+function hideLoading() {
+  loadingOverlay.style.display = 'none';
+}
+
+// 初始化隐藏
+hideLoading();

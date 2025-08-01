@@ -1,3 +1,34 @@
+const loadingOverlay = document.createElement('div');
+loadingOverlay.id = 'loading-overlay';
+loadingOverlay.innerHTML = '<div class="spinner"></div>';
+document.body.appendChild(loadingOverlay);
+
+const style = document.createElement('style');
+style.innerHTML = `
+#loading-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 6px solid #ccc;
+  border-top-color: #7b2cbf;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+`;
+document.head.appendChild(style);
+
 const popup = document.getElementById("popup");
 const popupText = document.getElementById("popupText");
 
@@ -27,6 +58,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    showLoading();
+
     fetch("https://zhucan.xyz:5000/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -35,15 +68,29 @@ document.addEventListener("DOMContentLoaded", () => {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
+          hideLoading();
           localStorage.setItem("userId", data.userId);
           window.location.href = "../index.html";
         } else {
+          hideLoading();
           showPopup("用户名或密码错误");
         }
       })
       .catch(err => {
+        hideLoading();
         console.error(err);
         showPopup("服务器连接失败");
       });
   });
 });
+
+function showLoading() {
+  loadingOverlay.style.display = 'flex';
+}
+
+function hideLoading() {
+  loadingOverlay.style.display = 'none';
+}
+
+// 初始化隐藏
+hideLoading();
