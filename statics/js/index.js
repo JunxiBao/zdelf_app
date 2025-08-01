@@ -35,10 +35,10 @@ function loadPage(index) {
 
       // 动态加载对应的JavaScript文件
       const scriptMap = [
-        "/statics/js/daily.js",
-        "/statics/js/case.js",
-        "/statics/js/square.js",
-        "/statics/js/me.js"
+        "../../statics/js/daily.js",
+        "../../statics/js/case.js",
+        "../../statics/js/square.js",
+        "../../statics/js/me.js"
       ];
 
       if (scriptMap[index]) {
