@@ -1,1 +1,1 @@
-nohup python3 src/backend/flask.py > ./log/login.out 2>&1 &
+nohup python3 src/backend/app.py > ./log/app.out 2>&1 &
