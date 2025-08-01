@@ -1,5 +1,3 @@
-console.log("🚀 daily.js 开始加载...");
-
 // 获取问候语函数
 function getGreeting() {
   const hour = new Date().getHours();
@@ -92,19 +90,9 @@ function displayGreeting(username) {
 }
 
 // 页面加载时初始化
-console.log("📋 准备添加 DOMContentLoaded 事件监听器...");
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("🎯 DOMContentLoaded 事件触发了！");
   getUsername();
 });
-
-// 立即检查 DOM 是否已经加载完成
-if (document.readyState === 'loading') {
-  console.log("⏳ DOM 还在加载中...");
-} else {
-  console.log("✅ DOM 已经加载完成，立即调用 getUsername");
-  getUsername();
-}
 
 // 调试函数：强制隐藏加载动画（仅在开发环境使用）
 function forceHideLoader() {
