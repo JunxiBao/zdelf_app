@@ -14,6 +14,18 @@ style.innerHTML = `
   display: none;
   align-items: center;
   justify-content: center;
+transition: background 0.3s ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  #loading-overlay {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  .spinner {
+    border: 6px solid #444;
+    border-top-color: #b197fc;
+  }
 }
 .spinner {
   width: 50px;
@@ -41,7 +53,7 @@ function showPopup(message, time = 2000) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
- 
+
   const loginBtn = document.getElementById("loginBtn");
   loginBtn.addEventListener("click", () => {
     const username = document.getElementById("username").value.trim();
@@ -83,46 +95,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   });
 });
-
-const style = document.createElement('style');
-style.innerHTML = `
-#loading-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  z-index: 9999;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s ease;
-}
-
-@media (prefers-color-scheme: dark) {
-  #loading-overlay {
-    background: rgba(0, 0, 0, 0.6);
-  }
-
-  .spinner {
-    border: 6px solid #444;
-    border-top-color: #b197fc;
-  }
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 6px solid #ccc;
-  border-top-color: #7b2cbf;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-`;
-document.head.appendChild(style);
 
 function showLoading() {
   loadingOverlay.style.display = 'flex';
