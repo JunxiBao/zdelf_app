@@ -2,7 +2,6 @@ const navItems = document.querySelectorAll(".nav-item");
 const indicator = document.getElementById("indicator");
 const centerBtn = document.getElementById("centerBtn");
 const content = document.getElementById("content");
-const loader = document.getElementById("loader");
 const modal = document.getElementById("modal");
 const modalContent = document.getElementById("modalContent");
 
@@ -15,19 +14,9 @@ const pageMap = [
 
 let activeIndex = 0;
 
-function showLoader() {
-  loader.style.display = "flex";
-}
 
-function hideLoader() {
-  setTimeout(() => {
-    loader.style.display = "none";
-  }, 400); // 增加加载动效显示时长
-}
 
 function loadPage(index) {
-  showLoader();
-
   fetch(pageMap[index])
     .then(res => res.text())
     .then(html => {
@@ -45,14 +34,13 @@ function loadPage(index) {
         const script = document.createElement("script");
         script.src = scriptMap[index];
         document.body.appendChild(script);
+        
+        console.log("📦 动态加载脚本:", scriptMap[index]);
       }
     })
     .catch(err => {
       content.innerHTML = "<p style='padding: 2em; text-align:center;'>⚠️ 页面加载失败</p>";
       console.error("加载页面出错:", err);
-    })
-    .finally(() => {
-      hideLoader();
     });
 }
 

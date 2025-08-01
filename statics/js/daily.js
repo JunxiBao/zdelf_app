@@ -15,30 +15,16 @@ function getGreeting() {
   }
 }
 
-// 显示/隐藏加载动画的函数
-function showLoader() {
-  const loader = document.getElementById('loader');
-  if (loader) loader.style.display = "flex";
-}
 
-function hideLoader() {
-  setTimeout(() => {
-    const loader = document.getElementById('loader');
-    if (loader) loader.style.display = "none";
-  }, 400);
-}
 
 // 获取用户名
 function getUsername() {
-  showLoader();
-
   const userId = localStorage.getItem('userId');
   console.log("🧪 获取到的 userId:", userId);
 
   if (!userId || userId === 'undefined' || userId === 'null') {
     console.warn("⚠️ 未获取到有效 userId，显示访客");
     displayGreeting("访客");
-    hideLoader();
     return;
   }
 
@@ -69,12 +55,10 @@ function getUsername() {
     } else {
       displayGreeting("访客");
     }
-    hideLoader();
   })
   .catch(error => {
     console.error('❌ 获取用户信息失败:', error);
     displayGreeting("访客");
-    hideLoader();
   });
 }
 
@@ -90,23 +74,16 @@ function displayGreeting(username) {
 }
 
 // 页面加载时初始化
-document.addEventListener('DOMContentLoaded', function() {
+// 对于动态加载的脚本，DOMContentLoaded 可能已经触发过了
+// 所以直接检查 DOM 状态并执行
+if (document.readyState === 'loading') {
+  // DOM 还在加载中，等待 DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', function() {
+    getUsername();
+  });
+} else {
+  // DOM 已经加载完成，立即执行
   getUsername();
-});
-
-// 调试函数：强制隐藏加载动画（仅在开发环境使用）
-function forceHideLoader() {
-  console.log("🔧 强制隐藏加载动画");
-  const loader = document.getElementById('loader');
-  if (loader) {
-    loader.style.display = 'none';
-    console.log("✅ 强制隐藏成功");
-  } else {
-    console.error("❌ 未找到 loader 元素");
-  }
 }
 
-// 仅在开发环境暴露调试函数
-if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-  window.forceHideLoader = forceHideLoader;
-}
+

@@ -8,14 +8,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // 全局函数，供其他脚本调用
-window.showLoader = function() {
-  const loader = document.getElementById('loader');
-  if (loader) loader.style.display = "flex";
-};
-
-window.hideLoader = function() {
-  setTimeout(() => {
-    const loader = document.getElementById('loader');
-    if (loader) loader.style.display = "none";
-  }, 400);
-}; 
+ 
