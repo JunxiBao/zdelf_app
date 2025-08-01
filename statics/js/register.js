@@ -14,7 +14,20 @@ style.innerHTML = `
   display: none;
   align-items: center;
   justify-content: center;
+  transition: background 0.3s ease;
 }
+
+@media (prefers-color-scheme: dark) {
+  #loading-overlay {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  .spinner {
+    border: 6px solid #444;
+    border-top-color: #b197fc;
+  }
+}
+
 .spinner {
   width: 50px;
   height: 50px;
@@ -23,6 +36,7 @@ style.innerHTML = `
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
