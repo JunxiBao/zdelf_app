@@ -27,20 +27,28 @@ function hideLoader() {
 
 // 获取用户名
 function getUsername() {
-  // 显示加载动画
   showLoader();
-  
-  // 从localStorage获取用户ID（假设登录时存储了）
+
   const userId = localStorage.getItem('userId');
-  
-  if (!userId) {
-    // 如果没有用户ID，显示默认问候
+  console.log("🧪 获取到的 userId:", userId);
+
+  if (!userId || userId === 'undefined' || userId === 'null') {
+    console.warn("⚠️ 未获取到有效 userId，显示访客");
     displayGreeting("访客");
     hideLoader();
     return;
   }
 
-  // 调用后端API获取用户信息
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+    console.error("⏰ 请求超时，已中断");
+    displayGreeting("访客");
+    hideLoader();
+  }, 8000);
+
+  console.log("📡 正在请求用户信息...");
+
   fetch('https://zhucan.xyz:5000/readdata', {
     method: 'POST',
     headers: {
@@ -49,23 +57,29 @@ function getUsername() {
     body: JSON.stringify({
       table_name: "users",
       user_id: userId
+    }),
+    signal: controller.signal
+  })
+    .then(response => {
+      clearTimeout(timeoutId);
+      console.log("✅ 收到服务器响应");
+      return response.json();
     })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success && data.data.length > 0) {
-      const username = data.data[0].username;
-      displayGreeting(username);
-    } else {
+    .then(data => {
+      console.log("📦 返回数据：", data);
+      if (data.success && data.data.length > 0) {
+        const username = data.data[0].username || "访客";
+        displayGreeting(username);
+      } else {
+        displayGreeting("访客");
+      }
+      hideLoader();
+    })
+    .catch(error => {
+      console.error('❌ 获取用户信息失败:', error);
       displayGreeting("访客");
-    }
-    hideLoader();
-  })
-  .catch(error => {
-    console.error('获取用户信息失败:', error);
-    displayGreeting("访客");
-    hideLoader();
-  });
+      hideLoader();
+    });
 }
 
 // 显示问候语
