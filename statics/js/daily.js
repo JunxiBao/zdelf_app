@@ -1,3 +1,5 @@
+console.log("🚀 daily.js 开始加载...");
+
 // 获取问候语函数
 function getGreeting() {
   const hour = new Date().getHours();
