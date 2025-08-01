@@ -95,6 +95,56 @@ def register():
         print("❌ 注册错误：", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
+@app.route('/readdata', methods=['POST', 'OPTIONS'])
+def readdata():
+    if request.method == 'OPTIONS':
+        return '', 200
+    try:
+        data = request.get_json(force=True)
+        print("读取数据收到的请求：", data)
+
+        # 获取前端传递的参数
+        table_name = data.get("table_name")
+        user_id = data.get("user_id")
+        username = data.get("username")
+        
+        # 参数校验
+        if not table_name:
+            return jsonify({"success": False, "message": "缺少表名参数"}), 400
+
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+
+        # 构建查询条件
+        query = f"SELECT * FROM {table_name}"
+        params = []
+        
+        if user_id:
+            query += " WHERE user_id = %s"
+            params.append(user_id)
+        elif username:
+            query += " WHERE username = %s"
+            params.append(username)
+        
+        print(f"执行查询: {query} 参数: {params}")
+        
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "success": True, 
+            "message": "数据读取成功",
+            "data": results,
+            "count": len(results)
+        })
+
+    except Exception as e:
+        print("❌ 读取数据错误：", e)
+        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(
     host='0.0.0.0',
