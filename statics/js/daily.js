@@ -18,6 +18,24 @@ function getGreeting() {
 
 // 获取用户名
 function getUsername() {
+  // 检查showLoader函数是否存在，如果不存在则定义它
+  if (typeof showLoader === 'undefined') {
+    window.showLoader = function() {
+      const loader = document.getElementById('loader');
+      if (loader) loader.style.display = "flex";
+    };
+  }
+  
+  // 检查hideLoader函数是否存在，如果不存在则定义它
+  if (typeof hideLoader === 'undefined') {
+    window.hideLoader = function() {
+      setTimeout(() => {
+        const loader = document.getElementById('loader');
+        if (loader) loader.style.display = "none";
+      }, 400);
+    };
+  }
+  
   showLoader();
 
   const userId = localStorage.getItem('userId');
@@ -94,3 +112,6 @@ function forceHideLoader() {
     console.error("❌ 未找到 loader 元素");
   }
 }
+
+// 全局函数，供其他脚本调用
+window.forceHideLoader = forceHideLoader;

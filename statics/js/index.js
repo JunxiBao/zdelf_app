@@ -32,6 +32,20 @@ function loadPage(index) {
     .then(res => res.text())
     .then(html => {
       content.innerHTML = html;
+      
+      // 动态加载对应的JavaScript文件
+      const scriptMap = [
+        "../../statics/js/daily.js",
+        "../../statics/js/case.js",
+        "../../statics/js/square.js",
+        "../../statics/js/me.js"
+      ];
+      
+      if (scriptMap[index]) {
+        const script = document.createElement("script");
+        script.src = scriptMap[index];
+        document.body.appendChild(script);
+      }
     })
     .catch(err => {
       content.innerHTML = "<p style='padding: 2em; text-align:center;'>⚠️ 页面加载失败</p>";

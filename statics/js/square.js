@@ -1,0 +1,21 @@
+// 广场页面JavaScript
+console.log("🏞️ 广场页面加载完成");
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("🏞️ 广场页面初始化");
+  // 这里可以添加广场页面的具体逻辑
+});
+
+// 全局函数，供其他脚本调用
+window.showLoader = function() {
+  const loader = document.getElementById('loader');
+  if (loader) loader.style.display = "flex";
+};
+
+window.hideLoader = function() {
+  setTimeout(() => {
+    const loader = document.getElementById('loader');
+    if (loader) loader.style.display = "none";
+  }, 400);
+}; 
