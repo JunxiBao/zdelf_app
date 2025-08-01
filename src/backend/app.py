@@ -39,8 +39,7 @@ def login():
         conn.close()
 
         if user:
-            user_id = str(uuid.uuid4())  # 你可以改成数据库里的ID
-            return jsonify({"success": True, "userId": user_id})
+            return jsonify({"success": True, "userId": user["user_id"]})
         else:
             return jsonify({"success": False, "message": "用户名或密码错误"}), 401
 
