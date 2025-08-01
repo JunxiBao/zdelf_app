@@ -15,22 +15,6 @@ function getGreeting() {
   }
 }
 
-// 显示加载动画
-function showLoader() {
-  document.getElementById('loader').style.display = 'flex';
-}
-
-// 隐藏加载动画
-function hideLoader() {
-  console.log("🔧 尝试隐藏加载动画");
-  const loader = document.getElementById('loader');
-  if (loader) {
-    loader.style.display = 'none';
-    console.log("✅ 加载动画已隐藏");
-  } else {
-    console.error("❌ 未找到 loader 元素");
-  }
-}
 
 // 获取用户名
 function getUsername() {
