@@ -2,132 +2,151 @@
 <html lang="zh">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bjx的DeepSeek机器人</title>
+  <meta charset="UTF-8">
+  <title>bjx 的 DeepSeek 聊天</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
+      padding: 0;
+      font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+      background-color: #e8ecf1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
 
-    #chat-container {
-      max-width: 600px;
-      margin: 40px auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    header {
+      background-color: #4a90e2;
+      color: white;
+      padding: 16px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    #chat {
-      height: 400px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 800px;
+      margin: 0 auto;
       padding: 10px;
-      border-radius: 8px;
-      background-color: #fafafa;
+    }
+
+    .message-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
     }
 
     .message {
+      max-width: 80%;
+      padding: 10px 14px;
       margin-bottom: 12px;
+      border-radius: 8px;
+      word-wrap: break-word;
+      line-height: 1.4;
     }
 
     .user {
+      align-self: flex-end;
+      background-color: #d1f0c4;
       text-align: right;
-      color: #007aff;
     }
 
     .bot {
-      text-align: left;
-      color: #333;
+      align-self: flex-start;
+      background-color: #f0f0f0;
     }
 
-    #form {
-      margin-top: 15px;
+    .input-container {
       display: flex;
+      gap: 10px;
     }
 
-    #message-input {
+    input[type="text"] {
       flex: 1;
-      padding: 10px;
-      border-radius: 6px;
+      padding: 12px;
+      font-size: 16px;
       border: 1px solid #ccc;
+      border-radius: 8px;
     }
 
-    #send-btn {
-      padding: 10px 16px;
-      margin-left: 10px;
-      background-color: #007aff;
-      color: white;
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
+      background-color: #4a90e2;
+      color: white;
       cursor: pointer;
+      transition: background-color 0.2s;
     }
 
-    #send-btn:hover {
-      background-color: #005fc1;
+    button:hover {
+      background-color: #357abd;
     }
   </style>
 </head>
 
 <body>
 
-  <div id="chat-container">
-    <h2>💬 bjx的DeepSeek机器人</h2>
-    <div id="chat"></div>
-    <form id="form">
-      <input id="message-input" type="text" placeholder="输入你的问题..." required />
-      <button id="send-btn" type="submit">发送</button>
-    </form>
+  <header>🤖 bjx 的 DeepSeek 聊天</header>
+
+  <div class="chat-container">
+    <div class="message-list" id="messageList"></div>
+
+    <div class="input-container">
+      <input type="text" id="userInput" placeholder="请输入你的消息..." onkeydown="if(event.key === 'Enter') sendMessage()" />
+      <button onclick="sendMessage()">发送</button>
+    </div>
   </div>
 
   <script>
-    const chat = document.getElementById('chat');
-    const form = document.getElementById('form');
-    const input = document.getElementById('message-input');
-
-    function appendMessage(role, text) {
-      const msg = document.createElement('div');
-      msg.classList.add('message', role);
-      msg.textContent = text;
-      chat.appendChild(msg);
-      chat.scrollTop = chat.scrollHeight;
-    }
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const message = input.value.trim();
+    async function sendMessage() {
+      const inputEl = document.getElementById('userInput');
+      const message = inputEl.value.trim();
       if (!message) return;
 
-      appendMessage('user', message);
-      input.value = '';
-
-      appendMessage('bot', '🤖 正在思考中...');
+      addMessage(message, 'user');
+      inputEl.value = '';
 
       try {
-        const res = await fetch('/deepseek', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("https://zhucan.xyz:5000/deepseek", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message })
         });
-        const data = await res.json();
 
-        // 移除上一个“正在思考”消息
-        chat.lastChild.remove();
-
-        if (data.reply) {
-          appendMessage('bot', data.reply);
+        const data = await response.json();
+        if (response.ok) {
+          addMessage(data.reply, 'bot');
         } else {
-          appendMessage('bot', '⚠️ 出错了：' + (data.error || '未知错误'));
+          addMessage("❌ 出错了：" + (data.error || "未知错误"), 'bot');
         }
-      } catch (err) {
-        chat.lastChild.remove();
-        appendMessage('bot', '❌ 网络错误或服务器故障');
-        console.error(err);
+      } catch (error) {
+        addMessage("⚠️ 无法连接服务器：" + error.message, 'bot');
       }
-    });
+    }
+
+    function addMessage(text, sender) {
+      const msgList = document.getElementById('messageList');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message ' + sender;
+      msgDiv.textContent = text;
+      msgDiv.style.alignSelf = sender === 'user' ? 'flex-end' : 'flex-start';
+      msgList.appendChild(msgDiv);
+      msgList.scrollTop = msgList.scrollHeight;
+    }
   </script>
 
 </body>
