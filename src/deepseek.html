@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bjx的DeepSeek机器人</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+    }
+
+    #chat-container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    #chat {
+      height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: #fafafa;
+    }
+
+    .message {
+      margin-bottom: 12px;
+    }
+
+    .user {
+      text-align: right;
+      color: #007aff;
+    }
+
+    .bot {
+      text-align: left;
+      color: #333;
+    }
+
+    #form {
+      margin-top: 15px;
+      display: flex;
+    }
+
+    #message-input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    #send-btn {
+      padding: 10px 16px;
+      margin-left: 10px;
+      background-color: #007aff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #send-btn:hover {
+      background-color: #005fc1;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="chat-container">
+    <h2>💬 bjx的DeepSeek机器人</h2>
+    <div id="chat"></div>
+    <form id="form">
+      <input id="message-input" type="text" placeholder="输入你的问题..." required />
+      <button id="send-btn" type="submit">发送</button>
+    </form>
+  </div>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const form = document.getElementById('form');
+    const input = document.getElementById('message-input');
+
+    function appendMessage(role, text) {
+      const msg = document.createElement('div');
+      msg.classList.add('message', role);
+      msg.textContent = text;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+
+      appendMessage('user', message);
+      input.value = '';
+
+      appendMessage('bot', '🤖 正在思考中...');
+
+      try {
+        const res = await fetch('/deepseek', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        const data = await res.json();
+
+        // 移除上一个“正在思考”消息
+        chat.lastChild.remove();
+
+        if (data.reply) {
+          appendMessage('bot', data.reply);
+        } else {
+          appendMessage('bot', '⚠️ 出错了：' + (data.error || '未知错误'));
+        }
+      } catch (err) {
+        chat.lastChild.remove();
+        appendMessage('bot', '❌ 网络错误或服务器故障');
+        console.error(err);
+      }
+    });
+  </script>
+
+</body>
+
+</html>

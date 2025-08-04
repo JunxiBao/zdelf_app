@@ -39,5 +39,5 @@ def login():
             return jsonify({"success": False, "message": "用户名或密码错误"}), 401
 
     except Exception as e:
-        print("❌ 错误：", e)
+        print("❌ 登陆错误：", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500

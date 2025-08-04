@@ -1,9 +1,9 @@
+from flask import Blueprint, request, jsonify
 import requests
 
-# 替换为你的 API 密钥
-API_KEY = 'your-deepseek-api-key'
 
-# DeepSeek 的 API 地址（兼容 OpenAI 接口）
+deepseek_blueprint = Blueprint('deepseek', __name__)
+API_KEY = 'sk-ad7ca0d093754ddba44a543da2718a88'
 API_URL = 'https://api.deepseek.com/v1/chat/completions'
 
 # 构建请求数据
@@ -12,23 +12,33 @@ headers = {
     'Authorization': f'Bearer {API_KEY}'
 }
 
-data = {
-    "model": "deepseek-chat",
-    "messages": [
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "什么是量子计算？"}
-    ],
-    "temperature": 0.7
-}
+@deepseek_blueprint.route('/deepseek', methods=['POST'])
+def deepseek_chat():
+    if request.method == 'OPTIONS':
+        return '', 200
+    try:
+        user_input = request.json.get('message', '')
+        if not user_input:
+            return jsonify({'error': 'Missing message'}), 400
 
-# 发送请求
-response = requests.post(API_URL, headers=headers, json=data)
+        data = {
+            "model": "deepseek-chat",
+            "messages": [
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": user_input}
+            ],
+            "temperature": 0.7
+        }
 
-# 解析响应
-if response.status_code == 200:
-    result = response.json()
-    reply = result['choices'][0]['message']['content']
-    print("AI 回复：", reply)
-else:
-    print("请求失败：", response.status_code)
-    print(response.text)
+        response = requests.post(API_URL, headers=headers, json=data)
+
+        if response.status_code == 200:
+            result = response.json()
+            reply = result['choices'][0]['message']['content']
+            return jsonify({'reply': reply})
+        else:
+            return jsonify({'error': response.text}), response.status_code
+        
+    except Exception as e:
+        print("❌ deepseek请求错误：", e)
+        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
