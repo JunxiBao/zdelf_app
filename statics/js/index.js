@@ -31,10 +31,26 @@ function loadPage(index) {
       ];
 
       if (scriptMap[index]) {
+        // 移除旧脚本（如果有）
+        const oldScript = document.querySelector(`script[src="${scriptMap[index]}"]`);
+        if (oldScript) oldScript.remove();
+
+        // 创建新脚本
         const script = document.createElement("script");
         script.src = scriptMap[index];
+        script.onload = () => {
+          // 尝试调用初始化函数（如 initDaily、initCase 等）
+          const initFunctionName = scriptMap[index]
+            .split("/")
+            .pop()
+            .replace(".js", ""); // 得到 daily、case 等
+          const initFunction = window[`init${initFunctionName.charAt(0).toUpperCase()}${initFunctionName.slice(1)}`];
+          if (typeof initFunction === "function") {
+            initFunction();
+          }
+        };
         document.body.appendChild(script);
-        
+
         console.log("📦 动态加载脚本:", scriptMap[index]);
       }
     })
