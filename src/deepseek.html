@@ -159,12 +159,7 @@
     function generateGreeting() {
       const now = new Date();
       const hour = now.getHours();
-      let greeting = "您好！";
-
-      if (hour < 6) greeting = "凌晨好，注意休息哦！";
-      else if (hour < 12) greeting = "早上好，祝您一天顺利！";
-      else if (hour < 18) greeting = "下午好，注意补充水分！";
-      else greeting = "晚上好，今天也辛苦啦～";
+      let greeting = "您好！有什么健康问题尽管问我哦~";
 
       addMessage(greeting, 'bot');
     }
