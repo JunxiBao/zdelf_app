@@ -7,7 +7,7 @@ load_dotenv()
 
 deepseek_blueprint = Blueprint('deepseek', __name__)
 API_KEY = os.getenv('DEEPSEEK_API_KEY')
-API_URL = 'https://api.deepseek.com/v1/chat/completions'
+API_URL = 'https://api.deepseek.com'
 
 headers = {
     'Content-Type': 'application/json',
