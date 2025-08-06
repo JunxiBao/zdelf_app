@@ -54,26 +54,43 @@
       margin-bottom: 12px;
       font-size: 16px;
       line-height: 1.5;
+      display: flex;
+      flex-direction: column;
     }
 
     .message {
-      max-width: 80%;
+      display: inline-block;
       padding: 10px 14px;
       margin-bottom: 10px;
       border-radius: 8px;
       word-wrap: break-word;
       line-height: 1.5;
+      animation: fadeInUp 0.3s ease-out;
+      max-width: 80%;
     }
 
     .user {
-      align-self: flex-end;
       background-color: #d1f0c4;
       text-align: right;
+      align-self: flex-end;
+      border-radius: 18px 18px 4px 18px;
     }
 
     .bot {
-      align-self: flex-start;
       background-color: #f0f0f0;
+      align-self: flex-start;
+      border-radius: 18px 18px 18px 4px;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .input-container {
@@ -204,7 +221,7 @@
         msgDiv.textContent = text;
         msgList.appendChild(msgDiv);
       }
-      msgDiv.style.alignSelf = sender === 'user' ? 'flex-end' : 'flex-start';
+      // msgDiv.style.alignSelf = sender === 'user' ? 'flex-end' : 'flex-start'; // 移除重复对齐设置
       msgList.scrollTop = msgList.scrollHeight;
     }
   </script>
