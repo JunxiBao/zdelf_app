@@ -1,12 +1,14 @@
+import os
+from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify
 import requests
 
+load_dotenv()
 
 deepseek_blueprint = Blueprint('deepseek', __name__)
-API_KEY = 'sk-ad7ca0d093754ddba44a543da2718a88'
+API_KEY = os.getenv('DEEPSEEK_API_KEY')
 API_URL = 'https://api.deepseek.com/v1/chat/completions'
 
-# 构建请求数据
 headers = {
     'Content-Type': 'application/json',
     'Authorization': f'Bearer {API_KEY}'
