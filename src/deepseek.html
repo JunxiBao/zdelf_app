@@ -3,8 +3,12 @@
 
 <head>
   <meta charset="UTF-8" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css">
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>bjx 的 DeepSeek 聊天</title>
+  <title>您的健康AI助手</title>
   <style>
     * {
       box-sizing: border-box;
@@ -138,7 +142,7 @@
 
 <body>
 
-  <header>🤖 bjx 的 DeepSeek 聊天</header>
+  <header>您的健康AI助手</header>
 
   <div class="chat-container">
     <div class="message-list" id="messageList"></div>
@@ -150,6 +154,23 @@
   </div>
 
   <script>
+    marked.setOptions({ breaks: true });
+
+    function generateGreeting() {
+      const now = new Date();
+      const hour = now.getHours();
+      let greeting = "您好！";
+
+      if (hour < 6) greeting = "凌晨好，注意休息哦！";
+      else if (hour < 12) greeting = "早上好，祝您一天顺利！";
+      else if (hour < 18) greeting = "下午好，注意补充水分！";
+      else greeting = "晚上好，今天也辛苦啦～";
+
+      addMessage(greeting, 'bot');
+    }
+
+    window.addEventListener('DOMContentLoaded', generateGreeting);
+
     async function sendMessage() {
       const inputEl = document.getElementById('userInput');
       const message = inputEl.value.trim();
@@ -180,9 +201,15 @@
       const msgList = document.getElementById('messageList');
       const msgDiv = document.createElement('div');
       msgDiv.className = 'message ' + sender;
-      msgDiv.textContent = text;
+      if (sender === 'bot') {
+        msgDiv.innerHTML = marked.parse(text);
+        msgList.appendChild(msgDiv);
+        Prism.highlightAll();
+      } else {
+        msgDiv.textContent = text;
+        msgList.appendChild(msgDiv);
+      }
       msgDiv.style.alignSelf = sender === 'user' ? 'flex-end' : 'flex-start';
-      msgList.appendChild(msgDiv);
       msgList.scrollTop = msgList.scrollHeight;
     }
   </script>
