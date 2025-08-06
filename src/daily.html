@@ -90,40 +90,7 @@
   </div>
 
   <script>
-    const doctorButton = document.getElementById('doctor-button');
-    const doctorPopup = document.getElementById('doctor-popup');
-
-    doctorButton.addEventListener('click', () => {
-      if (!doctorPopup.classList.contains('show')) {
-        doctorPopup.classList.add('show');
-      } else if (!doctorPopup.classList.contains('hiding')) {
-        doctorPopup.classList.add('hiding');
-        doctorPopup.addEventListener('transitionend', function handler() {
-          doctorPopup.classList.remove('show', 'hiding');
-          doctorPopup.style.display = 'none';
-          doctorPopup.removeEventListener('transitionend', handler);
-        });
-      }
-    });
-
-    document.addEventListener('click', (event) => {
-      if (doctorPopup.classList.contains('show') && !doctorButton.contains(event.target) && !doctorPopup.contains(event.target)) {
-        doctorPopup.classList.add('hiding');
-        doctorPopup.addEventListener('transitionend', function handler() {
-          doctorPopup.classList.remove('show', 'hiding');
-          doctorPopup.style.display = 'none';
-          doctorPopup.removeEventListener('transitionend', handler);
-        });
-      }
-    });
-
-    // Ensure display block is set when showing popup
-    const observer = new MutationObserver(() => {
-      if (doctorPopup.classList.contains('show')) {
-        doctorPopup.style.display = 'block';
-      }
-    });
-    observer.observe(doctorPopup, { attributes: true, attributeFilter: ['class'] });
+   
   </script>
 </body>
 </html>
