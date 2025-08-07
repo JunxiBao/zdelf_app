@@ -76,6 +76,10 @@ def deepseek_structured():
         if response.status_code == 200:
             result = response.json()
             reply = result['choices'][0]['message']['content']
+            # 去除 markdown 包裹
+            if reply.startswith("```json"):
+                reply = reply.strip("`")  # 去掉所有反引号
+                reply = reply.replace("json", "", 1).strip()  # 去掉 "json" 标签
             try:
                 parsed = json.loads(reply)
                 return jsonify(parsed)
