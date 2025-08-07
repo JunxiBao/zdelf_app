@@ -53,8 +53,13 @@ async function handleRecordSave() {
     }
 
     const prettyJSON = JSON.stringify(aiParsed, null, 2);
-    const blob = new Blob([prettyJSON], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+
+    console.log("✅ prettyJSON = ", prettyJSON);
+    console.log("✅ typeof prettyJSON = ", typeof prettyJSON);
+    console.log("✅ aiReplyRaw = ", aiReplyRaw);
+
+    // const blob = new Blob([prettyJSON], { type: 'application/json' });
+    // const url = URL.createObjectURL(blob);
 
     const modal = document.createElement('div');
     modal.style.position = 'fixed';
@@ -69,9 +74,8 @@ async function handleRecordSave() {
     modal.style.maxHeight = '80vh';
     modal.style.overflowY = 'auto';
     modal.innerHTML = `
-      <h3>AI分析结果（situation.json）</h3>
+      <h3>AI分析结果</h3>
       <pre style="white-space: pre-wrap; word-break: break-all;">${prettyJSON}</pre>
-      <a href="${url}" download="situation.json">下载 JSON 文件</a><br><br>
       <button onclick="this.parentNode.remove()">关闭</button>
     `;
 
