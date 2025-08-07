@@ -79,7 +79,7 @@ async function handleRecordSave() {
 
     modal.innerHTML = `
       <h3>AI分析结果</h3>
-    <textarea id="aiResultEditor" style="...">${prettyJSON}</textarea>
+    <textarea id="aiResultEditor" style="width: 100%; height: 300px; resize: vertical; padding: 10px; border: 1px solid #ccc; font-size: 14px;">${prettyJSON}</textarea>
       <div style="text-align: center; margin-top: 20px;">
         <button style="padding: 10px 20px; font-size: 16px; background-color: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 6px;" onclick="this.parentNode.parentNode.remove()">确定</button>
       </div>
