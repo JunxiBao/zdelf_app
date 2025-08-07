@@ -263,20 +263,27 @@ body {
     box-shadow: 0 4px 24px rgba(187, 134, 252, 0.18);
   }
 }
-/* 等待服务器返回时的加载动画 */
+/* 等待服务器返回时的加载动画 - 浅色模式 */
 .loading-spinner {
-  border: 4px solid rgba(255, 255, 255, 0.2);
-  border-top: 4px solid #bb86fc;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-top: 4px solid #6200ea;
   border-radius: 50%;
   width: 40px;
   height: 40px;
   animation: spin 1s linear infinite;
   margin: 20px auto;
-  display: none; /* 默认隐藏，等待时显示 */
+  display: none;
 }
 
 .loading-spinner.show {
   display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  .loading-spinner {
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    border-top: 4px solid #bb86fc;
+  }
 }
 
 @keyframes spin {
