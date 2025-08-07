@@ -9,7 +9,7 @@
     <input type="text" id="record-date" class="record-date" placeholder="选择日期" readonly />
   </div>
   <textarea class="record-textarea" placeholder="请记录您的饮食以及身体情况，没有具体格式，AI会自动分析" oninput="autoGrow(this)"></textarea>
-  <button class="record-btn" onclick="showPopup()">保存</button>
+  <button class="record-btn" onclick="handleRecordSave()">保存</button>
 </div>
 <!-- 弹窗结构 -->
 <div id="popup" class="popup">
