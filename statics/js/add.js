@@ -85,6 +85,13 @@ async function handleRecordSave() {
       </div>
     `;
 
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      const textarea = modal.querySelector('#aiResultEditor');
+      textarea.style.background = "#2c2c2c";
+      textarea.style.color = "#ddd";
+      textarea.style.border = "1px solid #444";
+    }
+
     document.body.appendChild(modal);
   } catch (error) {
     console.error('❌ 请求错误', error);
