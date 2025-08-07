@@ -61,8 +61,10 @@ async function handleRecordSave() {
     modal.style.overflowY = 'auto';
     modal.innerHTML = `
       <h3>AI分析结果</h3>
-      <pre style="white-space: pre-wrap; word-break: break-all;">${prettyJSON}</pre>
-      <button onclick="this.parentNode.remove()">关闭</button>
+      <textarea id="aiResultEditor" style="width: 100%; height: 300px; resize: vertical; padding: 10px; border: 1px solid #ccc; font-size: 14px;">${Object.entries(aiReplyRaw).map(([key, val]) => `${key}: ${val}`).join('\n')}</textarea>
+      <div style="text-align: center; margin-top: 20px;">
+        <button style="padding: 10px 20px; font-size: 16px; background-color: #4CAF50; color: white; border: none; cursor: pointer;" onclick="this.parentNode.parentNode.remove()">确定</button>
+      </div>
     `;
 
     document.body.appendChild(modal);
