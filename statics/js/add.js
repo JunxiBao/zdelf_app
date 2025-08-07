@@ -37,11 +37,27 @@ if (document.getElementById("record-date")) {
 }
 
 function openModal() {
-  const modalContent = document.getElementById('modal-content');
-  // 其他代码...
+  const modal = document.getElementById("modal");
+  const modalContent = document.getElementById("modalContent");
 
-  const script = document.createElement("script");
-  script.src = "../../statics/js/add.js";
-  script.async = false; // 确保脚本顺序执行
-  modalContent.appendChild(script);
+  // 清空内容，确保每次都是全新加载
+  modalContent.innerHTML = "";
+
+  // 动态加载 HTML 内容（你可以根据实际路径调整此地址）
+  fetch("src/add.html")
+    .then(res => res.text())
+    .then(html => {
+      modalContent.innerHTML = html;
+
+      // 动态插入 add.js 脚本
+      const script = document.createElement("script");
+      script.src = "statics/js/add.js";
+      script.async = false;
+      document.body.appendChild(script);
+
+      modal.style.display = "block";
+    })
+    .catch(err => {
+      console.error("加载 add.html 失败：", err);
+    });
 }
