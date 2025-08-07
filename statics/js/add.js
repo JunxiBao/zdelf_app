@@ -48,22 +48,40 @@ async function handleRecordSave() {
     // const url = URL.createObjectURL(blob);
 
     const modal = document.createElement('div');
-    modal.style.position = 'fixed';
-    modal.style.top = '50%';
-    modal.style.left = '50%';
-    modal.style.transform = 'translate(-50%, -50%)';
-    modal.style.background = '#fff';
-    modal.style.border = '1px solid #ccc';
-    modal.style.padding = '20px';
-    modal.style.zIndex = 10000;
-    modal.style.maxWidth = '80vw';
-    modal.style.maxHeight = '80vh';
-    modal.style.overflowY = 'auto';
+    modal.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background: #fff;
+      color: #000;
+      border: 1px solid #ccc;
+      padding: 20px;
+      z-index: 10000;
+      max-width: 80vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      opacity: 0;
+    `;
+    setTimeout(() => {
+      modal.style.transform = 'translate(-50%, -50%) scale(1)';
+      modal.style.opacity = '1';
+    }, 10);
+
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      modal.style.background = "#1e1e1e";
+      modal.style.color = "#ddd";
+      modal.style.border = "1px solid #444";
+    }
+
     modal.innerHTML = `
       <h3>AI分析结果</h3>
       <textarea id="aiResultEditor" style="width: 100%; height: 300px; resize: vertical; padding: 10px; border: 1px solid #ccc; font-size: 14px;">${Object.entries(aiReplyRaw).map(([key, val]) => `${key}: ${val}`).join('\n')}</textarea>
       <div style="text-align: center; margin-top: 20px;">
-        <button style="padding: 10px 20px; font-size: 16px; background-color: #4CAF50; color: white; border: none; cursor: pointer;" onclick="this.parentNode.parentNode.remove()">确定</button>
+        <button style="padding: 10px 20px; font-size: 16px; background-color: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 6px;" onclick="this.parentNode.parentNode.remove()">确定</button>
       </div>
     `;
 
