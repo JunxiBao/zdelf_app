@@ -67,7 +67,7 @@ body {
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
   .record-container {
-    background: #121212;
+    background: transparent;
     color: #eee;
   }
 
