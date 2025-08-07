@@ -29,30 +29,16 @@ async function handleRecordSave() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: content,
-        date: date
+        message: `日期：${date}\n${content}`
       })
     });
 
     const data = await response.json();
     console.log("AI 返回数据：", data);
 
-    const aiReplyRaw = data.reply || data.choices?.[0]?.message?.content;
-    if (!aiReplyRaw) {
-      alert('AI未返回有效内容');
-      return;
-    }
+    const aiReplyRaw = data;
 
-    let aiParsed;
-    try {
-      aiParsed = typeof aiReplyRaw === 'string' ? JSON.parse(aiReplyRaw) : aiReplyRaw;
-    } catch (e) {
-      console.error("❌ 无法解析 AI 返回的 JSON：", aiReplyRaw);
-      alert('AI 返回内容无法解析为 JSON，请稍后再试');
-      return;
-    }
-
-    const prettyJSON = JSON.stringify(aiParsed, null, 2);
+    const prettyJSON = JSON.stringify(aiReplyRaw, null, 2);
 
     console.log("✅ prettyJSON = ", prettyJSON);
     console.log("✅ typeof prettyJSON = ", typeof prettyJSON);
