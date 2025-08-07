@@ -24,6 +24,9 @@ async function handleRecordSave() {
     return;
   }
 
+  const spinner = document.getElementById('spinner');
+  spinner.classList.add('show');
+
   try {
     const response = await fetch('https://zhucan.xyz:5000/deepseek/structured', {
       method: 'POST',
@@ -93,9 +96,11 @@ async function handleRecordSave() {
     }
 
     document.body.appendChild(modal);
+    spinner.classList.remove('show');
   } catch (error) {
     console.error('❌ 请求错误', error);
     alert('请求失败，请稍后再试');
+    spinner.classList.remove('show');
   }
 
   showPopup(); // 显示已保存弹窗

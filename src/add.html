@@ -10,6 +10,7 @@
   </div>
   <textarea class="record-textarea" placeholder="请记录您的饮食以及身体情况，没有具体格式，AI会自动分析" oninput="autoGrow(this)"></textarea>
   <button class="record-btn" onclick="handleRecordSave()">保存</button>
+  <div class="loading-spinner" id="spinner"></div>
 </div>
 <!-- 弹窗结构 -->
 <div id="popup" class="popup">
@@ -17,3 +18,4 @@
     <span class="popup-text">已保存</span>
   </div>
 </div>
+
