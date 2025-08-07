@@ -13,6 +13,63 @@ function showPopup() {
   }, 1500); // 1.5秒后自动关闭
 }
 
+// 新增：用于提交 textarea 内容和日期，展示返回 JSON
+async function handleRecordSave() {
+  const textarea = document.querySelector('.record-textarea');
+  const content = textarea.value.trim();
+  const date = document.getElementById('record-date').value;
+
+  if (!content) {
+    alert('请输入记录内容');
+    return;
+  }
+
+  try {
+    const response = await fetch('/deepseek', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: content,
+        date: date
+      })
+    });
+
+    const data = await response.json();
+    if (data.reply) {
+      const blob = new Blob([data.reply], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const modal = document.createElement('div');
+      modal.style.position = 'fixed';
+      modal.style.top = '50%';
+      modal.style.left = '50%';
+      modal.style.transform = 'translate(-50%, -50%)';
+      modal.style.background = '#fff';
+      modal.style.border = '1px solid #ccc';
+      modal.style.padding = '20px';
+      modal.style.zIndex = 10000;
+      modal.style.maxWidth = '80vw';
+      modal.style.maxHeight = '80vh';
+      modal.style.overflowY = 'auto';
+      modal.innerHTML = `
+        <h3>AI分析结果（situation.json）</h3>
+        <pre style="white-space: pre-wrap; word-break: break-all;">${data.reply}</pre>
+        <a href="${url}" download="situation.json">下载 JSON 文件</a><br><br>
+        <button onclick="this.parentNode.remove()">关闭</button>
+      `;
+
+      document.body.appendChild(modal);
+    } else {
+      alert('AI未返回有效结果');
+    }
+  } catch (error) {
+    console.error('❌ 请求错误', error);
+    alert('请求失败，请稍后再试');
+  }
+
+  showPopup(); // 显示已保存弹窗
+}
+
 function initAdd() {
   flatpickr("#record-date", {
     dateFormat: "Y-m-d",
