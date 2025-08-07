@@ -1,13 +1,15 @@
-
-  <div class="record-container">
-    <div class="record-title">请记录你的饮食</div>
-    <textarea class="record-textarea" placeholder="例如：早餐：燕麦牛奶、鸡蛋" oninput="autoGrow(this)"></textarea>
-    <button class="record-btn" onclick="showPopup()">保存</button>
+<div class="record-container">
+  <div class="record-title">请记录你的饮食</div>
+  <div class="record-date-container">
+    <label for="record-date">记录日期：</label>
+    <input type="text" id="record-date" class="record-date" placeholder="选择日期" readonly />
   </div>
-  <!-- 弹窗结构 -->
-  <div id="popup" class="popup">
-    <div class="popup-content">
-      <span class="popup-text">已保存</span>
-    </div>
+  <textarea class="record-textarea" placeholder="请记录您的饮食以及身体情况，没有具体格式，AI会自动分析" oninput="autoGrow(this)"></textarea>
+  <button class="record-btn" onclick="showPopup()">保存</button>
+</div>
+<!-- 弹窗结构 -->
+<div id="popup" class="popup">
+  <div class="popup-content">
+    <span class="popup-text">已保存</span>
   </div>
-  <script src="../statics/js/add.js"></script>
+</div>

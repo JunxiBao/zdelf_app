@@ -1,3 +1,61 @@
+/* 日期选择器样式 */
+/* 记录容器样式，左对齐 */
+.record-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* 从居中改为左对齐 */
+  padding: 24px 16px 0 16px;
+  width: 100%;
+  max-width: 98vw;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* 日期选择器容器样式，左对齐且美观 */
+.record-date-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  font-size: 1.05em;
+  width: 100%;
+  max-width: 500px;
+  box-sizing: border-box;
+  padding-left: 4px;
+}
+
+.record-date-container label {
+  margin: 0;
+  flex-shrink: 0;
+  color: #333;
+  font-weight: 600;
+}
+
+.record-date {
+  padding: 10px 16px;
+  font-size: 1em;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fafaff;
+  color: #222;
+  box-shadow: 0 2px 6px rgba(98, 0, 234, 0.05);
+  outline: none;
+  transition: all 0.2s;
+  appearance: none;
+  cursor: pointer;
+}
+
+.record-date:hover {
+  border-color: #b49eff;
+}
+
+.record-date:focus {
+  border-color: #6200ea;
+  background: #fff;
+}
+
 body {
   font-family: 'Segoe UI', 'PingFang SC', Arial, sans-serif;
   background: #fff;
@@ -6,16 +64,32 @@ body {
   color: #222;
 }
 
-.record-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 24px 16px 0 16px;
-  width: 100%;
-  max-width: 98vw;
-  /* 让容器最大宽度接近视口宽度 */
-  margin: 0 auto;
-  box-sizing: border-box;
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .record-container {
+    background: #121212;
+    color: #eee;
+  }
+
+  .record-date-container label {
+    color: #ccc;
+  }
+
+  .record-date {
+    background: #1e1e1e;
+    border-color: #444;
+    color: #eee;
+    box-shadow: 0 2px 6px rgba(187, 134, 252, 0.1);
+  }
+
+  .record-date:hover {
+    border-color: #bb86fc;
+  }
+
+  .record-date:focus {
+    background: #222;
+    border-color: #bb86fc;
+  }
 }
 
 .record-title {
@@ -54,6 +128,8 @@ body {
 }
 
 .record-btn {
+  display: block;
+  margin: 0 auto 18px auto;
   background: #6200ea;
   color: #fff;
   border: none;
@@ -85,6 +161,15 @@ body {
     min-width: 0;
     font-size: 1em;
   }
+
+  .record-date-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .record-date {
+    width: 100%;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -115,6 +200,26 @@ body {
 
   .record-title {
     color: #bb86fc;
+  }
+
+  .record-date-container label {
+    color: #ccc;
+  }
+
+  .record-date {
+    background: #1e1e1e;
+    border-color: #444;
+    color: #eee;
+    box-shadow: 0 2px 6px rgba(187, 134, 252, 0.1);
+  }
+
+  .record-date:hover {
+    border-color: #bb86fc;
+  }
+
+  .record-date:focus {
+    background: #222;
+    border-color: #bb86fc;
   }
 }
 
