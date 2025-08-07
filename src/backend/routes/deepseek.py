@@ -15,7 +15,7 @@ headers = {
     'Authorization': f'Bearer {API_KEY}'
 }
 
-@deepseek_blueprint.route('/', methods=['POST'])
+@deepseek_blueprint.route('/chat', methods=['POST'])
 def deepseek_chat():
     if request.method == 'OPTIONS':
         return '', 200
