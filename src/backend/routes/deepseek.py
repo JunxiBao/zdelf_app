@@ -15,7 +15,7 @@ headers = {
     'Authorization': f'Bearer {API_KEY}'
 }
 
-@deepseek_blueprint.route('/deepseek', methods=['POST'])
+@deepseek_blueprint.route('/', methods=['POST'])
 def deepseek_chat():
     if request.method == 'OPTIONS':
         return '', 200
@@ -47,8 +47,7 @@ def deepseek_chat():
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
 
-# 新增结构化提取路由
-@deepseek_blueprint.route('/deepseek/structured', methods=['POST'])
+@deepseek_blueprint.route('/structured', methods=['POST'])
 def deepseek_structured():
     if request.method == 'OPTIONS':
         return '', 200

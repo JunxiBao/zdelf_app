@@ -9,7 +9,7 @@ app = Flask(__name__)
 app.register_blueprint(login_blueprint)
 app.register_blueprint(register_blueprint)
 app.register_blueprint(readdata_blueprint)
-app.register_blueprint(deepseek_blueprint)
+app.register_blueprint(deepseek_blueprint, url_prefix='/deepseek')
 CORS(app, resources={r"/*": {"origins": "https://zhucan.xyz"}}, supports_credentials=True)
 
 db_config = {
