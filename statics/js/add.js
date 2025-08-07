@@ -118,3 +118,10 @@ function openModal() {
       console.error("加载 add.html 失败：", err);
     });
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const saveBtn = document.querySelector('.record-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', handleRecordSave);
+  }
+});
