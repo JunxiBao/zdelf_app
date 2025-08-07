@@ -25,7 +25,7 @@ async function handleRecordSave() {
   }
 
   try {
-    const response = await fetch('https://zhucan.xyz:5000/deepseek', {
+    const response = await fetch('https://zhucan.xyz:5000/deepseek/structured', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
