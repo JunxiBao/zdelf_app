@@ -35,33 +35,47 @@ async function handleRecordSave() {
     });
 
     const data = await response.json();
-    if (data.reply) {
-      const blob = new Blob([data.reply], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+    console.log("AI 返回数据：", data);
 
-      const modal = document.createElement('div');
-      modal.style.position = 'fixed';
-      modal.style.top = '50%';
-      modal.style.left = '50%';
-      modal.style.transform = 'translate(-50%, -50%)';
-      modal.style.background = '#fff';
-      modal.style.border = '1px solid #ccc';
-      modal.style.padding = '20px';
-      modal.style.zIndex = 10000;
-      modal.style.maxWidth = '80vw';
-      modal.style.maxHeight = '80vh';
-      modal.style.overflowY = 'auto';
-      modal.innerHTML = `
-        <h3>AI分析结果（situation.json）</h3>
-        <pre style="white-space: pre-wrap; word-break: break-all;">${data.reply}</pre>
-        <a href="${url}" download="situation.json">下载 JSON 文件</a><br><br>
-        <button onclick="this.parentNode.remove()">关闭</button>
-      `;
-
-      document.body.appendChild(modal);
-    } else {
-      alert('AI未返回有效结果');
+    const aiReplyRaw = data.reply || data.choices?.[0]?.message?.content;
+    if (!aiReplyRaw) {
+      alert('AI未返回有效内容');
+      return;
     }
+
+    let aiParsed;
+    try {
+      aiParsed = typeof aiReplyRaw === 'string' ? JSON.parse(aiReplyRaw) : aiReplyRaw;
+    } catch (e) {
+      console.error("❌ 无法解析 AI 返回的 JSON：", aiReplyRaw);
+      alert('AI 返回内容无法解析为 JSON，请稍后再试');
+      return;
+    }
+
+    const prettyJSON = JSON.stringify(aiParsed, null, 2);
+    const blob = new Blob([prettyJSON], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '50%';
+    modal.style.left = '50%';
+    modal.style.transform = 'translate(-50%, -50%)';
+    modal.style.background = '#fff';
+    modal.style.border = '1px solid #ccc';
+    modal.style.padding = '20px';
+    modal.style.zIndex = 10000;
+    modal.style.maxWidth = '80vw';
+    modal.style.maxHeight = '80vh';
+    modal.style.overflowY = 'auto';
+    modal.innerHTML = `
+      <h3>AI分析结果（situation.json）</h3>
+      <pre style="white-space: pre-wrap; word-break: break-all;">${prettyJSON}</pre>
+      <a href="${url}" download="situation.json">下载 JSON 文件</a><br><br>
+      <button onclick="this.parentNode.remove()">关闭</button>
+    `;
+
+    document.body.appendChild(modal);
   } catch (error) {
     console.error('❌ 请求错误', error);
     alert('请求失败，请稍后再试');
