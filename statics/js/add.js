@@ -89,12 +89,41 @@ async function handleRecordSave() {
     }
 
     panel.innerHTML = `
-      <h3 style="margin: 0 0 12px;">AI分析结果</h3>
-      <textarea id="aiResultEditor" style="width: 70vw; max-width: 900px; height: 50vh; min-height: 260px; resize: vertical; padding: 10px; border: 1px solid #ccc; font-size: 14px;"></textarea>
+      <h3 style="margin: 0 0 12px; color: var(--ai-panel-heading-color, #222);">AI分析结果</h3>
+      <textarea
+        id="aiResultEditor"
+        style="
+          width: 70vw;
+          max-width: 900px;
+          height: 50vh;
+          min-height: 260px;
+          resize: vertical;
+          padding: 10px;
+          border: 1px solid #ccc;
+          font-size: 14px;
+          background: var(--ai-panel-textarea-bg, #f5f5f5);
+          color: var(--ai-panel-textarea-color, #222);
+        "
+      ></textarea>
       <div style="display:flex; gap:12px; justify-content:center; margin-top: 16px;">
         <button id="copyBtn" class="record-btn" style="max-width:220px; padding: 10px 18px;">复制到剪贴板</button>
         <button id="closeModalBtn" class="record-btn" style="max-width:220px; padding: 10px 18px;">确定</button>
       </div>`;
+
+    // Dark mode adaptation
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      const textareaEl = panel.querySelector('#aiResultEditor');
+      textareaEl.style.background = '#2b2b2b';
+      textareaEl.style.color = '#ddd';
+      textareaEl.style.border = '1px solid #444';
+      const heading = panel.querySelector('h3');
+      if (heading) heading.style.color = '#ddd';
+      panel.querySelectorAll('.record-btn').forEach(btn => {
+        btn.style.background = '#333';
+        btn.style.color = '#ddd';
+        btn.style.border = '1px solid #555';
+      });
+    }
 
     modal.appendChild(panel);
     document.body.appendChild(modal);
