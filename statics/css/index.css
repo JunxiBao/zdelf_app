@@ -1,3 +1,6 @@
+/* =========================================================
+   Base Reset
+========================================================= */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -8,20 +11,43 @@ body {
   font-family: sans-serif;
 }
 
+/* =========================================================
+   Theme Tokens (Light) – tweak here if you change brand colors
+========================================================= */
+:root {
+  --color-primary: #6200ea;
+  /* light mode primary */
+  --color-primary-contrast: #ffffff;
+  --color-surface: #ffffff;
+  --color-text-muted: #888;
+  --color-text-dim: #aaa;
+  --shadow-elev-1: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  --shadow-fab: 0 4px 10px rgba(0, 0, 0, 0.2);
+  /* Ripple (light) */
+  --ripple-color: rgba(186, 104, 200, 0.35);
+  /* soft purple */
+}
+
+/* =========================================================
+   Layout
+========================================================= */
 .content {
   margin-bottom: 100px;
   min-height: 200px;
   padding: 20px;
 }
 
+/* =========================================================
+   Bottom Navigation
+========================================================= */
 .nav-container {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
   height: 80px;
-  background: white;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-elev-1);
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -37,23 +63,32 @@ body {
   z-index: 1;
 }
 
-.nav-item button {
+/* buttons */
+.nav-item>button.icon {
   background: none;
   border: none;
+  padding: 8px;
   font-size: 24px;
   cursor: pointer;
-  color: #aaa;
+  color: var(--color-text-dim);
   transition: color 0.3s;
 }
 
-.nav-item.active button {
-  color: #6200ea;
+.nav-item>button.icon:focus {
+  outline: 2px solid #5b9dd9;
+  outline-offset: 2px;
 }
 
+/* active state */
+.nav-item.active button {
+  color: var(--color-primary);
+}
+
+/* labels */
 .nav-label {
   font-family: 'PingFang SC', 'Segoe UI', Arial, sans-serif;
   font-size: 13.5px;
-  color: #888;
+  color: var(--color-text-muted);
   margin-top: 2px;
   text-align: center;
   line-height: 1.2;
@@ -64,21 +99,23 @@ body {
 }
 
 .nav-item.active .nav-label {
-  color: #6200ea;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
+/* selection indicator */
 .indicator {
   position: absolute;
   bottom: 0;
   height: 4px;
   width: 25%;
-  background: #6200ea;
+  left: 0;
+  background: var(--color-primary);
   border-radius: 4px 4px 0 0;
   transition: transform 0.3s;
-  left: 0;
 }
 
+/* center (FAB-like) button */
 .center-button-wrapper {
   position: absolute;
   top: -30px;
@@ -90,23 +127,27 @@ body {
 .center-button {
   width: 60px;
   height: 60px;
-  background: #6200ea;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
   font-size: 30px;
   cursor: pointer;
   transition: transform 0.4s ease, background-color 0.3s ease;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-fab);
 }
 
 .center-button.rotate {
   transform: translateX(-0%) rotate(360deg);
 }
 
+/* icons */
 .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
@@ -115,9 +156,19 @@ body {
   opacity: 0.8;
 }
 
+.icon .material-symbols-rounded {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-size: 24px;
+  line-height: 1;
+}
 
+.center-button .material-symbols-rounded {
+  font-size: 28px;
+}
 
-/* Modal 背景 */
+/* =========================================================
+   Modal
+========================================================= */
 .modal {
   position: fixed;
   z-index: 999;
@@ -133,7 +184,6 @@ body {
   pointer-events: auto;
 }
 
-/* 弹窗内容动画：从底部滑到顶部 */
 @keyframes slideFullUp {
   from {
     transform: translateY(100%);
@@ -167,16 +217,14 @@ body {
   max-width: unset;
 }
 
-/* 响应式优化：超小屏幕更窄边距 */
 @media (max-width: 480px) {
   .modal-content {
     left: 4px;
     right: 4px;
-    padding: 16px 4px 16px 4px;
+    padding: 16px 4px;
   }
 }
 
-/* 关闭时的动画 */
 @keyframes slideFullDown {
   from {
     transform: translateY(0);
@@ -193,8 +241,45 @@ body {
   animation: slideFullDown 0.35s cubic-bezier(0.4, 1.7, 0.6, 0.8) forwards;
 }
 
-/* 深色模式支持 */
+/* =========================================================
+   Ripple (Google-like)
+========================================================= */
+.ripple {
+  position: relative;
+  /* allow overflow so ripples can extend beyond */
+}
+
+.ripple span.ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple-animation 600ms linear;
+  background-color: var(--ripple-color);
+  pointer-events: none;
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+   Dark Mode
+========================================================= */
 @media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #bb86fc;
+    /* dark mode primary */
+    --color-primary-contrast: #18181c;
+    --color-surface: #23232a;
+    --color-text-muted: #888;
+    --color-text-dim: #888;
+    /* Ripple (dark) */
+    --ripple-color: rgba(203, 148, 217, 0.5);
+    /* brighter purple for contrast */
+  }
 
   body,
   .content {
@@ -203,92 +288,43 @@ body {
   }
 
   .nav-container {
-    background: #23232a;
+    background: var(--color-surface);
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.6);
   }
 
-  .nav-item button {
-    color: #888;
+  .nav-item>button.icon {
+    color: var(--color-text-muted);
   }
 
   .nav-item.active button {
-    color: #bb86fc;
+    color: var(--color-primary);
   }
 
   .indicator {
-    background: #bb86fc;
+    background: var(--color-primary);
   }
 
   .center-button {
-    background: #bb86fc;
-    color: #18181c;
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
   }
-
-
 
   .modal {
     background: rgba(24, 24, 28, 0.5);
   }
 
   .modal-content {
-    background: #23232a;
+    background: var(--color-surface);
     color: #e5e5e5;
   }
 
   .nav-label {
-    color: #888;
+    color: var(--color-text-muted);
     font-family: 'PingFang SC', 'Segoe UI', Arial, sans-serif;
   }
+
   .nav-item.active .nav-label {
-    color: #bb86fc;
+    color: var(--color-primary);
     font-weight: 600;
   }
 }
-
- .icon {
-   display: inline-flex;
-   align-items: center;
-   justify-content: center;
- }
-
- .icon .material-symbols-rounded {
-   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-   font-size: 24px;
-   line-height: 1;
- }
-
- .center-button .material-symbols-rounded {
-   font-size: 28px;
- }
-
- .nav-item>button.icon {
-   background: none;
-   border: none;
-   padding: 8px;
- }
-
- .nav-item>button.icon:focus {
-   outline: 2px solid #5b9dd9;
-   outline-offset: 2px;
- }
-
- .ripple {
-   position: relative;
-   /* overflow: hidden; */
- }
-
- .ripple span.ripple-effect {
-   position: absolute;
-   border-radius: 50%;
-   transform: scale(0);
-   animation: ripple-animation 600ms linear;
-   background-color: rgba(0, 0, 0, 0.2);
-   pointer-events: none;
- }
-
- @keyframes ripple-animation {
-   to {
-     transform: scale(4);
-     opacity: 0;
-   }
- }
