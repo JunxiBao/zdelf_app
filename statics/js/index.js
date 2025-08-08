@@ -106,24 +106,21 @@ function closeModal() {
 }
 
 centerBtn.addEventListener("click", () => {
-  centerBtn.classList.toggle("rotate");
+  const isOpen = modal.style.display === "flex";
 
-  if (centerBtn.textContent === "＋") {
-    centerBtn.textContent = "＋";
-    centerBtn.style.backgroundColor = "#6200ea";
-    openModal();
-  } else {
-    centerBtn.textContent = "＋";
-    centerBtn.style.backgroundColor = "#6200ea";
+  if (isOpen) {
     closeModal();
+    centerBtn.classList.remove("rotate");
+  } else {
+    openModal();
+    centerBtn.classList.add("rotate");
   }
 });
 
 modal.addEventListener("click", (e) => {
   if (e.target === modal) {
-    centerBtn.textContent = "＋";
-    centerBtn.style.backgroundColor = "#6200ea";
     closeModal();
+    centerBtn.classList.remove("rotate");
   }
 });
 
