@@ -184,16 +184,11 @@ body {
   pointer-events: auto;
 }
 
-@keyframes slideFullUp {
-  from {
-    transform: translateY(100%);
-    opacity: 0.5;
-  }
-
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+@keyframes popSlideUp {
+  0%   { transform: translateY(24px) scale(.985); opacity: 0; }
+  60%  { transform: translateY(-2px) scale(1.008); opacity: 1; }
+  80%  { transform: translateY(0) scale(.997); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .modal-content {
@@ -207,7 +202,9 @@ body {
   border-radius: 18px;
   padding: 32px 16px 24px 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-  animation: slideFullUp 0.45s cubic-bezier(0.4, 1.7, 0.6, 0.8);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  animation: popSlideUp 0.5s cubic-bezier(.2,.8,.2,1);
   font-family: 'Segoe UI', 'PingFang SC', Arial, sans-serif;
   overflow-y: auto;
   z-index: 1001;
@@ -225,20 +222,14 @@ body {
   }
 }
 
-@keyframes slideFullDown {
-  from {
-    transform: translateY(0);
-    opacity: 1;
-  }
-
-  to {
-    transform: translateY(100%);
-    opacity: 0.5;
-  }
+@keyframes popSlideDown {
+  0%   { transform: translateY(0) scale(1); opacity: 1; }
+  20%  { transform: translateY(-1px) scale(.998); opacity: .96; }
+  100% { transform: translateY(24px) scale(.985); opacity: 0; }
 }
 
 .modal-content.closing {
-  animation: slideFullDown 0.35s cubic-bezier(0.4, 1.7, 0.6, 0.8) forwards;
+  animation: popSlideDown 0.35s cubic-bezier(.2,.8,.2,1) forwards;
 }
 
 /* =========================================================
@@ -327,4 +318,12 @@ body {
     color: var(--color-primary);
     font-weight: 600;
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-content { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .modal-content.closing { animation-duration: .01ms !important; }
+}
+
+@media (max-width: 380px) {
+  .modal-content { animation-duration: 0.42s; }
 }

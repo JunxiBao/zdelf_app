@@ -3,7 +3,8 @@
 .record-container {
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* 从居中改为左对齐 */
+  align-items: flex-start;
+  /* 从居中改为左对齐 */
   padding: 24px 16px 0 16px;
   width: 100%;
   max-width: 98vw;
@@ -263,6 +264,7 @@ body {
     box-shadow: 0 4px 24px rgba(187, 134, 252, 0.18);
   }
 }
+
 /* 等待服务器返回时的加载动画 - 浅色模式 */
 .loading-spinner {
   border: 4px solid rgba(0, 0, 0, 0.1);
@@ -290,7 +292,157 @@ body {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
+  }
+}
+
+/* ===== 追加：微交互与动效增强 ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(.96);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shake {
+
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+
+  40%,
+  60% {
+    transform: translateX(4px);
+  }
+}
+
+.shake {
+  animation: shake .3s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: .001s !important;
+    animation-iteration-count: 1 !important;
+    transition: none !important;
+  }
+}
+
+.record-container {
+  animation: fadeInUp .35s ease-out both;
+}
+
+.record-textarea {
+  transition: height .15s ease, border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+}
+
+.record-textarea:focus {
+  box-shadow: 0 6px 20px rgba(98, 0, 234, 0.12);
+}
+
+.record-btn {
+  position: relative;
+  overflow: hidden;
+  transform: translateZ(0);
+  transition: transform .06s ease, background .2s ease, box-shadow .2s ease;
+}
+
+.record-btn:active {
+  transform: scale(.98);
+}
+
+.btn-ripple {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  inset: 0;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%) scale(0);
+  background: radial-gradient(circle, rgba(255, 255, 255, .45) 0%, rgba(255, 255, 255, 0) 60%);
+  animation: ripple .5s ease-out forwards;
+}
+
+@keyframes ripple {
+  to {
+    transform: translate(-50%, -50%) scale(12);
+    opacity: 0;
+  }
+}
+
+/* 顶部提示弹窗优化（入场弹性） */
+.popup-content {
+  transform: translateY(6px) scale(.98);
+  opacity: 0;
+  transition: transform .2s ease, opacity .2s ease;
+}
+
+.popup.show .popup-content {
+  animation: pop .22s ease-out forwards;
+}
+
+/* 全屏加载遮罩，配合 #spinner 使用 */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  display: none;
+  background: rgba(0, 0, 0, .08);
+  backdrop-filter: blur(2px);
+}
+
+.loading-overlay.show {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  .loading-overlay {
+    background: rgba(255, 255, 255, .06);
+  }
+}
+
+/* 日期输入微动画 */
+.record-date {
+  transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+}
+
+.record-date:focus {
+  box-shadow: 0 6px 20px rgba(98, 0, 234, 0.12);
+}
+
+@media (max-width: 600px) {
+  .record-btn {
+    box-shadow: 0 6px 16px rgba(98, 0, 234, .16);
   }
 }
