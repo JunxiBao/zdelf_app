@@ -60,6 +60,26 @@ function loadPage(index) {
     });
 }
 
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  ['mousedown', 'touchstart'].forEach(evt => {
+    item.addEventListener(evt, function (e) {
+      const targetButton = item.querySelector('.icon');
+      if (!targetButton) return;
+      const circle = document.createElement('span');
+      circle.classList.add('ripple-effect');
+      const rect = targetButton.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      circle.style.width = circle.style.height = size + 'px';
+      circle.style.left = e.clientX - rect.left - size / 2 + 'px';
+      circle.style.top = e.clientY - rect.top - size / 2 + 'px';
+      const existing = targetButton.querySelector('.ripple-effect');
+      if (existing) existing.remove();
+      targetButton.appendChild(circle);
+    });
+  });
+});
+
 function updateActive(index) {
   navItems.forEach((item, i) => {
     item.classList.toggle("active", i === index);
