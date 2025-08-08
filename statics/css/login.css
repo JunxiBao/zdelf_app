@@ -17,6 +17,17 @@
   --shadow: 0 8px 24px rgba(98, 0, 234, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
+:root { --page-gap: clamp(12px, 4vw, 20px); }
+
+.page-center {
+  width: 100%;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: var(--page-gap);
+  box-sizing: border-box;
+}
+
 /* 背景与排版 */
 body {
   font-family: 'Segoe UI', 'PingFang SC', Arial, sans-serif;
@@ -181,7 +192,19 @@ input.record-textarea:-webkit-autofill:focus {
 
 /* 移动端优化 */
 @media (max-width: 600px) {
-  .record-container { padding: 22px 18px 20px; border-radius: 14px; }
+  html, body { height: 100dvh; overflow: hidden; }
+  .page-center {
+    min-height: 100dvh;
+    padding: calc(env(safe-area-inset-top) + var(--page-gap))
+             calc(env(safe-area-inset-right) + var(--page-gap))
+             calc(env(safe-area-inset-bottom) + var(--page-gap))
+             calc(env(safe-area-inset-left) + var(--page-gap));
+  }
+  .record-container {
+    max-height: calc(100dvh - (env(safe-area-inset-top) + env(safe-area-inset-bottom) + 2 * var(--page-gap)));
+    overflow: hidden;
+  }
+  .record-container { padding: 22px 18px 20px; border-radius: 14px; width: 100%; }
   .record-textarea, .record-btn { font-size: 1rem; }
 }
 
