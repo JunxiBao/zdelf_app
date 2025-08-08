@@ -12,13 +12,6 @@ app.register_blueprint(readdata_blueprint)
 app.register_blueprint(deepseek_blueprint, url_prefix='/deepseek')
 CORS(app, resources={r"/*": {"origins": "https://zhucan.xyz"}}, supports_credentials=True)
 
-db_config = {
-    "host": "localhost",  # 或者改成你数据库实际主机名
-    "user": "junxibao",
-    "password": "Bjx81402",
-    "database": "health"
-}
-
 if __name__ == '__main__':
     app.run(
     host='0.0.0.0',

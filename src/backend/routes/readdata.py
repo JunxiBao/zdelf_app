@@ -1,13 +1,17 @@
+import os
+from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify
 import mysql.connector
+
+load_dotenv()
 
 readdata_blueprint = Blueprint('readdata', __name__)
 
 db_config = {
-    "host": "localhost",
-    "user": "junxibao",
-    "password": "Bjx81402",
-    "database": "health"
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME")
 }
 
 @readdata_blueprint.route('/readdata', methods=['POST', 'OPTIONS'])
