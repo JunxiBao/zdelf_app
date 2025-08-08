@@ -119,9 +119,9 @@ async function handleRecordSave() {
       const heading = panel.querySelector('h3');
       if (heading) heading.style.color = '#ddd';
       panel.querySelectorAll('.record-btn').forEach(btn => {
-        btn.style.background = '#333';
-        btn.style.color = '#ddd';
-        btn.style.border = '1px solid #555';
+        btn.style.background = '#6a5acd';
+        btn.style.color = '#fff';
+        btn.style.border = '1px solid #836fff';
       });
     }
 

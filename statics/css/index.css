@@ -56,6 +56,19 @@ body {
   z-index: 10;
 }
 
+/* on-load slide up */
+.nav-container {
+  will-change: transform, opacity;
+  animation: navSlideUp 480ms cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes navSlideUp {
+  0% { transform: translateY(100%); opacity: 0; }
+  60% { transform: translateY(-4px); opacity: 1; }
+  80% { transform: translateY(0); }
+  100% { transform: translateY(0); }
+}
+
 .nav-item {
   flex: 1;
   text-align: center;
@@ -137,6 +150,28 @@ body {
   cursor: pointer;
   transition: transform 0.4s ease, background-color 0.3s ease;
   box-shadow: var(--shadow-fab);
+  position: relative;
+}
+
+/* one-time ripple on load for FAB */
+.center-button::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 0 0 var(--ripple-color);
+  opacity: 0;
+  animation: fabRing 900ms ease-out 120ms both;
+}
+
+@keyframes fabRing {
+  0%   { opacity: 1; box-shadow: 0 0 0 0 var(--ripple-color); }
+  60%  { opacity: .7; }
+  100% { opacity: 0; box-shadow: 0 0 0 22px rgba(0,0,0,0); }
 }
 
 .center-button.rotate {
@@ -322,6 +357,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .modal-content { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
   .modal-content.closing { animation-duration: .01ms !important; }
+  .nav-container { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .center-button::after { animation: none !important; }
 }
 
 @media (max-width: 380px) {
