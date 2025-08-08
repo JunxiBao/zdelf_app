@@ -1,3 +1,25 @@
+// --- iOS/WKWebView viewport fix & no-scroll ---
+(function () {
+  function setVH() {
+    var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    document.documentElement.style.setProperty('--vh', h + 'px');
+  }
+  // expose so other handlers can call it after blur
+  window.__setVH = setVH;
+  setVH();
+  window.addEventListener('resize', setVH);
+  window.addEventListener('orientationchange', setVH);
+  window.addEventListener('pageshow', setVH);
+  if (window.visualViewport) {
+    visualViewport.addEventListener('resize', setVH);
+    visualViewport.addEventListener('scroll', setVH);
+  }
+  // 禁止页面上下滚动（仍允许容器内部必要的交互）
+  document.addEventListener('touchmove', function (e) {
+    if (e.target.closest('.record-container')) return; // 允许在卡片内滚动（如果将来有溢出）
+    e.preventDefault();
+  }, { passive: false });
+})();
 const loadingOverlay = document.createElement('div');
 loadingOverlay.id = 'loading-overlay';
 loadingOverlay.innerHTML = '<div class="spinner"></div>';
@@ -45,6 +67,16 @@ document.head.appendChild(style);
 
 const popup = document.getElementById("popup");
 const popupText = document.getElementById("popupText");
+
+// 当输入框收起键盘后，延迟更新一次视口高度，避免卡片停在下方
+(function attachBlurVH(){
+  var allInputs = document.querySelectorAll('input, textarea');
+  allInputs.forEach(function(el){
+    el.addEventListener('blur', function(){
+      setTimeout(function(){ window.__setVH && window.__setVH(); }, 60);
+    }, true);
+  });
+})();
 
 function showPopup(message, time = 2000) {
   popupText.textContent = message;
