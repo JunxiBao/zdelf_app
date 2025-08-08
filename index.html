@@ -16,6 +16,14 @@
 
   <link rel="stylesheet" href="./statics/css/index.css">
   <link rel="stylesheet" href="./statics/css/add.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <style>
+    .icon { display: inline-flex; align-items: center; justify-content: center; }
+    .icon .material-symbols-rounded { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 24px; line-height: 1; }
+    .center-button .material-symbols-rounded { font-size: 28px; }
+    .nav-item > button.icon { background: none; border: none; padding: 8px; }
+    .nav-item > button.icon:focus { outline: 2px solid #5b9dd9; outline-offset: 2px; }
+  </style>
 </head>
 
 <body>
@@ -25,26 +33,36 @@
 
 
   <!-- 底部导航栏 -->
-  <div class="nav-container">
+  <div class="nav-container" role="tablist" aria-label="主导航">
     <div class="nav-item" data-index="0">
-      <button class="icon">📝</button>
+      <button class="icon" role="tab" aria-selected="false" aria-label="日常" title="日常">
+        <span class="material-symbols-rounded">edit_note</span>
+      </button>
       <div class="nav-label">日常</div>
     </div>
     <div class="nav-item" data-index="1">
-      <button class="icon">📃</button>
+      <button class="icon" role="tab" aria-selected="false" aria-label="病例" title="病例">
+        <span class="material-symbols-rounded">assignment</span>
+      </button>
       <div class="nav-label">病例</div>
     </div>
 
     <div class="center-button-wrapper">
-      <div class="center-button" id="centerBtn">＋</div>
+      <div class="center-button" id="centerBtn" aria-label="新增" title="新增">
+        <span class="material-symbols-rounded">add</span>
+      </div>
     </div>
 
     <div class="nav-item" data-index="2">
-      <button class="icon">🏞️</button>
+      <button class="icon" role="tab" aria-selected="false" aria-label="广场" title="广场">
+        <span class="material-symbols-rounded">landscape</span>
+      </button>
       <div class="nav-label">广场</div>
     </div>
     <div class="nav-item" data-index="3">
-      <button class="icon">👤</button>
+      <button class="icon" role="tab" aria-selected="false" aria-label="我的" title="我的">
+        <span class="material-symbols-rounded">person</span>
+      </button>
       <div class="nav-label">我的</div>
     </div>
 
