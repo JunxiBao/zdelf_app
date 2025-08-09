@@ -557,7 +557,7 @@
       // 新密码
       const fPwd = document.createElement('div'); fPwd.className = 'field';
       const lPwd = document.createElement('label'); lPwd.textContent = '新密码'; lPwd.setAttribute('for', 'edit-pwd');
-      const iPwd = document.createElement('input'); iPwd.id = 'edit-pwd'; iPwd.type = 'password'; iPwd.placeholder = '8-20位，含大小写和数字'; iPwd.autocomplete = 'new-password';
+      const iPwd = document.createElement('input'); iPwd.id = 'edit-pwd'; iPwd.type = 'password'; iPwd.placeholder = '8-20位，含大小写、数字，可含符号'; iPwd.autocomplete = 'new-password';
       fPwd.append(lPwd, iPwd);
       decoratePasswordInput(iPwd);
 
@@ -602,9 +602,9 @@
         }
         // 若填写了新密码，仅进行强度校验（不再需要原始密码）
         if (newPwdVal) {
-          const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,20}$/;
+          const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,20}$/;
           if (!passwordRegex.test(newPwdVal)) {
-            showErrorModal('新密码需为8-20位，包含大写字母、小写字母和数字');
+            showErrorModal('新密码必须为8到20位，包含大写字母、小写字母和数字，一些特殊字符不能包括');
             return;
           }
           // 不允许与原密码相同

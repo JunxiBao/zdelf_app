@@ -92,9 +92,9 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,20}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,20}$/;
     if (!passwordRegex.test(password)) {
-      showPopup("密码需8-20位，包含大小写和数字");
+      showPopup("密码必须为8到20位，包含大写字母、小写字母和数字，一些特殊字符不能包括");
       return;
     }
 
