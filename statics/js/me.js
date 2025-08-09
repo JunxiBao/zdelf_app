@@ -32,6 +32,8 @@
   };
   // Cache password from /readdata to prefill original password
   let userPassword = '';
+  // Keep current password only for equality check (never rendered)
+  let currentPassword = null;
 
   /**
    * Create a Material-like ripple effect inside the clicked element.
@@ -308,6 +310,8 @@
           const username = rec && rec.username ? rec.username : '无';
           const age = (rec && (rec.age !== null && rec.age !== undefined && rec.age !== '')) ? rec.age : '无';
           user = { name: username, age };
+          // 后端当前会返回明文密码，这里仅用于“新密码不能与原密码相同”的前端校验，不做任何回显
+          currentPassword = (typeof rec.password === 'string') ? rec.password : null;
           // 安全考虑：不再从接口缓存/使用密码字段
           userPassword = '';
           renderUser();
@@ -597,6 +601,11 @@
           const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,20}$/;
           if (!passwordRegex.test(newPwdVal)) {
             showErrorModal('新密码需为8-20位，包含大写字母、小写字母和数字');
+            return;
+          }
+          // 不允许与原密码相同
+          if (currentPassword != null && newPwdVal === currentPassword) {
+            showErrorModal('不能设置一样的密码');
             return;
           }
         }
