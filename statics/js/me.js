@@ -212,21 +212,6 @@
     const defaultBase = 'https://zhucan.xyz:5000';
     const apiBase = (configuredBase || defaultBase).replace(/\/$/, '');
 
-    // 校验原始密码：从后端读取该用户记录并比对 password 字段（若后端改为哈希存储，请改用服务端校验接口）
-    async function verifyOldPassword(inputOldPwd) {
-      const verifyPayload = storedId ? { table_name: tableName, user_id: storedId } : { table_name: tableName, username: storedUsername };
-      const resp = await fetch(apiBase + '/readdata', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(verifyPayload)
-      });
-      if (!resp.ok) throw new Error('verify request failed: ' + resp.status);
-      const data = await resp.json();
-      if (!data || data.success !== true || !Array.isArray(data.data) || !data.data[0]) return false;
-      const rec = data.data[0];
-      if (typeof rec.password !== 'string') return false;
-      return rec.password === inputOldPwd;
-    }
 
     // Initial paint with defaults ("无")
     renderUser();
@@ -559,15 +544,6 @@
           // 不能与原始密码相同
           if (newPwdVal === oldPwdVal) {
             showErrorModal('新密码不能与原始密码相同');
-            return;
-          }
-          // 远程校验原始密码是否正确
-          try {
-            const ok = await verifyOldPassword(oldPwdVal);
-            if (!ok) { showErrorModal('原始密码不正确'); return; }
-          } catch (e) {
-            console.warn('[me] verifyOldPassword error:', e);
-            showErrorModal('密码验证失败，请稍后重试');
             return;
           }
         }
