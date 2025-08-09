@@ -615,14 +615,61 @@
         }
 
         try {
-          // 模拟成功：不实际调用后端
-          if (ageVal !== '') user.age = ageVal; // 更新本地展示
+          // 进入保存请求：构建 payload（只发送有改动的字段）
+          const payload = { table_name: tableName };
+          if (storedId) payload.user_id = storedId; else if (storedUsername) payload.username = storedUsername;
+          if (ageChanged) payload.age = Number(ageVal);
+          if (newPwdVal) payload.new_password = newPwdVal;
+
+          // 按钮 loading 状态
+          btnSave.disabled = true;
+          btnSave.dataset._label = btnSave.textContent;
+          btnSave.textContent = '保存中...';
+
+          const resp = await fetch(apiBase + '/editdata', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          let result = null;
+          try { result = await resp.json(); } catch(_) {}
+
+          if (!resp.ok || !result || result.success !== true) {
+            const msg = (result && result.message) ? result.message : ('保存失败 (' + resp.status + ')');
+            showErrorModal(msg);
+            btnSave.disabled = false; btnSave.textContent = btnSave.dataset._label || '保存';
+            return;
+          }
+
+          // 更新本地展示（以服务端返回为准；若无返回则用输入值回填）
+          if (result.data) {
+            if (typeof result.data.age !== 'undefined' && result.data.age !== null) {
+              user.age = result.data.age;
+            } else if (ageChanged) {
+              user.age = Number(ageVal);
+            }
+            // 同步当前密码（仅用于“与旧密码相同”的前端比较，不做回显）
+            if (typeof result.data.password === 'string') {
+              currentPassword = result.data.password;
+            } else if (newPwdVal) {
+              currentPassword = newPwdVal;
+            }
+          } else {
+            if (ageChanged) user.age = Number(ageVal);
+            if (newPwdVal) currentPassword = newPwdVal;
+          }
+
           renderUser();
           showSuccessModal('修改成功');
           close();
         } catch (e) {
           console.warn('[me] 保存失败:', e);
           showErrorModal('保存失败，请稍后再试');
+        } finally {
+          btnSave.disabled = false;
+          if (btnSave.dataset._label) btnSave.textContent = btnSave.dataset._label;
+          delete btnSave.dataset._label;
         }
       });
 
