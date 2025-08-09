@@ -322,12 +322,19 @@
       if (user && user.age !== '无' && user.age !== undefined && user.age !== null && user.age !== '') { iAge.value = parseInt(user.age,10); }
       fAge.append(lAge,iAge);
 
+      // 新增原始密码字段
+      const fPwdOld = document.createElement('div'); fPwdOld.className = 'field';
+      const lPwdOld = document.createElement('label'); lPwdOld.textContent = '原始密码'; lPwdOld.setAttribute('for','edit-pwd-old');
+      const iPwdOld = document.createElement('input'); iPwdOld.id='edit-pwd-old'; iPwdOld.type='password'; iPwdOld.placeholder='请输入原始密码'; iPwdOld.autocomplete='current-password';
+      fPwdOld.append(lPwdOld,iPwdOld);
+
       const fPwd = document.createElement('div'); fPwd.className = 'field';
       const lPwd = document.createElement('label'); lPwd.textContent = '新密码'; lPwd.setAttribute('for','edit-pwd');
       const iPwd = document.createElement('input'); iPwd.id='edit-pwd'; iPwd.type='password'; iPwd.placeholder='不少于 6 位'; iPwd.autocomplete='new-password';
       fPwd.append(lPwd,iPwd);
 
-      body.append(fAge,fPwd);
+      // 按顺序添加：年龄、原始密码、新密码
+      body.append(fAge, fPwdOld, fPwd);
 
       const footer = document.createElement('div'); footer.className = 'edit-footer';
       const btnCancel = document.createElement('button'); btnCancel.className='btn btn-ghost'; btnCancel.textContent='取消';
@@ -352,20 +359,24 @@
 
       btnSave.addEventListener('click', async () => {
         const ageVal = iAge.value.trim();
-        const pwdVal = iPwd.value.trim();
+        const oldPwdVal = iPwdOld.value.trim();
+        const newPwdVal = iPwd.value.trim();
         if (ageVal && (isNaN(Number(ageVal)) || Number(ageVal) < 0 || Number(ageVal) > 120)) {
           toast('年龄范围应在 0~120');
           return;
         }
-        if (pwdVal) {
+        // 如果要修改密码，必须同时提供原始密码和新密码
+        if (oldPwdVal || newPwdVal) {
+          if (!oldPwdVal) { toast('请填写原始密码'); return; }
+          if (!newPwdVal) { toast('请填写新密码'); return; }
           const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,20}$/;
-          if (!passwordRegex.test(pwdVal)) {
-            toast('密码必须为8到20位，包含大写字母、小写字母和数字');
+          if (!passwordRegex.test(newPwdVal)) {
+            toast('新密码需为8-20位，包含大写字母、小写字母和数字');
             return;
           }
         }
         try {
-          await saveProfile(ageVal, pwdVal);
+          await saveProfile(ageVal, newPwdVal, oldPwdVal);
           if (ageVal !== '') user.age = ageVal; // 更新本地展示
           renderUser();
           toast('已保存');
@@ -379,7 +390,7 @@
       cleanupFns.push(() => { if (mask.parentNode) mask.remove(); });
     }
 
-    async function saveProfile(age, password) {
+    async function saveProfile(age, password, oldPassword) {
       // 读取当前 ID
       const uid = localStorage.getItem('userId') || sessionStorage.getItem('userId') || localStorage.getItem('UserID') || sessionStorage.getItem('UserID');
       if (!uid) throw new Error('missing userId');
@@ -391,6 +402,7 @@
       const updates = {};
       if (age !== '') updates.age = Number(age);
       if (password) updates.password = password;
+      if (oldPassword) updates.old_password = oldPassword; // 交给后端做原始密码校验
       const payload = { table_name: table, user_id: uid, updates };
       console.debug('[me] PUT', url, payload);
       const res = await fetch(url, {
