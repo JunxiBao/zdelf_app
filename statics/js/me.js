@@ -482,13 +482,6 @@
       if (user && user.age !== '无' && user.age !== undefined && user.age !== null && user.age !== '') { iAge.value = parseInt(user.age, 10); }
       fAge.append(lAge, iAge);
 
-      // 原始密码
-      const fPwdOld = document.createElement('div'); fPwdOld.className = 'field';
-      const lPwdOld = document.createElement('label'); lPwdOld.textContent = '原始密码'; lPwdOld.setAttribute('for', 'edit-pwd-old');
-      const iPwdOld = document.createElement('input'); iPwdOld.id = 'edit-pwd-old'; iPwdOld.type = 'password'; iPwdOld.placeholder = '请输入原始密码'; iPwdOld.autocomplete = 'current-password';
-      // 出于安全考虑，不自动填充原始密码
-      fPwdOld.append(lPwdOld, iPwdOld);
-      decoratePasswordInput(iPwdOld);
 
       // 新密码
       const fPwd = document.createElement('div'); fPwd.className = 'field';
@@ -497,8 +490,8 @@
       fPwd.append(lPwd, iPwd);
       decoratePasswordInput(iPwd);
 
-      // 添加顺序：年龄、原始密码、新密码
-      body.append(fAge, fPwdOld, fPwd);
+      // 添加顺序：年龄、新密码
+      body.append(fAge, fPwd);
 
       const footer = document.createElement('div'); footer.className = 'edit-footer';
       const btnCancel = document.createElement('button'); btnCancel.className = 'btn btn-ghost'; btnCancel.textContent = '取消';
@@ -523,27 +516,17 @@
 
       btnSave.addEventListener('click', async () => {
         const ageVal = iAge.value.trim();
-        const oldPwdVal = iPwdOld.value.trim();
         const newPwdVal = iPwd.value.trim();
 
         if (ageVal && (isNaN(Number(ageVal)) || Number(ageVal) < 0 || Number(ageVal) > 120)) {
           showErrorModal('年龄范围应在 0~120');
           return;
         }
-        // 若修改密码：必须同时提供原始密码与新密码，并进行格式与一致性校验
-        if (oldPwdVal || newPwdVal) {
-          if (!oldPwdVal) { showErrorModal('请填写原始密码'); return; }
-          if (!newPwdVal) { showErrorModal('请填写新密码'); return; }
-
-          // 密码规则：8-20 位，至少 1 大写 + 1 小写 + 1 数字，仅限英文字母与数字
+        // 若填写了新密码，仅进行强度校验（不再需要原始密码）
+        if (newPwdVal) {
           const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,20}$/;
           if (!passwordRegex.test(newPwdVal)) {
             showErrorModal('新密码需为8-20位，包含大写字母、小写字母和数字');
-            return;
-          }
-          // 不能与原始密码相同
-          if (newPwdVal === oldPwdVal) {
-            showErrorModal('新密码不能与原始密码相同');
             return;
           }
         }
