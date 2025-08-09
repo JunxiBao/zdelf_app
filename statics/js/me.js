@@ -220,6 +220,23 @@
       const defaultBase = 'https://zhucan.xyz:5000';
       const apiBase = (configuredBase || defaultBase).replace(/\/$/, '');
       const url = apiBase + '/readdata';
+
+      // 校验原始密码：从后端读取该用户记录并比对 password 字段
+      async function verifyOldPassword(inputOldPwd) {
+        const verifyPayload = storedId ? { table_name: tableName, user_id: storedId } : { table_name: tableName, username: storedUsername };
+        const resp = await fetch(apiBase + '/readdata', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(verifyPayload)
+        });
+        if (!resp.ok) throw new Error('verify request failed: ' + resp.status);
+        const data = await resp.json();
+        if (!data || data.success !== true || !Array.isArray(data.data) || !data.data[0]) return false;
+        const rec = data.data[0];
+        // 直接与明文 password 对比（注意：后端若改为哈希，请改为后端校验接口）
+        if (typeof rec.password !== 'string') return false;
+        return rec.password === inputOldPwd;
+      }
       console.debug('[me] POST', url, payload);
       fetch(url, {
         method: 'POST',
@@ -243,7 +260,8 @@
           const username = rec && rec.username ? rec.username : '无';
           const age = (rec && (rec.age !== null && rec.age !== undefined && rec.age !== '')) ? rec.age : '无';
           user = { name: username, age };
-          userPassword = rec && rec.password ? rec.password : '';
+          // 安全考虑：不再从接口缓存/使用密码字段
+          userPassword = '';
           renderUser();
         })
         .catch((err) => {
@@ -483,7 +501,7 @@
       const fPwdOld = document.createElement('div'); fPwdOld.className = 'field';
       const lPwdOld = document.createElement('label'); lPwdOld.textContent = '原始密码'; lPwdOld.setAttribute('for', 'edit-pwd-old');
       const iPwdOld = document.createElement('input'); iPwdOld.id = 'edit-pwd-old'; iPwdOld.type = 'password'; iPwdOld.placeholder = '请输入原始密码'; iPwdOld.autocomplete = 'current-password';
-      iPwdOld.value = userPassword || '';
+      // 出于安全考虑，不自动填充原始密码
       fPwdOld.append(lPwdOld, iPwdOld);
       decoratePasswordInput(iPwdOld);
 
@@ -527,13 +545,29 @@
           showErrorModal('年龄范围应在 0~120');
           return;
         }
-        // 如果要修改密码，必须同时提供原始密码和新密码
+        // 若修改密码：必须同时提供原始密码与新密码，并进行格式与一致性校验
         if (oldPwdVal || newPwdVal) {
           if (!oldPwdVal) { showErrorModal('请填写原始密码'); return; }
           if (!newPwdVal) { showErrorModal('请填写新密码'); return; }
-          const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{8,20}$/;
+
+          // 密码规则：8-20 位，至少 1 大写 + 1 小写 + 1 数字，仅限英文字母与数字
+          const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,20}$/;
           if (!passwordRegex.test(newPwdVal)) {
             showErrorModal('新密码需为8-20位，包含大写字母、小写字母和数字');
+            return;
+          }
+          // 不能与原始密码相同
+          if (newPwdVal === oldPwdVal) {
+            showErrorModal('新密码不能与原始密码相同');
+            return;
+          }
+          // 远程校验原始密码是否正确
+          try {
+            const ok = await verifyOldPassword(oldPwdVal);
+            if (!ok) { showErrorModal('原始密码不正确'); return; }
+          } catch (e) {
+            console.warn('[me] verifyOldPassword error:', e);
+            showErrorModal('密码验证失败，请稍后重试');
             return;
           }
         }
