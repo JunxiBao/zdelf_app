@@ -110,9 +110,10 @@
     // Try to load from backend using stored UserID
     const appRoot = root.querySelector('main.app');
     const tableName = (appRoot && appRoot.dataset && appRoot.dataset.table) ? appRoot.dataset.table : 'users';
-    const storedId = localStorage.getItem('UserID') || sessionStorage.getItem('UserID');
+    // Align with daily.js: prefer lower-cased 'userId' key
+    const storedId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || localStorage.getItem('UserID') || sessionStorage.getItem('UserID');
     const storedUsername = localStorage.getItem('username') || localStorage.getItem('Username') || sessionStorage.getItem('username') || sessionStorage.getItem('Username');
-    console.debug('[me] table:', tableName, 'UserID:', storedId, 'username:', storedUsername);
+    console.debug('[me] table:', tableName, 'userId:', storedId, 'username:', storedUsername);
 
     // Initial paint with defaults ("无")
     renderUser();
@@ -120,9 +121,13 @@
     if (storedId || storedUsername) {
       abortInFlight();
       fetchController = new AbortController();
+      // Build payload: prefer userId like daily.js; fallback to username if needed
       const payload = storedId ? { table_name: tableName, user_id: storedId } : { table_name: tableName, username: storedUsername };
-      const apiBase = (document.querySelector('meta[name="api-base"]')?.content || window.API_BASE || '').trim();
-      const url = apiBase ? apiBase.replace(/\/$/, '') + '/readdata' : '/readdata';
+      // Prefer meta tag or window var; otherwise use the same host as daily.js for consistency
+      const configuredBase = (document.querySelector('meta[name="api-base"]')?.content || window.API_BASE || '').trim();
+      const defaultBase = 'https://zhucan.xyz:5000';
+      const apiBase = (configuredBase || defaultBase).replace(/\/$/, '');
+      const url = apiBase + '/readdata';
       console.debug('[me] POST', url, payload);
       fetch(url, {
         method: 'POST',
@@ -130,7 +135,11 @@
         body: JSON.stringify(payload),
         signal: fetchController.signal,
       })
-        .then(res => res.json())
+        .then((response) => {
+          console.log('📡 [me] 收到响应，状态码:', response.status);
+          if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          return response.json();
+        })
         .then(json => {
           if (!json || json.success !== true || !Array.isArray(json.data)) {
             toast('无法从服务器读取资料');
@@ -138,9 +147,9 @@
           }
           const rec = json.data[0] || {};
           console.debug('[me] /readdata result:', json);
-          // Map fields from your provided schema; fall back to "无"
-          const username = pick(rec, ['username', 'name', 'nickname']);
-          const age = pick(rec, ['age']);
+          // Map fields using your users schema exactly (user_id, username, password, age)
+          const username = rec && rec.username ? rec.username : '无';
+          const age = (rec && (rec.age !== null && rec.age !== undefined && rec.age !== '')) ? rec.age : '无';
           user = { name: username, age };
           renderUser();
         })
