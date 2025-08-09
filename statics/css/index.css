@@ -11,6 +11,10 @@ body {
   font-family: sans-serif;
 }
 
+html {
+  background: var(--color-surface);
+}
+
 /* =========================================================
    Theme Tokens (Light) – tweak here if you change brand colors
 ========================================================= */
@@ -33,8 +37,9 @@ body {
 ========================================================= */
 .content {
   margin-bottom: 100px;
-  min-height: 200px;
+  min-height: calc(100vh - 80px); /* fill screen above bottom nav */
   padding: 20px;
+  background: inherit;
 }
 
 /* =========================================================
@@ -51,8 +56,8 @@ body {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
   z-index: 10;
 }
 
@@ -307,15 +312,19 @@ body {
     /* brighter purple for contrast */
   }
 
+  html,
   body,
-  .content {
-    background: #18181c;
+  .content,
+  #content {
+    background: #18181c !important;
     color: #e5e5e5;
   }
 
   .nav-container {
-    background: var(--color-surface);
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.6);
+    background: var(--color-surface) !important; /* restore intended dark mode surface color */
+    box-shadow: none; /* remove darker band above the bar */
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
   }
 
   .nav-item>button.icon {
