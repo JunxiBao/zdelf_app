@@ -207,6 +207,27 @@
       sessionStorage.getItem('username') || sessionStorage.getItem('Username');
     console.debug('[me] table:', tableName, 'userId:', storedId, 'username:', storedUsername);
 
+    // --- API base (shared in initMe) ---
+    const configuredBase = (document.querySelector('meta[name="api-base"]')?.content || window.API_BASE || '').trim();
+    const defaultBase = 'https://zhucan.xyz:5000';
+    const apiBase = (configuredBase || defaultBase).replace(/\/$/, '');
+
+    // 校验原始密码：从后端读取该用户记录并比对 password 字段（若后端改为哈希存储，请改用服务端校验接口）
+    async function verifyOldPassword(inputOldPwd) {
+      const verifyPayload = storedId ? { table_name: tableName, user_id: storedId } : { table_name: tableName, username: storedUsername };
+      const resp = await fetch(apiBase + '/readdata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(verifyPayload)
+      });
+      if (!resp.ok) throw new Error('verify request failed: ' + resp.status);
+      const data = await resp.json();
+      if (!data || data.success !== true || !Array.isArray(data.data) || !data.data[0]) return false;
+      const rec = data.data[0];
+      if (typeof rec.password !== 'string') return false;
+      return rec.password === inputOldPwd;
+    }
+
     // Initial paint with defaults ("无")
     renderUser();
 
@@ -215,28 +236,7 @@
       fetchController = new AbortController();
       // Build payload: prefer userId like daily.js; fallback to username if needed
       const payload = storedId ? { table_name: tableName, user_id: storedId } : { table_name: tableName, username: storedUsername };
-      // Prefer meta tag or window var; otherwise use the same host as daily.js for consistency
-      const configuredBase = (document.querySelector('meta[name="api-base"]')?.content || window.API_BASE || '').trim();
-      const defaultBase = 'https://zhucan.xyz:5000';
-      const apiBase = (configuredBase || defaultBase).replace(/\/$/, '');
       const url = apiBase + '/readdata';
-
-      // 校验原始密码：从后端读取该用户记录并比对 password 字段
-      async function verifyOldPassword(inputOldPwd) {
-        const verifyPayload = storedId ? { table_name: tableName, user_id: storedId } : { table_name: tableName, username: storedUsername };
-        const resp = await fetch(apiBase + '/readdata', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(verifyPayload)
-        });
-        if (!resp.ok) throw new Error('verify request failed: ' + resp.status);
-        const data = await resp.json();
-        if (!data || data.success !== true || !Array.isArray(data.data) || !data.data[0]) return false;
-        const rec = data.data[0];
-        // 直接与明文 password 对比（注意：后端若改为哈希，请改为后端校验接口）
-        if (typeof rec.password !== 'string') return false;
-        return rec.password === inputOldPwd;
-      }
       console.debug('[me] POST', url, payload);
       fetch(url, {
         method: 'POST',
