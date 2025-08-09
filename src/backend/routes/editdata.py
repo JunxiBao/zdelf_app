@@ -132,9 +132,6 @@ def editdata():
         select_sql = f"SELECT * FROM {table_name}" + select_where
         cursor.execute(select_sql, select_params)
         updated_row = cursor.fetchone()
-        # Remove password field before returning data
-        if updated_row and "password" in updated_row:
-            updated_row.pop("password", None)
 
         cursor.close()
         conn.close()

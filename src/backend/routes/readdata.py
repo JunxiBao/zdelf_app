@@ -47,10 +47,6 @@ def readdata():
         cursor.execute(query, params)
         results = cursor.fetchall()
 
-        for row in results:
-            if "password" in row:
-                row.pop("password", None)
-
         cursor.close()
         conn.close()
 
