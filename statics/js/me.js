@@ -102,31 +102,31 @@
     // Bind "Edit Profile" button click
     const editBtn = root.querySelector('#editProfileBtn');
     if (editBtn) {
-      //!const handler = () => toast('打开资料编辑');
-      editBtn.addEventListener('click', handler);
-      cleanupFns.push(() => editBtn.removeEventListener('click', handler));
+      const editHandler = () => toast('打开资料编辑');
+      editBtn.addEventListener('click', editHandler);
+      cleanupFns.push(() => editBtn.removeEventListener('click', editHandler));
     }
 
     // Bind "Logout" button click: clear storage and redirect to login page
     const logoutBtn = root.querySelector('#logoutBtn');
     if (logoutBtn) {
-      const handler = () => {
+      const logoutHandler = () => {
         try {
           const keys = ['UserID', 'userid', 'userId'];
           keys.forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
         } catch (e) { }
         // 跳转到登录页（按你的相对路径需求可调整）
-        window.location.replace('./login.html');
+        window.location.replace('src/login.html');
       };
-      logoutBtn.addEventListener('click', handler);
-      cleanupFns.push(() => logoutBtn.removeEventListener('click', handler));
+      logoutBtn.addEventListener('click', logoutHandler);
+      cleanupFns.push(() => logoutBtn.removeEventListener('click', logoutHandler));
     }
 
     // Bind click for custom action items; show toast with action name
     root.querySelectorAll('[data-action]').forEach(el => {
-      //!const handler = () => toast('打开：' + el.dataset.action);
-      el.addEventListener('click', handler);
-      cleanupFns.push(() => el.removeEventListener('click', handler));
+      const actionHandler = () => toast('打开：' + el.dataset.action);
+      el.addEventListener('click', actionHandler);
+      cleanupFns.push(() => el.removeEventListener('click', actionHandler));
     });
   }
 
