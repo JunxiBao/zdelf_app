@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <!--
-  index.html — App shell for the Health navigation app
+  index.html — Main application shell for the Health Navigation App
 
-  Responsibilities:
-  - Loads the app shell (bottom navigation, modal, content container)
-  - Provides global styles and icon fonts
-  - Hosts the Shadow DOM container (#content) where subpages are mounted
+  Purpose:
+  - Load core app shell elements (navigation bar, modal, content container)
+  - Apply global styles and icon fonts
+  - Provide Shadow DOM host (#content) where subpages are dynamically injected
 -->
 <html lang="en">
 
@@ -13,31 +13,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Navigation App</title>
-  <!-- Flatpickr date picker library (CSS and JS) -->
+  <!-- Flatpickr date picker (CSS + JS) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <!-- Google Fonts: Roboto (base font) and Material Icons Outlined -->
-  <!-- Google Material Icons & Roboto (for that Google-y look) -->
+  <!-- Google Fonts & Material Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
-  <!-- 全局图标字体（阿里 iconfont，如果你的底部栏用的是它） / Global icon font for bottom navbar -->
-  <link rel="stylesheet" href="../../statics/iconfont/iconfont.css">
+
+
   <script>
-    // 检查是否已登录
+    // Redirect to login page if user is not authenticated
     if (!localStorage.getItem("userId")) {
       window.location.href = "src/login.html";
     }
   </script>
 
 
-  <!-- 其他全局基础样式 / Other global base styles: base.css, nav.css, plus index/add.css for layout -->
+
   <link rel="stylesheet" href="./statics/css/index.css">
   <link rel="stylesheet" href="./statics/css/add.css">
-  <!-- Google Fonts: Material Symbols Rounded (used in nav icons) -->
+  <!-- Material Symbols Rounded (used in navigation icons) -->
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
 
-  <!-- Force icon font-family in case subpages override it -->
+  <!-- Force icon font styles to remain consistent even if overridden by subpages -->
   <style>
     /* Ensure Material Symbols render even if pages override font-family */
     .material-symbols-rounded {
@@ -68,11 +67,11 @@
 
 <body>
 
-  <!-- Main content container where subpages will be injected (Shadow DOM host) -->
+  <!-- Main content area (Shadow DOM host) where subpages load -->
   <div class="content" id="content"></div>
 
 
-  <!-- 底部导航栏 / Bottom navigation bar -->
+  <!-- Bottom navigation bar -->
   <div class="nav-container" role="tablist" aria-label="主导航">
     <!-- Daily tab -->
     <div class="nav-item" data-index="0">
@@ -111,16 +110,16 @@
       <div class="nav-label">我的</div>
     </div>
 
-    <!-- Active tab indicator -->
+    <!-- Navigation active tab indicator -->
     <div class="indicator" id="indicator"></div>
   </div>
 
-  <!-- Modal overlay and container for center action -->
+  <!-- Modal overlay and content container for center action -->
   <div class="modal" id="modal" style="display:none;">
     <div class="modal-content" id="modalContent"></div>
   </div>
 
-  <!-- App shell JS: handles nav, page loading, modal -->
+  <!-- App shell JavaScript: handles navigation, page loading, and modal interactions -->
   <script src="./statics/js/index.js"></script>
 
 </body>

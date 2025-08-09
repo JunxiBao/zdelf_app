@@ -1,18 +1,18 @@
 /**
- * index.js — App shell controller for Health app
+ * index.js — App shell controller for the Health Navigation App
  *
- * Responsibilities
- * - Bottom navbar interactions (active state, indicator, ripple)
- * - Page loader: fetches subpage HTML and mounts it in a Shadow DOM sandbox
- * - Lifecycle: calls page-specific init/destroy (e.g., initDaily/destroyDaily)
- * - Modal open/close and dynamic content for the center button
+ * Purpose
+ * - Manage bottom navigation (active state, indicator, ripple)
+ * - Load subpages into a Shadow DOM sandbox
+ * - Run page lifecycle hooks: initX / destroyX
+ * - Open/close the center-action modal
  *
  * Why Shadow DOM?
- * - Prevents subpage CSS from leaking to the global shell (e.g., bottom nav icons)
- * - Each page can ship its own <style>/<link> safely; we inject them into the shadow root
+ * - Isolates subpage CSS/JS from the global shell
+ * - Allows each page to safely include its own <style>/<link>
  */
 
-// Root elements for the shell UI (outside Shadow DOM)
+// Root elements for the app shell (outside Shadow DOM)
 const navItems = document.querySelectorAll(".nav-item");
 const indicator = document.getElementById("indicator");
 const centerBtn = document.getElementById("centerBtn");
@@ -20,21 +20,21 @@ const content = document.getElementById("content");
 const modal = document.getElementById("modal");
 const modalContent = document.getElementById("modalContent");
 
-// --- iOS shell: keep only the dynamic content scrollable and size it under the fixed nav ---
+// Keep dynamic content scrollable and size it under the fixed bottom nav
 function setNavHeightVar() {
   const nav = document.querySelector('.nav-container');
   if (!nav) return;
   const h = nav.getBoundingClientRect().height;
   document.documentElement.style.setProperty('--nav-h', h + 'px');
 }
-// Recalculate on load, resize, and after fonts load (icon fonts can change height)
+// Recalculate on load, resize, and after fonts load (icon fonts may change height)
 window.addEventListener('load', setNavHeightVar);
 window.addEventListener('resize', setNavHeightVar);
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(setNavHeightVar);
 }
 
-// Mapping of tab index -> subpage path (HTML fragments or full HTML docs)
+// Subpage paths by tab index (HTML fragments or full HTML docs)
 const pageMap = [
   "../../src/daily.html",
   "../../src/case.html",
@@ -42,33 +42,31 @@ const pageMap = [
   "../../src/me.html"
 ];
 
-// Current active tab index for the bottom navbar
+// Current active tab index
 let activeIndex = 0;
 
-// Track current page's destroy hook and shadow root so we can clean up on navigation
+// Track current page's destroy hook and ShadowRoot for cleanup during navigation
 let currentDestroy = null;
 let currentShadowRoot = null;
 
 /**
- * Inject <style> and page-scoped stylesheets into the ShadowRoot.
+ * Inject inline <style> tags and page-scoped stylesheets into the ShadowRoot.
  *
- * @param {Document} doc    Parsed HTML document returned by fetch
+ * @param {Document} doc      Parsed HTML document returned by fetch
  * @param {ShadowRoot} shadow Shadow root hosting the subpage
  *
  * Behavior:
- * - Clones all inline <style> blocks from the subpage
- * - Clones <link rel="stylesheet"> except for global assets already loaded in the host
- * - Ensures base.css exists inside the ShadowRoot (for cards/shadows/utility tokens)
- * - Appends an icon-font fix so Material Icons / Symbols and iconfont render in Shadow DOM
+ * - Clone all inline <style> blocks from the subpage
+ * - Clone <link rel="stylesheet"> except for global assets already loaded in the host
+ * - Append an icon-font fix so Material Icons / Symbols and iconfont render inside the Shadow DOM
  */
 function injectPageStyles(doc, shadow) {
-  // Copy <style> from <head> and <body>
+  // Copy all inline <style> tags from <head> and <body>
   doc.querySelectorAll('style').forEach(styleEl => {
     shadow.appendChild(styleEl.cloneNode(true));
   });
-  // Styles we intentionally DO NOT duplicate into the shadow (they live in host <head>)
+  // Global styles to skip (already loaded in the host <head>)
   const globalHrefs = new Set([
-    new URL('../../statics/iconfont/iconfont.css', location.href).href,
     new URL('../../statics/css/nav.css', location.href).href,
   ]);
   doc.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
@@ -77,16 +75,7 @@ function injectPageStyles(doc, shadow) {
     const clone = link.cloneNode(true);
     shadow.appendChild(clone);
   });
-  // Ensure base.css is available inside ShadowRoot so card shadows and utilities work
-  const baseHref = new URL('../../statics/css/base.css', location.href).href;
-  const hasBase = [...shadow.querySelectorAll('link[rel="stylesheet"]')].some(l => new URL(l.getAttribute('href'), location.href).href === baseHref);
-  if (!hasBase) {
-    const baseLink = document.createElement('link');
-    baseLink.rel = 'stylesheet';
-    baseLink.href = baseHref;
-    shadow.appendChild(baseLink);
-  }
-  // Font fix: Shadow DOM isolates styles, so ensure icon ligatures resolve inside the page
+  // Icon font fix: ensure ligatures resolve inside the Shadow DOM
   const fix = document.createElement('style');
   fix.textContent = `
     .material-icons,
@@ -129,13 +118,14 @@ function injectPageStyles(doc, shadow) {
  * Load a subpage by index and mount it under #content using Shadow DOM.
  *
  * @param {number} index Tab index from the navbar
+ *
  * Steps:
  * 1) Run previous page's destroy hook (if any)
  * 2) Fetch subpage HTML and parse via DOMParser
- * 3) Create a ShadowRoot and write the body HTML
- * 4) Inject the subpage's styles (and base.css) into the shadow
+ * 3) Create a ShadowRoot host and mount the page content
+ * 4) Inject page styles into the ShadowRoot
  * 5) Load the page script (daily/case/square/me) with cache-busting
- * 6) Call initX(shadowRoot); retain destroyX for when we navigate away
+ * 6) Call initX(shadowRoot) and store destroyX for teardown on navigation
  */
 function loadPage(index) {
   // run previous page teardown if available
@@ -147,11 +137,11 @@ function loadPage(index) {
   fetch(pageMap[index])
     .then(res => res.text())
     .then(html => {
-      // Parse the incoming document and take only the <body> content
+      // Parse the incoming document and take only the <body> content (fallback to raw HTML)
       const doc = new DOMParser().parseFromString(html, "text/html");
       const bodyHTML = doc.body ? doc.body.innerHTML : html;
 
-      // Create a host element and attach Shadow DOM to sandbox styles/scripts
+      // Create a host element and attach a ShadowRoot to sandbox styles/scripts
       const host = document.createElement("div");
       host.className = "page-host";
       const shadow = host.attachShadow({ mode: "open" });
@@ -159,11 +149,11 @@ function loadPage(index) {
 
       injectPageStyles(doc, shadow);
 
-      // Mount the new page (replace previous content entirely)
+      // Mount the new page (replace previous content)
       content.replaceChildren(host);
       currentShadowRoot = shadow;
 
-      // Dynamically load the corresponding JavaScript file with cache-busting
+      // Load the corresponding page script with cache-busting
       const scriptMap = [
         "../../statics/js/daily.js",
         "../../statics/js/case.js",
@@ -180,7 +170,7 @@ function loadPage(index) {
         script.src = `${scriptMap[index]}?t=${Date.now()}`; // avoid cached non-execution
         script.setAttribute("data-page-script", scriptMap[index]);
         script.onload = () => {
-          // Call lifecycle init with the ShadowRoot so page code scopes to its own DOM
+          // Call page init with the ShadowRoot so code scopes to its own DOM
           const initName = scriptMap[index].split("/").pop().replace(".js", ""); // daily / case / ...
           const cap = initName.charAt(0).toUpperCase() + initName.slice(1);
           const initFn = window[`init${cap}`];
@@ -194,7 +184,7 @@ function loadPage(index) {
       }
     })
     .catch(err => {
-      // fallback UI
+      // Fallback UI
       content.innerHTML = "<p style='padding: 2em; text-align:center;'>⚠️ 页面加载失败</p>";
       console.error("加载页面出错:", err);
       currentShadowRoot = null;
@@ -250,7 +240,7 @@ function openModal() {
     .then(res => res.text())
     .then(html => {
       modalContent.innerHTML = html;
-      // 动态加载 add.js
+      // Dynamically load add.js
       const script = document.createElement("script");
       script.src = "../../statics/js/add.js";
       modalContent.appendChild(script);
@@ -292,7 +282,7 @@ modal.addEventListener("click", (e) => {
   }
 });
 
-// Boot the default tab after the shell is ready
+// Boot the default tab once the shell is ready
 document.addEventListener("DOMContentLoaded", () => {
   setNavHeightVar();
   updateActive(0);
