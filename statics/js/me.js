@@ -12,6 +12,7 @@
  * - Shadow DOM injection (rootEl = ShadowRoot)
  */
 (function () {
+  console.debug('[me] me.js evaluated');
   // Array of teardown callbacks to run when leaving the page
   let cleanupFns = [];
 
@@ -70,61 +71,7 @@
   function initMe(rootEl) {
     const root = rootEl || document; // allow manual boot for standalone use
 
-    // Fill profile name/email/initials in the UI (will hydrate from DB)
-    const nameEl = root.querySelector('#displayName');
-    const emailEl = root.querySelector('#displayEmail');
-    const initialsEl = root.querySelector('#avatarInitials');
-
-    function renderUser() {
-      if (nameEl) nameEl.textContent = user.name || '无';
-      if (emailEl) emailEl.textContent = (user.age !== '无' ? '年龄：' + user.age : '年龄：无');
-      if (initialsEl) initialsEl.textContent = initialsFrom(user.name);
-    }
-
-    // Try to load from backend using stored UserID
-    const appRoot = root.querySelector('main.app');
-    const tableName = (appRoot && appRoot.dataset && appRoot.dataset.table) ? appRoot.dataset.table : 'users';
-    const storedId = localStorage.getItem('UserID') || sessionStorage.getItem('UserID');
-
-    // Initial paint with defaults ("无")
-    renderUser();
-
-    if (storedId) {
-      abortInFlight();
-      fetchController = new AbortController();
-      const payload = { table_name: tableName, user_id: storedId };
-      fetch('/readdata', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        signal: fetchController.signal,
-      })
-        .then(res => res.json())
-        .then(json => {
-          if (!json || json.success !== true || !Array.isArray(json.data)) {
-            toast('无法从服务器读取资料');
-            return;
-          }
-          const rec = json.data[0] || {};
-          // Map fields from your provided schema; fall back to "无"
-          const username = pick(rec, ['username', 'name', 'nickname']);
-          const age = pick(rec, ['age']);
-          user = { name: username, age };
-          renderUser();
-        })
-        .catch(() => {
-          // Network error or aborted; keep defaults
-          toast('网络错误，显示本地占位信息');
-        })
-        .finally(() => { fetchController = null; });
-      // ensure request is aborted on page destroy
-      cleanupFns.push(() => abortInFlight());
-    } else {
-      // No UserID found; keep defaults and notify once
-      toast('未找到用户ID，显示占位信息');
-    }
-
-    // Toast notification helper for transient messages
+    // Toast notification helper for transient messages (must be defined before use)
     const toast = (msg) => {
       const t = document.createElement('div');
       t.textContent = msg;
@@ -148,6 +95,67 @@
       }, 1500);
       cleanupFns.push(() => { clearTimeout(hideTimer); if (t.parentNode) t.remove(); });
     };
+
+    // Fill profile name/email/initials in the UI (will hydrate from DB)
+    const nameEl = root.querySelector('#displayName');
+    const emailEl = root.querySelector('#displayEmail');
+    const initialsEl = root.querySelector('#avatarInitials');
+
+    function renderUser() {
+      if (nameEl) nameEl.textContent = user.name || '无';
+      if (emailEl) emailEl.textContent = (user.age !== '无' ? '年龄：' + user.age : '年龄：无');
+      if (initialsEl) initialsEl.textContent = initialsFrom(user.name);
+    }
+
+    // Try to load from backend using stored UserID
+    const appRoot = root.querySelector('main.app');
+    const tableName = (appRoot && appRoot.dataset && appRoot.dataset.table) ? appRoot.dataset.table : 'users';
+    const storedId = localStorage.getItem('UserID') || sessionStorage.getItem('UserID');
+    const storedUsername = localStorage.getItem('username') || localStorage.getItem('Username') || sessionStorage.getItem('username') || sessionStorage.getItem('Username');
+    console.debug('[me] table:', tableName, 'UserID:', storedId, 'username:', storedUsername);
+
+    // Initial paint with defaults ("无")
+    renderUser();
+
+    if (storedId || storedUsername) {
+      abortInFlight();
+      fetchController = new AbortController();
+      const payload = storedId ? { table_name: tableName, user_id: storedId } : { table_name: tableName, username: storedUsername };
+      const apiBase = (document.querySelector('meta[name="api-base"]')?.content || window.API_BASE || '').trim();
+      const url = apiBase ? apiBase.replace(/\/$/, '') + '/readdata' : '/readdata';
+      console.debug('[me] POST', url, payload);
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: fetchController.signal,
+      })
+        .then(res => res.json())
+        .then(json => {
+          if (!json || json.success !== true || !Array.isArray(json.data)) {
+            toast('无法从服务器读取资料');
+            return;
+          }
+          const rec = json.data[0] || {};
+          console.debug('[me] /readdata result:', json);
+          // Map fields from your provided schema; fall back to "无"
+          const username = pick(rec, ['username', 'name', 'nickname']);
+          const age = pick(rec, ['age']);
+          user = { name: username, age };
+          renderUser();
+        })
+        .catch((err) => {
+          // Network error or aborted; keep defaults
+          console.warn('[me] /readdata error:', err);
+          toast('网络错误，显示本地占位信息');
+        })
+        .finally(() => { fetchController = null; });
+      // ensure request is aborted on page destroy
+      cleanupFns.push(() => abortInFlight());
+    } else {
+      // No identifier found; keep defaults and notify once
+      toast('未找到用户ID/用户名，本地显示占位');
+    }
 
     // Custom confirm modal with animation and dark mode support
     function ensureConfirmStyles() {
@@ -283,6 +291,7 @@
   }
 
   // Expose lifecycle functions to global scope for loader
+  console.debug('[me] exposing lifecycle: initMe/destroyMe');
   window.initMe = initMe;
   window.destroyMe = destroyMe;
 })();
