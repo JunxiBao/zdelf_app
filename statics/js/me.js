@@ -20,7 +20,7 @@
   let fetchController = null;
   function abortInFlight() {
     if (fetchController) {
-      try { fetchController.abort(); } catch (e) {}
+      try { fetchController.abort(); } catch (e) { }
       fetchController = null;
     }
   }
@@ -99,7 +99,13 @@
       t.style.zIndex = '9999';
       t.style.opacity = '0';
       t.style.transition = 'opacity .2s ease, translate .2s ease';
-      document.body.appendChild(t);
+      // Insert toast before edit modal if open, else to body
+      const editMask = document.querySelector('.edit-mask');
+      if (editMask && editMask.parentNode) {
+        editMask.parentNode.insertBefore(t, editMask);
+      } else {
+        document.body.appendChild(t);
+      }
       requestAnimationFrame(() => { t.style.opacity = '1'; t.style.translate = '0 -8px'; });
       const hideTimer = setTimeout(() => {
         t.style.opacity = '0'; t.style.translate = '0 0';
@@ -248,7 +254,7 @@
         cancelBtn.addEventListener('click', () => close(false), { once: true });
         okBtn.addEventListener('click', () => close(true), { once: true });
         mask.addEventListener('click', (e) => { if (e.target === mask) close(false); });
-        document.addEventListener('keydown', function escHandler(ev){ if (ev.key === 'Escape') { document.removeEventListener('keydown', escHandler); close(false); } });
+        document.addEventListener('keydown', function escHandler(ev) { if (ev.key === 'Escape') { document.removeEventListener('keydown', escHandler); close(false); } });
 
         // focus management
         setTimeout(() => okBtn.focus(), 0);
@@ -317,35 +323,35 @@
       body.className = 'edit-body';
 
       const fAge = document.createElement('div'); fAge.className = 'field';
-      const lAge = document.createElement('label'); lAge.textContent = '年龄'; lAge.setAttribute('for','edit-age');
-      const iAge = document.createElement('input'); iAge.id='edit-age'; iAge.type='number'; iAge.min='0'; iAge.max='120'; iAge.placeholder='请输入年龄';
-      if (user && user.age !== '无' && user.age !== undefined && user.age !== null && user.age !== '') { iAge.value = parseInt(user.age,10); }
-      fAge.append(lAge,iAge);
+      const lAge = document.createElement('label'); lAge.textContent = '年龄'; lAge.setAttribute('for', 'edit-age');
+      const iAge = document.createElement('input'); iAge.id = 'edit-age'; iAge.type = 'number'; iAge.min = '0'; iAge.max = '120'; iAge.placeholder = '请输入年龄';
+      if (user && user.age !== '无' && user.age !== undefined && user.age !== null && user.age !== '') { iAge.value = parseInt(user.age, 10); }
+      fAge.append(lAge, iAge);
 
       // 新增原始密码字段
       const fPwdOld = document.createElement('div'); fPwdOld.className = 'field';
-      const lPwdOld = document.createElement('label'); lPwdOld.textContent = '原始密码'; lPwdOld.setAttribute('for','edit-pwd-old');
-      const iPwdOld = document.createElement('input'); iPwdOld.id='edit-pwd-old'; iPwdOld.type='password'; iPwdOld.placeholder='请输入原始密码'; iPwdOld.autocomplete='current-password';
-      fPwdOld.append(lPwdOld,iPwdOld);
+      const lPwdOld = document.createElement('label'); lPwdOld.textContent = '原始密码'; lPwdOld.setAttribute('for', 'edit-pwd-old');
+      const iPwdOld = document.createElement('input'); iPwdOld.id = 'edit-pwd-old'; iPwdOld.type = 'password'; iPwdOld.placeholder = '请输入原始密码'; iPwdOld.autocomplete = 'current-password';
+      fPwdOld.append(lPwdOld, iPwdOld);
 
       const fPwd = document.createElement('div'); fPwd.className = 'field';
-      const lPwd = document.createElement('label'); lPwd.textContent = '新密码'; lPwd.setAttribute('for','edit-pwd');
-      const iPwd = document.createElement('input'); iPwd.id='edit-pwd'; iPwd.type='password'; iPwd.placeholder='不少于 6 位'; iPwd.autocomplete='new-password';
-      fPwd.append(lPwd,iPwd);
+      const lPwd = document.createElement('label'); lPwd.textContent = '新密码'; lPwd.setAttribute('for', 'edit-pwd');
+      const iPwd = document.createElement('input'); iPwd.id = 'edit-pwd'; iPwd.type = 'password'; iPwd.placeholder = '不少于 8 位'; iPwd.autocomplete = 'new-password';
+      fPwd.append(lPwd, iPwd);
 
       // 按顺序添加：年龄、原始密码、新密码
       body.append(fAge, fPwdOld, fPwd);
 
       const footer = document.createElement('div'); footer.className = 'edit-footer';
-      const btnCancel = document.createElement('button'); btnCancel.className='btn btn-ghost'; btnCancel.textContent='取消';
-      const btnSave = document.createElement('button'); btnSave.className='btn btn-primary'; btnSave.textContent='保存';
+      const btnCancel = document.createElement('button'); btnCancel.className = 'btn btn-ghost'; btnCancel.textContent = '取消';
+      const btnSave = document.createElement('button'); btnSave.className = 'btn btn-primary'; btnSave.textContent = '保存';
       footer.append(btnCancel, btnSave);
 
       dialog.append(header, body, footer);
       mask.appendChild(dialog);
       document.body.appendChild(mask);
 
-      requestAnimationFrame(()=>{ mask.classList.add('show'); dialog.classList.add('show'); });
+      requestAnimationFrame(() => { mask.classList.add('show'); dialog.classList.add('show'); });
 
       const close = () => {
         dialog.classList.remove('show');
@@ -354,8 +360,8 @@
         mask.addEventListener('transitionend', onEnd);
       };
 
-      btnCancel.addEventListener('click', close, { once:true });
-      mask.addEventListener('click', (e)=>{ if (e.target === mask) close(); });
+      btnCancel.addEventListener('click', close, { once: true });
+      mask.addEventListener('click', (e) => { if (e.target === mask) close(); });
 
       btnSave.addEventListener('click', async () => {
         const ageVal = iAge.value.trim();
@@ -457,7 +463,7 @@
     // abort any in-flight fetch
     abortInFlight();
     // run and clear all teardown callbacks
-    cleanupFns.forEach(fn => { try { fn(); } catch (e) {} });
+    cleanupFns.forEach(fn => { try { fn(); } catch (e) { } });
     cleanupFns = [];
   }
 
