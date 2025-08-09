@@ -303,30 +303,6 @@ body {
 }
 
 /* =========================================================
-   Ripple (Google-like)
-========================================================= */
-.ripple {
-  position: relative;
-  /* allow overflow so ripples can extend beyond */
-}
-
-.ripple span.ripple-effect {
-  position: absolute;
-  border-radius: 50%;
-  transform: scale(0);
-  animation: ripple-animation 600ms linear;
-  background-color: var(--ripple-color);
-  pointer-events: none;
-}
-
-@keyframes ripple-animation {
-  to {
-    transform: scale(4);
-    opacity: 0;
-  }
-}
-
-/* =========================================================
    Dark Mode
 ========================================================= */
 @media (prefers-color-scheme: dark) {
