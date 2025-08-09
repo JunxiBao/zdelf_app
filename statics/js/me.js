@@ -59,9 +59,20 @@
   }
   function initialsFrom(name) {
     if (!name || name === '无') return '无';
-    const parts = String(name).trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return '无';
-    return parts.map(s => s[0]).slice(0, 2).join('').toUpperCase();
+    const trimmed = String(name).trim();
+    if (!trimmed) return '无';
+    // Check if first character is a Chinese character (CJK Unified Ideographs)
+    const firstChar = trimmed[0];
+    if (/[\u4E00-\u9FFF]/.test(firstChar)) {
+      return firstChar;
+    }
+    // English or other: extract uppercase letters
+    const upperLetters = (trimmed.match(/[A-Z]/g) || []);
+    if (upperLetters.length >= 2) {
+      return (upperLetters[0] + upperLetters[1]).toUpperCase();
+    }
+    // Fallback: use first two characters, uppercased if letters
+    return trimmed.slice(0, 2).toUpperCase();
   }
 
   /**
