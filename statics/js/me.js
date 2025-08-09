@@ -125,7 +125,7 @@
       const s = document.createElement('style');
       s.id = 'error-modal-style';
       s.textContent = `
-      .err-mask{position:fixed;inset:0;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:12002;backdrop-filter:blur(8px)}
+      .err-mask{position:fixed;inset:0;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:120000;backdrop-filter:blur(8px)}
       .err-mask.show{opacity:1;pointer-events:auto}
       .err-dialog{width:min(92vw,420px);background:var(--card-bg,#fff);color:var(--text,#1b1b1f);border-radius:16px;box-shadow:0 18px 42px rgba(98,0,234,.20),0 6px 18px rgba(0,0,0,.1);border:1px solid var(--border,rgba(98,0,234,.12));transform:translateY(10px) scale(.98);opacity:.98;transition:transform .2s ease,opacity .2s ease}
       .err-dialog.show{transform:translateY(0) scale(1);opacity:1}
@@ -169,10 +169,8 @@
       dlg.append(head, body, foot);
       mask.appendChild(dlg);
 
-      // Insert as the top-most element
-      const editMask = document.querySelector('.edit-mask');
-      if (editMask && editMask.parentNode) editMask.parentNode.insertBefore(mask, editMask);
-      else document.body.appendChild(mask);
+      // Always append to body so it stays on top of any modal
+      document.body.appendChild(mask);
 
       requestAnimationFrame(() => { mask.classList.add('show'); dlg.classList.add('show'); });
 
