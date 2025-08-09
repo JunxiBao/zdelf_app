@@ -42,6 +42,36 @@ html {
   background: inherit;
 }
 
+/* --- iOS shell layout adjustments --- */
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+body {
+  overscroll-behavior: none;
+}
+.content {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-h, 80px) + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* smooth iOS momentum */
+  contain: content;
+}
+/* Fixed nav stays pinned and respects safe area */
+.nav-container {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+/* Ensure modal still covers viewport without enabling body scroll */
+.modal {
+  position: fixed !important;
+  inset: 0 !important;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* =========================================================
    Bottom Navigation
 ========================================================= */

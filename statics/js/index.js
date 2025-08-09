@@ -20,6 +20,20 @@ const content = document.getElementById("content");
 const modal = document.getElementById("modal");
 const modalContent = document.getElementById("modalContent");
 
+// --- iOS shell: keep only the dynamic content scrollable and size it under the fixed nav ---
+function setNavHeightVar() {
+  const nav = document.querySelector('.nav-container');
+  if (!nav) return;
+  const h = nav.getBoundingClientRect().height;
+  document.documentElement.style.setProperty('--nav-h', h + 'px');
+}
+// Recalculate on load, resize, and after fonts load (icon fonts can change height)
+window.addEventListener('load', setNavHeightVar);
+window.addEventListener('resize', setNavHeightVar);
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(setNavHeightVar);
+}
+
 // Mapping of tab index -> subpage path (HTML fragments or full HTML docs)
 const pageMap = [
   "../../src/daily.html",
@@ -280,5 +294,6 @@ modal.addEventListener("click", (e) => {
 
 // Boot the default tab after the shell is ready
 document.addEventListener("DOMContentLoaded", () => {
+  setNavHeightVar();
   updateActive(0);
 });
