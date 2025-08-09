@@ -267,10 +267,148 @@
       });
     });
 
-    // Bind "Edit Profile" button click
+    // -----------------------------
+    // Edit modal (age + password) with dark mode support
+    // -----------------------------
+    function ensureEditStyles() {
+      if (document.getElementById('edit-profile-style')) return;
+      const s = document.createElement('style');
+      s.id = 'edit-profile-style';
+      s.textContent = `
+      .edit-mask{position:fixed;inset:0;background:color-mix(in srgb, var(--text,#000) 20%, transparent);backdrop-filter:saturate(120%) blur(2px);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s ease;z-index:10000}
+      .edit-mask.show{opacity:1}
+      .edit-dialog{width:min(92vw,400px);background:var(--card,#fff);color:var(--text,#111);border-radius:16px;box-shadow:var(--shadow-3,0 10px 30px rgba(0,0,0,.15));transform:translateY(12px) scale(.98);opacity:0;transition:transform .2s ease,opacity .2s ease;border:1px solid var(--border,rgba(0,0,0,.06))}
+      .edit-dialog.show{transform:translateY(0) scale(1);opacity:1}
+      .edit-header{padding:16px 18px 8px;font-weight:600;font-size:16px}
+      .edit-body{padding:0 18px 12px;}
+      .field{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+      .field label{font-size:13px;opacity:.8}
+      .field input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border,rgba(0,0,0,.1));background:var(--surface,#fff);color:var(--text,#111);}
+      .field input:focus{outline:2px solid var(--accent,#7c3aed);outline-offset:2px}
+      .edit-footer{display:flex;gap:10px;justify-content:flex-end;padding:0 12px 14px 12px}
+      .btn{appearance:none;border:0;padding:9px 14px;border-radius:12px;cursor:pointer;font-size:14px}
+      .btn-ghost{background:var(--surface,rgba(0,0,0,.04));color:var(--text,#111)}
+      .btn-primary{background:var(--accent,#7c3aed);color:#fff}
+      @media (prefers-color-scheme: dark){
+        .edit-mask{background:color-mix(in srgb,#000 50%, transparent)}
+        .edit-dialog{background:var(--card,#1e1f22);color:var(--text,#e6e6e6);border-color:var(--border,rgba(255,255,255,.08))}
+        .field input{background:var(--surface,#232428);color:var(--text,#e6e6e6);border-color:var(--border,rgba(255,255,255,.12))}
+        .btn-ghost{background:var(--surface,rgba(255,255,255,.08));color:var(--text,#e6e6e6)}
+      }
+      @supports(padding: max(0px)){ .edit-dialog{ margin-bottom: env(safe-area-inset-bottom); } }
+      `;
+      document.head.appendChild(s);
+      cleanupFns.push(() => { if (s.parentNode) s.remove(); });
+    }
+
+    function openEditDialog() {
+      ensureEditStyles();
+      const mask = document.createElement('div');
+      mask.className = 'edit-mask';
+
+      const dialog = document.createElement('div');
+      dialog.className = 'edit-dialog';
+
+      const header = document.createElement('div');
+      header.className = 'edit-header';
+      header.textContent = '编辑资料';
+
+      const body = document.createElement('div');
+      body.className = 'edit-body';
+
+      const fAge = document.createElement('div'); fAge.className = 'field';
+      const lAge = document.createElement('label'); lAge.textContent = '年龄'; lAge.setAttribute('for','edit-age');
+      const iAge = document.createElement('input'); iAge.id='edit-age'; iAge.type='number'; iAge.min='0'; iAge.max='120'; iAge.placeholder='请输入年龄';
+      if (user && user.age !== '无' && user.age !== undefined && user.age !== null && user.age !== '') { iAge.value = parseInt(user.age,10); }
+      fAge.append(lAge,iAge);
+
+      const fPwd = document.createElement('div'); fPwd.className = 'field';
+      const lPwd = document.createElement('label'); lPwd.textContent = '新密码'; lPwd.setAttribute('for','edit-pwd');
+      const iPwd = document.createElement('input'); iPwd.id='edit-pwd'; iPwd.type='password'; iPwd.placeholder='不少于 6 位'; iPwd.autocomplete='new-password';
+      fPwd.append(lPwd,iPwd);
+
+      body.append(fAge,fPwd);
+
+      const footer = document.createElement('div'); footer.className = 'edit-footer';
+      const btnCancel = document.createElement('button'); btnCancel.className='btn btn-ghost'; btnCancel.textContent='取消';
+      const btnSave = document.createElement('button'); btnSave.className='btn btn-primary'; btnSave.textContent='保存';
+      footer.append(btnCancel, btnSave);
+
+      dialog.append(header, body, footer);
+      mask.appendChild(dialog);
+      document.body.appendChild(mask);
+
+      requestAnimationFrame(()=>{ mask.classList.add('show'); dialog.classList.add('show'); });
+
+      const close = () => {
+        dialog.classList.remove('show');
+        mask.classList.remove('show');
+        const onEnd = () => { mask.removeEventListener('transitionend', onEnd); if (mask.parentNode) mask.remove(); };
+        mask.addEventListener('transitionend', onEnd);
+      };
+
+      btnCancel.addEventListener('click', close, { once:true });
+      mask.addEventListener('click', (e)=>{ if (e.target === mask) close(); });
+
+      btnSave.addEventListener('click', async () => {
+        const ageVal = iAge.value.trim();
+        const pwdVal = iPwd.value.trim();
+        if (ageVal && (isNaN(Number(ageVal)) || Number(ageVal) < 0 || Number(ageVal) > 120)) {
+          toast('年龄范围应在 0~120');
+          return;
+        }
+        if (pwdVal) {
+          const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,20}$/;
+          if (!passwordRegex.test(pwdVal)) {
+            toast('密码必须为8到20位，包含大写字母、小写字母和数字');
+            return;
+          }
+        }
+        try {
+          await saveProfile(ageVal, pwdVal);
+          if (ageVal !== '') user.age = ageVal; // 更新本地展示
+          renderUser();
+          toast('已保存');
+          close();
+        } catch (e) {
+          console.warn('[me] 保存失败:', e);
+          toast('保存失败，请稍后再试');
+        }
+      });
+
+      cleanupFns.push(() => { if (mask.parentNode) mask.remove(); });
+    }
+
+    async function saveProfile(age, password) {
+      // 读取当前 ID
+      const uid = localStorage.getItem('userId') || sessionStorage.getItem('userId') || localStorage.getItem('UserID') || sessionStorage.getItem('UserID');
+      if (!uid) throw new Error('missing userId');
+      const table = tableName || 'users';
+      const configuredBase = (document.querySelector('meta[name="api-base"]')?.content || window.API_BASE || '').trim();
+      const defaultBase = 'https://zhucan.xyz:5000';
+      const apiBase = (configuredBase || defaultBase).replace(/\/$/, '');
+      const url = apiBase + '/updatedata';
+      const updates = {};
+      if (age !== '') updates.age = Number(age);
+      if (password) updates.password = password;
+      const payload = { table_name: table, user_id: uid, updates };
+      console.debug('[me] PUT', url, payload);
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      console.debug('[me] /updatedata result:', json);
+      if (!json || json.success !== true) throw new Error('update failed');
+      return json;
+    }
+
+    // Bind "Edit Profile" button click -> open edit modal
     const editBtn = root.querySelector('#editProfileBtn');
     if (editBtn) {
-      const editHandler = () => toast('打开资料编辑');
+      const editHandler = () => openEditDialog();
       editBtn.addEventListener('click', editHandler);
       cleanupFns.push(() => editBtn.removeEventListener('click', editHandler));
     }
