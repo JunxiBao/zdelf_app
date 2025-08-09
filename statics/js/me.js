@@ -350,33 +350,54 @@
       const s = document.createElement('style');
       s.id = 'edit-profile-style';
       s.textContent = `
-      .edit-mask{position:fixed;inset:0;background:color-mix(in srgb, var(--text,#000) 20%, transparent);backdrop-filter:saturate(120%) blur(2px);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s ease;z-index:10000}
-      .edit-mask.show{opacity:1}
-      .edit-dialog{width:min(92vw,400px);background:var(--card,#fff);color:var(--text,#111);border-radius:16px;box-shadow:var(--shadow-3,0 10px 30px rgba(0,0,0,.15));transform:translateY(12px) scale(.98);opacity:0;transition:transform .2s ease,opacity .2s ease;border:1px solid var(--border,rgba(0,0,0,.06))}
-      .edit-dialog.show{transform:translateY(0) scale(1);opacity:1}
-      .edit-header{padding:16px 18px 8px;font-weight:600;font-size:16px}
-      .edit-body{padding:0 18px 12px;}
-      .field{display:flex;flex-direction:column;gap:6px;margin:12px 0}
-      .field label{font-size:13px;opacity:.8}
-      .field input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border,rgba(0,0,0,.1));background:var(--surface,#fff);color:var(--text,#111);}
-      .field input:focus{outline:2px solid var(--accent,#7c3aed);outline-offset:2px}
-      .edit-footer{display:flex;gap:10px;justify-content:flex-end;padding:0 12px 14px 12px}
-      .btn{appearance:none;border:0;padding:9px 14px;border-radius:12px;cursor:pointer;font-size:14px}
-      .btn-ghost{background:var(--surface,rgba(0,0,0,.04));color:var(--text,#111)}
-      .btn-primary{background:var(--accent,#7c3aed);color:#fff}
-      @media (prefers-color-scheme: dark){
-        .edit-mask{background:color-mix(in srgb,#000 50%, transparent)}
-        .edit-dialog{background:var(--card,#1e1f22);color:var(--text,#e6e6e6);border-color:var(--border,rgba(255,255,255,.08))}
-        .field input{background:var(--surface,#232428);color:var(--text,#e6e6e6);border-color:var(--border,rgba(255,255,255,.12))}
-        .btn-ghost{background:var(--surface,rgba(255,255,255,.08));color:var(--text,#e6e6e6)}
-      }
-      @supports(padding: max(0px)){ .edit-dialog{ margin-bottom: env(safe-area-inset-bottom); } }
-      `;
+  .edit-mask{position:fixed;inset:0;background:color-mix(in srgb, var(--text,#000) 20%, transparent);backdrop-filter:saturate(120%) blur(2px);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s ease;z-index:10000}
+  .edit-mask.show{opacity:1}
+  .edit-dialog{width:min(92vw,400px);background:var(--card,#fff);color:var(--text,#111);border-radius:16px;box-shadow:var(--shadow-3,0 10px 30px rgba(0,0,0,.15));transform:translateY(12px) scale(.98);opacity:0;transition:transform .2s ease,opacity .2s ease;border:1px solid var(--border,rgba(0,0,0,.06))}
+  .edit-dialog.show{transform:translateY(0) scale(1);opacity:1}
+  .edit-header{padding:16px 18px 8px;font-weight:600;font-size:16px}
+  .edit-body{padding:0 18px 12px;}
+  .field{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+  .field label{font-size:13px;opacity:.8}
+  .field input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border,rgba(0,0,0,.1));background:var(--surface,#fff);color:var(--text,#111);}
+  .field input:focus{outline:2px solid var(--accent,#7c3aed);outline-offset:2px}
+  .edit-footer{display:flex;gap:10px;justify-content:flex-end;padding:0 12px 14px 12px}
+  .btn{appearance:none;border:0;padding:9px 14px;border-radius:12px;cursor:pointer;font-size:14px}
+  .btn-ghost{background:var(--surface,rgba(0,0,0,.04));color:var(--text,#111)}
+  .btn-primary{background:var(--accent,#7c3aed);color:#fff}
+  @media (prefers-color-scheme: dark){
+    .edit-mask{background:color-mix(in srgb,#000 50%, transparent)}
+    .edit-dialog{background:var(--card,#1e1f22);color:var(--text,#e6e6e6);border-color:var(--border,rgba(255,255,255,.08))}
+    .field input{background:var(--surface,#232428);color:var(--text,#e6e6e6);border-color:var(--border,rgba(255,255,255,.12))}
+    .btn-ghost{background:var(--surface,rgba(255,255,255,.08));color:var(--text,#e6e6e6)}
+  }
+  @supports(padding: max(0px)){ .edit-dialog{ margin-bottom: env(safe-area-inset-bottom); } }
+
+  /* Password toggle styles — 与登录页一致 */
+  .input-with-toggle { position: relative; display: flex; align-items: center; }
+  .input-with-toggle input.record-textarea { width: 100%; padding-right: 44px; box-sizing: border-box; }
+  .toggle-password {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: transparent; border: none; cursor: pointer; padding: 6px;
+    display: inline-flex; align-items: center; justify-content: center; border-radius: 10px;
+    transition: background-color 120ms ease, transform 120ms ease, opacity 120ms ease; opacity: .8;
+    -webkit-tap-highlight-color: transparent; z-index: 2;
+  }
+  .toggle-password:hover { background: rgba(98,0,234,0.08); opacity: 1; }
+  .toggle-password:active { transform: translateY(-50%) scale(0.96); }
+  .toggle-password:focus-visible { outline: 2px solid var(--primary,#6200ea); outline-offset: 2px; }
+  .toggle-password .icon { width: 22px; height: 22px; display: block; }
+  .toggle-password .icon.visible { display: block; }
+  .toggle-password .icon.hidden  { display: none; }
+
+  @media (prefers-color-scheme: dark) {
+    .toggle-password:hover { background: rgba(255,255,255,0.06); }
+  }
+`;
       document.head.appendChild(s);
       cleanupFns.push(() => { if (s.parentNode) s.remove(); });
     }
 
-    // 密码输入装饰器：添加“显示/隐藏”按钮（使用登录页样式类名）
+    // 密码输入装饰器：添加“显示/隐藏”按钮（使用登录页样式与 SVG 图标）
     function decoratePasswordInput(inputEl) {
       const wrap = document.createElement('div');
       wrap.className = 'input-with-toggle';
@@ -388,26 +409,53 @@
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'toggle-password';
-      btn.setAttribute('aria-label', '显示/隐藏密码');
-      const eye = document.createElement('span'); eye.className = 'icon visible'; eye.textContent = '👁';
-      const eyeOff = document.createElement('span'); eyeOff.className = 'icon hidden'; eyeOff.textContent = '🙈';
-      btn.append(eye, eyeOff);
+      btn.setAttribute('aria-label', '显示密码');
+      btn.setAttribute('title', '显示密码');
+
+      // 使用与登录页相同的 SVG 图标和类名
+      btn.innerHTML = `
+        <svg class="icon eye icon-visible visible" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <svg class="icon eye-off icon-hidden hidden" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.94"></path>
+          <path d="M1 1l22 22"></path>
+          <path d="M9.9 4.24A10.93 10.93 0 0 1 12 4c7 0 11 8 11 8a21.77 21.77 0 0 1-3.87 5.19"></path>
+          <path d="M14.12 14.12A3 3 0 0 1 12 15a3 3 0 0 1-3-3 3 3 0 0 1 .88-2.12"></path>
+        </svg>
+      `;
       wrap.appendChild(btn);
 
-      const sync = () => {
-        if (inputEl.type === 'password') {
-          eye.classList.add('visible'); eye.classList.remove('hidden');
-          eyeOff.classList.add('hidden'); eyeOff.classList.remove('visible');
-        } else {
-          eye.classList.add('hidden'); eye.classList.remove('visible');
-          eyeOff.classList.add('visible'); eyeOff.classList.remove('hidden');
-        }
-      };
-      sync();
+      const eye = btn.querySelector('.eye');
+      const eyeOff = btn.querySelector('.eye-off');
 
-      const onClick = () => { inputEl.type = inputEl.type === 'password' ? 'text' : 'password'; sync(); };
-      btn.addEventListener('click', onClick);
-      cleanupFns.push(() => btn.removeEventListener('click', onClick));
+      function setState(show) {
+        inputEl.setAttribute('type', show ? 'text' : 'password');
+        btn.setAttribute('aria-label', show ? '隐藏密码' : '显示密码');
+        btn.setAttribute('title', show ? '隐藏密码' : '显示密码');
+        eye.classList.toggle('visible', !show);
+        eye.classList.toggle('hidden', show);
+        eyeOff.classList.toggle('visible', show);
+        eyeOff.classList.toggle('hidden', !show);
+      }
+
+      btn.addEventListener('click', () => {
+        const show = inputEl.getAttribute('type') === 'password';
+        btn.animate([
+          { transform: 'translateY(-50%) scale(1)' },
+          { transform: 'translateY(-50%) scale(0.9)' },
+          { transform: 'translateY(-50%) scale(1)' }
+        ], { duration: 160, easing: 'ease-out' });
+        setState(show);
+      });
+
+      // 默认隐藏密码
+      setState(false);
+
+      cleanupFns.push(() => btn.replaceWith(btn.cloneNode(true)));
     }
 
     function openEditDialog() {
