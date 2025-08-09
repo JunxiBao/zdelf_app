@@ -1,3 +1,18 @@
+/**
+ * index.js — App shell controller for Health app
+ *
+ * Responsibilities
+ * - Bottom navbar interactions (active state, indicator, ripple)
+ * - Page loader: fetches subpage HTML and mounts it in a Shadow DOM sandbox
+ * - Lifecycle: calls page-specific init/destroy (e.g., initDaily/destroyDaily)
+ * - Modal open/close and dynamic content for the center button
+ *
+ * Why Shadow DOM?
+ * - Prevents subpage CSS from leaking to the global shell (e.g., bottom nav icons)
+ * - Each page can ship its own <style>/<link> safely; we inject them into the shadow root
+ */
+
+// Root elements for the shell UI (outside Shadow DOM)
 const navItems = document.querySelectorAll(".nav-item");
 const indicator = document.getElementById("indicator");
 const centerBtn = document.getElementById("centerBtn");
@@ -5,6 +20,7 @@ const content = document.getElementById("content");
 const modal = document.getElementById("modal");
 const modalContent = document.getElementById("modalContent");
 
+// Mapping of tab index -> subpage path (HTML fragments or full HTML docs)
 const pageMap = [
   "../../src/daily.html",
   "../../src/case.html",
@@ -12,17 +28,128 @@ const pageMap = [
   "../../src/me.html"
 ];
 
+// Current active tab index for the bottom navbar
 let activeIndex = 0;
 
+// Track current page's destroy hook and shadow root so we can clean up on navigation
+let currentDestroy = null;
+let currentShadowRoot = null;
 
+/**
+ * Inject <style> and page-scoped stylesheets into the ShadowRoot.
+ *
+ * @param {Document} doc    Parsed HTML document returned by fetch
+ * @param {ShadowRoot} shadow Shadow root hosting the subpage
+ *
+ * Behavior:
+ * - Clones all inline <style> blocks from the subpage
+ * - Clones <link rel="stylesheet"> except for global assets already loaded in the host
+ * - Ensures base.css exists inside the ShadowRoot (for cards/shadows/utility tokens)
+ * - Appends an icon-font fix so Material Icons / Symbols and iconfont render in Shadow DOM
+ */
+function injectPageStyles(doc, shadow) {
+  // Copy <style> from <head> and <body>
+  doc.querySelectorAll('style').forEach(styleEl => {
+    shadow.appendChild(styleEl.cloneNode(true));
+  });
+  // Styles we intentionally DO NOT duplicate into the shadow (they live in host <head>)
+  const globalHrefs = new Set([
+    new URL('../../statics/iconfont/iconfont.css', location.href).href,
+    new URL('../../statics/css/nav.css', location.href).href,
+  ]);
+  doc.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+    const href = new URL(link.getAttribute('href'), location.href).href;
+    if (globalHrefs.has(href)) return; // skip globals
+    const clone = link.cloneNode(true);
+    shadow.appendChild(clone);
+  });
+  // Ensure base.css is available inside ShadowRoot so card shadows and utilities work
+  const baseHref = new URL('../../statics/css/base.css', location.href).href;
+  const hasBase = [...shadow.querySelectorAll('link[rel="stylesheet"]')].some(l => new URL(l.getAttribute('href'), location.href).href === baseHref);
+  if (!hasBase) {
+    const baseLink = document.createElement('link');
+    baseLink.rel = 'stylesheet';
+    baseLink.href = baseHref;
+    shadow.appendChild(baseLink);
+  }
+  // Font fix: Shadow DOM isolates styles, so ensure icon ligatures resolve inside the page
+  const fix = document.createElement('style');
+  fix.textContent = `
+    .material-icons,
+    .material-icons-outlined {
+      font-family: "Material Icons Outlined", "Material Icons" !important;
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      line-height: 1;
+      display: inline-block;
+      text-transform: none;
+      letter-spacing: normal;
+      white-space: nowrap;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    .material-symbols-rounded,
+    .material-symbols-outlined {
+      font-family: "Material Symbols Rounded", "Material Symbols Outlined" !important;
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      line-height: 1;
+      display: inline-block;
+      text-transform: none;
+      letter-spacing: normal;
+      white-space: nowrap;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .iconfont { font-family: "iconfont" !important; font-style: normal; font-weight: normal; }
+  `;
+  shadow.appendChild(fix);
+}
 
+/**
+ * Load a subpage by index and mount it under #content using Shadow DOM.
+ *
+ * @param {number} index Tab index from the navbar
+ * Steps:
+ * 1) Run previous page's destroy hook (if any)
+ * 2) Fetch subpage HTML and parse via DOMParser
+ * 3) Create a ShadowRoot and write the body HTML
+ * 4) Inject the subpage's styles (and base.css) into the shadow
+ * 5) Load the page script (daily/case/square/me) with cache-busting
+ * 6) Call initX(shadowRoot); retain destroyX for when we navigate away
+ */
 function loadPage(index) {
+  // run previous page teardown if available
+  if (typeof currentDestroy === "function") {
+    try { currentDestroy(); } catch (e) { console.warn(e); }
+    currentDestroy = null;
+  }
+
   fetch(pageMap[index])
     .then(res => res.text())
     .then(html => {
-      content.innerHTML = html;
+      // Parse the incoming document and take only the <body> content
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const bodyHTML = doc.body ? doc.body.innerHTML : html;
 
-      // 动态加载对应的JavaScript文件
+      // Create a host element and attach Shadow DOM to sandbox styles/scripts
+      const host = document.createElement("div");
+      host.className = "page-host";
+      const shadow = host.attachShadow({ mode: "open" });
+      shadow.innerHTML = bodyHTML;
+
+      injectPageStyles(doc, shadow);
+
+      // Mount the new page (replace previous content entirely)
+      content.replaceChildren(host);
+      currentShadowRoot = shadow;
+
+      // Dynamically load the corresponding JavaScript file with cache-busting
       const scriptMap = [
         "../../statics/js/daily.js",
         "../../statics/js/case.js",
@@ -31,23 +158,21 @@ function loadPage(index) {
       ];
 
       if (scriptMap[index]) {
-        // 移除旧脚本（如果有）
-        const oldScript = document.querySelector(`script[src="${scriptMap[index]}"]`);
+        // Remove old script tag for this page (if any)
+        const oldScript = document.querySelector(`script[data-page-script="${scriptMap[index]}"]`);
         if (oldScript) oldScript.remove();
 
-        // 创建新脚本
         const script = document.createElement("script");
-        script.src = scriptMap[index];
+        script.src = `${scriptMap[index]}?t=${Date.now()}`; // avoid cached non-execution
+        script.setAttribute("data-page-script", scriptMap[index]);
         script.onload = () => {
-          // 尝试调用初始化函数（如 initDaily、initCase 等）
-          const initFunctionName = scriptMap[index]
-            .split("/")
-            .pop()
-            .replace(".js", ""); // 得到 daily、case 等
-          const initFunction = window[`init${initFunctionName.charAt(0).toUpperCase()}${initFunctionName.slice(1)}`];
-          if (typeof initFunction === "function") {
-            initFunction();
-          }
+          // Call lifecycle init with the ShadowRoot so page code scopes to its own DOM
+          const initName = scriptMap[index].split("/").pop().replace(".js", ""); // daily / case / ...
+          const cap = initName.charAt(0).toUpperCase() + initName.slice(1);
+          const initFn = window[`init${cap}`];
+          const destroyFn = window[`destroy${cap}`];
+          if (typeof destroyFn === "function") currentDestroy = destroyFn;
+          if (typeof initFn === "function") initFn(currentShadowRoot);
         };
         document.body.appendChild(script);
 
@@ -55,12 +180,14 @@ function loadPage(index) {
       }
     })
     .catch(err => {
+      // fallback UI
       content.innerHTML = "<p style='padding: 2em; text-align:center;'>⚠️ 页面加载失败</p>";
       console.error("加载页面出错:", err);
+      currentShadowRoot = null;
     });
 }
 
-
+// Lightweight ripple effect for nav icons (mousedown/touchstart)
 document.querySelectorAll('.nav-item').forEach(item => {
   ['mousedown', 'touchstart'].forEach(evt => {
     item.addEventListener(evt, function (e) {
@@ -68,6 +195,8 @@ document.querySelectorAll('.nav-item').forEach(item => {
       if (!targetButton) return;
       const circle = document.createElement('span');
       circle.classList.add('ripple-effect');
+      circle.style.position = 'absolute';
+      circle.style.pointerEvents = 'none';
       const rect = targetButton.getBoundingClientRect();
       const size = Math.max(rect.width, rect.height);
       circle.style.width = circle.style.height = size + 'px';
@@ -80,6 +209,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
   });
 });
 
+// Update active tab UI and trigger page load
 function updateActive(index) {
   navItems.forEach((item, i) => {
     item.classList.toggle("active", i === index);
@@ -97,6 +227,7 @@ navItems.forEach((item, index) => {
   });
 });
 
+// Center action modal: loads add.html into the modal content and add.js for its logic
 function openModal() {
   modal.style.display = "flex";
   modalContent.innerHTML = '<div style="text-align:center;padding:2em;">加载中...</div>';
@@ -115,6 +246,7 @@ function openModal() {
     });
 }
 
+// Close modal with a small exit animation; cleanup DOM after animation ends
 function closeModal() {
   modalContent.classList.add("closing");
   modalContent.addEventListener("animationend", function handler() {
@@ -125,6 +257,7 @@ function closeModal() {
   });
 }
 
+// Toggle the center action modal and animate the FAB rotation
 centerBtn.addEventListener("click", () => {
   const isOpen = modal.style.display === "flex";
 
@@ -137,6 +270,7 @@ centerBtn.addEventListener("click", () => {
   }
 });
 
+// Click outside (backdrop) closes the modal
 modal.addEventListener("click", (e) => {
   if (e.target === modal) {
     closeModal();
@@ -144,7 +278,7 @@ modal.addEventListener("click", (e) => {
   }
 });
 
-// 确保页面完全加载后再初始化首页内容
+// Boot the default tab after the shell is ready
 document.addEventListener("DOMContentLoaded", () => {
   updateActive(0);
 });
