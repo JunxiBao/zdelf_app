@@ -8,14 +8,24 @@
 
 :root {
   --bg: #f6f3ff;
-  --text: #222;
+  --text: #1b1b1f;
+  --text-muted: #6b6b6b;
   --primary: #6200ea;
   --primary-600: #4b00b5;
   --primary-200: #bb86fc;
+  --primary-contrast: #ffffff;
   --card-bg: #ffffff;
   --border: rgba(98, 0, 234, 0.12);
   --ring: rgba(98, 0, 234, 0.35);
   --shadow: 0 8px 24px rgba(98, 0, 234, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --radius: 16px;
+  --radius-sm: 12px;
+  --space: clamp(16px, 3.5vw, 28px);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --blur: 10px;
+  --bg-grad-1: radial-gradient(1200px 800px at 10% -10%, rgba(98, 0, 234, 0.10), transparent);
+  --bg-grad-2: radial-gradient(900px 650px at 110% -10%, rgba(98, 0, 234, 0.06), transparent);
 }
 
 /* 视图居中与间隙容器（与 HTML 中的 .page-center 配合） */
@@ -35,9 +45,7 @@
 /* 背景与排版 */
 body {
   font-family: 'Segoe UI', 'PingFang SC', Arial, sans-serif;
-  background: radial-gradient(1200px 800px at 10% -10%, rgba(98, 0, 234, 0.10), transparent),
-              radial-gradient(1000px 700px at 100% 0%, rgba(98, 0, 234, 0.06), transparent),
-              var(--bg);
+  background: var(--bg-grad-1), var(--bg-grad-2), var(--bg);
   margin: 0;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -52,56 +60,77 @@ body {
 .record-container {
   width: 100%;
   max-width: 520px;
-  background: var(--card-bg);
+  background: color-mix(in srgb, var(--card-bg) 85%, transparent);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 28px 24px 24px;
   box-sizing: border-box;
+  backdrop-filter: saturate(160%) blur(var(--blur));
+  transition: transform var(--dur-fast) ease, box-shadow var(--dur) ease, border-color var(--dur) ease, background-color var(--dur) ease;
+}
+.record-container:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 30px rgba(98, 0, 234, 0.18), 0 2px 10px rgba(0,0,0,0.08);
+  border-color: color-mix(in srgb, var(--primary) 20%, var(--border));
 }
 
 /* 标题 */
 .record-title {
   font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: 0.4px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
   margin: 6px 0 18px;
-  color: var(--primary);
   text-align: center;
+  background: linear-gradient(90deg, var(--primary) 0%, #8e66ff 60%, #b88cff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* 输入框（兼容 .record-textarea / .record-input） */
 .record-textarea,
 .record-input {
   width: 100%;
-  height: 44px;
+  height: 46px;
   padding: 12px 14px;
   border: 1.2px solid #e5e5ef;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 1rem;
   outline: none;
   background: #fafaff;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: border-color var(--dur) ease, box-shadow var(--dur) ease, background var(--dur) ease, transform var(--dur-fast) ease;
   margin-bottom: 14px;
   box-sizing: border-box;
 }
-
 .record-textarea::placeholder,
-.record-input::placeholder {
-  color: #9aa0b4;
-}
-
+.record-input::placeholder { color: #9aa0b4; }
 .record-textarea:hover,
-.record-input:hover {
-  border-color: #d3c8ff;
-}
-
+.record-input:hover { border-color: #d3c8ff; background: #ffffff; }
 .record-textarea:focus,
 .record-input:focus {
   background: #fff;
   border-color: var(--primary);
   box-shadow: 0 0 0 4px var(--ring);
+  transform: translateY(-1px);
 }
+
+/* 密码显示/隐藏按钮样式 */
+.input-with-toggle { position: relative; display: flex; align-items: center; }
+.input-with-toggle input.record-textarea { width: 100%; padding-right: 44px; box-sizing: border-box; }
+.toggle-password {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: transparent; border: none; cursor: pointer; padding: 6px;
+  display: inline-flex; align-items: center; justify-content: center; border-radius: 10px;
+  transition: background-color var(--dur-fast) ease, transform var(--dur-fast) ease, opacity var(--dur-fast) ease;
+  opacity: 0.8; -webkit-tap-highlight-color: transparent;
+}
+.toggle-password:hover { background: rgba(98,0,234,0.08); opacity: 1; }
+.toggle-password:active { transform: translateY(-50%) scale(0.96); }
+.toggle-password:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.toggle-password .icon { width: 22px; height: 22px; display: block; }
+.toggle-password .icon.visible { opacity: 1; transition: opacity var(--dur-fast) ease, transform var(--dur) ease; transform: rotate(0deg) scale(1); }
+.toggle-password .icon.hidden { opacity: 0; transition: opacity var(--dur-fast) ease, transform var(--dur) ease; transform: rotate(-12deg) scale(0.9); }
 
 /* 自动填充优化 */
 input.record-input:-webkit-autofill,
@@ -121,31 +150,28 @@ input.record-input:-webkit-autofill:focus {
 .record-btn {
   width: 100%;
   background: linear-gradient(180deg, var(--primary), var(--primary-600));
-  color: #fff;
+  color: var(--primary-contrast);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 12px 18px;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 6px 14px rgba(98, 0, 234, 0.22);
-  transition: transform 0.08s ease, filter 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 18px rgba(98, 0, 234, 0.22);
+  transition: transform var(--dur-fast) ease, filter var(--dur) ease, box-shadow var(--dur) ease, opacity var(--dur) ease;
+  position: relative; overflow: hidden;
 }
-
-.record-btn:hover {
-  filter: brightness(1.03);
-  box-shadow: 0 10px 24px rgba(98, 0, 234, 0.28);
+.record-btn:hover { filter: brightness(1.05); box-shadow: 0 12px 26px rgba(98, 0, 234, 0.28); transform: translateY(-1px); }
+.record-btn:active { transform: translateY(0); }
+.record-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 30%, transparent); outline-offset: 3px; }
+.record-btn:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: 0 2px 8px rgba(98, 0, 234, 0.12); }
+.record-btn.is-loading { pointer-events: none; }
+.record-btn.is-loading::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  animation: shimmer 1.2s infinite;
 }
-
-.record-btn:active {
-  transform: translateY(1px) scale(0.99);
-}
-
-.record-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  box-shadow: 0 2px 8px rgba(98, 0, 234, 0.12);
-}
+@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
 /* 账号引导链接区域（如有） */
 .record-container a {
@@ -181,11 +207,12 @@ input.record-input:-webkit-autofill:focus {
   color: var(--primary);
   padding: 20px 28px;
   border-radius: 14px;
-  box-shadow: 0 12px 36px rgba(98, 0, 234, 0.20);
+  box-shadow: 0 18px 42px rgba(98, 0, 234, 0.20);
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: 0.3px;
   text-align: center;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
 
 /* 动画与可访问性 */
@@ -196,6 +223,7 @@ input.record-input:-webkit-autofill:focus {
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
+  .record-btn.is-loading::after { animation: none !important; }
 }
 
 /* 移动端优化 */
@@ -221,45 +249,33 @@ input.record-input:-webkit-autofill:focus {
 /* 暗黑模式 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121212;
-    --text: #e9e9ef;
-    --card-bg: #18181b;
+    --bg: #0f0f12;
+    --text: #e6e6ea;
+    --text-muted: #a9a9b3;
+    --card-bg: #16161b;
     --border: rgba(255, 255, 255, 0.06);
     --ring: rgba(187, 134, 252, 0.35);
-    --shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+    --shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+    --bg-grad-1: radial-gradient(1200px 800px at 10% -10%, rgba(187, 134, 252, 0.12), transparent);
+    --bg-grad-2: radial-gradient(900px 650px at 110% -10%, rgba(187, 134, 252, 0.08), transparent);
   }
 
-  body {
-    background: radial-gradient(1200px 800px at 10% -10%, rgba(187, 134, 252, 0.12), transparent),
-                radial-gradient(1000px 700px at 100% 0%, rgba(187, 134, 252, 0.08), transparent),
-                var(--bg);
-    color: var(--text);
-  }
-
-  .record-title { color: var(--primary-200); }
-
+  body { background: var(--bg-grad-1), var(--bg-grad-2), var(--bg); color: var(--text); }
+  .record-title { background: linear-gradient(90deg, var(--primary-200), #d0b6ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .record-textarea,
-  .record-input {
-    background: #1e1e24;
-    border-color: #2a2a34;
-    color: var(--text);
-  }
-
+  .record-input { background: #1b1b22; border-color: #2a2a34; color: var(--text); }
   .record-textarea:focus,
-  .record-input:focus {
-    background: #1c1c22;
-    border-color: var(--primary-200);
-  }
+  .record-input:focus { background: #1b1b22; border-color: var(--primary-200); }
+  .record-btn { background: linear-gradient(180deg, var(--primary-200), #9c66d6); color: #0b0b0f; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45); }
+  .popup-content { background: #1c1c22; color: var(--primary-200); box-shadow: 0 22px 48px rgba(0, 0, 0, 0.55); border-color: rgba(255,255,255,0.08); }
+  .toggle-password:hover { background: rgba(255,255,255,0.06); }
+}
 
-  .record-btn {
-    background: linear-gradient(180deg, var(--primary-200), #9c66d6);
-    color: #000;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
-  }
-
-  .popup-content {
-    background: #212127;
-    color: var(--primary-200);
-    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.55);
+@supports(padding: max(0px)) {
+  .page-center {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
 }

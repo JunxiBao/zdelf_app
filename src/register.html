@@ -4,8 +4,153 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212" />
   <link rel="stylesheet" href="../statics/css/register.css" />
+  <style>
+    :root { --violet: #6200ea; }
+
+    /* Wrapper for inputs with a toggle button */
+    .input-with-toggle { position: relative; display: flex; align-items: center; }
+    .input-with-toggle > input { padding-right: 44px; }
+
+    /* Toggle button styling */
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      padding: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: background-color 160ms ease, transform 160ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .toggle-password:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+    .toggle-password:hover { background: rgba(98, 0, 234, 0.08); }
+    .toggle-password:active { transform: translateY(-50%) scale(0.96); }
+
+    /* Icon container & animation */
+    .toggle-password svg { width: 22px; height: 22px; display: block; }
+    .toggle-password .icon { position: absolute; opacity: 0; transition: opacity 160ms ease, transform 200ms ease; }
+    .toggle-password .icon.visible { opacity: 1; transform: rotate(0deg) scale(1); }
+    .toggle-password .icon.hidden { opacity: 0; transform: rotate(-15deg) scale(0.9); }
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .toggle-password, .toggle-password .icon { transition: none; }
+    }
+
+    /* Dark mode polish */
+    @media (prefers-color-scheme: dark) {
+      .toggle-password:hover { background: rgba(255,255,255,0.06); }
+    }
+  </style>
   <title>注册</title>
+  <style>
+    /* Color system & surfaces */
+    :root {
+      --primary: #6200ea;            /* theme violet */
+      --bg: #f6f4ff;                 /* light background */
+      --surface: #ffffff;            /* light surface */
+      --text: #1b1b1f;               /* light text */
+      --muted: #6b6b6b;              /* light placeholder */
+      --border: rgba(0,0,0,0.12);    /* light divider */
+      --elev: 0 10px 24px rgba(0,0,0,0.08);
+    }
+
+    body { background: var(--bg); color: var(--text); }
+
+    .record-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--elev);
+      backdrop-filter: saturate(160%) blur(6px);
+      border-radius: 16px;
+    }
+
+    .record-title { color: var(--text); }
+
+    .record-textarea,
+    .record-input {
+      background: color-mix(in srgb, var(--surface) 96%, transparent);
+      border: 1px solid var(--border);
+      color: var(--text);
+      transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .record-textarea::placeholder,
+    .record-input::placeholder { color: var(--muted); }
+
+    .record-textarea:focus,
+    .record-input:focus {
+      outline: none;
+      border-color: color-mix(in srgb, var(--primary) 60%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+    }
+
+    .record-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      transition: transform 160ms ease, box-shadow 180ms ease, opacity 180ms ease;
+      box-shadow: 0 8px 18px rgba(98,0,234,0.22);
+    }
+    .record-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(98,0,234,0.28); }
+    .record-btn:active { transform: translateY(0); }
+
+    a { color: var(--primary); }
+
+    /* Popup surface */
+    .popup .popup-content {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: var(--elev);
+      border-radius: 12px;
+    }
+
+    /* System-wide dark mode */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f0f12;
+        --surface: #16161b;
+        --text: #e6e6ea;
+        --muted: #a9a9b3;
+        --border: rgba(255,255,255,0.12);
+        --elev: 0 14px 30px rgba(0,0,0,0.6);
+      }
+
+      .record-btn { box-shadow: 0 10px 24px rgba(98,0,234,0.35); }
+      .record-btn:hover { box-shadow: 0 14px 30px rgba(98,0,234,0.45); }
+
+      /* Inputs look better slightly darker in dark mode */
+      .record-textarea,
+      .record-input {
+        background: #1b1b22;
+      }
+
+      /* Links have a bit more luminance in dark mode */
+      a { color: #7c4dff; }
+    }
+
+    /* iOS safe-area padding so content doesn't clip under sensor housings */
+    @supports(padding: max(0px)) {
+      .page-center {
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+        padding-top: max(16px, env(safe-area-inset-top));
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -16,8 +161,40 @@
     <div class="record-container">
       <h1 class="record-title">注册账号</h1>
       <input type="text" placeholder="用户名" class="record-textarea" id="username" />
-      <input type="password" placeholder="密码" class="record-textarea" id="password" />
-      <input type="password" placeholder="确认密码" class="record-textarea" id="confirmPassword" />
+      <div class="input-with-toggle">
+        <input type="password" placeholder="密码" class="record-textarea" id="password" />
+        <button type="button" class="toggle-password" data-target="password" aria-label="显示密码" title="显示密码">
+          <!-- eye (visible) -->
+          <svg class="icon eye icon-visible visible" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <!-- eye-off (hidden) -->
+          <svg class="icon eye-off icon-hidden hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.94"/>
+            <path d="M1 1l22 22"/>
+            <path d="M9.9 4.24A10.93 10.93 0 0 1 12 4c7 0 11 8 11 8a21.77 21.77 0 0 1-3.87 5.19"/>
+            <path d="M14.12 14.12A3 3 0 0 1 12 15a3 3 0 0 1-3-3 3 3 0 0 1 .88-2.12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-with-toggle">
+        <input type="password" placeholder="确认密码" class="record-textarea" id="confirmPassword" />
+        <button type="button" class="toggle-password" data-target="confirmPassword" aria-label="显示密码" title="显示密码">
+          <!-- eye (visible) -->
+          <svg class="icon eye icon-visible visible" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <!-- eye-off (hidden) -->
+          <svg class="icon eye-off icon-hidden hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.94"/>
+            <path d="M1 1l22 22"/>
+            <path d="M9.9 4.24A10.93 10.93 0 0 1 12 4c7 0 11 8 11 8a21.77 21.77 0 0 1-3.87 5.19"/>
+            <path d="M14.12 14.12A3 3 0 0 1 12 15a3 3 0 0 1-3-3 3 3 0 0 1 .88-2.12"/>
+          </svg>
+        </button>
+      </div>
       <input type="number" placeholder="年龄" class="record-input" id="age" />
       <button class="record-btn" id="registerBtn">注册</button>
       <div style="margin-top: 12px; font-size: 0.95em;">
@@ -29,6 +206,43 @@
     </div>
   </div>
   <script src="../statics/js/register.js"></script>
+  <script>
+    (function () {
+      const buttons = document.querySelectorAll('.toggle-password');
+      buttons.forEach(btn => {
+        const targetId = btn.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        const eye = btn.querySelector('.eye');
+        const eyeOff = btn.querySelector('.eye-off');
+
+        function setState(show) {
+          if (!input) return;
+          input.setAttribute('type', show ? 'text' : 'password');
+          btn.setAttribute('aria-label', show ? '隐藏密码' : '显示密码');
+          btn.setAttribute('title', show ? '隐藏密码' : '显示密码');
+          // swap icons with a tiny animation
+          eye.classList.toggle('visible', !show);
+          eye.classList.toggle('hidden', show);
+          eyeOff.classList.toggle('visible', show);
+          eyeOff.classList.toggle('hidden', !show);
+        }
+
+        btn.addEventListener('click', () => {
+          const show = input.getAttribute('type') === 'password';
+          // playful micro interaction
+          btn.animate([
+            { transform: 'translateY(-50%) scale(1)' },
+            { transform: 'translateY(-50%) scale(0.9)' },
+            { transform: 'translateY(-50%) scale(1)' }
+          ], { duration: 160, easing: 'ease-out' });
+          setState(show);
+        });
+
+        // Start with hidden state
+        setState(false);
+      });
+    })();
+  </script>
 </body>
 
 </html>
