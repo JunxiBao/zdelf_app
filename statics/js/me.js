@@ -2,7 +2,7 @@
  * me.js — Logic for the "Me" / Profile page
  *
  * Responsibilities:
- * - Populate user profile info (name, email, initials)
+ * - Populate user profile info (username, age, initials)
  * - Bind ripple effect to interactive elements
  * - Handle edit profile, logout, and custom [data-action] buttons
  * - Provide initMe(rootEl) / destroyMe() lifecycle for dynamic page loader
@@ -15,10 +15,19 @@
   // Array of teardown callbacks to run when leaving the page
   let cleanupFns = [];
 
-  // Placeholder user data; replace with actual API call in production
-  const user = {
-    name: 'Junxi Bao',
-    email: 'junxi@example.com'
+  // Abort controller for in-flight requests
+  let fetchController = null;
+  function abortInFlight() {
+    if (fetchController) {
+      try { fetchController.abort(); } catch (e) {}
+      fetchController = null;
+    }
+  }
+
+  // User data; will be hydrated from the backend. Default to "无" when missing.
+  let user = {
+    name: '无',        // 显示为用户名
+    age: '无'         // 显示为年龄
   };
 
   /**
@@ -40,6 +49,20 @@
     ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
   }
 
+  // Helpers to safely read fields and compute initials
+  function pick(obj, keys, fallback = '无') {
+    for (const k of keys) {
+      if (obj && obj[k] != null && obj[k] !== '') return obj[k];
+    }
+    return fallback;
+  }
+  function initialsFrom(name) {
+    if (!name || name === '无') return '无';
+    const parts = String(name).trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '无';
+    return parts.map(s => s[0]).slice(0, 2).join('').toUpperCase();
+  }
+
   /**
    * Initialize the "Me" page UI.
    * @param {Document|ShadowRoot} rootEl - Scope for DOM queries.
@@ -47,19 +70,58 @@
   function initMe(rootEl) {
     const root = rootEl || document; // allow manual boot for standalone use
 
-    // Fill profile name/email/initials in the UI
+    // Fill profile name/email/initials in the UI (will hydrate from DB)
     const nameEl = root.querySelector('#displayName');
     const emailEl = root.querySelector('#displayEmail');
     const initialsEl = root.querySelector('#avatarInitials');
-    if (nameEl) nameEl.textContent = user.name;
-    if (emailEl) emailEl.textContent = user.email;
-    if (initialsEl) {
-      initialsEl.textContent = user.name
-        .split(/\s+/)
-        .map(s => s[0])
-        .slice(0, 2)
-        .join('')
-        .toUpperCase();
+
+    function renderUser() {
+      if (nameEl) nameEl.textContent = user.name || '无';
+      if (emailEl) emailEl.textContent = (user.age !== '无' ? '年龄：' + user.age : '年龄：无');
+      if (initialsEl) initialsEl.textContent = initialsFrom(user.name);
+    }
+
+    // Try to load from backend using stored UserID
+    const appRoot = root.querySelector('main.app');
+    const tableName = (appRoot && appRoot.dataset && appRoot.dataset.table) ? appRoot.dataset.table : 'users';
+    const storedId = localStorage.getItem('UserID') || sessionStorage.getItem('UserID');
+
+    // Initial paint with defaults ("无")
+    renderUser();
+
+    if (storedId) {
+      abortInFlight();
+      fetchController = new AbortController();
+      const payload = { table_name: tableName, user_id: storedId };
+      fetch('/readdata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: fetchController.signal,
+      })
+        .then(res => res.json())
+        .then(json => {
+          if (!json || json.success !== true || !Array.isArray(json.data)) {
+            toast('无法从服务器读取资料');
+            return;
+          }
+          const rec = json.data[0] || {};
+          // Map fields from your provided schema; fall back to "无"
+          const username = pick(rec, ['username', 'name', 'nickname']);
+          const age = pick(rec, ['age']);
+          user = { name: username, age };
+          renderUser();
+        })
+        .catch(() => {
+          // Network error or aborted; keep defaults
+          toast('网络错误，显示本地占位信息');
+        })
+        .finally(() => { fetchController = null; });
+      // ensure request is aborted on page destroy
+      cleanupFns.push(() => abortInFlight());
+    } else {
+      // No UserID found; keep defaults and notify once
+      toast('未找到用户ID，显示占位信息');
     }
 
     // Toast notification helper for transient messages
@@ -213,6 +275,8 @@
    * Called before leaving the page to prevent leaks.
    */
   function destroyMe() {
+    // abort any in-flight fetch
+    abortInFlight();
     // run and clear all teardown callbacks
     cleanupFns.forEach(fn => { try { fn(); } catch (e) {} });
     cleanupFns = [];
