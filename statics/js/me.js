@@ -71,8 +71,9 @@
     if (upperLetters.length >= 2) {
       return (upperLetters[0] + upperLetters[1]).toUpperCase();
     }
-    // Fallback: use first two characters, uppercased if letters
-    return trimmed.slice(0, 2).toUpperCase();
+    // Fallback: use first two characters, only uppercase the first character
+    const part = trimmed.slice(0, 2);
+    return part.charAt(0).toUpperCase() + part.slice(1);
   }
 
   /**
