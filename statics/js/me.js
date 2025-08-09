@@ -96,7 +96,8 @@
       t.style.padding = '10px 14px';
       t.style.borderRadius = '12px';
       t.style.boxShadow = 'var(--shadow-2)';
-      t.style.zIndex = '9999';
+      t.style.zIndex = '12001';
+      t.style.pointerEvents = 'none';
       t.style.opacity = '0';
       t.style.transition = 'opacity .2s ease, translate .2s ease';
       // Insert toast before edit modal if open, else to body
@@ -113,6 +114,77 @@
       }, 1500);
       cleanupFns.push(() => { clearTimeout(hideTimer); if (t.parentNode) t.remove(); });
     };
+
+    // -----------------------------
+    // Pretty error modal (purple theme, dark-mode friendly)
+    // -----------------------------
+    function ensureErrorStyles() {
+      if (document.getElementById('error-modal-style')) return;
+      const s = document.createElement('style');
+      s.id = 'error-modal-style';
+      s.textContent = `
+      .err-mask{position:fixed;inset:0;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:12002;backdrop-filter:blur(8px)}
+      .err-mask.show{opacity:1;pointer-events:auto}
+      .err-dialog{width:min(92vw,420px);background:var(--card-bg,#fff);color:var(--text,#1b1b1f);border-radius:16px;box-shadow:0 18px 42px rgba(98,0,234,.20),0 6px 18px rgba(0,0,0,.1);border:1px solid var(--border,rgba(98,0,234,.12));transform:translateY(10px) scale(.98);opacity:.98;transition:transform .2s ease,opacity .2s ease}
+      .err-dialog.show{transform:translateY(0) scale(1);opacity:1}
+      .err-head{display:flex;align-items:center;gap:10px;padding:16px 18px 8px}
+      .err-icon{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(180deg,var(--primary,#6200ea),var(--primary-600,#4b00b5));color:#fff;box-shadow:0 6px 18px rgba(98,0,234,.28)}
+      .err-title{font-weight:800;letter-spacing:.3px}
+      .err-body{padding:6px 18px 14px;line-height:1.6;color:var(--text,#1b1b1f)}
+      .err-footer{display:flex;justify-content:flex-end;gap:10px;padding:0 12px 14px}
+      .err-btn{appearance:none;border:0;border-radius:12px;padding:9px 14px;font-weight:600;cursor:pointer}
+      .err-btn-ghost{background:var(--surface,rgba(0,0,0,.04));color:var(--text,#1b1b1f)}
+      .err-btn-primary{background:linear-gradient(180deg,var(--primary,#6200ea),var(--primary-600,#4b00b5));color:#fff}
+      @media (prefers-color-scheme: dark){
+        .err-dialog{background:#1c1c22;color:var(--text,#e6e6ea);border-color:rgba(255,255,255,.08);box-shadow:0 22px 48px rgba(0,0,0,.55)}
+        .err-btn-ghost{background:rgba(255,255,255,.08);color:var(--text,#e6e6ea)}
+      }
+      @supports(padding:max(0px)){ .err-dialog{ margin-bottom: env(safe-area-inset-bottom); } }
+      `;
+      document.head.appendChild(s);
+      cleanupFns.push(()=>{ if (s.parentNode) s.remove(); });
+    }
+
+    function showErrorModal(message, title='出错了') {
+      ensureErrorStyles();
+      const mask = document.createElement('div');
+      mask.className = 'err-mask';
+      mask.setAttribute('role','dialog');
+      mask.setAttribute('aria-modal','true');
+
+      const dlg = document.createElement('div');
+      dlg.className = 'err-dialog';
+
+      const head = document.createElement('div'); head.className = 'err-head';
+      const icon = document.createElement('div'); icon.className = 'err-icon'; icon.innerHTML = '✕'; icon.setAttribute('aria-hidden','true');
+      const h = document.createElement('div'); h.className = 'err-title'; h.textContent = title;
+      head.append(icon,h);
+
+      const body = document.createElement('div'); body.className = 'err-body'; body.textContent = message || '发生未知错误';
+
+      const foot = document.createElement('div'); foot.className = 'err-footer';
+      const ok = document.createElement('button'); ok.className = 'err-btn err-btn-primary'; ok.textContent = '我知道了';
+      foot.append(ok);
+
+      dlg.append(head, body, foot);
+      mask.appendChild(dlg);
+
+      // Insert as the top-most element
+      const editMask = document.querySelector('.edit-mask');
+      if (editMask && editMask.parentNode) editMask.parentNode.insertBefore(mask, editMask);
+      else document.body.appendChild(mask);
+
+      requestAnimationFrame(()=>{ mask.classList.add('show'); dlg.classList.add('show'); });
+
+      const close = ()=>{
+        dlg.classList.remove('show'); mask.classList.remove('show');
+        const onEnd = ()=>{ mask.removeEventListener('transitionend', onEnd); if (mask.parentNode) mask.remove(); };
+        mask.addEventListener('transitionend', onEnd);
+      };
+      ok.addEventListener('click', close, { once:true });
+      mask.addEventListener('click', (e)=>{ if (e.target === mask) close(); });
+      document.addEventListener('keydown', function esc(ev){ if (ev.key === 'Escape'){ document.removeEventListener('keydown', esc); close(); } });
+    }
 
     // Fill profile name/email/initials in the UI (will hydrate from DB)
     const nameEl = root.querySelector('#displayName');
@@ -160,7 +232,7 @@
         })
         .then(json => {
           if (!json || json.success !== true || !Array.isArray(json.data)) {
-            toast('无法从服务器读取资料');
+            showErrorModal('无法从服务器读取资料');
             return;
           }
           const rec = json.data[0] || {};
@@ -174,7 +246,7 @@
         .catch((err) => {
           // Network error or aborted; keep defaults
           console.warn('[me] /readdata error:', err);
-          toast('网络错误，显示本地占位信息');
+          showErrorModal('网络错误，请稍后再试');
         })
         .finally(() => { fetchController = null; });
       // ensure request is aborted on page destroy
@@ -368,16 +440,16 @@
         const oldPwdVal = iPwdOld.value.trim();
         const newPwdVal = iPwd.value.trim();
         if (ageVal && (isNaN(Number(ageVal)) || Number(ageVal) < 0 || Number(ageVal) > 120)) {
-          toast('年龄范围应在 0~120');
+          showErrorModal('年龄范围应在 0~120');
           return;
         }
         // 如果要修改密码，必须同时提供原始密码和新密码
         if (oldPwdVal || newPwdVal) {
-          if (!oldPwdVal) { toast('请填写原始密码'); return; }
-          if (!newPwdVal) { toast('请填写新密码'); return; }
+          if (!oldPwdVal) { showErrorModal('请填写原始密码'); return; }
+          if (!newPwdVal) { showErrorModal('请填写新密码'); return; }
           const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,20}$/;
           if (!passwordRegex.test(newPwdVal)) {
-            toast('新密码需为8-20位，包含大写字母、小写字母和数字');
+            showErrorModal('新密码需为8-20位，包含大写字母、小写字母和数字');
             return;
           }
         }
@@ -389,7 +461,7 @@
           close();
         } catch (e) {
           console.warn('[me] 保存失败:', e);
-          toast('保存失败，请稍后再试');
+          showErrorModal('保存失败，请稍后再试');
         }
       });
 
