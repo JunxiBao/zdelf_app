@@ -89,9 +89,9 @@ def editdata():
         # 密码校验（new_password 或 password 二选一）
         new_password = data.get("new_password") or data.get("password")
         if new_password is not None and new_password != "":
-            # 至少 1 大写 + 1 小写 + 1 数字，长度 8-20，仅字母数字
-            if not re.fullmatch(r"(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,20}", str(new_password)):
-                return jsonify({"success": False, "message": "密码需为8-20位，包含大写字母、小写字母和数字"}), 400
+            # 至少 1 大写 + 1 小写 + 1 数字，长度 8-20，允许常见符号
+            if not re.fullmatch(r"(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]{8,20}", str(new_password)):
+                return jsonify({"success": False, "message": "新密码必须为8到20位，包含大写字母、小写字母和数字，一些特殊字符不能包括"}), 400
             updated_fields.append("password = %s")
             params.append(new_password)
 
