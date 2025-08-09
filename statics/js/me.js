@@ -184,6 +184,71 @@
       document.addEventListener('keydown', function esc(ev) { if (ev.key === 'Escape') { document.removeEventListener('keydown', esc); close(); } });
     }
 
+    // -----------------------------
+    // Success modal (purple theme, dark-mode friendly)
+    // -----------------------------
+    function ensureSuccessStyles() {
+      if (document.getElementById('success-modal-style')) return;
+      const s = document.createElement('style');
+      s.id = 'success-modal-style';
+      s.textContent = `
+      .ok-mask{position:fixed;inset:0;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:120000;backdrop-filter:blur(8px)}
+      .ok-mask.show{opacity:1;pointer-events:auto}
+      .ok-dialog{width:min(92vw,420px);background:var(--card-bg,#fff);color:var(--text,#1b1b1f);border-radius:16px;box-shadow:0 18px 42px rgba(98,0,234,.20),0 6px 18px rgba(0,0,0,.1);border:1px solid var(--border,rgba(98,0,234,.12));transform:translateY(10px) scale(.98);opacity:.98;transition:transform .2s ease,opacity .2s ease}
+      .ok-dialog.show{transform:translateY(0) scale(1);opacity:1}
+      .ok-head{display:flex;align-items:center;gap:10px;padding:16px 18px 8px}
+      .ok-title{font-weight:800;letter-spacing:.3px}
+      .ok-body{padding:6px 18px 14px;line-height:1.6;color:var(--text,#1b1b1f)}
+      .ok-footer{display:flex;justify-content:flex-end;gap:10px;padding:0 12px 14px}
+      .ok-btn{appearance:none;border:0;border-radius:12px;padding:9px 14px;font-weight:600;cursor:pointer}
+      .ok-btn-primary{background:linear-gradient(180deg,var(--primary,#6200ea),var(--primary-600,#4b00b5));color:#fff}
+      @media (prefers-color-scheme: dark){
+        .ok-dialog{background:#1c1c22;color:var(--text,#e6e6ea);border-color:rgba(255,255,255,.08);box-shadow:0 22px 48px rgba(0,0,0,.55)}
+      }
+      `;
+      document.head.appendChild(s);
+      cleanupFns.push(() => { if (s.parentNode) s.remove(); });
+    }
+
+    function showSuccessModal(message, title = '已保存') {
+      ensureSuccessStyles();
+      const mask = document.createElement('div');
+      mask.className = 'ok-mask';
+      mask.setAttribute('role','dialog');
+      mask.setAttribute('aria-modal','true');
+
+      const dlg = document.createElement('div');
+      dlg.className = 'ok-dialog';
+
+      const head = document.createElement('div'); head.className = 'ok-head';
+      const h = document.createElement('div'); h.className = 'ok-title'; h.textContent = title;
+      head.append(h);
+
+      const body = document.createElement('div'); body.className = 'ok-body'; body.textContent = message || '保存成功';
+
+      const foot = document.createElement('div'); foot.className = 'ok-footer';
+      const ok = document.createElement('button'); ok.className = 'ok-btn ok-btn-primary'; ok.textContent = '好的';
+      foot.append(ok);
+
+      dlg.append(head, body, foot);
+      mask.appendChild(dlg);
+      document.body.appendChild(mask);
+
+      requestAnimationFrame(() => { mask.classList.add('show'); dlg.classList.add('show'); });
+
+      const close = () => {
+        dlg.classList.remove('show'); mask.classList.remove('show');
+        const onEnd = () => { mask.removeEventListener('transitionend', onEnd); if (mask.parentNode) mask.remove(); };
+        mask.addEventListener('transitionend', onEnd);
+      };
+      ok.addEventListener('click', close, { once: true });
+      mask.addEventListener('click', (e) => { if (e.target === mask) close(); });
+
+      // auto close after 1.6s
+      const timer = setTimeout(close, 1600);
+      cleanupFns.push(() => { clearTimeout(timer); if (mask.parentNode) mask.remove(); });
+    }
+
     // Fill profile name/email/initials in the UI (will hydrate from DB)
     const nameEl = root.querySelector('#displayName');
     const emailEl = root.querySelector('#displayEmail');
@@ -516,6 +581,13 @@
         const ageVal = iAge.value.trim();
         const newPwdVal = iPwd.value.trim();
 
+        const ageChanged = (ageVal !== '' && Number(ageVal) !== Number(user.age));
+        const pwdChanged = !!newPwdVal;
+        if (!ageChanged && !pwdChanged) {
+          showErrorModal('您没有任何改动');
+          return;
+        }
+
         if (ageVal && (isNaN(Number(ageVal)) || Number(ageVal) < 0 || Number(ageVal) > 120)) {
           showErrorModal('年龄范围应在 0~120');
           return;
@@ -533,7 +605,7 @@
           // 模拟成功：不实际调用后端
           if (ageVal !== '') user.age = ageVal; // 更新本地展示
           renderUser();
-          toast('修改成功');
+          showSuccessModal('修改成功');
           close();
         } catch (e) {
           console.warn('[me] 保存失败:', e);
