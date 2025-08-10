@@ -5,7 +5,7 @@ from routes.register import register_blueprint
 from routes.readdata import readdata_blueprint
 from routes.editdata import editdata_blueprint
 from routes.deepseek import deepseek_blueprint
-from src.backend.routes.sms import sms_blueprint
+from routes.sms import sms_blueprint
 
 
 app = Flask(__name__)
