@@ -158,7 +158,8 @@ function loadPage(index) {
         "../../statics/js/daily.js",
         "../../statics/js/case.js",
         "../../statics/js/square.js",
-        "../../statics/js/me.js"
+        "../../statics/js/me.js",
+        "../../statics/js/deepseek.js"
       ];
 
       if (scriptMap[index]) {
