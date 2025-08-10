@@ -96,131 +96,7 @@
   </style>
   <title>注册</title>
   <style>
-    /* Color system & surfaces */
-    :root {
-      --primary: #6200ea;
-      /* theme violet */
-      --bg: #f6f4ff;
-      /* light background */
-      --surface: #ffffff;
-      /* light surface */
-      --text: #1b1b1f;
-      /* light text */
-      --muted: #6b6b6b;
-      /* light placeholder */
-      --border: rgba(0, 0, 0, 0.12);
-      /* light divider */
-      --elev: 0 10px 24px rgba(0, 0, 0, 0.08);
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    .record-container {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      box-shadow: var(--elev);
-      backdrop-filter: saturate(160%) blur(6px);
-      border-radius: 16px;
-    }
-
-    .record-title {
-      color: var(--text);
-    }
-
-    .record-textarea,
-    .record-input {
-      background: color-mix(in srgb, var(--surface) 96%, transparent);
-      border: 1px solid var(--border);
-      color: var(--text);
-      transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
-    }
-
-    .record-textarea::placeholder,
-    .record-input::placeholder {
-      color: var(--muted);
-    }
-
-    .record-textarea:focus,
-    .record-input:focus {
-      outline: none;
-      border-color: color-mix(in srgb, var(--primary) 60%, transparent);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
-    }
-
-    .record-btn {
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      transition: transform 160ms ease, box-shadow 180ms ease, opacity 180ms ease;
-      box-shadow: 0 8px 18px rgba(98, 0, 234, 0.22);
-    }
-
-    .record-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 22px rgba(98, 0, 234, 0.28);
-    }
-
-    .record-btn:active {
-      transform: translateY(0);
-    }
-
-    a {
-      color: var(--primary);
-    }
-
-    /* Popup surface */
-    .popup .popup-content {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border);
-      box-shadow: var(--elev);
-      border-radius: 12px;
-    }
-
-    /* System-wide dark mode */
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0f0f12;
-        --surface: #16161b;
-        --text: #e6e6ea;
-        --muted: #a9a9b3;
-        --border: rgba(255, 255, 255, 0.12);
-        --elev: 0 14px 30px rgba(0, 0, 0, 0.6);
-      }
-
-      .record-btn {
-        box-shadow: 0 10px 24px rgba(98, 0, 234, 0.35);
-      }
-
-      .record-btn:hover {
-        box-shadow: 0 14px 30px rgba(98, 0, 234, 0.45);
-      }
-
-      /* Inputs look better slightly darker in dark mode */
-      .record-textarea,
-      .record-input {
-        background: #1b1b22;
-      }
-
-      /* Links have a bit more luminance in dark mode */
-      a {
-        color: #7c4dff;
-      }
-    }
-
-    /* iOS safe-area padding so content doesn't clip under sensor housings */
-    @supports(padding: max(0px)) {
-      .page-center {
-        padding-left: max(16px, env(safe-area-inset-left));
-        padding-right: max(16px, env(safe-area-inset-right));
-        padding-top: max(16px, env(safe-area-inset-top));
-        padding-bottom: max(16px, env(safe-area-inset-bottom));
-      }
-    }
+    
   </style>
 </head>
 
@@ -232,6 +108,33 @@
     <div class="record-container">
       <h1 class="record-title">注册账号</h1>
       <input type="text" placeholder="用户名" class="record-textarea" id="username" />
+      <!-- 手机号（仅限中国大陆，支持+86/86 前缀） -->
+      <input
+        type="tel"
+        class="record-textarea"
+        id="phoneReg"
+        inputmode="tel"
+        autocomplete="tel"
+        placeholder="请输入中国大陆手机号中国大陆手机号（不含国家码）"
+        maxlength="17"
+        aria-label="手机号"
+        style="margin-top: 10px;"
+      />
+      <!-- 验证码输入 + 获取验证码按钮 -->
+      <div class="input-with-action" style="margin-top: 10px;">
+        <input
+          class="record-textarea"
+          id="smsCodeReg"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="短信验证码（6位数字）"
+          pattern="\d{6}"
+          maxlength="6"
+          aria-label="短信验证码"
+        />
+        <button type="button" class="code-action" id="sendCodeBtnReg" aria-label="获取短信验证码">获取验证码</button>
+      </div>
       <div class="input-with-toggle">
         <input type="password" placeholder="密码" class="record-textarea" id="password" />
         <button type="button" class="toggle-password" data-target="password" aria-label="显示密码" title="显示密码">
@@ -317,6 +220,82 @@
         setState(false);
       });
     })();
+      // === 短信验证码逻辑（仅中国大陆手机号） ===
+      (function () {
+        const popup = document.getElementById('popup');
+        const popupText = document.getElementById('popupText');
+        const phone = document.getElementById('phoneReg');
+        const code = document.getElementById('smsCodeReg');
+        const sendBtn = document.getElementById('sendCodeBtnReg');
+  
+        if (!phone || !code || !sendBtn) return;
+  
+        function toast(text) {
+          if (!popup || !popupText) return alert(text);
+          popupText.textContent = text;
+          popup.classList.add('show');
+          setTimeout(() => popup.classList.remove('show'), 1600);
+        }
+        // 仅允许中国大陆手机号（号段 13-19，11 位；允许 +86/86 前缀）
+        function validPhone(v) {
+          const raw = v.trim().replace(/\s|-/g, '');
+          let num = raw;
+          if (raw.startsWith('+86')) num = raw.slice(3);
+          else if (raw.startsWith('86')) num = raw.slice(2);
+          return /^1[3-9]\d{9}$/.test(num);
+        }
+        function toE164(v) {
+          const raw = v.trim().replace(/\s|-/g, '');
+          if (raw.startsWith('+86')) return raw;
+          if (raw.startsWith('86')) return '+' + raw;
+          return '+86' + raw;
+        }
+  
+        let ticking = false;
+        let remain = 60;
+        let timer = null;
+        function setSendState(disabled) {
+          sendBtn.disabled = disabled;
+          sendBtn.textContent = disabled ? '重新发送 (' + remain + 's)' : '获取验证码';
+        }
+        function startCountdown() {
+          ticking = true;
+          remain = 60;
+          setSendState(true);
+          timer = setInterval(() => {
+            remain -= 1;
+            if (remain <= 0) {
+              clearInterval(timer);
+              ticking = false;
+              setSendState(false);
+            } else {
+              setSendState(true);
+            }
+          }, 1000);
+        }
+  
+        sendBtn.addEventListener('click', async () => {
+          const v = phone.value.trim();
+          if (!validPhone(v)) {
+            toast('请填写有效的中国大陆手机号');
+            return;
+          }
+          // 微交互动效
+          sendBtn.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.96)' }, { transform: 'scale(1)' }], { duration: 140, easing: 'ease-out' });
+  
+          const normalized = toE164(v);
+          // TODO: 调用后端发送验证码接口，例如：
+          // await fetch('/api/auth/sms/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: normalized }) })
+  
+          // 加载态 & 倒计时
+          sendBtn.classList.add('loading');
+          setTimeout(() => {
+            sendBtn.classList.remove('loading');
+            toast('验证码已发送');
+            if (!ticking) startCountdown();
+          }, 500);
+        });
+      })();
   </script>
 </body>
 

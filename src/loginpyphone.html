@@ -1,0 +1,172 @@
+
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>短信登录</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212" />
+  <link rel="stylesheet" href="../statics/css/register.css" />
+  <style>
+    
+  </style>
+</head>
+<body>
+  <div class="page-center">
+    <div class="record-container">
+      <div class="record-title">短信登录</div>
+
+      <!-- 手机号输入（支持+国家码） -->
+      <input
+        class="record-textarea"
+        id="phone"
+        type="tel"
+        inputmode="tel"
+        autocomplete="tel"
+        placeholder="请输入中国大陆手机号（不含国家码）"
+        maxlength="17"
+        aria-label="手机号"
+      />
+
+      <!-- 验证码输入 + 获取验证码按钮 -->
+      <div class="input-with-action" style="margin-top: 10px;">
+        <input
+          class="record-textarea"
+          id="smsCode"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="短信验证码（6位数字）"
+          pattern="\\d{6}"
+          maxlength="6"
+          aria-label="短信验证码"
+        />
+        <button type="button" class="code-action" id="sendCodeBtn" aria-label="获取短信验证码">获取验证码</button>
+      </div>
+
+      <button class="record-btn" id="smsLoginBtn" style="margin-top: 12px;">短信登录</button>
+
+      <div style="margin-top: 12px; font-size: 0.95em;">
+        想用密码登录？
+        <a href="login.html" style="text-decoration: none; font-weight: 500;">前往密码登录！</a>
+      </div>
+    </div>
+
+    <div class="popup" id="popup">
+      <div class="popup-content" id="popupText">加载中...</div>
+    </div>
+  </div>
+
+  <!-- 逻辑：发送验证码倒计时 + 简单校验 -->
+  <script>
+    (function () {
+      const phone = document.getElementById('phone');
+      const code = document.getElementById('smsCode');
+      const sendBtn = document.getElementById('sendCodeBtn');
+      const loginBtn = document.getElementById('smsLoginBtn');
+      const popup = document.getElementById('popup');
+      const popupText = document.getElementById('popupText');
+
+      function toast(text) {
+        if (!popup || !popupText) return alert(text);
+        popupText.textContent = text;
+        popup.classList.add('show');
+        setTimeout(() => popup.classList.remove('show'), 1800);
+      }
+
+      // 仅允许中国大陆手机号（可选+86/86 前缀），号段 13-19，固定 11 位
+      function validPhone(v) {
+        const raw = v.trim().replace(/\s|-/g, '');
+        let num = raw;
+        if (raw.startsWith('+86')) num = raw.slice(3);
+        else if (raw.startsWith('86')) num = raw.slice(2);
+        return /^1[3-9]\d{9}$/.test(num);
+      }
+
+      let ticking = false;
+      let remain = 60;
+      let timer = null;
+
+      function setSendState(disabled) {
+        sendBtn.disabled = disabled;
+        sendBtn.textContent = disabled ? '重新发送 (' + remain + 's)' : '获取验证码';
+      }
+
+      function startCountdown() {
+        ticking = true;
+        remain = 60;
+        setSendState(true);
+        timer = setInterval(() => {
+          remain -= 1;
+          if (remain <= 0) {
+            clearInterval(timer);
+            ticking = false;
+            setSendState(false);
+          } else {
+            setSendState(true);
+          }
+        }, 1000);
+      }
+
+      sendBtn.addEventListener('click', () => {
+        const v = phone.value.trim();
+        if (!validPhone(v)) {
+          toast('请填写有效手机号');
+          return;
+        }
+        // 视觉反馈
+        sendBtn.animate([{ transform: 'translateY(-50%) scale(1)' }, { transform: 'translateY(-50%) scale(0.96)' }, { transform: 'translateY(-50%) scale(1)' }], { duration: 140, easing: 'ease-out' });
+
+        // 标准化为 E.164（+86 开头）
+        const normalized = (() => {
+          const raw = v.replace(/\s|-/g, '');
+          if (raw.startsWith('+86')) return raw;
+          if (raw.startsWith('86')) return '+' + raw;
+          return '+86' + raw;
+        })();
+
+        // TODO: 在此调用后端发送验证码接口，例如 /api/auth/sms/send
+        // await fetch('/api/auth/sms/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: normalized }) })
+
+        // 设置加载态（视觉上转圈），这里模拟网络延迟
+        sendBtn.classList.add('loading');
+        setTimeout(() => {
+          sendBtn.classList.remove('loading');
+          toast('验证码已发送');
+          if (!ticking) startCountdown();
+        }, 500);
+      });
+
+      loginBtn.addEventListener('click', () => {
+        const v = phone.value.trim();
+        const c = code.value.trim();
+
+        if (!validPhone(v)) {
+          toast('请填写有效手机号');
+          return;
+        }
+        if (!/^\d{6}$/.test(c)) {
+          toast('请填写6位验证码');
+          return;
+        }
+
+        // 标准化为 E.164
+        const normalized = (() => {
+          const raw = v.replace(/\s|-/g, '');
+          if (raw.startsWith('+86')) return raw;
+          if (raw.startsWith('86')) return '+' + raw;
+          return '+86' + raw;
+        })();
+
+        // TODO: 在此调用后端校验接口，例如 /api/auth/sms/login
+        // fetch('/api/auth/sms/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: normalized, code: c }) })
+
+        toast('登录中...');
+      });
+    })();
+  </script>
+</body>
+</html>

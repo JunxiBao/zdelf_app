@@ -8,114 +8,9 @@
   <meta name="color-scheme" content="light dark" />
   <meta name="theme-color" content="#ffffff" />
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212" />
-  <link rel="stylesheet" href="../statics/css/login.css" />
+  <link rel="stylesheet" href="../statics/css/register.css" />
   <style>
-    :root {
-      --primary: #6200ea;
-      --bg: #f6f4ff;
-      --surface: #ffffff;
-      --text: #1b1b1f;
-      --muted: #6b6b6b;
-      --border: rgba(0,0,0,0.12);
-      --elev: 0 10px 24px rgba(0,0,0,0.08);
-    }
-    body { background: var(--bg); color: var(--text); }
-    .record-container {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      box-shadow: var(--elev);
-      backdrop-filter: saturate(160%) blur(6px);
-      border-radius: 16px;
-    }
-    .record-title { color: var(--text); }
-    .record-textarea {
-      background: color-mix(in srgb, var(--surface) 96%, transparent);
-      border: 1px solid var(--border);
-      color: var(--text);
-      transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
-    }
-    .record-textarea::placeholder { color: var(--muted); }
-    .record-textarea:focus {
-      outline: none;
-      border-color: color-mix(in srgb, var(--primary) 60%, transparent);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
-    }
-    .record-btn {
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      transition: transform 160ms ease, box-shadow 180ms ease, opacity 180ms ease;
-      box-shadow: 0 8px 18px rgba(98,0,234,0.22);
-    }
-    .record-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(98,0,234,0.28); }
-    .record-btn:active { transform: translateY(0); }
-    a { color: var(--primary); }
-    .popup .popup-content {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border);
-      box-shadow: var(--elev);
-      border-radius: 12px;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0f0f12;
-        --surface: #16161b;
-        --text: #e6e6ea;
-        --muted: #a9a9b3;
-        --border: rgba(255,255,255,0.12);
-        --elev: 0 14px 30px rgba(0,0,0,0.6);
-      }
-      .record-btn { box-shadow: 0 10px 24px rgba(98,0,234,0.35); }
-      .record-btn:hover { box-shadow: 0 14px 30px rgba(98,0,234,0.45); }
-      .record-textarea { background: #1b1b22; }
-      a { color: #7c4dff; }
-    }
-    @supports(padding: max(0px)) {
-      .page-center {
-        padding-left: max(16px, env(safe-area-inset-left));
-        padding-right: max(16px, env(safe-area-inset-right));
-        padding-top: max(16px, env(safe-area-inset-top));
-        padding-bottom: max(16px, env(safe-area-inset-bottom));
-      }
-    }
-    .input-with-toggle {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    .input-with-toggle input.record-textarea {
-      width: 100%;
-      padding-right: 40px;
-      box-sizing: border-box;
-    }
-    .toggle-password {
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0 4px;
-      display: flex;
-      align-items: center;
-      opacity: 0.7;
-      transition: opacity 120ms;
-      z-index: 2;
-    }
-    .toggle-password:hover { opacity: 1; }
-    .toggle-password .icon {
-      width: 22px;
-      height: 22px;
-      display: block;
-      transition: opacity 120ms;
-    }
-    .icon-hidden { display: none; }
-    .icon-visible { display: block; }
-    .toggle-password .icon.visible { display: block; }
-    .toggle-password .icon.hidden { display: none; }
+   
   </style>
 </head>
 
@@ -140,6 +35,9 @@
         </button>
       </div>
       <button class="record-btn" id="loginBtn">登录</button>
+      <button class="record-btn" id="phoneLoginBtn" style="margin-top: 8px;" onclick="location.href='loginpyphone.html'">
+        使用手机号登录
+      </button>
       <div style="margin-top: 12px; font-size: 0.95em;">
         没有账号？
         <a href="register.html" style="color: #6200ea; text-decoration: none; font-weight: 500;">

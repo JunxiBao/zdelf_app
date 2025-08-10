@@ -1,36 +1,83 @@
-/* ------------------------------
-   注册页样式 (精修版)
-   - 与登录页视觉统一
-   - 无需改动 HTML 即可生效
-   - 支持暗黑模式 / 降低动画
-   - 移动端优化
--------------------------------- */
+/* =============================================================================
+   Register Page Styles — Consolidated & Commented
+   统一整理：去重 / 分组 / 英文注释 + 中文小标注
+   - Visual parity with login page (与登录页一致)
+   - Dark mode support (支持暗黑模式)
+   - Mobile & iOS safe areas (移动端与安全区)
+   - SMS code UI (短信验证码输入与按钮)
+============================================================================= */
 
+/* -----------------------------------------------------------------------------
+   1) Design Tokens / CSS Variables 设计变量
+----------------------------------------------------------------------------- */
 :root {
-  --bg: #f6f3ff;
-  --text: #1b1b1f;
-  --text-muted: #6b6b6b;
+  /* Core brand / colors 核心品牌与色彩 */
   --primary: #6200ea;
+  /* theme violet 品牌紫 */
   --primary-600: #4b00b5;
+  /* darker violet 深紫 */
   --primary-200: #bb86fc;
-  --primary-contrast: #ffffff;
-  --card-bg: #ffffff;
+  /* lighter violet 浅紫 */
+
+  /* Neutrals & text 中性色与文字 */
+  --bg: #f6f3ff;
+  /* app background 应用背景 */
+  --text: #1b1b1f;
+  /* primary text 主文字 */
+  --text-muted: #6b6b6b;
+  /* secondary text 次要文字 */
+
+  /* Surfaces & effects 表面与效果 */
+  --surface: #ffffff;
+  /* card surface 卡片 */
   --border: rgba(98, 0, 234, 0.12);
   --ring: rgba(98, 0, 234, 0.35);
+  /* focus ring 聚焦环 */
   --shadow: 0 8px 24px rgba(98, 0, 234, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  /* Radii & spacing 圆角与间距 */
   --radius: 16px;
   --radius-sm: 12px;
   --space: clamp(16px, 3.5vw, 28px);
+
+  /* Timings 动画时长 */
   --dur-fast: 120ms;
   --dur: 200ms;
+
+  /* Others 其他 */
   --blur: 10px;
+  --elev: 0 10px 24px rgba(0, 0, 0, 0.08);
+
+  /* Background gradients 背景光效 */
   --bg-grad-1: radial-gradient(1200px 800px at 10% -10%, rgba(98, 0, 234, 0.10), transparent);
   --bg-grad-2: radial-gradient(900px 650px at 110% -10%, rgba(98, 0, 234, 0.06), transparent);
+
+  /* Layout helpers 布局辅助 */
+  --page-gap: clamp(12px, 4vw, 20px);
 }
 
-/* 视图居中与间隙容器（与 HTML 中的 .page-center 配合） */
-:root { --page-gap: clamp(12px, 4vw, 20px); }
+/* -----------------------------------------------------------------------------
+   2) Page & Layout 页面与布局
+----------------------------------------------------------------------------- */
+html,
+body {
+  height: 100%;
+}
 
+body {
+  font-family: 'Segoe UI', 'PingFang SC', Arial, sans-serif;
+  background: var(--bg-grad-1), var(--bg-grad-2), var(--bg);
+  color: var(--text);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  animation: fadeInBody 0.5s ease-out;
+}
+
+/* Center content, respect iOS safe areas 视图居中并适配安全区 */
 .page-center {
   position: fixed;
   inset: 0;
@@ -42,25 +89,23 @@
   box-sizing: border-box;
 }
 
-/* 背景与排版 */
-body {
-  font-family: 'Segoe UI', 'PingFang SC', Arial, sans-serif;
-  background: var(--bg-grad-1), var(--bg-grad-2), var(--bg);
-  margin: 0;
-  color: var(--text);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  min-height: 100svh;
-  display: grid;
-  place-items: center;
-  animation: fadeInBody 0.5s ease-out;
+/* iOS safe-area padding so content doesn't clip under sensor housings */
+@supports(padding: max(0px)) {
+  .page-center {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
 }
 
-/* 容器卡片 */
+/* -----------------------------------------------------------------------------
+   3) Card / Container 容器卡片
+----------------------------------------------------------------------------- */
 .record-container {
   width: 100%;
   max-width: 520px;
-  background: color-mix(in srgb, var(--card-bg) 85%, transparent);
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -69,13 +114,16 @@ body {
   backdrop-filter: saturate(160%) blur(var(--blur));
   transition: transform var(--dur-fast) ease, box-shadow var(--dur) ease, border-color var(--dur) ease, background-color var(--dur) ease;
 }
+
 .record-container:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 30px rgba(98, 0, 234, 0.18), 0 2px 10px rgba(0,0,0,0.08);
+  box-shadow: 0 12px 30px rgba(98, 0, 234, 0.18), 0 2px 10px rgba(0, 0, 0, 0.08);
   border-color: color-mix(in srgb, var(--primary) 20%, var(--border));
 }
 
-/* 标题 */
+/* -----------------------------------------------------------------------------
+   4) Headings 标题
+----------------------------------------------------------------------------- */
 .record-title {
   font-size: 1.6rem;
   font-weight: 800;
@@ -88,7 +136,9 @@ body {
   color: transparent;
 }
 
-/* 输入框（兼容 .record-textarea / .record-input） */
+/* -----------------------------------------------------------------------------
+   5) Inputs 输入组件（兼容 .record-textarea / .record-input）
+----------------------------------------------------------------------------- */
 .record-textarea,
 .record-input {
   width: 100%;
@@ -98,15 +148,24 @@ body {
   border-radius: var(--radius-sm);
   font-size: 1rem;
   outline: none;
-  background: #fafaff;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
   transition: border-color var(--dur) ease, box-shadow var(--dur) ease, background var(--dur) ease, transform var(--dur-fast) ease;
   margin-bottom: 14px;
   box-sizing: border-box;
+  color: var(--text);
 }
+
 .record-textarea::placeholder,
-.record-input::placeholder { color: #9aa0b4; }
+.record-input::placeholder {
+  color: #9aa0b4;
+}
+
 .record-textarea:hover,
-.record-input:hover { border-color: #d3c8ff; background: #ffffff; }
+.record-input:hover {
+  border-color: #d3c8ff;
+  background: #ffffff;
+}
+
 .record-textarea:focus,
 .record-input:focus {
   background: #fff;
@@ -115,42 +174,92 @@ body {
   transform: translateY(-1px);
 }
 
-/* 密码显示/隐藏按钮样式 */
-.input-with-toggle { position: relative; display: flex; align-items: center; }
-.input-with-toggle input.record-textarea { width: 100%; padding-right: 44px; box-sizing: border-box; }
-.toggle-password {
-  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-  background: transparent; border: none; cursor: pointer; padding: 6px;
-  display: inline-flex; align-items: center; justify-content: center; border-radius: 10px;
-  transition: background-color var(--dur-fast) ease, transform var(--dur-fast) ease, opacity var(--dur-fast) ease;
-  opacity: 0.8; -webkit-tap-highlight-color: transparent;
-}
-.toggle-password:hover { background: rgba(98,0,234,0.08); opacity: 1; }
-.toggle-password:active { transform: translateY(-50%) scale(0.96); }
-.toggle-password:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.toggle-password .icon { width: 22px; height: 22px; display: block; }
-.toggle-password .icon.visible { opacity: 1; transition: opacity var(--dur-fast) ease, transform var(--dur) ease; transform: rotate(0deg) scale(1); }
-.toggle-password .icon.hidden { opacity: 0; transition: opacity var(--dur-fast) ease, transform var(--dur) ease; transform: rotate(-12deg) scale(0.9); }
-
-/* 自动填充优化 */
+/* Autofill smoothing 自动填充优化 */
 input.record-input:-webkit-autofill,
 input.record-input:-webkit-autofill:hover,
 input.record-input:-webkit-autofill:focus {
   transition: background-color 9999s, color 9999s;
 }
 
-/* 错误态（可在 JS 中为输入加上 .is-invalid） */
+/* Error state 错误态（在 JS 中添加 .is-invalid） */
 .record-textarea.is-invalid,
 .record-input.is-invalid {
   border-color: #e5484d;
   box-shadow: 0 0 0 4px rgba(229, 72, 77, 0.25);
 }
 
-/* 按钮 */
+/* -----------------------------------------------------------------------------
+   6) Password Toggle 密码显隐按钮
+----------------------------------------------------------------------------- */
+.input-with-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-toggle input.record-textarea {
+  width: 100%;
+  padding-right: 44px;
+  box-sizing: border-box;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  transition: background-color var(--dur-fast) ease, transform var(--dur-fast) ease, opacity var(--dur-fast) ease;
+  opacity: 0.8;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.toggle-password:hover {
+  background: rgba(98, 0, 234, 0.08);
+  opacity: 1;
+}
+
+.toggle-password:active {
+  transform: translateY(-50%) scale(0.96);
+}
+
+.toggle-password:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.toggle-password .icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.toggle-password .icon.visible {
+  opacity: 1;
+  transition: opacity var(--dur-fast) ease, transform var(--dur) ease;
+  transform: rotate(0deg) scale(1);
+}
+
+.toggle-password .icon.hidden {
+  opacity: 0;
+  transition: opacity var(--dur-fast) ease, transform var(--dur) ease;
+  transform: rotate(-12deg) scale(0.9);
+}
+
+/* -----------------------------------------------------------------------------
+   7) Buttons 按钮
+----------------------------------------------------------------------------- */
 .record-btn {
   width: 100%;
   background: linear-gradient(180deg, var(--primary), var(--primary-600));
-  color: var(--primary-contrast);
+  color: #fff;
   border: none;
   border-radius: var(--radius-sm);
   padding: 12px 18px;
@@ -159,21 +268,54 @@ input.record-input:-webkit-autofill:focus {
   cursor: pointer;
   box-shadow: 0 8px 18px rgba(98, 0, 234, 0.22);
   transition: transform var(--dur-fast) ease, filter var(--dur) ease, box-shadow var(--dur) ease, opacity var(--dur) ease;
-  position: relative; overflow: hidden;
+  position: relative;
+  overflow: hidden;
 }
-.record-btn:hover { filter: brightness(1.05); box-shadow: 0 12px 26px rgba(98, 0, 234, 0.28); transform: translateY(-1px); }
-.record-btn:active { transform: translateY(0); }
-.record-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 30%, transparent); outline-offset: 3px; }
-.record-btn:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: 0 2px 8px rgba(98, 0, 234, 0.12); }
-.record-btn.is-loading { pointer-events: none; }
+
+.record-btn:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 12px 26px rgba(98, 0, 234, 0.28);
+  transform: translateY(-1px);
+}
+
+.record-btn:active {
+  transform: translateY(0);
+}
+
+.record-btn:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  outline-offset: 3px;
+}
+
+.record-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: 0 2px 8px rgba(98, 0, 234, 0.12);
+}
+
+.record-btn.is-loading {
+  pointer-events: none;
+}
+
 .record-btn.is-loading::after {
-  content: ""; position: absolute; inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
   animation: shimmer 1.2s infinite;
 }
-@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
-/* 账号引导链接区域（如有） */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Links 链接 */
 .record-container a {
   color: var(--primary);
   font-weight: 600;
@@ -184,7 +326,9 @@ input.record-input:-webkit-autofill:focus {
   text-decoration: underline;
 }
 
-/* 弹窗/蒙层 */
+/* -----------------------------------------------------------------------------
+   8) Popup / Toast 弹窗/提示
+----------------------------------------------------------------------------- */
 .popup {
   position: fixed;
   inset: 0;
@@ -215,44 +359,152 @@ input.record-input:-webkit-autofill:focus {
   border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
 
-/* 动画与可访问性 */
+/* -----------------------------------------------------------------------------
+   9) SMS Code Inputs & Button 短信验证码输入与按钮
+----------------------------------------------------------------------------- */
+.input-with-action {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.input-with-action input.record-textarea {
+  width: 100%;
+  padding-right: 136px;
+  /* reserve space for the side button 右侧按钮预留空间 */
+  box-sizing: border-box;
+}
+
+/* Transparent in-field action button 输入框内的透明功能按钮（获取验证码） */
+.code-action {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  height: auto;
+  padding: 0 14px;
+  border-radius: 0 10px 10px 0;
+  border: none;
+  background: transparent;
+  /* no background 不要背景 */
+  color: var(--primary);
+  cursor: pointer;
+  transition: opacity 120ms, transform 140ms, color 160ms;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.code-action:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.code-action[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Loading spinner on the button 加载中的小圆圈 */
+.code-action.loading {
+  position: relative;
+}
+
+.code-action.loading::after {
+  content: "";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   10) Animations & A11y 动画与可访问性
+----------------------------------------------------------------------------- */
 @keyframes fadeInBody {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
-  .record-btn.is-loading::after { animation: none !important; }
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .record-btn.is-loading::after {
+    animation: none !important;
+  }
 }
 
-/* 移动端优化 */
+/* -----------------------------------------------------------------------------
+   11) Responsive 响应式
+----------------------------------------------------------------------------- */
 @media (max-width: 600px) {
-  html, body { height: auto; overflow: hidden; }
-  body { display: block; }
+
+  html,
+  body {
+    height: auto;
+    overflow: hidden;
+  }
+
+  body {
+    display: block;
+  }
+
   .page-center {
     height: calc(var(--vh, 100dvh));
-    padding: calc(env(safe-area-inset-top) + var(--page-gap))
-             calc(env(safe-area-inset-right) + var(--page-gap))
-             calc(env(safe-area-inset-bottom) + var(--page-gap))
-             calc(env(safe-area-inset-left) + var(--page-gap));
+    padding: calc(env(safe-area-inset-top) + var(--page-gap)) calc(env(safe-area-inset-right) + var(--page-gap)) calc(env(safe-area-inset-bottom) + var(--page-gap)) calc(env(safe-area-inset-left) + var(--page-gap));
   }
-  /* 为防止容器过高引起页面滚动，限制其最大高度 */
+
+  /* Prevent oversized card on small screens 防止过高导致滚动 */
   .record-container {
     max-height: calc(var(--vh, 100dvh) - (env(safe-area-inset-top) + env(safe-area-inset-bottom) + 2 * var(--page-gap)));
     overflow: hidden;
+    padding: 22px 18px 20px;
+    border-radius: 14px;
+    width: 100%;
   }
-  .record-container { padding: 22px 18px 20px; border-radius: 14px; width: 100%; }
-  .record-textarea, .record-input, .record-btn { font-size: 1rem; }
+
+  .record-textarea,
+  .record-input,
+  .record-btn {
+    font-size: 1rem;
+  }
 }
 
-/* 暗黑模式 */
+/* -----------------------------------------------------------------------------
+   12) Dark Mode 暗黑模式
+----------------------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0f0f12;
     --text: #e6e6ea;
     --text-muted: #a9a9b3;
-    --card-bg: #16161b;
+    --surface: #16161b;
     --border: rgba(255, 255, 255, 0.06);
     --ring: rgba(187, 134, 252, 0.35);
     --shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
@@ -260,22 +512,46 @@ input.record-input:-webkit-autofill:focus {
     --bg-grad-2: radial-gradient(900px 650px at 110% -10%, rgba(187, 134, 252, 0.08), transparent);
   }
 
-  body { background: var(--bg-grad-1), var(--bg-grad-2), var(--bg); color: var(--text); }
-  .record-title { background: linear-gradient(90deg, var(--primary-200), #d0b6ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .record-textarea,
-  .record-input { background: #1b1b22; border-color: #2a2a34; color: var(--text); }
-  .record-textarea:focus,
-  .record-input:focus { background: #1b1b22; border-color: var(--primary-200); }
-  .record-btn { background: linear-gradient(180deg, var(--primary-200), #9c66d6); color: #0b0b0f; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45); }
-  .popup-content { background: #1c1c22; color: var(--primary-200); box-shadow: 0 22px 48px rgba(0, 0, 0, 0.55); border-color: rgba(255,255,255,0.08); }
-  .toggle-password:hover { background: rgba(255,255,255,0.06); }
-}
+  body {
+    background: var(--bg-grad-1), var(--bg-grad-2), var(--bg);
+    color: var(--text);
+  }
 
-@supports(padding: max(0px)) {
-  .page-center {
-    padding-left: max(16px, env(safe-area-inset-left));
-    padding-right: max(16px, env(safe-area-inset-right));
-    padding-top: max(16px, env(safe-area-inset-top));
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  .record-title {
+    background: linear-gradient(90deg, var(--primary-200), #d0b6ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .record-textarea,
+  .record-input {
+    background: #1b1b22;
+    border-color: #2a2a34;
+    color: var(--text);
+  }
+
+  .record-textarea:focus,
+  .record-input:focus {
+    background: #1b1b22;
+    border-color: var(--primary-200);
+  }
+
+  .record-btn {
+    background: linear-gradient(180deg, var(--primary-200), #9c66d6);
+    color: #0b0b0f;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  }
+
+  .popup-content {
+    background: #1c1c22;
+    color: var(--primary-200);
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.55);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Code action color for dark mode 深色模式按钮文字色 */
+  .code-action {
+    color: #7c4dff;
   }
 }
