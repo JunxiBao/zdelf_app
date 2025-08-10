@@ -5,6 +5,8 @@ from routes.register import register_blueprint
 from routes.readdata import readdata_blueprint
 from routes.editdata import editdata_blueprint
 from routes.deepseek import deepseek_blueprint
+from src.backend.routes.sms import sms_blueprint
+
 
 app = Flask(__name__)
 app.register_blueprint(login_blueprint)
@@ -12,6 +14,7 @@ app.register_blueprint(register_blueprint)
 app.register_blueprint(readdata_blueprint)
 app.register_blueprint(editdata_blueprint)
 app.register_blueprint(deepseek_blueprint, url_prefix='/deepseek')
+app.register_blueprint(sms_blueprint)
 CORS(app, resources={r"/*": {"origins": "https://zhucan.xyz"}}, supports_credentials=True)
 
 if __name__ == '__main__':

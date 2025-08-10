@@ -134,46 +134,75 @@
   /* =============================
    * 6) Register handler
    * ============================= */
+  // API endpoints (same origin base)
+  var API_BASE = 'https://zhucan.xyz:5000';
+  var SMS_SEND_ENDPOINT = API_BASE + '/sms/send';
+  var SMS_VERIFY_ENDPOINT = API_BASE + '/sms/verify';
   var REGISTER_ENDPOINT = 'https://zhucan.xyz:5000/register';
   async function handleRegister() {
     var usernameEl = document.getElementById('username');
     var passwordEl = document.getElementById('password');
     var confirmEl  = document.getElementById('confirmPassword');
     var ageEl      = document.getElementById('age');
+    var phoneEl    = document.getElementById('phoneReg');
+    var codeEl     = document.getElementById('smsCodeReg');
 
     var username = (usernameEl && usernameEl.value || '').trim();
     var password = (passwordEl && passwordEl.value) || '';
     var confirm  = (confirmEl && confirmEl.value) || '';
     var age      = (ageEl && ageEl.value || '').trim();
+    var phoneRaw = (phoneEl && phoneEl.value || '').trim();
+    var code     = (codeEl && codeEl.value || '').trim();
 
     if (!isValidUsername(username)) { showPopup('用户名不能为空且不超过20位'); return; }
     if (!isValidPassword(password)) { showPopup('密码必须为8到20位，包含大写字母、小写字母和数字，一些特殊字符不能包括'); return; }
-    if (password !== confirm)    { showPopup('两次输入的密码不一致'); return; }
-    if (!isValidAge(age))        { showPopup('年龄必须是1-120之间的整数'); return; }
+    if (password !== confirm)      { showPopup('两次输入的密码不一致'); return; }
+    if (!isValidAge(age))          { showPopup('年龄必须是1-120之间的整数'); return; }
+    if (!isValidCNPhone(phoneRaw)) { showPopup('请填写有效的中国大陆手机号'); return; }
+    if (!/^\d{6}$/.test(code))    { showPopup('请输入 6 位短信验证码'); return; }
+
+    var phoneE164 = toE164CN(phoneRaw);
 
     showLoading();
     try {
-      var res = await fetch(REGISTER_ENDPOINT, {
+      // 1) 先校验短信验证码
+      var vRes = await fetch(SMS_VERIFY_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneE164, code: code })
+      });
+      var vData = {};
+      try { vData = await vRes.json(); } catch (_) { vData = {}; }
+      if (!vRes.ok || !vData || !vData.success) {
+        hideLoading();
+        showPopup('验证码校验失败：' + (vData && vData.message ? vData.message : (vRes.status + ' ' + vRes.statusText)));
+        return;
+      }
+      // 可选：保存后端返回的 token（若有）
+      if (vData.token) { try { localStorage.setItem('token', vData.token); } catch (_) {} }
+
+      // 2) 再完成账号注册（把用户名/密码/年龄入库）
+      var rRes = await fetch(REGISTER_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username, password: password, age: age })
       });
-      var data = {};
-      try { data = await res.json(); } catch (_) { data = {}; }
+      var rData = {};
+      try { rData = await rRes.json(); } catch (_) { rData = {}; }
 
-      if (res.ok && data && data.success) {
+      if (rRes.ok && rData && rData.success) {
         showPopup('注册成功！');
         setTimeout(function () {
           window.location.href = 'login.html';
           hideLoading();
         }, 1500);
       } else {
-        showPopup('注册失败: ' + (data && data.message ? data.message : (res.status + ' ' + res.statusText)));
         hideLoading();
+        showPopup('注册失败: ' + (rData && rData.message ? rData.message : (rRes.status + ' ' + rRes.statusText)));
       }
     } catch (err) {
-      showPopup('网络错误: ' + (err && err.message ? err.message : err));
       hideLoading();
+      showPopup('网络错误: ' + (err && err.message ? err.message : err));
     }
   }
 
@@ -234,7 +263,7 @@
       }, 1000);
     }
 
-    sendBtn.addEventListener('click', function () {
+    sendBtn.addEventListener('click', async function () {
       var v = (phone.value || '').trim();
       if (!isValidCNPhone(v)) { showPopup('请填写有效的中国大陆手机号'); return; }
 
@@ -244,16 +273,33 @@
       ], { duration: 140, easing: 'ease-out' });
 
       var normalized = toE164CN(v);
-      // TODO: 调用后端发送验证码接口，例如：
-      // await fetch('/api/auth/sms/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: normalized }) })
 
-      // loading visual & countdown (simulate async)
-      sendBtn.classList.add('loading');
-      setTimeout(function () {
-        sendBtn.classList.remove('loading');
+      // 调用后端发送验证码接口
+      try {
+        sendBtn.disabled = true;
+        sendBtn.classList.add('loading');
+        var res = await fetch(SMS_SEND_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: normalized })
+        });
+        var data = {};
+        try { data = await res.json(); } catch (_) { data = {}; }
+        if (!res.ok || !data || !data.success) {
+          var msg = (data && data.message) ? data.message : (res.status + ' ' + res.statusText);
+          showPopup('发送失败：' + msg);
+          sendBtn.disabled = false;
+          sendBtn.classList.remove('loading');
+          return;
+        }
         showPopup('验证码已发送');
+        sendBtn.classList.remove('loading');
         if (!ticking) startCountdown();
-      }, 500);
+      } catch (e) {
+        showPopup('网络错误：' + (e && e.message ? e.message : e));
+        sendBtn.disabled = false;
+        sendBtn.classList.remove('loading');
+      }
     });
   }
 
