@@ -1,11 +1,30 @@
-// --- iOS/WKWebView viewport fix & no-scroll ---
+/**
+ * Register page script — organized & documented
+ * 注册页脚本（整理 + 注释 + 轻量健壮性增强）
+ * - iOS/WKWebView viewport fix (safe reflow)
+ * - Global loading overlay (light/dark aware, injected once)
+ * - Popup/toast helper (fallback to alert)
+ * - Form validation (username/password/confirm/age)
+ * - Register request via async/await
+ * - Password visibility toggle
+ * - Mainland China SMS code utilities (send + countdown)
+ */
 (function () {
+  'use strict';
+
+  /* =============================
+   * 1) Viewport & scroll handling
+   * ============================= */
+  var docEl = document.documentElement;
+  var vwRAF = null;
   function setVH() {
-    var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-    document.documentElement.style.setProperty('--vh', h + 'px');
+    if (vwRAF) cancelAnimationFrame(vwRAF);
+    vwRAF = requestAnimationFrame(function () {
+      var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 0;
+      docEl.style.setProperty('--vh', h + 'px');
+    });
   }
-  // expose so other handlers can call it after blur
-  window.__setVH = setVH;
+  window.__setVH = setVH; // expose for blur handlers
   setVH();
   window.addEventListener('resize', setVH);
   window.addEventListener('orientationchange', setVH);
@@ -14,146 +33,230 @@
     visualViewport.addEventListener('resize', setVH);
     visualViewport.addEventListener('scroll', setVH);
   }
-  // 禁止页面上下滚动（仍允许容器内部必要的交互）
-  document.addEventListener('touchmove', function (e) {
-    if (e.target.closest('.record-container')) return; // 允许在卡片内滚动（如果将来有溢出）
-    e.preventDefault();
-  }, { passive: false });
-})();
-const loadingOverlay = document.createElement('div');
-loadingOverlay.id = 'loading-overlay';
-loadingOverlay.innerHTML = '<div class="spinner"></div>';
-document.body.appendChild(loadingOverlay);
-
-const style = document.createElement('style');
-style.innerHTML = `
-#loading-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  z-index: 9999;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s ease;
-}
-
-@media (prefers-color-scheme: dark) {
-  #loading-overlay {
-    background: rgba(0, 0, 0, 0.6);
-  }
-
-  .spinner {
-    border: 6px solid #444;
-    border-top-color: #b197fc;
-  }
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 6px solid #ccc;
-  border-top-color: #7b2cbf;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-`;
-document.head.appendChild(style);
-
-const popup = document.getElementById("popup");
-const popupText = document.getElementById("popupText");
-
-// 当输入框收起键盘后，延迟更新一次视口高度，避免卡片停在下方
-(function attachBlurVH(){
-  var allInputs = document.querySelectorAll('input, textarea');
-  allInputs.forEach(function(el){
-    el.addEventListener('blur', function(){
-      setTimeout(function(){ window.__setVH && window.__setVH(); }, 60);
-    }, true);
-  });
-})();
-
-function showPopup(message, time = 2000) {
-  popupText.textContent = message;
-  popup.classList.add("show");
-  setTimeout(() => {
-    popup.classList.remove("show");
-  }, time);
-}
-
-document.getElementById('registerBtn').addEventListener('click', function () {
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value;
-  const confirmPassword = document.getElementById('confirmPassword').value;
-  const age = document.getElementById('age').value.trim();
-
-  if (!username) {
-    showPopup('用户名不能为空');
-    return;
-  }
-
-  if (username.length > 20) {
-    showPopup('用户名不能超过20个字符');
-    return;
-  }
-
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,20}$/;
-  if (!passwordRegex.test(password)) {
-    showPopup('密码必须为8到20位，包含大写字母、小写字母和数字，一些特殊字符不能包括');
-    return;
-  }
-
-  if (password !== confirmPassword) {
-    showPopup('两次输入的密码不一致');
-    return;
-  }
-
-  // 年龄校验：必须是1-120的整数
-  const ageNum = Number(age);
-  if (!age || isNaN(ageNum) || !Number.isInteger(ageNum) || ageNum < 1 || ageNum > 120) {
-    showPopup('年龄必须是1-120之间的整数');
-    return;
-  }
-
-  showLoading();
-  fetch('https://zhucan.xyz:5000/register', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
+  // Prevent page vertical scroll; allow interactions inside card
+  document.addEventListener(
+    'touchmove',
+    function (e) {
+      if (e.target && e.target.closest && e.target.closest('.record-container')) return;
+      e.preventDefault();
     },
-    body: JSON.stringify({ username, password, age })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      showPopup('注册成功！');
-      setTimeout(() => {
-        window.location.href = 'login.html';
+    { passive: false }
+  );
+
+  /* =============================
+   * 2) Loading overlay (ensure once)
+   * ============================= */
+  var loadingOverlay = document.getElementById('loading-overlay');
+  if (!loadingOverlay) {
+    loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'loading-overlay';
+    loadingOverlay.innerHTML = '<div class="spinner"></div>';
+    document.body.appendChild(loadingOverlay);
+  }
+  (function ensureStyle() {
+    var id = 'register-runtime-style';
+    if (document.getElementById(id)) return;
+    var style = document.createElement('style');
+    style.id = id;
+    style.textContent = `
+#loading-overlay{position:fixed;inset:0;width:100%;height:100%;background:rgba(255,255,255,0.8);z-index:9999;display:none;align-items:center;justify-content:center;transition:background .3s ease}
+@media (prefers-color-scheme: dark){#loading-overlay{background:rgba(0,0,0,0.6)}.spinner{border:6px solid #444;border-top-color:#b197fc}}
+.spinner{width:50px;height:50px;border:6px solid #ccc;border-top-color:#7b2cbf;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}`;
+    document.head.appendChild(style);
+  })();
+  function showLoading() { loadingOverlay.style.display = 'flex'; }
+  function hideLoading() { loadingOverlay.style.display = 'none'; }
+
+  /* =============================
+   * 3) Popup / toast helper
+   * ============================= */
+  var popup = document.getElementById('popup');
+  var popupText = document.getElementById('popupText');
+  function showPopup(message, time) {
+    if (time === void 0) time = 2000;
+    if (!popup || !popupText) { alert(message); return; }
+    popupText.textContent = message;
+    popup.classList.add('show');
+    setTimeout(function () { popup.classList.remove('show'); }, time);
+  }
+
+  /* =============================
+   * 4) Validation helpers
+   * ============================= */
+  var USERNAME_MAX = 20;
+  var PASS_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?]{8,20}$/;
+  function isValidUsername(v) { return !!v && v.length <= USERNAME_MAX; }
+  function isValidPassword(v) { return PASS_RE.test(v); }
+  function isValidAge(v) {
+    var n = Number((v || '').trim());
+    return Number.isInteger(n) && n >= 1 && n <= 120;
+  }
+
+  // Mainland China phone only: allow optional +86/86, segments 13-19, 11 digits
+  function isValidCNPhone(v) {
+    var raw = (v || '').trim().replace(/\s|-/g, '');
+    var num = raw;
+    if (raw.startsWith('+86')) num = raw.slice(3);
+    else if (raw.startsWith('86')) num = raw.slice(2);
+    return /^1[3-9]\d{9}$/.test(num);
+  }
+  function toE164CN(v) {
+    var raw = (v || '').trim().replace(/\s|-/g, '');
+    if (raw.startsWith('+86')) return raw;
+    if (raw.startsWith('86')) return '+' + raw;
+    return '+86' + raw;
+  }
+
+  /* =============================
+   * 5) DOM ready wiring
+   * ============================= */
+  document.addEventListener('DOMContentLoaded', function () {
+    // After input blur, update viewport in case keyboard collapsed
+    var allInputs = document.querySelectorAll('input, textarea');
+    allInputs.forEach(function (el) {
+      el.addEventListener('blur', function () {
+        setTimeout(function () { window.__setVH && window.__setVH(); }, 60);
+      }, true);
+    });
+
+    // Register button
+    var registerBtn = document.getElementById('registerBtn');
+    if (registerBtn) registerBtn.addEventListener('click', handleRegister);
+
+    // Password toggles
+    bindPasswordToggles();
+
+    // SMS code (if present on page)
+    bindSMS();
+  });
+
+  /* =============================
+   * 6) Register handler
+   * ============================= */
+  var REGISTER_ENDPOINT = 'https://zhucan.xyz:5000/register';
+  async function handleRegister() {
+    var usernameEl = document.getElementById('username');
+    var passwordEl = document.getElementById('password');
+    var confirmEl  = document.getElementById('confirmPassword');
+    var ageEl      = document.getElementById('age');
+
+    var username = (usernameEl && usernameEl.value || '').trim();
+    var password = (passwordEl && passwordEl.value) || '';
+    var confirm  = (confirmEl && confirmEl.value) || '';
+    var age      = (ageEl && ageEl.value || '').trim();
+
+    if (!isValidUsername(username)) { showPopup('用户名不能为空且不超过20位'); return; }
+    if (!isValidPassword(password)) { showPopup('密码必须为8到20位，包含大写字母、小写字母和数字，一些特殊字符不能包括'); return; }
+    if (password !== confirm)    { showPopup('两次输入的密码不一致'); return; }
+    if (!isValidAge(age))        { showPopup('年龄必须是1-120之间的整数'); return; }
+
+    showLoading();
+    try {
+      var res = await fetch(REGISTER_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username, password: password, age: age })
+      });
+      var data = {};
+      try { data = await res.json(); } catch (_) { data = {}; }
+
+      if (res.ok && data && data.success) {
+        showPopup('注册成功！');
+        setTimeout(function () {
+          window.location.href = 'login.html';
+          hideLoading();
+        }, 1500);
+      } else {
+        showPopup('注册失败: ' + (data && data.message ? data.message : (res.status + ' ' + res.statusText)));
         hideLoading();
-      }, 1500);
-    } else {
-      showPopup('注册失败: ' + data.message);
+      }
+    } catch (err) {
+      showPopup('网络错误: ' + (err && err.message ? err.message : err));
       hideLoading();
     }
-  })
-  .catch(error => {
-    showPopup('网络错误: ' + error);
-    hideLoading();
-  });
-});
+  }
 
-function showLoading() {
-  loadingOverlay.style.display = 'flex';
-}
+  /* =============================
+   * 7) Password visibility toggles
+   * ============================= */
+  function bindPasswordToggles() {
+    var buttons = document.querySelectorAll('.toggle-password');
+    buttons.forEach(function (btn) {
+      var targetId = btn.getAttribute('data-target');
+      var input = document.getElementById(targetId);
+      if (!input) return;
+      var eye = btn.querySelector('.eye');
+      var eyeOff = btn.querySelector('.eye-off');
+      function setState(show) {
+        input.setAttribute('type', show ? 'text' : 'password');
+        btn.setAttribute('aria-label', show ? '隐藏密码' : '显示密码');
+        btn.setAttribute('title', show ? '隐藏密码' : '显示密码');
+        if (eye)    { eye.classList.toggle('visible', !show); eye.classList.toggle('hidden', show); }
+        if (eyeOff) { eyeOff.classList.toggle('visible', show);  eyeOff.classList.toggle('hidden', !show); }
+      }
+      btn.addEventListener('click', function () {
+        var show = input.getAttribute('type') === 'password';
+        btn.animate([
+          { transform: 'translateY(-50%) scale(1)' },
+          { transform: 'translateY(-50%) scale(0.9)' },
+          { transform: 'translateY(-50%) scale(1)' }
+        ], { duration: 160, easing: 'ease-out' });
+        setState(show);
+      });
+      setState(false);
+    });
+  }
 
-function hideLoading() {
-  loadingOverlay.style.display = 'none';
-}
+  /* =============================
+   * 8) SMS code binding (China only)
+   * ============================= */
+  function bindSMS() {
+    var phone = document.getElementById('phoneReg');
+    var code  = document.getElementById('smsCodeReg');
+    var sendBtn = document.getElementById('sendCodeBtnReg');
+    if (!phone || !code || !sendBtn) return; // not on this page
 
-// 初始化隐藏
-hideLoading();
+    var ticking = false;
+    var remain = 60;
+    var timer = null;
+
+    function setSendState(disabled) {
+      sendBtn.disabled = disabled;
+      sendBtn.textContent = disabled ? ('重新发送 (' + remain + 's)') : '获取验证码';
+    }
+    function startCountdown() {
+      ticking = true; remain = 60; setSendState(true);
+      timer = setInterval(function () {
+        remain -= 1;
+        if (remain <= 0) { clearInterval(timer); ticking = false; setSendState(false); }
+        else { setSendState(true); }
+      }, 1000);
+    }
+
+    sendBtn.addEventListener('click', function () {
+      var v = (phone.value || '').trim();
+      if (!isValidCNPhone(v)) { showPopup('请填写有效的中国大陆手机号'); return; }
+
+      // micro interaction
+      sendBtn.animate([
+        { transform: 'scale(1)' }, { transform: 'scale(0.96)' }, { transform: 'scale(1)' }
+      ], { duration: 140, easing: 'ease-out' });
+
+      var normalized = toE164CN(v);
+      // TODO: 调用后端发送验证码接口，例如：
+      // await fetch('/api/auth/sms/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: normalized }) })
+
+      // loading visual & countdown (simulate async)
+      sendBtn.classList.add('loading');
+      setTimeout(function () {
+        sendBtn.classList.remove('loading');
+        showPopup('验证码已发送');
+        if (!ticking) startCountdown();
+      }, 500);
+    });
+  }
+
+  // Initialize hidden overlay
+  hideLoading();
+})();

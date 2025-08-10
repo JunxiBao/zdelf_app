@@ -1,35 +1,70 @@
 <!DOCTYPE html>
 <html lang="zh">
-
 <head>
   <meta charset="UTF-8" />
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css">
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <link rel="stylesheet" href="../statics/css/deepseek.css" />
   <title>您的健康AI助手</title>
+  
+  <!-- Viewport & color scheme 视口与颜色方案 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212" />
 
+  <!-- Stylesheets 样式表 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css">
+  <link rel="stylesheet" href="../statics/css/deepseek.css" />
 
+  <!-- Third-party libs 外部库（defer 避免阻塞渲染） -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js" defer></script>
 </head>
 
 <body>
-
+  <!-- Header 页头 -->
   <header>您的健康AI助手</header>
 
+  <!-- Chat container 聊天容器 -->
   <div class="chat-container">
-    <div class="message-list" id="messageList"></div>
+    <!-- Message list 消息列表：使用可访问性语义 -->
+    <div class="message-list" id="messageList" role="log" aria-live="polite" aria-relevant="additions"></div>
 
+    <!-- Input area 输入区 -->
     <div class="input-container">
-      <input type="text" id="userInput" placeholder="请输入你的消息..." onkeydown="if(event.key === 'Enter') sendMessage()" />
-      <button onclick="sendMessage()">发送</button>
+      <input
+        type="text"
+        id="userInput"
+        placeholder="请输入你的消息..."
+        autocomplete="off"
+        enterkeyhint="send"
+        aria-label="输入你的消息"
+        onkeydown="if(event.key === 'Enter') sendMessage()"
+      />
+      <button type="button" id="sendBtn" onclick="sendMessage()" aria-label="发送消息">发送</button>
     </div>
   </div>
 
   <script>
-    marked.setOptions({ breaks: true });
+    // Wait for deferred libs 等第三方库加载完成
+    window.addEventListener('DOMContentLoaded', () => {
+      // marked config: soft line breaks & safer defaults
+      if (window.marked) {
+        marked.setOptions({ breaks: true, mangle: false, headerIds: false });
+      }
+      generateGreeting();
+    });
 
+    /**
+     * Sanitize + render Markdown 安全渲染 Markdown
+     * - 使用 DOMPurify 进行 XSS 过滤
+     */
+    function renderMarkdownSafe(mdText) {
+      const html = (window.marked ? marked.parse(mdText || '') : (mdText || ''));
+      return window.DOMPurify ? DOMPurify.sanitize(html, { USE_PROFILES: { html: true } }) : html;
+    }
+
+    // 初始问候
     function generateGreeting() {
       const hour = new Date().getHours();
       let greet = '您好！有什么健康问题尽管问我哦~';
@@ -40,12 +75,12 @@
       addMessage(greet, 'bot');
     }
 
-    window.addEventListener('DOMContentLoaded', generateGreeting);
-
+    // 打字中占位气泡 typing bubble
     function addTypingBubble() {
       const msgList = document.getElementById('messageList');
       const wrap = document.createElement('div');
       wrap.className = 'message bot typing';
+      wrap.setAttribute('aria-label', '正在回复');
       wrap.innerHTML = '<span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>';
       msgList.appendChild(wrap);
       msgList.scrollTop = msgList.scrollHeight;
@@ -54,9 +89,12 @@
 
     async function sendMessage() {
       const inputEl = document.getElementById('userInput');
+      const btn = document.getElementById('sendBtn');
       const message = inputEl.value.trim();
       if (!message) return;
+
       inputEl.disabled = true;
+      btn.disabled = true;
 
       addMessage(message, 'user');
       inputEl.value = '';
@@ -64,28 +102,32 @@
       const thinkingMsg = addTypingBubble();
 
       try {
-        const response = await fetch("https://zhucan.xyz:5000/deepseek/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('https://zhucan.xyz:5000/deepseek/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message })
         });
 
-        const data = await response.json();
-        if (response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data && typeof data.reply === 'string') {
           thinkingMsg.classList.remove('typing');
-          thinkingMsg.innerHTML = marked.parse(data.reply);
-          Prism.highlightAll();
+          thinkingMsg.innerHTML = renderMarkdownSafe(data.reply);
+          if (window.Prism) Prism.highlightAll();
         } else {
-          thinkingMsg.textContent = "❌ 出错了：" + (data.error || "未知错误");
+          thinkingMsg.classList.remove('typing');
+          thinkingMsg.textContent = '❌ 出错了：' + (data.error || response.status + ' ' + response.statusText);
         }
       } catch (error) {
         thinkingMsg.classList.remove('typing');
-        thinkingMsg.textContent = "⚠️ 无法连接服务器：" + error.message;
+        thinkingMsg.textContent = '⚠️ 无法连接服务器：' + (error && error.message ? error.message : 'Network error');
+      } finally {
+        inputEl.disabled = false;
+        btn.disabled = false;
+        inputEl.focus();
       }
-      inputEl.disabled = false;
-      inputEl.focus();
     }
 
+    // 添加消息到列表
     function addMessage(text, sender, returnElement = false) {
       const msgList = document.getElementById('messageList');
       const msgDiv = document.createElement('div');
@@ -94,17 +136,18 @@
       content.className = 'msg-content';
 
       if (sender === 'bot') {
-        content.innerHTML = marked.parse(text);
+        content.innerHTML = renderMarkdownSafe(text);
       } else {
+        // User text as plain text to avoid injection 用户消息按纯文本插入
         content.textContent = text;
       }
+
       msgDiv.appendChild(content);
       msgList.appendChild(msgDiv);
       msgList.scrollTop = msgList.scrollHeight;
-      Prism.highlightAll();
+      if (window.Prism) Prism.highlightAll();
       return returnElement ? msgDiv : undefined;
     }
   </script>
 </body>
-
 </html>

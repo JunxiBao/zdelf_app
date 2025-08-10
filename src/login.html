@@ -50,37 +50,7 @@
     </div>
   </div>
   <script src="../statics/js/login.js"></script>
-  <script>
-    (function () {
-      const buttons = document.querySelectorAll('.toggle-password');
-      buttons.forEach(btn => {
-        const targetId = btn.getAttribute('data-target');
-        const input = document.getElementById(targetId);
-        const eye = btn.querySelector('.eye');
-        const eyeOff = btn.querySelector('.eye-off');
-        function setState(show) {
-          if (!input) return;
-          input.setAttribute('type', show ? 'text' : 'password');
-          btn.setAttribute('aria-label', show ? '隐藏密码' : '显示密码');
-          btn.setAttribute('title', show ? '隐藏密码' : '显示密码');
-          eye.classList.toggle('visible', !show);
-          eye.classList.toggle('hidden', show);
-          eyeOff.classList.toggle('visible', show);
-          eyeOff.classList.toggle('hidden', !show);
-        }
-        btn.addEventListener('click', () => {
-          const show = input.getAttribute('type') === 'password';
-          btn.animate([
-            { transform: 'translateY(-50%) scale(1)' },
-            { transform: 'translateY(-50%) scale(0.9)' },
-            { transform: 'translateY(-50%) scale(1)' }
-          ], { duration: 160, easing: 'ease-out' });
-          setState(show);
-        });
-        setState(false);
-      });
-    })();
-  </script>
+
 </body>
 
 </html>
