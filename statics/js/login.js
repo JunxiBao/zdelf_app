@@ -1,12 +1,3 @@
-/**
- * Login page script — organized & documented
- * 登录页脚本（已整理 + 注释 + 轻量健壮性增强）
- * - iOS/WKWebView viewport fix (with safe reflow)
- * - Global loading overlay (light/dark aware)
- * - Popup/toast helper
- * - Form validation & fetch via async/await
- * - Password visibility toggle
- */
 (function () {
   'use strict';
 
@@ -180,10 +171,17 @@
       }
       btn.addEventListener('click', function () {
         var show = input.getAttribute('type') === 'password';
-        btn.animate(
-          [ { transform: 'translateY(-50%) scale(1)' }, { transform: 'translateY(-50%) scale(0.9)' }, { transform: 'translateY(-50%) scale(1)' } ],
-          { duration: 160, easing: 'ease-out' }
-        );
+        var icon = show ? eyeOff : eye;
+        if (icon && icon.animate) {
+          icon.animate(
+            [
+              { transform: 'scale(0.96)', opacity: 0.8 },
+              { transform: 'scale(1.06)', opacity: 1 },
+              { transform: 'scale(1)', opacity: 1 }
+            ],
+            { duration: 160, easing: 'ease-out' }
+          );
+        }
         setState(show);
       });
       setState(false);

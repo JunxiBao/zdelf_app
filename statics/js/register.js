@@ -226,11 +226,17 @@
       }
       btn.addEventListener('click', function () {
         var show = input.getAttribute('type') === 'password';
-        btn.animate([
-          { transform: 'translateY(-50%) scale(1)' },
-          { transform: 'translateY(-50%) scale(0.9)' },
-          { transform: 'translateY(-50%) scale(1)' }
-        ], { duration: 160, easing: 'ease-out' });
+        var icon = show ? eyeOff : eye;
+        if (icon && icon.animate) {
+          icon.animate(
+            [
+              { transform: 'scale(0.96)', opacity: 0.8 },
+              { transform: 'scale(1.06)', opacity: 1 },
+              { transform: 'scale(1)', opacity: 1 }
+            ],
+            { duration: 160, easing: 'ease-out' }
+          );
+        }
         setState(show);
       });
       setState(false);

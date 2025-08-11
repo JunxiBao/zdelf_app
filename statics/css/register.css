@@ -155,6 +155,17 @@ body {
   color: var(--text);
 }
 
+/* Uniform vertical rhythm for input groups 统一表单垂直节奏 */
+.input-with-toggle,
+.input-with-action {
+  margin-bottom: 14px; /* 与单独输入框一致 */
+}
+/* 当输入框位于包裹容器里，内部输入不再额外占用外间距，避免叠加 */
+.input-with-toggle .record-textarea,
+.input-with-action .record-textarea {
+  margin-bottom: 0;
+}
+
 .record-textarea::placeholder,
 .record-input::placeholder {
   color: #9aa0b4;
@@ -199,25 +210,29 @@ input.record-input:-webkit-autofill:focus {
 
 .input-with-toggle input.record-textarea {
   width: 100%;
-  padding-right: 44px;
+  padding-right: 48px;
   box-sizing: border-box;
 }
 
 .toggle-password {
   position: absolute;
   right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
+  bottom: 0;
+  margin: auto 0; /* 垂直居中，不用 transform */
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0;            /* 固定尺寸不需要内边距 */
+  width: 28px;           /* 固定宽度 */
+  height: 28px;          /* 固定高度 */
+  display: grid;         /* 两个图标重叠 */
+  place-items: center;   /* 居中图标 */
+  line-height: 0;        /* 消除匿名文本节点影响 */
+  font-size: 0;          /* 消除匿名文本节点影响 */
   border-radius: 10px;
-  transition: background-color var(--dur-fast) ease, transform var(--dur-fast) ease, opacity var(--dur-fast) ease;
-  opacity: 0.8;
+  transition: background-color var(--dur-fast) ease, opacity var(--dur-fast) ease;
+  opacity: 0.9;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -227,7 +242,7 @@ input.record-input:-webkit-autofill:focus {
 }
 
 .toggle-password:active {
-  transform: translateY(-50%) scale(0.96);
+  opacity: 0.92; /* 避免对按钮做 transform */
 }
 
 .toggle-password:focus-visible {
@@ -239,18 +254,19 @@ input.record-input:-webkit-autofill:focus {
   width: 22px;
   height: 22px;
   display: block;
+  grid-area: 1 / 1;   /* 两个图标叠放在同一层 */
+  pointer-events: none; /* 点击命中按钮，不命中图标 */
+  will-change: opacity; /* 仅做透明度动画，避免布局抖动 */
 }
 
 .toggle-password .icon.visible {
   opacity: 1;
-  transition: opacity var(--dur-fast) ease, transform var(--dur) ease;
-  transform: rotate(0deg) scale(1);
+  transition: opacity var(--dur-fast) ease;
 }
 
 .toggle-password .icon.hidden {
   opacity: 0;
-  transition: opacity var(--dur-fast) ease, transform var(--dur) ease;
-  transform: rotate(-12deg) scale(0.9);
+  transition: opacity var(--dur-fast) ease;
 }
 
 /* -----------------------------------------------------------------------------
