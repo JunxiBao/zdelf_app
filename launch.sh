@@ -1,1 +1,2 @@
-nohup python3 src/backend/app.py > ./log/app.out 2>&1 &
+#!/usr/bin/env bash
+exec python3 src/backend/app.py > ./log/app.out 2>&1
