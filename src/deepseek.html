@@ -25,18 +25,6 @@
   <!-- Header 页头 -->
   <header>您的健康AI助手</header>
 
-  <!-- 打字速度配置 -->
-  <div class="typing-config">
-    <label for="typingSpeed">打字速度：</label>
-    <select id="typingSpeed">
-      <option value="20">快速</option>
-      <option value="30" selected>正常</option>
-      <option value="50">慢速</option>
-      <option value="100">很慢</option>
-    </select>
-    <button type="button" id="stopTyping" onclick="stopTyping()" style="display: none;">停止打字</button>
-  </div>
-
   <!-- Chat container 聊天容器 -->
   <div class="chat-container">
     <!-- Message list 消息列表：使用可访问性语义 -->
@@ -157,7 +145,6 @@
           thinkingMsg.classList.remove('typing');
           
           // 启动打字机效果
-          currentTypingTask = 'continue';
           await typewriterEffect(thinkingMsg, data.reply);
           
           if (window.Prism) Prism.highlightAll();
@@ -232,17 +219,7 @@
     }
 
     // 打字机效果函数
-    let currentTypingTask = null; // 当前打字任务
-    
-    async function typewriterEffect(element, text, speed = 30) {
-      // 获取用户设置的打字速度
-      const speedSelect = document.getElementById('typingSpeed');
-      const userSpeed = parseInt(speedSelect.value) || speed;
-      
-      // 显示停止按钮
-      const stopBtn = document.getElementById('stopTyping');
-      stopBtn.style.display = 'inline-block';
-      
+    async function typewriterEffect(element, text) {
       // 清空元素内容
       element.innerHTML = '';
       
@@ -253,11 +230,6 @@
       
       // 逐字显示文本
       for (let i = 0; i < text.length; i++) {
-        // 检查是否被中断
-        if (currentTypingTask !== null && currentTypingTask !== 'continue') {
-          break;
-        }
-        
         const char = text[i];
         
         // 处理换行符
@@ -274,11 +246,11 @@
         msgList.scrollTop = msgList.scrollHeight;
         
         // 动态调整打字速度：标点符号稍慢，普通字符稍快
-        let currentSpeed = userSpeed;
+        let currentSpeed = 30; // 默认30ms
         if (['。', '！', '？', '；', '：', '.', '!', '?', ';', ':'].includes(char)) {
-          currentSpeed = userSpeed * 2; // 标点符号停顿时间更长
+          currentSpeed = 60; // 标点符号停顿时间更长
         } else if (['，', '、', ',', ' '].includes(char)) {
-          currentSpeed = userSpeed * 1.5; // 逗号和空格稍慢
+          currentSpeed = 45; // 逗号和空格稍慢
         }
         
         // 等待一段时间再显示下一个字符
@@ -288,10 +260,6 @@
       // 最终渲染完整的markdown并高亮代码
       content.innerHTML = renderMarkdownSafe(text);
       if (window.Prism) Prism.highlightAll();
-      
-      // 隐藏停止按钮
-      stopBtn.style.display = 'none';
-      currentTypingTask = null;
     }
 
     // 停止打字功能
