@@ -18,6 +18,7 @@ headers = {
 
 @deepseek_blueprint.route('/chat', methods=['POST'])
 def deepseek_chat():
+    """传统聊天接口 - 完整返回回复"""
     if request.method == 'OPTIONS':
         return '', 200
     try:
@@ -31,41 +32,15 @@ def deepseek_chat():
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": user_input}
             ],
-            "temperature": 0.7,
-            "stream": True  # 启用流式响应
+            "temperature": 0.7
         }
 
-        response = requests.post(API_URL, headers=headers, json=data, stream=True)
+        response = requests.post(API_URL, headers=headers, json=data)
 
         if response.status_code == 200:
-            def generate():
-                try:
-                    for line in response.iter_lines():
-                        if line:
-                            line = line.decode('utf-8')
-                            if line.startswith('data: '):
-                                data_str = line[6:]  # 去掉 'data: ' 前缀
-                                if data_str == '[DONE]':
-                                    break
-                                try:
-                                    chunk = json.loads(data_str)
-                                    if 'choices' in chunk and len(chunk['choices']) > 0:
-                                        delta = chunk['choices'][0].get('delta', {})
-                                        if 'content' in delta:
-                                            content = delta['content']
-                                            # 一个字一个字地返回
-                                            for char in content:
-                                                yield f"data: {json.dumps({'char': char, 'type': 'char'})}\n\n"
-                                                time.sleep(0.03)  # 30ms延迟，模拟打字速度
-                                except json.JSONDecodeError:
-                                    continue
-                except Exception as e:
-                    print(f"流式响应错误: {e}")
-                    yield f"data: {json.dumps({'error': str(e), 'type': 'error'})}\n\n"
-                finally:
-                    yield "data: [DONE]\n\n"
-
-            return Response(generate(), mimetype='text/plain')
+            result = response.json()
+            reply = result['choices'][0]['message']['content']
+            return jsonify({'reply': reply})
         else:
             return jsonify({'error': response.text}), response.status_code
         
@@ -129,37 +104,7 @@ def deepseek_chat_stream():
         print("❌ deepseek流式请求错误：", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
-# 保留原有的非流式接口作为备用
-@deepseek_blueprint.route('/chat_legacy', methods=['POST'])
-def deepseek_chat_legacy():
-    if request.method == 'OPTIONS':
-        return '', 200
-    try:
-        user_input = request.json.get('message', '')
-        if not user_input:
-            return jsonify({'error': 'Missing message'}), 400
 
-        data = {
-            "model": "deepseek-chat",
-            "messages": [
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": user_input}
-            ],
-            "temperature": 0.7
-        }
-
-        response = requests.post(API_URL, headers=headers, json=data)
-
-        if response.status_code == 200:
-            result = response.json()
-            reply = result['choices'][0]['message']['content']
-            return jsonify({'reply': reply})
-        else:
-            return jsonify({'error': response.text}), response.status_code
-        
-    except Exception as e:
-        print("❌ deepseek请求错误：", e)
-        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
 
 @deepseek_blueprint.route('/structured', methods=['POST'])

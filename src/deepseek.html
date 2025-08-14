@@ -146,7 +146,7 @@
     // 回退到普通接口 + 打字机效果
     async function fallbackToLegacy(thinkingMsg, message) {
       try {
-        const response = await fetch('https://zhucan.xyz:5000/deepseek/chat_legacy', {
+        const response = await fetch('https://zhucan.xyz:5000/deepseek/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message })
