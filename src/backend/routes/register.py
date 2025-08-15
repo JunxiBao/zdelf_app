@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify
 import mysql.connector
 import uuid
+import re
 
 load_dotenv()
 
@@ -15,6 +16,30 @@ db_config = {
     "database": os.getenv("DB_NAME")
 }
 
+# 将中国大陆手机号标准化为 E.164（+86xxxxxxxxxxx）。
+# 支持输入：+86***********、86***********、1**********（11位）
+PHONE_RE = re.compile(r"^\+?\d{6,15}$")
+
+def normalize_cn_phone(raw: str) -> str:
+    if not raw:
+        return ''
+    s = re.sub(r"\s", "", str(raw))
+    # 仅接受数字和可选+
+    if not PHONE_RE.match(s) and not (s.startswith('1') and len(s) == 11 and s.isdigit()):
+        return ''
+    # 规范化
+    digits = re.sub(r"[^0-9]", "", s)
+    if s.startswith('+86') or s.startswith('86'):
+        # 取末尾 11 位
+        digits = digits[-11:]
+        if len(digits) != 11:
+            return ''
+        return '+86' + digits
+    if s.startswith('1') and len(s) == 11:
+        return '+86' + s
+    # 其他情况不接受（只允许中国大陆手机号）
+    return ''
+
 @register_blueprint.route('/register', methods=['POST', 'OPTIONS'])
 def register():
     if request.method == 'OPTIONS':
@@ -23,9 +48,13 @@ def register():
         data = request.get_json(force=True)
         print("注册收到的数据：", data)
 
-        username = data.get("username")
-        password = data.get("password")
+        username = (data.get("username") or '').strip()
+        password = (data.get("password") or '')
         age = data.get("age")
+        phone_raw = (data.get("phone") or '').strip()
+        phone = normalize_cn_phone(phone_raw)
+
+        # 年龄校验
         try:
             age = int(age)
             if age < 1 or age > 120:
@@ -33,23 +62,31 @@ def register():
         except (TypeError, ValueError):
             return jsonify({"success": False, "message": "年龄格式不正确"}), 400
 
-        if not username or not password or age is None:
-            return jsonify({"success": False, "message": "缺少用户名、密码或年龄"}), 400
+        # 必填校验
+        if not username or not password or age is None or not phone:
+            return jsonify({"success": False, "message": "缺少用户名、密码、年龄或手机号，或手机号格式不正确（仅支持中国大陆）"}), 400
 
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("SELECT * FROM users WHERE username=%s", (username,))
-        existing_user = cursor.fetchone()
-        if existing_user:
+        # 用户名唯一
+        cursor.execute("SELECT 1 FROM users WHERE username=%s", (username,))
+        if cursor.fetchone():
             cursor.close()
             conn.close()
             return jsonify({"success": False, "message": "用户名已存在"}), 409
 
+        # 手机号唯一
+        cursor.execute("SELECT 1 FROM users WHERE phone_number=%s", (phone,))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({"success": False, "message": "该手机号已注册"}), 409
+
         user_id = str(uuid.uuid4())
         cursor.execute(
-            "INSERT INTO users (user_id, username, password, age) VALUES (%s, %s, %s, %s)",
-            (user_id, username, password, age)
+            "INSERT INTO users (user_id, username, password, age, phone_number) VALUES (%s, %s, %s, %s, %s)",
+            (user_id, username, password, age, phone)
         )
         conn.commit()
 

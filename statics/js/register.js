@@ -185,7 +185,7 @@
       var rRes = await fetch(REGISTER_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username, password: password, age: age })
+        body: JSON.stringify({ username: username, password: password, age: age, phone: phoneE164 })
       });
       var rData = {};
       try { rData = await rRes.json(); } catch (_) { rData = {}; }
