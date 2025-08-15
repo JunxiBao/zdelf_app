@@ -321,11 +321,10 @@ def sms_verify():
                 "userId": user["user_id"]
             })
         else:
-            # 未注册的手机号：按登录语义返回 401，更贴近 /login 的风格
             return jsonify({
-                "success": False,
-                "message": "该手机号尚未注册，请先完成注册"
-            }), 401
+                "success": True,
+                "message": "验证码校验通过"
+            })
 
     except Exception as e:
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
