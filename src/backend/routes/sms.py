@@ -1,5 +1,3 @@
-
-
 import os
 import re
 import hmac
@@ -269,29 +267,10 @@ def sms_verify():
             (phone,)
         )
 
-        # 若需要：自动注册或查找用户
-        # 假设 users 表结构至少包含 user_id, username, password, age（与现有注册保持一致），
-        # 这里我们以 phone 作为 username，password 设为空字符串。
-        cur.execute("SELECT * FROM users WHERE username=%s", (phone,))
-        user = cur.fetchone()
-        if not user:
-            new_user_id = str(uuid.uuid4())
-            # 对于 age 没有来源，这里默认 0（或 NULL，看你的表定义）。
-            try:
-                cur.execute(
-                    "INSERT INTO users (user_id, username, password, age) VALUES (%s, %s, %s, %s)",
-                    (new_user_id, phone, '', 0)
-                )
-            except Exception:
-                # 如果 users 表结构不同，请按你的实际结构调整插入语句。
-                pass
-
         conn.commit()
         cur.close(); conn.close()
 
-        # 返回登录态（此处仅返回一个临时 token 占位，建议改为 HttpOnly Cookie 会话）
-        session_token = str(uuid.uuid4())
-        return jsonify({"success": True, "message": "登录成功", "token": session_token})
+        return jsonify({"success": True, "message": "验证码校验通过"})
 
     except Exception as e:
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500

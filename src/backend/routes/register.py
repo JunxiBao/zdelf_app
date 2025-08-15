@@ -69,6 +69,22 @@ def register():
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)
 
+        # 若之前在 /sms/verify 中创建过占位账号（username=phone 且 phone_number 为空），则直接认领并更新为正式信息
+        cursor.execute(
+            "SELECT user_id FROM users WHERE username=%s AND (phone_number IS NULL OR phone_number='')",
+            (phone,)
+        )
+        placeholder = cursor.fetchone()
+        if placeholder:
+            cursor.execute(
+                "UPDATE users SET username=%s, password=%s, age=%s, phone_number=%s WHERE user_id=%s",
+                (username, password, age, phone, placeholder['user_id'])
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return jsonify({"success": True, "message": "注册成功（占位账号已更新）"})
+
         # 用户名唯一
         cursor.execute("SELECT 1 FROM users WHERE username=%s", (username,))
         if cursor.fetchone():
