@@ -175,7 +175,7 @@
         return;
       }
 
-      // 校验通过：如果返回了 user_id/userId 则写入本地并进入首页；否则跳到注册页并带上手机号
+      // 校验通过：如果返回了 user_id/userId 则写入本地并进入首页；否则提示错误
       try {
         var uid = data && (data.user_id || data.userId);
         if (uid) {
@@ -188,12 +188,7 @@
             window.location.href = '/index.html';
           }, 300);
         } else {
-          // 未注册：把手机号暂存以便注册页自动填充
-          try { localStorage.setItem('pendingRegisterPhone', normalized); } catch (_) {}
-          toast('该手机号尚未注册，正在前往注册页...');
-          setTimeout(function () {
-            window.location.href = 'register.html';
-          }, 300);
+          toast('未获取到用户ID，请先注册或稍后重试');
         }
       } catch (_) {}
     } catch (e) {
