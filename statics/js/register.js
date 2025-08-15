@@ -134,11 +134,17 @@
   /* =============================
    * 6) Register handler
    * ============================= */
-  // API endpoints (same origin base)
-  var API_BASE = 'https://zhucan.xyz:5000';
+  // API endpoints (auto-detect base, compatible with reverse proxy or direct)
+  // 自动探测后端基址
+  var API_BASE = (!location.port && location.protocol.startsWith('http'))
+    ? location.protocol + '//' + location.hostname + ':5000'
+    : '';
+  if (typeof window !== 'undefined' && window.__API_BASE__) {
+    API_BASE = window.__API_BASE__;
+  }
   var SMS_SEND_ENDPOINT = API_BASE + '/sms/send';
   var SMS_VERIFY_ENDPOINT = API_BASE + '/sms/verify';
-  var REGISTER_ENDPOINT = 'https://zhucan.xyz:5000/register';
+  var REGISTER_ENDPOINT = API_BASE + '/register';
   async function handleRegister() {
     var usernameEl = document.getElementById('username');
     var passwordEl = document.getElementById('password');

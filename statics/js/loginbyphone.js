@@ -6,8 +6,15 @@
   const popup = document.getElementById('popup');
   const popupText = document.getElementById('popupText');
 
-  const API_SEND = '/sms/send';
-  const API_VERIFY = '/sms/verify';
+  // 自动探测后端基址：若当前页面是标准 443 端口（location.port 为空），则尝试走同域的 5000 端口直连 Flask；
+  // 否则走同源相对路径（假设反向代理已转发 /sms/* 到 Flask）。
+  const API_BASE = (!location.port && location.protocol.startsWith('http'))
+    ? `${location.protocol}//${location.hostname}:5000`
+    : '';
+  // 如需强制指定，可在页面上提前设置 window.__API_BASE__ = 'https://your-domain:5000';
+  const BASE = (typeof window !== 'undefined' && window.__API_BASE__) || API_BASE;
+  const API_SEND = `${BASE}/sms/send`;
+  const API_VERIFY = `${BASE}/sms/verify`;
 
   function toast(text) {
     if (!popup || !popupText) return alert(text);
