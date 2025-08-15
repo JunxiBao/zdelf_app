@@ -1,6 +1,15 @@
-
-
 <!DOCTYPE html>
+<!--
+  SMS Login Page (CN Mainland)
+  - Minimal, Google-style card layout; supports dark mode.
+  - Works with statics/js/loginbyphone.js (auto-detects API base).
+  - Accessible: aria labels, loading overlay, proper input attributes.
+
+  短信登录页（中国大陆手机号）
+  - 简洁卡片布局，支持深色模式；
+  - 与 statics/js/loginbyphone.js 配合（自动探测后端 BASE）；
+  - 注重可访问性：aria 标签、加载遮罩、输入属性。
+-->
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
@@ -11,6 +20,13 @@
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212" />
   <link rel="stylesheet" href="../statics/css/register.css" />
 
+  <!-- Basic spinner style (fallback if CSS not loaded) -->
+  <style>
+    #loading-overlay{position:fixed;inset:0;width:100%;height:100%;background:rgba(255,255,255,0.8);z-index:9999;display:none;align-items:center;justify-content:center;transition:background .3s ease}
+    @media (prefers-color-scheme: dark){#loading-overlay{background:rgba(0,0,0,0.6)}.spinner{border:6px solid #444;border-top-color:#b197fc}}
+    .spinner{width:50px;height:50px;border:6px solid #ccc;border-top-color:#7b2cbf;border-radius:50%;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
 </head>
 <body>
   <div class="page-center">
@@ -27,6 +43,7 @@
         placeholder="请输入中国大陆手机号"
         maxlength="17"
         aria-label="手机号"
+        autocapitalize="off" autocorrect="off"
       />
 
       <!-- 验证码输入 + 获取验证码按钮 -->
@@ -38,14 +55,15 @@
           inputmode="numeric"
           autocomplete="one-time-code"
           placeholder="短信验证码（6位数字）"
-          pattern="\\d{6}"
+          pattern="^\d{6}$"
           maxlength="6"
           aria-label="短信验证码"
+          autocapitalize="off" autocorrect="off"
         />
         <button type="button" class="code-action" id="sendCodeBtn" aria-label="获取短信验证码">获取验证码</button>
       </div>
 
-      <button class="record-btn" id="smsLoginBtn">短信登录</button>
+      <button type="button" class="record-btn" id="smsLoginBtn">短信登录</button>
 
       <div style="margin-top: 12px; font-size: 0.95em;">
         想用密码登录？
@@ -61,6 +79,9 @@
   <div id="loading-overlay" aria-hidden="true" style="display:none">
     <div class="spinner" role="status" aria-live="polite" aria-label="正在加载"></div>
   </div>
-  <script src="../statics/js/loginbyphone.js"></script>
+  <script src="../statics/js/loginbyphone.js" defer></script>
+  <noscript>
+    <div style="padding:12px;color:#b00020;text-align:center">需要启用 JavaScript 才能完成短信登录 / JavaScript is required for SMS login.</div>
+  </noscript>
 </body>
 </html>

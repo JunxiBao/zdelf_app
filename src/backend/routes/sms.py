@@ -1,3 +1,15 @@
+"""
+SMS routes (send / verify) for CN mainland phone numbers.
+- Stores OTP hashes locally (no plaintext) with TTL.
+- Delegates rate limiting to Aliyun (no local cooldown or daily limit).
+- Verification enforces TTL and max fail attempts locally.
+
+短信路由（发送/校验），中国大陆手机号：
+- 本地仅存验证码哈希与过期时间；
+- 频控交由阿里云；
+- 校验时做有效期和最大失败次数限制。
+"""
+
 import os
 import re
 import hmac
@@ -27,9 +39,10 @@ except Exception:
 
 load_dotenv()
 
+# Flask blueprint that mounts /sms/send and /sms/verify
 sms_blueprint = Blueprint('sms', __name__)
 
-# ---------- 环境变量与配置 ----------
+# --- Configuration (env-driven). Do not hardcode secrets.
 DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
     "user": os.getenv("DB_USER"),
@@ -51,12 +64,17 @@ OTP_SEND_COOLDOWN_SECONDS = int(os.getenv("OTP_SEND_COOLDOWN_SECONDS", "60"))
 OTP_DAILY_LIMIT_PER_PHONE = int(os.getenv("OTP_DAILY_LIMIT_PER_PHONE", "10"))
 OTP_VERIFY_MAX_FAILS = int(os.getenv("OTP_VERIFY_MAX_FAILS", "5"))
 
+# Generic E.164-ish quick check (loose). Real validation is in normalize_cn_phone().
 PHONE_REGEX = re.compile(r"^\+?\d{6,15}$")
 
 # 仅支持中国大陆手机号：+86***********、86***********、或 11 位以 1 开头
 CN_MOBILE_RE = re.compile(r"^1[3-9]\d{9}$")
 
 def normalize_cn_phone(raw: str) -> str:
+    """Normalize CN mainland phone to E.164 (+86XXXXXXXXXXX).
+    Accepts inputs like '+86...', '86...', or plain 11-digit starting with '1'.
+    Returns normalized "+86" format, or empty string if invalid.
+    """
     if not raw:
         return ''
     s = str(raw).strip().replace(' ', '').replace('-', '')
@@ -73,11 +91,12 @@ def normalize_cn_phone(raw: str) -> str:
 # ---------- 工具函数 ----------
 
 def get_db():
+    """Create a new MySQL connection using DB_CONFIG."""
     return mysql.connector.connect(**DB_CONFIG)
 
 
 def ensure_tables():
-    """初始化所需表：sms_codes 和 users（若不存在 users 则不会创建字段，请按业务已有结构为准）。"""
+    """Ensure the sms_codes table exists. Does not mutate users schema."""
     conn = get_db()
     cur = conn.cursor()
     # 存储验证码与频控数据
@@ -102,12 +121,14 @@ def ensure_tables():
 # 哈希验证码（不明文入库）
 
 def hash_code(phone: str, code: str) -> str:
+    """HMAC-SHA256 of "phone:code" using SERVER_SECRET; stored in DB (no plaintext)."""
     msg = f"{phone}:{code}".encode("utf-8")
     key = SERVER_SECRET.encode("utf-8")
     return hmac.new(key, msg, hashlib.sha256).hexdigest()
 
 
 def gen_code(length: int = 6) -> str:
+    """Generate a zero-padded numeric OTP of given length."""
     n = random.randint(0, 10 ** length - 1)
     return str(n).zfill(length)
 
@@ -115,6 +136,7 @@ def gen_code(length: int = 6) -> str:
 # ---------- 阿里云短信 ----------
 
 def get_aliyun_client():
+    """Create and return a DysmsapiClient. Raises if SDK/keys missing."""
     if not _ALIYUN_SMS_AVAILABLE:
         raise RuntimeError("阿里云短信 SDK 未安装，请先 pip install alibabacloud_dysmsapi20170525 alibabacloud_tea_openapi alibabacloud_tea_util")
     if not (ALIYUN_ACCESS_KEY_ID and ALIYUN_ACCESS_KEY_SECRET and ALIYUN_SIGN_NAME and ALIYUN_TEMPLATE_CODE):
@@ -130,6 +152,7 @@ def get_aliyun_client():
 
 
 def send_sms_code_via_aliyun(phone: str, code: str):
+    """Call Aliyun SMS to send a single OTP. Raises RuntimeError on non-OK code."""
     client = get_aliyun_client()
     send_req = dysmsapi_20170525_models.SendSmsRequest(
         sign_name=ALIYUN_SIGN_NAME,
@@ -149,6 +172,11 @@ def send_sms_code_via_aliyun(phone: str, code: str):
 
 @sms_blueprint.route('/sms/send', methods=['POST', 'OPTIONS'])
 def sms_send():
+    """POST /sms/send
+    Body: {"phone": "+86..." or plain 11-digit}
+    Behavior: normalize phone, upsert OTP hash/expiry, then call Aliyun to send.
+    No local cooldown or daily limit; Aliyun enforces provider-side throttling.
+    """
     if request.method == 'OPTIONS':
         return '', 200
 
@@ -160,29 +188,17 @@ def sms_send():
         if not phone:
             return jsonify({"success": False, "message": "手机号格式不正确（仅支持中国大陆 11 位或带 +86）"}), 400
 
-        now = datetime.utcnow()
-        today = now.date()
+        now = datetime.utcnow()  # store UTC timestamps in DB
 
         conn = get_db()
         cur = conn.cursor(dictionary=True)
 
-        # 读取现有记录
+        # Read existing OTP row for this phone (if any)
         cur.execute("SELECT * FROM sms_codes WHERE phone=%s", (phone,))
         row = cur.fetchone()
 
 
-        # 频控：每日上限
-        daily_count = 0
-        if row:
-            daily_count = row.get('daily_count', 0) or 0
-            day_key = row.get('day_key')
-            if str(day_key) != str(today):
-                daily_count = 0  # 新的一天重置
-        if daily_count >= OTP_DAILY_LIMIT_PER_PHONE:
-            cur.close(); conn.close()
-            return jsonify({"success": False, "message": "当日发送次数已达上限"}), 429
-
-        # 生成验证码并入库（哈希）
+        # Generate a new OTP and store only its HMAC hash (+ expiry)
         code = gen_code(OTP_LENGTH)
         code_hash = hash_code(phone, code)
         expires_at = now + timedelta(seconds=OTP_TTL_SECONDS)
@@ -190,28 +206,28 @@ def sms_send():
         if row:
             cur.execute(
                 """
-                UPDATE sms_codes SET code_hash=%s, expires_at=%s, last_sent_at=%s,
-                    day_key=%s, daily_count=%s
+                UPDATE sms_codes SET code_hash=%s, expires_at=%s, last_sent_at=%s
                 WHERE phone=%s
                 """,
-                (code_hash, expires_at, now, today, daily_count + 1, phone)
+                (code_hash, expires_at, now, phone)
             )
         else:
             cur.execute(
                 """
                 INSERT INTO sms_codes (phone, code_hash, expires_at, last_sent_at, day_key, daily_count, fail_count)
-                VALUES (%s, %s, %s, %s, %s, %s, 0)
+                VALUES (%s, %s, %s, %s, NULL, 0, 0)
                 """,
-                (phone, code_hash, expires_at, now, today, 1)
+                (phone, code_hash, expires_at, now)
             )
         conn.commit()
         cur.close(); conn.close()
 
-        # 发送短信
+        # Send via Aliyun (provider-side throttling such as daily caps is expected)
         try:
             send_sms_code_via_aliyun(phone, code)
         except Exception as e:
             # 发送失败时，建议回滚当次计数（这里简单返回错误信息，不做回滚）
+            # Hint: BUSINESS_LIMIT_CONTROL indicates Aliyun daily cap has been hit.
             return jsonify({"success": False, "message": f"短信发送失败: {str(e)}"}), 500
 
         return jsonify({"success": True, "message": "验证码已发送"})
@@ -222,6 +238,11 @@ def sms_send():
 
 @sms_blueprint.route('/sms/verify', methods=['POST', 'OPTIONS'])
 def sms_verify():
+    """POST /sms/verify
+    Body: {"phone": "+86...", "code": "######"}
+    Behavior: normalize phone, check OTP hash + TTL + fail_count; on success, clear OTP and
+    return user id if the phone is registered in users table.
+    """
     if request.method == 'OPTIONS':
         return '', 200
 
@@ -230,6 +251,7 @@ def sms_verify():
         data = request.get_json(force=True)
         raw_phone = (data or {}).get('phone', '').strip()
         code = (data or {}).get('code', '').strip()
+        # Basic format validation
         phone = normalize_cn_phone(raw_phone)
         if not phone:
             return jsonify({"success": False, "message": "手机号格式不正确（仅支持中国大陆 11 位或带 +86）"}), 400
@@ -239,13 +261,14 @@ def sms_verify():
         conn = get_db()
         cur = conn.cursor(dictionary=True)
 
+        # Fetch current OTP row
         cur.execute("SELECT * FROM sms_codes WHERE phone=%s", (phone,))
         row = cur.fetchone()
         if not row or not row.get('code_hash'):
             cur.close(); conn.close()
             return jsonify({"success": False, "message": "验证码不存在或已过期"}), 400
 
-        # 过期检查
+        # TTL check
         expires_at = row['expires_at']
         if isinstance(expires_at, str):
             expires_at = datetime.fromisoformat(expires_at)
@@ -253,13 +276,13 @@ def sms_verify():
             cur.close(); conn.close()
             return jsonify({"success": False, "message": "验证码已过期"}), 400
 
-        # 失败次数检查
+        # Max wrong attempts (local protection)
         fail_count = row.get('fail_count', 0) or 0
         if fail_count >= OTP_VERIFY_MAX_FAILS:
             cur.close(); conn.close()
             return jsonify({"success": False, "message": "尝试次数过多，请稍后再试"}), 429
 
-        # 校验
+        # Hash compare (no plaintext OTP stored)
         incoming_hash = hash_code(phone, code)
         if incoming_hash != row['code_hash']:
             cur.execute("UPDATE sms_codes SET fail_count = fail_count + 1 WHERE phone=%s", (phone,))
@@ -268,13 +291,13 @@ def sms_verify():
             left = max(0, OTP_VERIFY_MAX_FAILS - fail_count - 1)
             return jsonify({"success": False, "message": f"验证码不正确，还可尝试 {left} 次"}), 400
 
-        # 成功：清除验证码与失败计数
+        # Success: clear OTP state
         cur.execute(
             "UPDATE sms_codes SET code_hash=NULL, expires_at=NULL, fail_count=0 WHERE phone=%s",
             (phone,)
         )
 
-        # 依据手机号查找已注册用户（兼容历史数据：有些账号的 username 可能就是 +86手机号）
+        # Map phone to user (supports legacy username==+86...)
         try:
             print(f"[SMS VERIFY] lookup phone=<{phone}>")
         except Exception:

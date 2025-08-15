@@ -1,3 +1,14 @@
+/**
+ * SMS login frontend controller (CN mainland) — works with /sms/send and /sms/verify
+ * - Auto-detects backend API base (direct :5000 or reverse-proxy path)
+ * - Normalizes phone to E.164 (+86) and validates 11-digit segments
+ * - Minimal UI feedback: toast, loading overlay, 60s resend countdown
+ *
+ * 短信登录前端控制器（中国大陆）— 对接 /sms/send 与 /sms/verify
+ * - 自动探测后端 API 基址（直连 :5000 或反向代理）
+ * - 统一手机号为 E.164（+86），校验 11 位
+ * - 轻量交互：弹窗、加载遮罩、60s 重发倒计时
+ */
 (function () {
   const phone = document.getElementById('phone');
   const code = document.getElementById('smsCode');
@@ -5,10 +16,32 @@
   const loginBtn = document.getElementById('smsLoginBtn');
   const popup = document.getElementById('popup');
   const popupText = document.getElementById('popupText');
-  const loadingOverlay = document.getElementById('loading-overlay');
-  function showLoading() { if (loadingOverlay) loadingOverlay.style.display = 'flex'; }
-  function hideLoading() { if (loadingOverlay) loadingOverlay.style.display = 'none'; }
 
+  // Ensure loading overlay exists (same as register.js)
+  let loadingOverlay = document.getElementById('loading-overlay');
+  if (!loadingOverlay) {
+    loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'loading-overlay';
+    loadingOverlay.innerHTML = '<div class="spinner" role="status" aria-live="polite" aria-label="正在加载"></div>';
+    document.body.appendChild(loadingOverlay);
+  }
+  (function ensureStyle(){
+    var id = 'register-runtime-style';
+    if (document.getElementById(id)) return;
+    var style = document.createElement('style');
+    style.id = id;
+    style.textContent = `
+#loading-overlay{position:fixed;inset:0;width:100%;height:100%;background:rgba(255,255,255,0.8);z-index:9999;display:none;align-items:center;justify-content:center;transition:background .3s ease}
+@media (prefers-color-scheme: dark){#loading-overlay{background:rgba(0,0,0,0.6)}.spinner{border:6px solid #444;border-top-color:#b197fc}}
+.spinner{width:50px;height:50px;border:6px solid #ccc;border-top-color:#7b2cbf;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}`;
+    document.head.appendChild(style);
+  })();
+
+  function showLoading() { loadingOverlay.style.display = 'flex'; }
+  function hideLoading() { loadingOverlay.style.display = 'none'; }
+
+  // API base auto-detect: if page is on default HTTPS (no port), hit same host :5000; otherwise use relative path.
   // 自动探测后端基址：若当前页面是标准 443 端口（location.port 为空），则尝试走同域的 5000 端口直连 Flask；
   // 否则走同源相对路径（假设反向代理已转发 /sms/* 到 Flask）。
   const API_BASE = (!location.port && location.protocol.startsWith('http'))
@@ -19,6 +52,7 @@
   const API_SEND = `${BASE}/sms/send`;
   const API_VERIFY = `${BASE}/sms/verify`;
 
+  /** Show a lightweight toast popup (falls back to alert if popup DOM missing). */
   function toast(text) {
     if (!popup || !popupText) return alert(text);
     popupText.textContent = text;
@@ -26,7 +60,7 @@
     setTimeout(() => popup.classList.remove('show'), 1800);
   }
 
-  // 仅允许中国大陆手机号（可选+86/86 前缀），号段 13-19，固定 11 位
+  /** Validate CN mainland mobile: 11 digits starting with 1, allows +86/86 prefixes. */
   function validPhone(v) {
     const raw = (v || '').trim().replace(/\s|-/g, '');
     let num = raw;
@@ -35,6 +69,7 @@
     return /^1[3-9]\d{9}$/.test(num);
   }
 
+  /** Normalize to E.164 (+86XXXXXXXXXXX) regardless of input prefix. */
   function normalizeE164(v) {
     const raw = (v || '').trim().replace(/\s|-/g, '');
     if (raw.startsWith('+86')) return raw;
@@ -51,6 +86,7 @@
     sendBtn.textContent = disabled ? '重新发送 (' + remain + 's)' : '获取验证码';
   }
 
+  /** 60s resend cooldown (UI only). */
   function startCountdown() {
     ticking = true;
     remain = 60;
@@ -83,7 +119,6 @@
 
     const normalized = normalizeE164(v);
 
-    showLoading();
     try {
       sendBtn.classList.add('loading');
       const res = await fetch(API_SEND, {
@@ -105,7 +140,6 @@
       toast('网络异常，请检查连接');
     } finally {
       sendBtn.classList.remove('loading');
-      hideLoading();
     }
   });
 
