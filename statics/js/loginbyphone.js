@@ -141,7 +141,7 @@
       } catch (_) {}
       toast('登录成功，正在进入...');
       setTimeout(() => {
-        window.location.replace('index.html');
+        window.location.replace('/index.html');
       }, 300);
     } catch (e) {
       toast('网络异常，请检查连接');
