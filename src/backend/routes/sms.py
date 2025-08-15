@@ -170,16 +170,6 @@ def sms_send():
         cur.execute("SELECT * FROM sms_codes WHERE phone=%s", (phone,))
         row = cur.fetchone()
 
-        # 频控：冷却时间
-        if row and row.get('last_sent_at'):
-            last_sent = row['last_sent_at']
-            if isinstance(last_sent, str):
-                last_sent = datetime.fromisoformat(last_sent)
-            delta = (now - last_sent).total_seconds()
-            if delta < OTP_SEND_COOLDOWN_SECONDS:
-                left = int(OTP_SEND_COOLDOWN_SECONDS - delta)
-                cur.close(); conn.close()
-                return jsonify({"success": False, "message": f"发送过于频繁，请 {left}s 后重试"}), 429
 
         # 频控：每日上限
         daily_count = 0

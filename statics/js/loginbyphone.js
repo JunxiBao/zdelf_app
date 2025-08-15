@@ -5,6 +5,9 @@
   const loginBtn = document.getElementById('smsLoginBtn');
   const popup = document.getElementById('popup');
   const popupText = document.getElementById('popupText');
+  const loadingOverlay = document.getElementById('loading-overlay');
+  function showLoading() { if (loadingOverlay) loadingOverlay.style.display = 'flex'; }
+  function hideLoading() { if (loadingOverlay) loadingOverlay.style.display = 'none'; }
 
   // 自动探测后端基址：若当前页面是标准 443 端口（location.port 为空），则尝试走同域的 5000 端口直连 Flask；
   // 否则走同源相对路径（假设反向代理已转发 /sms/* 到 Flask）。
@@ -80,6 +83,7 @@
 
     const normalized = normalizeE164(v);
 
+    showLoading();
     try {
       sendBtn.classList.add('loading');
       const res = await fetch(API_SEND, {
@@ -101,6 +105,7 @@
       toast('网络异常，请检查连接');
     } finally {
       sendBtn.classList.remove('loading');
+      hideLoading();
     }
   });
 
@@ -119,6 +124,7 @@
 
     const normalized = normalizeE164(v);
 
+    showLoading();
     try {
       loginBtn.classList.add('loading');
       const res = await fetch(API_VERIFY, {
@@ -160,6 +166,7 @@
       toast('网络异常，请检查连接');
     } finally {
       loginBtn.classList.remove('loading');
+      hideLoading();
     }
   });
 })();
