@@ -135,19 +135,27 @@
         return;
       }
 
-      // 校验通过：前端本地做登录标记并跳转主页（你的应用通过 index.html 动态加载）
+      // 校验通过：如果返回了 user_id/userId 则写入本地并进入首页；否则跳到注册页并带上手机号
       try {
-        localStorage.setItem('loggedInPhone', normalized);
         var uid = data && (data.user_id || data.userId);
         if (uid) {
-          localStorage.setItem('loggedInUserId', uid); // for phone-login flows
-          localStorage.setItem('userId', uid);         // for password-login compatible code
+          localStorage.setItem('loggedInPhone', normalized);
+          localStorage.setItem('loggedInUserId', uid);
+          localStorage.setItem('userId', uid);
+          toast('登录成功，正在进入...');
+          setTimeout(function () {
+            // 相对路径更稳：避免不同部署子路径下 “/index.html” 指向错误
+            window.location.href = 'index.html';
+          }, 300);
+        } else {
+          // 未注册：把手机号暂存以便注册页自动填充
+          try { localStorage.setItem('pendingRegisterPhone', normalized); } catch (_) {}
+          toast('该手机号尚未注册，正在前往注册页...');
+          setTimeout(function () {
+            window.location.href = 'register.html';
+          }, 300);
         }
       } catch (_) {}
-      toast('登录成功，正在进入...');
-      setTimeout(() => {
-        window.location.replace('/index.html');
-      }, 300);
     } catch (e) {
       toast('网络异常，请检查连接');
     } finally {
