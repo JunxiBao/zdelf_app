@@ -267,10 +267,27 @@ def sms_verify():
             (phone,)
         )
 
+        # 依据手机号查找已注册用户
+        cur.execute("SELECT user_id FROM users WHERE phone_number=%s", (phone,))
+        user = cur.fetchone()
+
         conn.commit()
         cur.close(); conn.close()
 
-        return jsonify({"success": True, "message": "验证码校验通过"})
+        if user and user.get('user_id'):
+            # 与 /login 的返回风格对齐，同时兼容前端已使用的 user_id 键
+            return jsonify({
+                "success": True,
+                "message": "验证码校验通过",
+                "user_id": user["user_id"],
+                "userId": user["user_id"]
+            })
+        else:
+            # 未注册的手机号：按登录语义返回 401，更贴近 /login 的风格
+            return jsonify({
+                "success": False,
+                "message": "该手机号尚未注册，请先完成注册"
+            }), 401
 
     except Exception as e:
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500

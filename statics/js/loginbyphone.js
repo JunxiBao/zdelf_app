@@ -138,6 +138,9 @@
       // 校验通过：前端本地做登录标记并跳转主页（你的应用通过 index.html 动态加载）
       try {
         localStorage.setItem('loggedInPhone', normalized);
+        if (data && data.user_id) {
+          localStorage.setItem('loggedInUserId', data.user_id);
+        }
       } catch (_) {}
       toast('登录成功，正在进入...');
       setTimeout(() => {
