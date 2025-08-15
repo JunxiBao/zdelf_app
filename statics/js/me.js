@@ -28,7 +28,8 @@
   // User data; will be hydrated from the backend. Default to "无" when missing.
   let user = {
     name: '无',        // 显示为用户名
-    age: '无'         // 显示为年龄
+    age: '无',         // 显示为年龄
+    phone: '无'        // 显示为手机号
   };
   // Cache password from /readdata to prefill original password
   let userPassword = '';
@@ -78,6 +79,18 @@
     }
     const part = trimmed.slice(0, 2);
     return part.charAt(0).toUpperCase() + part.slice(1);
+  }
+
+  // 将手机号打码：11 位数字显示为 3-4-4 规则中间打码；其他情况原样返回
+  function maskPhone(p) {
+    if (!p || p === '无') return '无';
+    const s = String(p).replace(/\s+/g, '');
+    const m = s.match(/(?:(?:\+?86)?)(\d{11})$/);
+    if (m) {
+      const n = m[1];
+      return n.slice(0,3) + '****' + n.slice(7);
+    }
+    return s;
   }
 
   /**
@@ -255,14 +268,16 @@
       cleanupFns.push(() => { clearTimeout(timer); if (mask.parentNode) mask.remove(); });
     }
 
-    // Fill profile name/email/initials in the UI (will hydrate from DB)
+    // Fill profile name/age/phone/initials in the UI (will hydrate from DB)
     const nameEl = root.querySelector('#displayName');
-    const emailEl = root.querySelector('#displayEmail');
+    const ageEl = root.querySelector('#displayAge');
+    const phoneEl = root.querySelector('#displayPhone');
     const initialsEl = root.querySelector('#avatarInitials');
 
     function renderUser() {
       if (nameEl) nameEl.textContent = user.name || '无';
-      if (emailEl) emailEl.textContent = (user.age !== '无' ? '年龄：' + user.age : '年龄：无');
+      if (ageEl) ageEl.textContent = (user.age !== '无' ? '年龄：' + user.age : '年龄：无');
+      if (phoneEl) phoneEl.textContent = (user.phone && user.phone !== '无' ? ('手机号：' + maskPhone(user.phone)) : '手机号：无');
       if (initialsEl) initialsEl.textContent = initialsFrom(user.name);
     }
 
@@ -313,7 +328,8 @@
           // Map by your users schema (user_id, username, password, age)
           const username = rec && rec.username ? rec.username : '无';
           const age = (rec && (rec.age !== null && rec.age !== undefined && rec.age !== '')) ? rec.age : '无';
-          user = { name: username, age };
+          const phone = pick(rec, ['phone', 'mobile', 'phone_number'], '无');
+          user = { name: username, age, phone };
           // 后端当前会返回明文密码，这里仅用于“新密码不能与原密码相同”的前端校验，不做任何回显
           currentPassword = (typeof rec.password === 'string') ? rec.password : null;
           // 安全考虑：不再从接口缓存/使用密码字段
