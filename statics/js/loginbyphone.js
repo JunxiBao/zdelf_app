@@ -145,7 +145,7 @@
           toast('登录成功，正在进入...');
           setTimeout(function () {
             // 相对路径更稳：避免不同部署子路径下 “/index.html” 指向错误
-            window.location.href = 'index.html';
+            window.location.href = '/index.html';
           }, 300);
         } else {
           // 未注册：把手机号暂存以便注册页自动填充
