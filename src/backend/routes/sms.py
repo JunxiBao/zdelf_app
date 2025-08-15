@@ -53,6 +53,23 @@ OTP_VERIFY_MAX_FAILS = int(os.getenv("OTP_VERIFY_MAX_FAILS", "5"))
 
 PHONE_REGEX = re.compile(r"^\+?\d{6,15}$")
 
+# 仅支持中国大陆手机号：+86***********、86***********、或 11 位以 1 开头
+CN_MOBILE_RE = re.compile(r"^1[3-9]\d{9}$")
+
+def normalize_cn_phone(raw: str) -> str:
+    if not raw:
+        return ''
+    s = str(raw).strip().replace(' ', '').replace('-', '')
+    # 去掉前缀，拿出纯数字
+    digits = re.sub(r"[^0-9]", "", s)
+    # +86 / 86 前缀
+    if s.startswith('+86') or s.startswith('86'):
+        digits = digits[-11:]  # 取末 11 位
+    # 纯 11 位以 1 开头
+    if len(digits) == 11 and CN_MOBILE_RE.match(digits):
+        return '+86' + digits
+    return ''
+
 # ---------- 工具函数 ----------
 
 def get_db():
@@ -138,10 +155,10 @@ def sms_send():
     try:
         ensure_tables()
         data = request.get_json(force=True)
-        phone = (data or {}).get('phone', '').strip()
-
-        if not PHONE_REGEX.match(phone):
-            return jsonify({"success": False, "message": "手机号格式不正确（需包含区号，如 +86xxxxxxxx）"}), 400
+        raw_phone = (data or {}).get('phone', '').strip()
+        phone = normalize_cn_phone(raw_phone)
+        if not phone:
+            return jsonify({"success": False, "message": "手机号格式不正确（仅支持中国大陆 11 位或带 +86）"}), 400
 
         now = datetime.utcnow()
         today = now.date()
@@ -221,11 +238,11 @@ def sms_verify():
     try:
         ensure_tables()
         data = request.get_json(force=True)
-        phone = (data or {}).get('phone', '').strip()
+        raw_phone = (data or {}).get('phone', '').strip()
         code = (data or {}).get('code', '').strip()
-
-        if not PHONE_REGEX.match(phone):
-            return jsonify({"success": False, "message": "手机号格式不正确"}), 400
+        phone = normalize_cn_phone(raw_phone)
+        if not phone:
+            return jsonify({"success": False, "message": "手机号格式不正确（仅支持中国大陆 11 位或带 +86）"}), 400
         if not code or not code.isdigit() or len(code) != OTP_LENGTH:
             return jsonify({"success": False, "message": f"验证码应为 {OTP_LENGTH} 位数字"}), 400
 
@@ -267,9 +284,17 @@ def sms_verify():
             (phone,)
         )
 
-        # 依据手机号查找已注册用户
-        cur.execute("SELECT user_id FROM users WHERE phone_number=%s", (phone,))
+        # 依据手机号查找已注册用户（兼容历史数据：有些账号的 username 可能就是 +86手机号）
+        try:
+            print(f"[SMS VERIFY] lookup phone=<{phone}>")
+        except Exception:
+            pass
+        cur.execute("SELECT user_id FROM users WHERE phone_number=%s OR username=%s LIMIT 1", (phone, phone))
         user = cur.fetchone()
+        try:
+            print(f"[SMS VERIFY] user lookup result: {user}")
+        except Exception:
+            pass
 
         conn.commit()
         cur.close(); conn.close()
