@@ -513,6 +513,64 @@ input.record-input:-webkit-autofill:focus {
 }
 
 /* -----------------------------------------------------------------------------
+   12) ICP / Record Footer 备案号右下角样式（与主题一致）
+----------------------------------------------------------------------------- */
+.footer {
+  position: fixed;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 998; /* below .popup(999) */
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  -webkit-backdrop-filter: saturate(160%) blur(var(--blur));
+  backdrop-filter: saturate(160%) blur(var(--blur));
+  padding: 6px 8px;
+}
+
+.footer p {
+  margin: 0;
+}
+
+.footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1;
+  padding: 6px 8px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: color var(--dur) ease, background-color var(--dur) ease, transform var(--dur-fast) ease, box-shadow var(--dur) ease;
+}
+
+.footer a:hover {
+  color: var(--primary);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 10%, transparent), transparent);
+  transform: translateY(-1px);
+}
+
+.footer a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+/* 外链提示小箭头 */
+.footer a::after {
+  content: "↗";
+  font-size: 12px;
+  opacity: .6;
+}
+
+/* 小屏幕压缩排版 */
+@media (max-width: 600px) {
+  .footer { padding: 4px 6px; }
+  .footer a { font-size: 11px; padding: 6px; }
+}
+
+/* -----------------------------------------------------------------------------
    12) Dark Mode 暗黑模式
 ----------------------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
@@ -569,5 +627,16 @@ input.record-input:-webkit-autofill:focus {
   /* Code action color for dark mode 深色模式按钮文字色 */
   .code-action {
     color: #7c4dff;
+  }
+
+  /* Footer adjustments for dark mode 深色模式下的备案号样式 */
+  .footer {
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  }
+
+  .footer a:hover {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--primary-200) 16%, transparent), transparent);
   }
 }
