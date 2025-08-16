@@ -1,14 +1,23 @@
-<div style="position: absolute; top: 15px; left: 15px;">
-  <img src="../images/writing.png" alt="Writing" style="height: 50px;">
+<div style="position: absolute; top: 15px; left: 15px">
+  <img src="../images/writing.png" alt="Writing" style="height: 50px" />
 </div>
 <div class="record-container">
-  
   <div class="record-title">请记录你的饮食</div>
   <div class="record-date-container">
     <label for="record-date">记录日期：</label>
-    <input type="text" id="record-date" class="record-date" placeholder="选择日期" readonly />
+    <input
+      type="text"
+      id="record-date"
+      class="record-date"
+      placeholder="选择日期"
+      readonly
+    />
   </div>
-  <textarea class="record-textarea" placeholder="请记录您的饮食以及身体情况，没有具体格式，AI会自动分析" oninput="autoGrow(this)"></textarea>
+  <textarea
+    class="record-textarea"
+    placeholder="请记录您的饮食以及身体情况，没有具体格式，AI会自动分析"
+    oninput="autoGrow(this)"
+  ></textarea>
   <button class="record-btn" onclick="handleRecordSave()">保存</button>
   <div class="loading-spinner" id="spinner"></div>
 </div>
@@ -18,4 +27,3 @@
     <span class="popup-text">AI分析</span>
   </div>
 </div>
-

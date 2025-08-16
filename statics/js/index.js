@@ -22,14 +22,14 @@ const modalContent = document.getElementById("modalContent");
 
 // Keep dynamic content scrollable and size it under the fixed bottom nav
 function setNavHeightVar() {
-  const nav = document.querySelector('.nav-container');
+  const nav = document.querySelector(".nav-container");
   if (!nav) return;
   const h = nav.getBoundingClientRect().height;
-  document.documentElement.style.setProperty('--nav-h', h + 'px');
+  document.documentElement.style.setProperty("--nav-h", h + "px");
 }
 // Recalculate on load, resize, and after fonts load (icon fonts may change height)
-window.addEventListener('load', setNavHeightVar);
-window.addEventListener('resize', setNavHeightVar);
+window.addEventListener("load", setNavHeightVar);
+window.addEventListener("resize", setNavHeightVar);
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(setNavHeightVar);
 }
@@ -39,7 +39,7 @@ const pageMap = [
   "../../src/daily.html",
   "../../src/case.html",
   "../../src/square.html",
-  "../../src/me.html"
+  "../../src/me.html",
 ];
 
 // Current active tab index
@@ -62,21 +62,21 @@ let currentShadowRoot = null;
  */
 function injectPageStyles(doc, shadow) {
   // Copy all inline <style> tags from <head> and <body>
-  doc.querySelectorAll('style').forEach(styleEl => {
+  doc.querySelectorAll("style").forEach((styleEl) => {
     shadow.appendChild(styleEl.cloneNode(true));
   });
   // Global styles to skip (already loaded in the host <head>)
   const globalHrefs = new Set([
-    new URL('../../statics/css/nav.css', location.href).href,
+    new URL("../../statics/css/nav.css", location.href).href,
   ]);
-  doc.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-    const href = new URL(link.getAttribute('href'), location.href).href;
+  doc.querySelectorAll('link[rel="stylesheet"]').forEach((link) => {
+    const href = new URL(link.getAttribute("href"), location.href).href;
     if (globalHrefs.has(href)) return; // skip globals
     const clone = link.cloneNode(true);
     shadow.appendChild(clone);
   });
   // Icon font fix: ensure ligatures resolve inside the Shadow DOM
-  const fix = document.createElement('style');
+  const fix = document.createElement("style");
   fix.textContent = `
     .material-icons,
     .material-icons-outlined {
@@ -130,13 +130,17 @@ function injectPageStyles(doc, shadow) {
 function loadPage(index) {
   // run previous page teardown if available
   if (typeof currentDestroy === "function") {
-    try { currentDestroy(); } catch (e) { console.warn(e); }
+    try {
+      currentDestroy();
+    } catch (e) {
+      console.warn(e);
+    }
     currentDestroy = null;
   }
 
   fetch(pageMap[index])
-    .then(res => res.text())
-    .then(html => {
+    .then((res) => res.text())
+    .then((html) => {
       // Parse the incoming document and take only the <body> content (fallback to raw HTML)
       const doc = new DOMParser().parseFromString(html, "text/html");
       const bodyHTML = doc.body ? doc.body.innerHTML : html;
@@ -163,7 +167,9 @@ function loadPage(index) {
 
       if (scriptMap[index]) {
         // Remove old script tag for this page (if any)
-        const oldScript = document.querySelector(`script[data-page-script="${scriptMap[index]}"]`);
+        const oldScript = document.querySelector(
+          `script[data-page-script="${scriptMap[index]}"]`
+        );
         if (oldScript) oldScript.remove();
 
         const script = document.createElement("script");
@@ -183,30 +189,31 @@ function loadPage(index) {
         console.log("📦 动态加载脚本:", scriptMap[index]);
       }
     })
-    .catch(err => {
+    .catch((err) => {
       // Fallback UI
-      content.innerHTML = "<p style='padding: 2em; text-align:center;'>⚠️ 页面加载失败</p>";
+      content.innerHTML =
+        "<p style='padding: 2em; text-align:center;'>⚠️ 页面加载失败</p>";
       console.error("加载页面出错:", err);
       currentShadowRoot = null;
     });
 }
 
 // Lightweight ripple effect for nav icons (mousedown/touchstart)
-document.querySelectorAll('.nav-item').forEach(item => {
-  ['mousedown', 'touchstart'].forEach(evt => {
+document.querySelectorAll(".nav-item").forEach((item) => {
+  ["mousedown", "touchstart"].forEach((evt) => {
     item.addEventListener(evt, function (e) {
-      const targetButton = item.querySelector('.icon');
+      const targetButton = item.querySelector(".icon");
       if (!targetButton) return;
-      const circle = document.createElement('span');
-      circle.classList.add('ripple-effect');
-      circle.style.position = 'absolute';
-      circle.style.pointerEvents = 'none';
+      const circle = document.createElement("span");
+      circle.classList.add("ripple-effect");
+      circle.style.position = "absolute";
+      circle.style.pointerEvents = "none";
       const rect = targetButton.getBoundingClientRect();
       const size = Math.max(rect.width, rect.height);
-      circle.style.width = circle.style.height = size + 'px';
-      circle.style.left = e.clientX - rect.left - size / 2 + 'px';
-      circle.style.top = e.clientY - rect.top - size / 2 + 'px';
-      const existing = targetButton.querySelector('.ripple-effect');
+      circle.style.width = circle.style.height = size + "px";
+      circle.style.left = e.clientX - rect.left - size / 2 + "px";
+      circle.style.top = e.clientY - rect.top - size / 2 + "px";
+      const existing = targetButton.querySelector(".ripple-effect");
       if (existing) existing.remove();
       targetButton.appendChild(circle);
     });
@@ -234,11 +241,12 @@ navItems.forEach((item, index) => {
 // Center action modal: loads add.html into the modal content and add.js for its logic
 function openModal() {
   modal.style.display = "flex";
-  modalContent.innerHTML = '<div style="text-align:center;padding:2em;">加载中...</div>';
+  modalContent.innerHTML =
+    '<div style="text-align:center;padding:2em;">加载中...</div>';
 
   fetch("../../src/add.html")
-    .then(res => res.text())
-    .then(html => {
+    .then((res) => res.text())
+    .then((html) => {
       modalContent.innerHTML = html;
       // Dynamically load add.js
       const script = document.createElement("script");
@@ -246,7 +254,8 @@ function openModal() {
       modalContent.appendChild(script);
     })
     .catch(() => {
-      modalContent.innerHTML = "<p style='text-align:center;'>⚠️ 无法加载内容</p>";
+      modalContent.innerHTML =
+        "<p style='text-align:center;'>⚠️ 无法加载内容</p>";
     });
 }
 

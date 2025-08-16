@@ -12,7 +12,7 @@
  * - Shadow DOM injection (rootEl = ShadowRoot)
  */
 (function () {
-  console.debug('[me] me.js evaluated');
+  console.debug("[me] me.js evaluated");
   // Array of teardown callbacks to run when leaving the page
   let cleanupFns = [];
 
@@ -20,19 +20,21 @@
   let fetchController = null;
   function abortInFlight() {
     if (fetchController) {
-      try { fetchController.abort(); } catch (e) { }
+      try {
+        fetchController.abort();
+      } catch (e) {}
       fetchController = null;
     }
   }
 
   // User data; will be hydrated from the backend. Default to "无" when missing.
   let user = {
-    name: '无',        // 显示为用户名
-    age: '无',         // 显示为年龄
-    phone: '无'        // 显示为手机号
+    name: "无", // 显示为用户名
+    age: "无", // 显示为年龄
+    phone: "无", // 显示为手机号
   };
   // Cache password from /readdata to prefill original password
-  let userPassword = '';
+  let userPassword = "";
   // Keep current password only for equality check (never rendered)
   let currentPassword = null;
 
@@ -43,22 +45,24 @@
   function addRipple(e) {
     const target = e.currentTarget;
     const rect = target.getBoundingClientRect();
-    const ripple = document.createElement('span');
+    const ripple = document.createElement("span");
     const size = Math.max(rect.width, rect.height);
-    ripple.className = 'ripple';
-    ripple.style.width = ripple.style.height = size + 'px';
-    const x = (e.clientX || (rect.left + rect.width / 2)) - rect.left - size / 2;
-    const y = (e.clientY || (rect.top + rect.height / 2)) - rect.top - size / 2;
-    ripple.style.left = x + 'px';
-    ripple.style.top = y + 'px';
+    ripple.className = "ripple";
+    ripple.style.width = ripple.style.height = size + "px";
+    const x = (e.clientX || rect.left + rect.width / 2) - rect.left - size / 2;
+    const y = (e.clientY || rect.top + rect.height / 2) - rect.top - size / 2;
+    ripple.style.left = x + "px";
+    ripple.style.top = y + "px";
     target.appendChild(ripple);
-    ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+    ripple.addEventListener("animationend", () => ripple.remove(), {
+      once: true,
+    });
   }
 
   // Helpers to safely read fields and compute initials
-  function pick(obj, keys, fallback = '无') {
+  function pick(obj, keys, fallback = "无") {
     for (const k of keys) {
-      if (obj && obj[k] != null && obj[k] !== '') return obj[k];
+      if (obj && obj[k] != null && obj[k] !== "") return obj[k];
     }
     return fallback;
   }
@@ -66,14 +70,14 @@
   // - 中文：取首字（姓）
   // - 英文：若有两个及以上大写字母，取前两个；否则取前两个字符，仅首字母大写
   function initialsFrom(name) {
-    if (!name || name === '无') return '无';
+    if (!name || name === "无") return "无";
     const trimmed = String(name).trim();
-    if (!trimmed) return '无';
+    if (!trimmed) return "无";
     const firstChar = trimmed[0];
     if (/[\u4E00-\u9FFF]/.test(firstChar)) {
       return firstChar;
     }
-    const upperLetters = (trimmed.match(/[A-Z]/g) || []);
+    const upperLetters = trimmed.match(/[A-Z]/g) || [];
     if (upperLetters.length >= 2) {
       return (upperLetters[0] + upperLetters[1]).toUpperCase();
     }
@@ -83,12 +87,12 @@
 
   // 将手机号打码：11 位数字显示为 3-4-4 规则中间打码；其他情况原样返回
   function maskPhone(p) {
-    if (!p || p === '无') return '无';
-    const s = String(p).replace(/\s+/g, '');
+    if (!p || p === "无") return "无";
+    const s = String(p).replace(/\s+/g, "");
     const m = s.match(/(?:(?:\+?86)?)(\d{11})$/);
     if (m) {
       const n = m[1];
-      return n.slice(0,3) + '****' + n.slice(7);
+      return n.slice(0, 3) + "****" + n.slice(7);
     }
     return s;
   }
@@ -102,43 +106,50 @@
 
     // Toast notification helper（放最顶层，且不阻挡点击）
     const toast = (msg) => {
-      const t = document.createElement('div');
+      const t = document.createElement("div");
       t.textContent = msg;
-      t.style.position = 'fixed';
-      t.style.left = '50%';
-      t.style.bottom = '28px';
-      t.style.transform = 'translateX(-50%)';
-      t.style.background = 'var(--card)';
-      t.style.color = 'var(--text)';
-      t.style.padding = '10px 14px';
-      t.style.borderRadius = '12px';
-      t.style.boxShadow = 'var(--shadow-2)';
-      t.style.zIndex = '12001';
-      t.style.pointerEvents = 'none';
-      t.style.opacity = '0';
-      t.style.transition = 'opacity .2s ease, translate .2s ease';
+      t.style.position = "fixed";
+      t.style.left = "50%";
+      t.style.bottom = "28px";
+      t.style.transform = "translateX(-50%)";
+      t.style.background = "var(--card)";
+      t.style.color = "var(--text)";
+      t.style.padding = "10px 14px";
+      t.style.borderRadius = "12px";
+      t.style.boxShadow = "var(--shadow-2)";
+      t.style.zIndex = "12001";
+      t.style.pointerEvents = "none";
+      t.style.opacity = "0";
+      t.style.transition = "opacity .2s ease, translate .2s ease";
       // 如果有编辑弹窗，插到其前面，确保在最上层
-      const editMask = document.querySelector('.edit-mask');
+      const editMask = document.querySelector(".edit-mask");
       if (editMask && editMask.parentNode) {
         editMask.parentNode.insertBefore(t, editMask);
       } else {
         document.body.appendChild(t);
       }
-      requestAnimationFrame(() => { t.style.opacity = '1'; t.style.translate = '0 -8px'; });
+      requestAnimationFrame(() => {
+        t.style.opacity = "1";
+        t.style.translate = "0 -8px";
+      });
       const hideTimer = setTimeout(() => {
-        t.style.opacity = '0'; t.style.translate = '0 0';
-        t.addEventListener('transitionend', () => t.remove(), { once: true });
+        t.style.opacity = "0";
+        t.style.translate = "0 0";
+        t.addEventListener("transitionend", () => t.remove(), { once: true });
       }, 1500);
-      cleanupFns.push(() => { clearTimeout(hideTimer); if (t.parentNode) t.remove(); });
+      cleanupFns.push(() => {
+        clearTimeout(hideTimer);
+        if (t.parentNode) t.remove();
+      });
     };
 
     // -----------------------------
     // Pretty error modal (purple theme, dark-mode friendly)
     // -----------------------------
     function ensureErrorStyles() {
-      if (document.getElementById('error-modal-style')) return;
-      const s = document.createElement('style');
-      s.id = 'error-modal-style';
+      if (document.getElementById("error-modal-style")) return;
+      const s = document.createElement("style");
+      s.id = "error-modal-style";
       s.textContent = `
       .err-mask{position:fixed;inset:0;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:120000;backdrop-filter:blur(8px)}
       .err-mask.show{opacity:1;pointer-events:auto}
@@ -160,27 +171,37 @@
       @supports(padding:max(0px)){ .err-dialog{ margin-bottom: env(safe-area-inset-bottom); } }
       `;
       document.head.appendChild(s);
-      cleanupFns.push(() => { if (s.parentNode) s.remove(); });
+      cleanupFns.push(() => {
+        if (s.parentNode) s.remove();
+      });
     }
 
-    function showErrorModal(message, title = '出错了') {
+    function showErrorModal(message, title = "出错了") {
       ensureErrorStyles();
-      const mask = document.createElement('div');
-      mask.className = 'err-mask';
-      mask.setAttribute('role', 'dialog');
-      mask.setAttribute('aria-modal', 'true');
+      const mask = document.createElement("div");
+      mask.className = "err-mask";
+      mask.setAttribute("role", "dialog");
+      mask.setAttribute("aria-modal", "true");
 
-      const dlg = document.createElement('div');
-      dlg.className = 'err-dialog';
+      const dlg = document.createElement("div");
+      dlg.className = "err-dialog";
 
-      const head = document.createElement('div'); head.className = 'err-head';
-      const h = document.createElement('div'); h.className = 'err-title'; h.textContent = title;
+      const head = document.createElement("div");
+      head.className = "err-head";
+      const h = document.createElement("div");
+      h.className = "err-title";
+      h.textContent = title;
       head.append(h);
 
-      const body = document.createElement('div'); body.className = 'err-body'; body.textContent = message || '发生未知错误';
+      const body = document.createElement("div");
+      body.className = "err-body";
+      body.textContent = message || "发生未知错误";
 
-      const foot = document.createElement('div'); foot.className = 'err-footer';
-      const ok = document.createElement('button'); ok.className = 'err-btn err-btn-primary'; ok.textContent = '我知道了';
+      const foot = document.createElement("div");
+      foot.className = "err-footer";
+      const ok = document.createElement("button");
+      ok.className = "err-btn err-btn-primary";
+      ok.textContent = "我知道了";
       foot.append(ok);
 
       dlg.append(head, body, foot);
@@ -189,25 +210,39 @@
       // Always append to body so it stays on top of any modal
       document.body.appendChild(mask);
 
-      requestAnimationFrame(() => { mask.classList.add('show'); dlg.classList.add('show'); });
+      requestAnimationFrame(() => {
+        mask.classList.add("show");
+        dlg.classList.add("show");
+      });
 
       const close = () => {
-        dlg.classList.remove('show'); mask.classList.remove('show');
-        const onEnd = () => { mask.removeEventListener('transitionend', onEnd); if (mask.parentNode) mask.remove(); };
-        mask.addEventListener('transitionend', onEnd);
+        dlg.classList.remove("show");
+        mask.classList.remove("show");
+        const onEnd = () => {
+          mask.removeEventListener("transitionend", onEnd);
+          if (mask.parentNode) mask.remove();
+        };
+        mask.addEventListener("transitionend", onEnd);
       };
-      ok.addEventListener('click', close, { once: true });
-      mask.addEventListener('click', (e) => { if (e.target === mask) close(); });
-      document.addEventListener('keydown', function esc(ev) { if (ev.key === 'Escape') { document.removeEventListener('keydown', esc); close(); } });
+      ok.addEventListener("click", close, { once: true });
+      mask.addEventListener("click", (e) => {
+        if (e.target === mask) close();
+      });
+      document.addEventListener("keydown", function esc(ev) {
+        if (ev.key === "Escape") {
+          document.removeEventListener("keydown", esc);
+          close();
+        }
+      });
     }
 
     // -----------------------------
     // Success modal (purple theme, dark-mode friendly)
     // -----------------------------
     function ensureSuccessStyles() {
-      if (document.getElementById('success-modal-style')) return;
-      const s = document.createElement('style');
-      s.id = 'success-modal-style';
+      if (document.getElementById("success-modal-style")) return;
+      const s = document.createElement("style");
+      s.id = "success-modal-style";
       s.textContent = `
       .ok-mask{position:fixed;inset:0;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:120000;backdrop-filter:blur(8px)}
       .ok-mask.show{opacity:1;pointer-events:auto}
@@ -226,76 +261,123 @@
       }
       `;
       document.head.appendChild(s);
-      cleanupFns.push(() => { if (s.parentNode) s.remove(); });
+      cleanupFns.push(() => {
+        if (s.parentNode) s.remove();
+      });
     }
 
-    function showSuccessModal(message, title = '已保存') {
+    function showSuccessModal(message, title = "已保存") {
       ensureSuccessStyles();
-      const mask = document.createElement('div');
-      mask.className = 'ok-mask';
-      mask.setAttribute('role','dialog');
-      mask.setAttribute('aria-modal','true');
+      const mask = document.createElement("div");
+      mask.className = "ok-mask";
+      mask.setAttribute("role", "dialog");
+      mask.setAttribute("aria-modal", "true");
 
-      const dlg = document.createElement('div');
-      dlg.className = 'ok-dialog';
+      const dlg = document.createElement("div");
+      dlg.className = "ok-dialog";
 
-      const head = document.createElement('div'); head.className = 'ok-head';
-      const h = document.createElement('div'); h.className = 'ok-title'; h.textContent = title;
+      const head = document.createElement("div");
+      head.className = "ok-head";
+      const h = document.createElement("div");
+      h.className = "ok-title";
+      h.textContent = title;
       head.append(h);
 
-      const body = document.createElement('div'); body.className = 'ok-body'; body.textContent = message || '保存成功';
+      const body = document.createElement("div");
+      body.className = "ok-body";
+      body.textContent = message || "保存成功";
 
-      const foot = document.createElement('div'); foot.className = 'ok-footer';
-      const ok = document.createElement('button'); ok.className = 'ok-btn ok-btn-primary'; ok.textContent = '好的';
+      const foot = document.createElement("div");
+      foot.className = "ok-footer";
+      const ok = document.createElement("button");
+      ok.className = "ok-btn ok-btn-primary";
+      ok.textContent = "好的";
       foot.append(ok);
 
       dlg.append(head, body, foot);
       mask.appendChild(dlg);
       document.body.appendChild(mask);
 
-      requestAnimationFrame(() => { mask.classList.add('show'); dlg.classList.add('show'); });
+      requestAnimationFrame(() => {
+        mask.classList.add("show");
+        dlg.classList.add("show");
+      });
 
       const close = () => {
-        dlg.classList.remove('show'); mask.classList.remove('show');
-        const onEnd = () => { mask.removeEventListener('transitionend', onEnd); if (mask.parentNode) mask.remove(); };
-        mask.addEventListener('transitionend', onEnd);
+        dlg.classList.remove("show");
+        mask.classList.remove("show");
+        const onEnd = () => {
+          mask.removeEventListener("transitionend", onEnd);
+          if (mask.parentNode) mask.remove();
+        };
+        mask.addEventListener("transitionend", onEnd);
       };
-      ok.addEventListener('click', close, { once: true });
-      mask.addEventListener('click', (e) => { if (e.target === mask) close(); });
+      ok.addEventListener("click", close, { once: true });
+      mask.addEventListener("click", (e) => {
+        if (e.target === mask) close();
+      });
 
       // auto close after 1.6s
       const timer = setTimeout(close, 1600);
-      cleanupFns.push(() => { clearTimeout(timer); if (mask.parentNode) mask.remove(); });
+      cleanupFns.push(() => {
+        clearTimeout(timer);
+        if (mask.parentNode) mask.remove();
+      });
     }
 
     // Fill profile name/age/phone/initials in the UI (will hydrate from DB)
-    const nameEl = root.querySelector('#displayName');
-    const ageEl = root.querySelector('#displayAge');
-    const phoneEl = root.querySelector('#displayPhone');
-    const initialsEl = root.querySelector('#avatarInitials');
+    const nameEl = root.querySelector("#displayName");
+    const ageEl = root.querySelector("#displayAge");
+    const phoneEl = root.querySelector("#displayPhone");
+    const initialsEl = root.querySelector("#avatarInitials");
 
     function renderUser() {
-      if (nameEl) nameEl.textContent = user.name || '无';
-      if (ageEl) ageEl.textContent = (user.age !== '无' ? '年龄：' + user.age : '年龄：无');
-      if (phoneEl) phoneEl.textContent = (user.phone && user.phone !== '无' ? ('手机号：' + maskPhone(user.phone)) : '手机号：无');
+      if (nameEl) nameEl.textContent = user.name || "无";
+      if (ageEl)
+        ageEl.textContent =
+          user.age !== "无" ? "年龄：" + user.age : "年龄：无";
+      if (phoneEl)
+        phoneEl.textContent =
+          user.phone && user.phone !== "无"
+            ? "手机号：" + maskPhone(user.phone)
+            : "手机号：无";
       if (initialsEl) initialsEl.textContent = initialsFrom(user.name);
     }
 
     // Try to load from backend using stored UserID
-    const appRoot = root.querySelector('main.app');
-    const tableName = (appRoot && appRoot.dataset && appRoot.dataset.table) ? appRoot.dataset.table : 'users';
+    const appRoot = root.querySelector("main.app");
+    const tableName =
+      appRoot && appRoot.dataset && appRoot.dataset.table
+        ? appRoot.dataset.table
+        : "users";
     // Align with daily.js: prefer lower-cased 'userId' key
-    const storedId = localStorage.getItem('userId') || sessionStorage.getItem('userId') ||
-      localStorage.getItem('UserID') || sessionStorage.getItem('UserID');
-    const storedUsername = localStorage.getItem('username') || localStorage.getItem('Username') ||
-      sessionStorage.getItem('username') || sessionStorage.getItem('Username');
-    console.debug('[me] table:', tableName, 'userId:', storedId, 'username:', storedUsername);
+    const storedId =
+      localStorage.getItem("userId") ||
+      sessionStorage.getItem("userId") ||
+      localStorage.getItem("UserID") ||
+      sessionStorage.getItem("UserID");
+    const storedUsername =
+      localStorage.getItem("username") ||
+      localStorage.getItem("Username") ||
+      sessionStorage.getItem("username") ||
+      sessionStorage.getItem("Username");
+    console.debug(
+      "[me] table:",
+      tableName,
+      "userId:",
+      storedId,
+      "username:",
+      storedUsername
+    );
 
     // --- API base (shared in initMe) ---
-    const configuredBase = (document.querySelector('meta[name="api-base"]')?.content || window.API_BASE || '').trim();
-    const defaultBase = 'https://zhucan.xyz:5000';
-    const apiBase = (configuredBase || defaultBase).replace(/\/$/, '');
-
+    const configuredBase = (
+      document.querySelector('meta[name="api-base"]')?.content ||
+      window.API_BASE ||
+      ""
+    ).trim();
+    const defaultBase = "https://zhucan.xyz:5000";
+    const apiBase = (configuredBase || defaultBase).replace(/\/$/, "");
 
     // Initial paint with defaults ("无")
     renderUser();
@@ -304,53 +386,62 @@
       abortInFlight();
       fetchController = new AbortController();
       // Build payload: prefer userId like daily.js; fallback to username if needed
-      const payload = storedId ? { table_name: tableName, user_id: storedId } : { table_name: tableName, username: storedUsername };
-      const url = apiBase + '/readdata';
-      console.debug('[me] POST', url, payload);
+      const payload = storedId
+        ? { table_name: tableName, user_id: storedId }
+        : { table_name: tableName, username: storedUsername };
+      const url = apiBase + "/readdata";
+      console.debug("[me] POST", url, payload);
       fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
         signal: fetchController.signal,
       })
         .then((response) => {
-          console.log('📡 [me] 收到响应，状态码:', response.status);
-          if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          console.log("📡 [me] 收到响应，状态码:", response.status);
+          if (!response.ok)
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           return response.json();
         })
-        .then(json => {
+        .then((json) => {
           if (!json || json.success !== true || !Array.isArray(json.data)) {
-            showErrorModal('无法从服务器读取资料');
+            showErrorModal("无法从服务器读取资料");
             return;
           }
           const rec = json.data[0] || {};
-          console.debug('[me] /readdata result:', json);
+          console.debug("[me] /readdata result:", json);
           // Map by your users schema (user_id, username, password, age)
-          const username = rec && rec.username ? rec.username : '无';
-          const age = (rec && (rec.age !== null && rec.age !== undefined && rec.age !== '')) ? rec.age : '无';
-          const phone = pick(rec, ['phone', 'mobile', 'phone_number'], '无');
+          const username = rec && rec.username ? rec.username : "无";
+          const age =
+            rec && rec.age !== null && rec.age !== undefined && rec.age !== ""
+              ? rec.age
+              : "无";
+          const phone = pick(rec, ["phone", "mobile", "phone_number"], "无");
           user = { name: username, age, phone };
           // 后端当前会返回明文密码，这里仅用于“新密码不能与原密码相同”的前端校验，不做任何回显
-          currentPassword = (typeof rec.password === 'string') ? rec.password : null;
+          currentPassword =
+            typeof rec.password === "string" ? rec.password : null;
           // 安全考虑：不再从接口缓存/使用密码字段
-          userPassword = '';
+          userPassword = "";
           renderUser();
         })
         .catch((err) => {
-          console.warn('[me] /readdata error:', err);
-          showErrorModal('网络错误，请稍后再试');
+          console.warn("[me] /readdata error:", err);
+          showErrorModal("网络错误，请稍后再试");
         })
-        .finally(() => { fetchController = null; });
+        .finally(() => {
+          fetchController = null;
+        });
       cleanupFns.push(() => abortInFlight());
     } else {
-      toast('未找到用户ID/用户名，本地显示占位');
+      toast("未找到用户ID/用户名，本地显示占位");
     }
 
     // Confirm modal (for logout)
     function ensureConfirmStyles() {
-      if (document.getElementById('app-confirm-style')) return;
-      const s = document.createElement('style');
-      s.id = 'app-confirm-style';
+      if (document.getElementById("app-confirm-style")) return;
+      const s = document.createElement("style");
+      s.id = "app-confirm-style";
       s.textContent = `
       .app-confirm-mask {position: fixed; inset: 0; background: color-mix(in srgb, var(--text, #000) 20%, transparent); backdrop-filter: saturate(120%) blur(2px); display:flex; align-items:center; justify-content:center; opacity:0; transition: opacity .18s ease; z-index: 10000;}
       .app-confirm-mask.show {opacity:1;}
@@ -369,66 +460,85 @@
       }
       `;
       document.head.appendChild(s);
-      cleanupFns.push(() => { if (s.parentNode) s.remove(); });
+      cleanupFns.push(() => {
+        if (s.parentNode) s.remove();
+      });
     }
 
     function confirmDialog(message) {
       ensureConfirmStyles();
       return new Promise((resolve) => {
-        const mask = document.createElement('div');
-        mask.className = 'app-confirm-mask';
+        const mask = document.createElement("div");
+        mask.className = "app-confirm-mask";
 
-        const box = document.createElement('div');
-        box.className = 'app-confirm';
+        const box = document.createElement("div");
+        box.className = "app-confirm";
 
-        const body = document.createElement('div');
-        body.className = 'app-confirm__body';
-        body.textContent = message || '确定要执行此操作吗？';
+        const body = document.createElement("div");
+        body.className = "app-confirm__body";
+        body.textContent = message || "确定要执行此操作吗？";
 
-        const footer = document.createElement('div');
-        footer.className = 'app-confirm__footer';
+        const footer = document.createElement("div");
+        footer.className = "app-confirm__footer";
 
-        const cancelBtn = document.createElement('button');
-        cancelBtn.className = 'app-confirm__btn app-confirm__btn--ghost';
-        cancelBtn.textContent = '取消';
+        const cancelBtn = document.createElement("button");
+        cancelBtn.className = "app-confirm__btn app-confirm__btn--ghost";
+        cancelBtn.textContent = "取消";
 
-        const okBtn = document.createElement('button');
-        okBtn.className = 'app-confirm__btn app-confirm__btn--primary';
-        okBtn.textContent = '确定';
+        const okBtn = document.createElement("button");
+        okBtn.className = "app-confirm__btn app-confirm__btn--primary";
+        okBtn.textContent = "确定";
 
         footer.append(cancelBtn, okBtn);
         box.append(body, footer);
         mask.appendChild(box);
         document.body.appendChild(mask);
 
-        requestAnimationFrame(() => { mask.classList.add('show'); box.classList.add('show'); });
+        requestAnimationFrame(() => {
+          mask.classList.add("show");
+          box.classList.add("show");
+        });
 
         const close = (result) => {
-          box.classList.remove('show');
-          mask.classList.remove('show');
-          const onEnd = () => { mask.removeEventListener('transitionend', onEnd); if (mask.parentNode) mask.remove(); };
-          mask.addEventListener('transitionend', onEnd);
+          box.classList.remove("show");
+          mask.classList.remove("show");
+          const onEnd = () => {
+            mask.removeEventListener("transitionend", onEnd);
+            if (mask.parentNode) mask.remove();
+          };
+          mask.addEventListener("transitionend", onEnd);
           resolve(result);
         };
 
-        cancelBtn.addEventListener('click', () => close(false), { once: true });
-        okBtn.addEventListener('click', () => close(true), { once: true });
-        mask.addEventListener('click', (e) => { if (e.target === mask) close(false); });
-        document.addEventListener('keydown', function escHandler(ev) { if (ev.key === 'Escape') { document.removeEventListener('keydown', escHandler); close(false); } });
+        cancelBtn.addEventListener("click", () => close(false), { once: true });
+        okBtn.addEventListener("click", () => close(true), { once: true });
+        mask.addEventListener("click", (e) => {
+          if (e.target === mask) close(false);
+        });
+        document.addEventListener("keydown", function escHandler(ev) {
+          if (ev.key === "Escape") {
+            document.removeEventListener("keydown", escHandler);
+            close(false);
+          }
+        });
 
         setTimeout(() => okBtn.focus(), 0);
       });
     }
 
     // 绑定 ripple
-    root.querySelectorAll('.rippleable').forEach(el => {
+    root.querySelectorAll(".rippleable").forEach((el) => {
       const clickHandler = (e) => addRipple(e);
-      const keyHandler = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { el.click(); } };
-      el.addEventListener('click', clickHandler);
-      el.addEventListener('keydown', keyHandler);
+      const keyHandler = (ev) => {
+        if (ev.key === "Enter" || ev.key === " ") {
+          el.click();
+        }
+      };
+      el.addEventListener("click", clickHandler);
+      el.addEventListener("keydown", keyHandler);
       cleanupFns.push(() => {
-        el.removeEventListener('click', clickHandler);
-        el.removeEventListener('keydown', keyHandler);
+        el.removeEventListener("click", clickHandler);
+        el.removeEventListener("keydown", keyHandler);
       });
     });
 
@@ -436,9 +546,9 @@
     // Edit modal (age + password) with dark mode support
     // -----------------------------
     function ensureEditStyles() {
-      if (document.getElementById('edit-profile-style')) return;
-      const s = document.createElement('style');
-      s.id = 'edit-profile-style';
+      if (document.getElementById("edit-profile-style")) return;
+      const s = document.createElement("style");
+      s.id = "edit-profile-style";
       s.textContent = `
   .edit-mask{position:fixed;inset:0;background:color-mix(in srgb, var(--text,#000) 20%, transparent);backdrop-filter:saturate(120%) blur(2px);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s ease;z-index:10000}
   .edit-mask.show{opacity:1}
@@ -484,23 +594,25 @@
   }
 `;
       document.head.appendChild(s);
-      cleanupFns.push(() => { if (s.parentNode) s.remove(); });
+      cleanupFns.push(() => {
+        if (s.parentNode) s.remove();
+      });
     }
 
     // 密码输入装饰器：添加“显示/隐藏”按钮（使用登录页样式与 SVG 图标）
     function decoratePasswordInput(inputEl) {
-      const wrap = document.createElement('div');
-      wrap.className = 'input-with-toggle';
-      inputEl.classList.add('record-textarea');
+      const wrap = document.createElement("div");
+      wrap.className = "input-with-toggle";
+      inputEl.classList.add("record-textarea");
       const parent = inputEl.parentNode;
       parent.replaceChild(wrap, inputEl);
       wrap.appendChild(inputEl);
 
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'toggle-password';
-      btn.setAttribute('aria-label', '显示密码');
-      btn.setAttribute('title', '显示密码');
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "toggle-password";
+      btn.setAttribute("aria-label", "显示密码");
+      btn.setAttribute("title", "显示密码");
 
       // 使用与登录页相同的 SVG 图标和类名
       btn.innerHTML = `
@@ -519,26 +631,29 @@
       `;
       wrap.appendChild(btn);
 
-      const eye = btn.querySelector('.eye');
-      const eyeOff = btn.querySelector('.eye-off');
+      const eye = btn.querySelector(".eye");
+      const eyeOff = btn.querySelector(".eye-off");
 
       function setState(show) {
-        inputEl.setAttribute('type', show ? 'text' : 'password');
-        btn.setAttribute('aria-label', show ? '隐藏密码' : '显示密码');
-        btn.setAttribute('title', show ? '隐藏密码' : '显示密码');
-        eye.classList.toggle('visible', !show);
-        eye.classList.toggle('hidden', show);
-        eyeOff.classList.toggle('visible', show);
-        eyeOff.classList.toggle('hidden', !show);
+        inputEl.setAttribute("type", show ? "text" : "password");
+        btn.setAttribute("aria-label", show ? "隐藏密码" : "显示密码");
+        btn.setAttribute("title", show ? "隐藏密码" : "显示密码");
+        eye.classList.toggle("visible", !show);
+        eye.classList.toggle("hidden", show);
+        eyeOff.classList.toggle("visible", show);
+        eyeOff.classList.toggle("hidden", !show);
       }
 
-      btn.addEventListener('click', () => {
-        const show = inputEl.getAttribute('type') === 'password';
-        btn.animate([
-          { transform: 'translateY(-50%) scale(1)' },
-          { transform: 'translateY(-50%) scale(0.9)' },
-          { transform: 'translateY(-50%) scale(1)' }
-        ], { duration: 160, easing: 'ease-out' });
+      btn.addEventListener("click", () => {
+        const show = inputEl.getAttribute("type") === "password";
+        btn.animate(
+          [
+            { transform: "translateY(-50%) scale(1)" },
+            { transform: "translateY(-50%) scale(0.9)" },
+            { transform: "translateY(-50%) scale(1)" },
+          ],
+          { duration: 160, easing: "ease-out" }
+        );
         setState(show);
       });
 
@@ -550,82 +665,123 @@
 
     function openEditDialog() {
       ensureEditStyles();
-      const mask = document.createElement('div');
-      mask.className = 'edit-mask';
+      const mask = document.createElement("div");
+      mask.className = "edit-mask";
 
-      const dialog = document.createElement('div');
-      dialog.className = 'edit-dialog';
+      const dialog = document.createElement("div");
+      dialog.className = "edit-dialog";
 
-      const header = document.createElement('div');
-      header.className = 'edit-header';
-      header.textContent = '编辑资料';
+      const header = document.createElement("div");
+      header.className = "edit-header";
+      header.textContent = "编辑资料";
 
-      const body = document.createElement('div');
-      body.className = 'edit-body';
+      const body = document.createElement("div");
+      body.className = "edit-body";
 
-      const fAge = document.createElement('div'); fAge.className = 'field';
-      const lAge = document.createElement('label'); lAge.textContent = '年龄'; lAge.setAttribute('for', 'edit-age');
-      const iAge = document.createElement('input'); iAge.id = 'edit-age'; iAge.type = 'number'; iAge.min = '0'; iAge.max = '120'; iAge.placeholder = '请输入年龄';
-      if (user && user.age !== '无' && user.age !== undefined && user.age !== null && user.age !== '') { iAge.value = parseInt(user.age, 10); }
+      const fAge = document.createElement("div");
+      fAge.className = "field";
+      const lAge = document.createElement("label");
+      lAge.textContent = "年龄";
+      lAge.setAttribute("for", "edit-age");
+      const iAge = document.createElement("input");
+      iAge.id = "edit-age";
+      iAge.type = "number";
+      iAge.min = "0";
+      iAge.max = "120";
+      iAge.placeholder = "请输入年龄";
+      if (
+        user &&
+        user.age !== "无" &&
+        user.age !== undefined &&
+        user.age !== null &&
+        user.age !== ""
+      ) {
+        iAge.value = parseInt(user.age, 10);
+      }
       fAge.append(lAge, iAge);
 
-
       // 新密码
-      const fPwd = document.createElement('div'); fPwd.className = 'field';
-      const lPwd = document.createElement('label'); lPwd.textContent = '新密码'; lPwd.setAttribute('for', 'edit-pwd');
-      const iPwd = document.createElement('input'); iPwd.id = 'edit-pwd'; iPwd.type = 'password'; iPwd.placeholder = '8-20位，含大小写、数字，可含符号'; iPwd.autocomplete = 'new-password';
+      const fPwd = document.createElement("div");
+      fPwd.className = "field";
+      const lPwd = document.createElement("label");
+      lPwd.textContent = "新密码";
+      lPwd.setAttribute("for", "edit-pwd");
+      const iPwd = document.createElement("input");
+      iPwd.id = "edit-pwd";
+      iPwd.type = "password";
+      iPwd.placeholder = "8-20位，含大小写、数字，可含符号";
+      iPwd.autocomplete = "new-password";
       fPwd.append(lPwd, iPwd);
       decoratePasswordInput(iPwd);
 
       // 添加顺序：年龄、新密码
       body.append(fAge, fPwd);
 
-      const footer = document.createElement('div'); footer.className = 'edit-footer';
-      const btnCancel = document.createElement('button'); btnCancel.className = 'btn btn-ghost'; btnCancel.textContent = '取消';
-      const btnSave = document.createElement('button'); btnSave.className = 'btn btn-primary'; btnSave.textContent = '保存';
+      const footer = document.createElement("div");
+      footer.className = "edit-footer";
+      const btnCancel = document.createElement("button");
+      btnCancel.className = "btn btn-ghost";
+      btnCancel.textContent = "取消";
+      const btnSave = document.createElement("button");
+      btnSave.className = "btn btn-primary";
+      btnSave.textContent = "保存";
       footer.append(btnCancel, btnSave);
 
       dialog.append(header, body, footer);
       mask.appendChild(dialog);
       document.body.appendChild(mask);
 
-      requestAnimationFrame(() => { mask.classList.add('show'); dialog.classList.add('show'); });
+      requestAnimationFrame(() => {
+        mask.classList.add("show");
+        dialog.classList.add("show");
+      });
 
       const close = () => {
-        dialog.classList.remove('show');
-        mask.classList.remove('show');
-        const onEnd = () => { mask.removeEventListener('transitionend', onEnd); if (mask.parentNode) mask.remove(); };
-        mask.addEventListener('transitionend', onEnd);
+        dialog.classList.remove("show");
+        mask.classList.remove("show");
+        const onEnd = () => {
+          mask.removeEventListener("transitionend", onEnd);
+          if (mask.parentNode) mask.remove();
+        };
+        mask.addEventListener("transitionend", onEnd);
       };
 
-      btnCancel.addEventListener('click', close, { once: true });
-      mask.addEventListener('click', (e) => { if (e.target === mask) close(); });
+      btnCancel.addEventListener("click", close, { once: true });
+      mask.addEventListener("click", (e) => {
+        if (e.target === mask) close();
+      });
 
-      btnSave.addEventListener('click', async () => {
+      btnSave.addEventListener("click", async () => {
         const ageVal = iAge.value.trim();
         const newPwdVal = iPwd.value.trim();
 
-        const ageChanged = (ageVal !== '' && Number(ageVal) !== Number(user.age));
+        const ageChanged = ageVal !== "" && Number(ageVal) !== Number(user.age);
         const pwdChanged = !!newPwdVal;
         if (!ageChanged && !pwdChanged) {
-          showErrorModal('您没有任何改动');
+          showErrorModal("您没有任何改动");
           return;
         }
 
-        if (ageVal && (isNaN(Number(ageVal)) || Number(ageVal) < 0 || Number(ageVal) > 120)) {
-          showErrorModal('年龄范围应在 0~120');
+        if (
+          ageVal &&
+          (isNaN(Number(ageVal)) || Number(ageVal) < 0 || Number(ageVal) > 120)
+        ) {
+          showErrorModal("年龄范围应在 0~120");
           return;
         }
         // 若填写了新密码，仅进行强度校验（不再需要原始密码）
         if (newPwdVal) {
-          const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,20}$/;
+          const passwordRegex =
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,20}$/;
           if (!passwordRegex.test(newPwdVal)) {
-            showErrorModal('新密码必须为8到20位，包含大写字母、小写字母和数字，一些特殊字符不能包括');
+            showErrorModal(
+              "新密码必须为8到20位，包含大写字母、小写字母和数字，一些特殊字符不能包括"
+            );
             return;
           }
           // 不允许与原密码相同
           if (currentPassword != null && newPwdVal === currentPassword) {
-            showErrorModal('不能设置一样的密码');
+            showErrorModal("不能设置一样的密码");
             return;
           }
         }
@@ -633,40 +789,50 @@
         try {
           // 进入保存请求：构建 payload（只发送有改动的字段）
           const payload = { table_name: tableName };
-          if (storedId) payload.user_id = storedId; else if (storedUsername) payload.username = storedUsername;
+          if (storedId) payload.user_id = storedId;
+          else if (storedUsername) payload.username = storedUsername;
           if (ageChanged) payload.age = Number(ageVal);
           if (newPwdVal) payload.new_password = newPwdVal;
 
           // 按钮 loading 状态
           btnSave.disabled = true;
           btnSave.dataset._label = btnSave.textContent;
-          btnSave.textContent = '保存中...';
+          btnSave.textContent = "保存中...";
 
-          const resp = await fetch(apiBase + '/editdata', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+          const resp = await fetch(apiBase + "/editdata", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
           });
 
           let result = null;
-          try { result = await resp.json(); } catch(_) {}
+          try {
+            result = await resp.json();
+          } catch (_) {}
 
           if (!resp.ok || !result || result.success !== true) {
-            const msg = (result && result.message) ? result.message : ('保存失败 (' + resp.status + ')');
+            const msg =
+              result && result.message
+                ? result.message
+                : "保存失败 (" + resp.status + ")";
             showErrorModal(msg);
-            btnSave.disabled = false; btnSave.textContent = btnSave.dataset._label || '保存';
+            btnSave.disabled = false;
+            btnSave.textContent = btnSave.dataset._label || "保存";
             return;
           }
 
           // 更新本地展示（以服务端返回为准；若无返回则用输入值回填）
           if (result.data) {
-            if (typeof result.data.age !== 'undefined' && result.data.age !== null) {
+            if (
+              typeof result.data.age !== "undefined" &&
+              result.data.age !== null
+            ) {
               user.age = result.data.age;
             } else if (ageChanged) {
               user.age = Number(ageVal);
             }
             // 同步当前密码（仅用于“与旧密码相同”的前端比较，不做回显）
-            if (typeof result.data.password === 'string') {
+            if (typeof result.data.password === "string") {
               currentPassword = result.data.password;
             } else if (newPwdVal) {
               currentPassword = newPwdVal;
@@ -677,50 +843,58 @@
           }
 
           renderUser();
-          showSuccessModal('修改成功');
+          showSuccessModal("修改成功");
           close();
         } catch (e) {
-          console.warn('[me] 保存失败:', e);
-          showErrorModal('保存失败，请稍后再试');
+          console.warn("[me] 保存失败:", e);
+          showErrorModal("保存失败，请稍后再试");
         } finally {
           btnSave.disabled = false;
-          if (btnSave.dataset._label) btnSave.textContent = btnSave.dataset._label;
+          if (btnSave.dataset._label)
+            btnSave.textContent = btnSave.dataset._label;
           delete btnSave.dataset._label;
         }
       });
 
-      cleanupFns.push(() => { if (mask.parentNode) mask.remove(); });
+      cleanupFns.push(() => {
+        if (mask.parentNode) mask.remove();
+      });
     }
 
     // 绑定“编辑资料”按钮
-    const editBtn = root.querySelector('#editProfileBtn');
+    const editBtn = root.querySelector("#editProfileBtn");
     if (editBtn) {
       const editHandler = () => openEditDialog();
-      editBtn.addEventListener('click', editHandler);
-      cleanupFns.push(() => editBtn.removeEventListener('click', editHandler));
+      editBtn.addEventListener("click", editHandler);
+      cleanupFns.push(() => editBtn.removeEventListener("click", editHandler));
     }
 
     // 退出登录
-    const logoutBtn = root.querySelector('#logoutBtn');
+    const logoutBtn = root.querySelector("#logoutBtn");
     if (logoutBtn) {
       const logoutHandler = async () => {
-        const ok = await confirmDialog('确定要退出登录吗？');
+        const ok = await confirmDialog("确定要退出登录吗？");
         if (!ok) return;
         try {
-          const keys = ['UserID', 'userid', 'userId'];
-          keys.forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
-        } catch (e) { }
-        window.location.replace('src/login.html');
+          const keys = ["UserID", "userid", "userId"];
+          keys.forEach((k) => {
+            localStorage.removeItem(k);
+            sessionStorage.removeItem(k);
+          });
+        } catch (e) {}
+        window.location.replace("src/login.html");
       };
-      logoutBtn.addEventListener('click', logoutHandler);
-      cleanupFns.push(() => logoutBtn.removeEventListener('click', logoutHandler));
+      logoutBtn.addEventListener("click", logoutHandler);
+      cleanupFns.push(() =>
+        logoutBtn.removeEventListener("click", logoutHandler)
+      );
     }
 
     // 列表项点击
-    root.querySelectorAll('[data-action]').forEach(el => {
-      const actionHandler = () => toast('打开：' + el.dataset.action);
-      el.addEventListener('click', actionHandler);
-      cleanupFns.push(() => el.removeEventListener('click', actionHandler));
+    root.querySelectorAll("[data-action]").forEach((el) => {
+      const actionHandler = () => toast("打开：" + el.dataset.action);
+      el.addEventListener("click", actionHandler);
+      cleanupFns.push(() => el.removeEventListener("click", actionHandler));
     });
   }
 
@@ -730,12 +904,16 @@
    */
   function destroyMe() {
     abortInFlight();
-    cleanupFns.forEach(fn => { try { fn(); } catch (e) { } });
+    cleanupFns.forEach((fn) => {
+      try {
+        fn();
+      } catch (e) {}
+    });
     cleanupFns = [];
   }
 
   // Expose lifecycle functions to global scope for loader
-  console.debug('[me] exposing lifecycle: initMe/destroyMe');
+  console.debug("[me] exposing lifecycle: initMe/destroyMe");
   window.initMe = initMe;
   window.destroyMe = destroyMe;
 })();

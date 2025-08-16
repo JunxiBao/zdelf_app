@@ -49,8 +49,16 @@
   --elev: 0 10px 24px rgba(0, 0, 0, 0.08);
 
   /* Background gradients 背景光效 */
-  --bg-grad-1: radial-gradient(1200px 800px at 10% -10%, rgba(98, 0, 234, 0.10), transparent);
-  --bg-grad-2: radial-gradient(900px 650px at 110% -10%, rgba(98, 0, 234, 0.06), transparent);
+  --bg-grad-1: radial-gradient(
+    1200px 800px at 10% -10%,
+    rgba(98, 0, 234, 0.1),
+    transparent
+  );
+  --bg-grad-2: radial-gradient(
+    900px 650px at 110% -10%,
+    rgba(98, 0, 234, 0.06),
+    transparent
+  );
 
   /* Layout helpers 布局辅助 */
   --page-gap: clamp(12px, 4vw, 20px);
@@ -65,7 +73,7 @@ body {
 }
 
 body {
-  font-family: 'Segoe UI', 'PingFang SC', Arial, sans-serif;
+  font-family: "Segoe UI", "PingFang SC", Arial, sans-serif;
   background: var(--bg-grad-1), var(--bg-grad-2), var(--bg);
   color: var(--text);
   margin: 0;
@@ -90,7 +98,7 @@ body {
 }
 
 /* iOS safe-area padding so content doesn't clip under sensor housings */
-@supports(padding: max(0px)) {
+@supports (padding: max(0px)) {
   .page-center {
     padding-left: max(16px, env(safe-area-inset-left));
     padding-right: max(16px, env(safe-area-inset-right));
@@ -112,7 +120,8 @@ body {
   padding: 28px 24px 24px;
   box-sizing: border-box;
   backdrop-filter: saturate(160%) blur(var(--blur));
-  transition: transform var(--dur-fast) ease, box-shadow var(--dur) ease, border-color var(--dur) ease, background-color var(--dur) ease;
+  transition: transform var(--dur-fast) ease, box-shadow var(--dur) ease,
+    border-color var(--dur) ease, background-color var(--dur) ease;
 }
 
 .record-container:hover {
@@ -130,7 +139,12 @@ body {
   letter-spacing: 0.3px;
   margin: 6px 0 18px;
   text-align: center;
-  background: linear-gradient(90deg, var(--primary) 0%, #8e66ff 60%, #b88cff 100%);
+  background: linear-gradient(
+    90deg,
+    var(--primary) 0%,
+    #8e66ff 60%,
+    #b88cff 100%
+  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -149,7 +163,8 @@ body {
   font-size: 1rem;
   outline: none;
   background: color-mix(in srgb, var(--surface) 96%, transparent);
-  transition: border-color var(--dur) ease, box-shadow var(--dur) ease, background var(--dur) ease, transform var(--dur-fast) ease;
+  transition: border-color var(--dur) ease, box-shadow var(--dur) ease,
+    background var(--dur) ease, transform var(--dur-fast) ease;
   margin-bottom: 14px;
   box-sizing: border-box;
   color: var(--text);
@@ -223,15 +238,16 @@ input.record-input:-webkit-autofill:focus {
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 0;            /* 固定尺寸不需要内边距 */
-  width: 28px;           /* 固定宽度 */
-  height: 28px;          /* 固定高度 */
-  display: grid;         /* 两个图标重叠 */
-  place-items: center;   /* 居中图标 */
-  line-height: 0;        /* 消除匿名文本节点影响 */
-  font-size: 0;          /* 消除匿名文本节点影响 */
+  padding: 0; /* 固定尺寸不需要内边距 */
+  width: 28px; /* 固定宽度 */
+  height: 28px; /* 固定高度 */
+  display: grid; /* 两个图标重叠 */
+  place-items: center; /* 居中图标 */
+  line-height: 0; /* 消除匿名文本节点影响 */
+  font-size: 0; /* 消除匿名文本节点影响 */
   border-radius: 10px;
-  transition: background-color var(--dur-fast) ease, opacity var(--dur-fast) ease;
+  transition: background-color var(--dur-fast) ease,
+    opacity var(--dur-fast) ease;
   opacity: 0.9;
   -webkit-tap-highlight-color: transparent;
 }
@@ -254,7 +270,7 @@ input.record-input:-webkit-autofill:focus {
   width: 22px;
   height: 22px;
   display: block;
-  grid-area: 1 / 1;   /* 两个图标叠放在同一层 */
+  grid-area: 1 / 1; /* 两个图标叠放在同一层 */
   pointer-events: none; /* 点击命中按钮，不命中图标 */
   will-change: opacity; /* 仅做透明度动画，避免布局抖动 */
 }
@@ -283,7 +299,8 @@ input.record-input:-webkit-autofill:focus {
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 8px 18px rgba(98, 0, 234, 0.22);
-  transition: transform var(--dur-fast) ease, filter var(--dur) ease, box-shadow var(--dur) ease, opacity var(--dur) ease;
+  transition: transform var(--dur-fast) ease, filter var(--dur) ease,
+    box-shadow var(--dur) ease, opacity var(--dur) ease;
   position: relative;
   overflow: hidden;
 }
@@ -317,7 +334,12 @@ input.record-input:-webkit-autofill:focus {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
   animation: shimmer 1.2s infinite;
 }
 
@@ -367,7 +389,7 @@ input.record-input:-webkit-autofill:focus {
   color: var(--primary);
   padding: 20px 28px;
   border-radius: 14px;
-  box-shadow: 0 18px 42px rgba(98, 0, 234, 0.20);
+  box-shadow: 0 18px 42px rgba(98, 0, 234, 0.2);
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: 0.3px;
@@ -480,7 +502,6 @@ input.record-input:-webkit-autofill:focus {
    11) Responsive 响应式
 ----------------------------------------------------------------------------- */
 @media (max-width: 600px) {
-
   html,
   body {
     height: auto;
@@ -493,12 +514,21 @@ input.record-input:-webkit-autofill:focus {
 
   .page-center {
     height: calc(var(--vh, 100dvh));
-    padding: calc(env(safe-area-inset-top) + var(--page-gap)) calc(env(safe-area-inset-right) + var(--page-gap)) calc(env(safe-area-inset-bottom) + var(--page-gap)) calc(env(safe-area-inset-left) + var(--page-gap));
+    padding: calc(env(safe-area-inset-top) + var(--page-gap))
+      calc(env(safe-area-inset-right) + var(--page-gap))
+      calc(env(safe-area-inset-bottom) + var(--page-gap))
+      calc(env(safe-area-inset-left) + var(--page-gap));
   }
 
   /* Prevent oversized card on small screens 防止过高导致滚动 */
   .record-container {
-    max-height: calc(var(--vh, 100dvh) - (env(safe-area-inset-top) + env(safe-area-inset-bottom) + 2 * var(--page-gap)));
+    max-height: calc(
+      var(--vh, 100dvh) -
+        (
+          env(safe-area-inset-top) + env(safe-area-inset-bottom) + 2 *
+            var(--page-gap)
+        )
+    );
     overflow: hidden;
     padding: 22px 18px 20px;
     border-radius: 14px;
@@ -543,12 +573,17 @@ input.record-input:-webkit-autofill:focus {
   padding: 6px 8px;
   border-radius: 10px;
   text-decoration: none;
-  transition: color var(--dur) ease, background-color var(--dur) ease, transform var(--dur-fast) ease, box-shadow var(--dur) ease;
+  transition: color var(--dur) ease, background-color var(--dur) ease,
+    transform var(--dur-fast) ease, box-shadow var(--dur) ease;
 }
 
 .footer a:hover {
   color: var(--primary);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 10%, transparent), transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 10%, transparent),
+    transparent
+  );
   transform: translateY(-1px);
 }
 
@@ -561,13 +596,18 @@ input.record-input:-webkit-autofill:focus {
 .footer a::after {
   content: "↗";
   font-size: 12px;
-  opacity: .6;
+  opacity: 0.6;
 }
 
 /* 小屏幕压缩排版 */
 @media (max-width: 600px) {
-  .footer { padding: 4px 6px; }
-  .footer a { font-size: 11px; padding: 6px; }
+  .footer {
+    padding: 4px 6px;
+  }
+  .footer a {
+    font-size: 11px;
+    padding: 6px;
+  }
 }
 
 /* -----------------------------------------------------------------------------
@@ -582,8 +622,16 @@ input.record-input:-webkit-autofill:focus {
     --border: rgba(255, 255, 255, 0.06);
     --ring: rgba(187, 134, 252, 0.35);
     --shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
-    --bg-grad-1: radial-gradient(1200px 800px at 10% -10%, rgba(187, 134, 252, 0.12), transparent);
-    --bg-grad-2: radial-gradient(900px 650px at 110% -10%, rgba(187, 134, 252, 0.08), transparent);
+    --bg-grad-1: radial-gradient(
+      1200px 800px at 10% -10%,
+      rgba(187, 134, 252, 0.12),
+      transparent
+    );
+    --bg-grad-2: radial-gradient(
+      900px 650px at 110% -10%,
+      rgba(187, 134, 252, 0.08),
+      transparent
+    );
   }
 
   body {
@@ -637,6 +685,10 @@ input.record-input:-webkit-autofill:focus {
   }
 
   .footer a:hover {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--primary-200) 16%, transparent), transparent);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--primary-200) 16%, transparent),
+      transparent
+    );
   }
 }

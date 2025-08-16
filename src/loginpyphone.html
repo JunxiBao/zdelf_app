@@ -11,84 +11,146 @@
   - 注重可访问性：aria 标签、加载遮罩、输入属性。
 -->
 <html lang="zh">
-<head>
-  <meta charset="UTF-8" />
-  <title>短信登录</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="color-scheme" content="light dark" />
-  <meta name="theme-color" content="#ffffff" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212" />
-  <link rel="stylesheet" href="../statics/css/register.css" />
+  <head>
+    <meta charset="UTF-8" />
+    <title>短信登录</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="#121212"
+    />
+    <link rel="stylesheet" href="../statics/css/register.css" />
 
-  <!-- Basic spinner style (fallback if CSS not loaded) -->
-  <style>
-    #loading-overlay{position:fixed;inset:0;width:100%;height:100%;background:rgba(255,255,255,0.8);z-index:9999;display:none;align-items:center;justify-content:center;transition:background .3s ease}
-    @media (prefers-color-scheme: dark){#loading-overlay{background:rgba(0,0,0,0.6)}.spinner{border:6px solid #444;border-top-color:#b197fc}}
-    .spinner{width:50px;height:50px;border:6px solid #ccc;border-top-color:#7b2cbf;border-radius:50%;animation:spin 1s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-  </style>
-</head>
-<body>
-  <div class="page-center">
-    <div class="record-container">
-      <div class="record-title">短信登录</div>
+    <!-- Basic spinner style (fallback if CSS not loaded) -->
+    <style>
+      #loading-overlay {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.3s ease;
+      }
+      @media (prefers-color-scheme: dark) {
+        #loading-overlay {
+          background: rgba(0, 0, 0, 0.6);
+        }
+        .spinner {
+          border: 6px solid #444;
+          border-top-color: #b197fc;
+        }
+      }
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 6px solid #ccc;
+        border-top-color: #7b2cbf;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-center">
+      <div class="record-container">
+        <div class="record-title">短信登录</div>
 
-      <!-- 手机号输入（支持+国家码） -->
-      <input
-        class="record-textarea"
-        id="phone"
-        type="tel"
-        inputmode="tel"
-        autocomplete="tel"
-        placeholder="请输入中国大陆手机号"
-        maxlength="17"
-        aria-label="手机号"
-        autocapitalize="off" autocorrect="off"
-      />
-
-      <!-- 验证码输入 + 获取验证码按钮 -->
-      <div class="input-with-action">
+        <!-- 手机号输入（支持+国家码） -->
         <input
           class="record-textarea"
-          id="smsCode"
-          type="text"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          placeholder="短信验证码（6位数字）"
-          pattern="^\d{6}$"
-          maxlength="6"
-          aria-label="短信验证码"
-          autocapitalize="off" autocorrect="off"
+          id="phone"
+          type="tel"
+          inputmode="tel"
+          autocomplete="tel"
+          placeholder="请输入中国大陆手机号"
+          maxlength="17"
+          aria-label="手机号"
+          autocapitalize="off"
+          autocorrect="off"
         />
-        <button type="button" class="code-action" id="sendCodeBtn" aria-label="获取短信验证码">获取验证码</button>
+
+        <!-- 验证码输入 + 获取验证码按钮 -->
+        <div class="input-with-action">
+          <input
+            class="record-textarea"
+            id="smsCode"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            placeholder="短信验证码（6位数字）"
+            pattern="^\d{6}$"
+            maxlength="6"
+            aria-label="短信验证码"
+            autocapitalize="off"
+            autocorrect="off"
+          />
+          <button
+            type="button"
+            class="code-action"
+            id="sendCodeBtn"
+            aria-label="获取短信验证码"
+          >
+            获取验证码
+          </button>
+        </div>
+
+        <button type="button" class="record-btn" id="smsLoginBtn">
+          短信登录
+        </button>
+
+        <div style="margin-top: 12px; font-size: 0.95em">
+          想用密码登录？
+          <a href="login.html" style="text-decoration: none; font-weight: 500"
+            >前往密码登录！</a
+          >
+        </div>
       </div>
 
-      <button type="button" class="record-btn" id="smsLoginBtn">短信登录</button>
-
-      <div style="margin-top: 12px; font-size: 0.95em;">
-        想用密码登录？
-        <a href="login.html" style="text-decoration: none; font-weight: 500;">前往密码登录！</a>
+      <div class="popup" id="popup">
+        <div class="popup-content" id="popupText">加载中...</div>
       </div>
     </div>
-
-    <div class="popup" id="popup">
-      <div class="popup-content" id="popupText">加载中...</div>
+    <!-- 全局加载遮罩：短信登录时显示 -->
+    <div id="loading-overlay" aria-hidden="true" style="display: none">
+      <div
+        class="spinner"
+        role="status"
+        aria-live="polite"
+        aria-label="正在加载"
+      ></div>
     </div>
-  </div>
-  <!-- 全局加载遮罩：短信登录时显示 -->
-  <div id="loading-overlay" aria-hidden="true" style="display:none">
-    <div class="spinner" role="status" aria-live="polite" aria-label="正在加载"></div>
-  </div>
-  <script src="../statics/js/loginbyphone.js" defer></script>
-  <noscript>
-    <div style="padding:12px;color:#b00020;text-align:center">需要启用 JavaScript 才能完成短信登录 / JavaScript is required for SMS login.</div>
-  </noscript>
+    <script src="../statics/js/loginbyphone.js" defer></script>
+    <noscript>
+      <div style="padding: 12px; color: #b00020; text-align: center">
+        需要启用 JavaScript 才能完成短信登录 / JavaScript is required for SMS
+        login.
+      </div>
+    </noscript>
     <footer class="footer">
       <p>
-        <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">
+        <a
+          href="https://beian.miit.gov.cn"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           浙ICP备2023040285号
         </a>
       </p>
     </footer>
-</body>
+  </body>
 </html>

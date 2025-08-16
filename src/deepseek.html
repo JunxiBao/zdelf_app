@@ -1,297 +1,348 @@
 <!DOCTYPE html>
 <html lang="zh">
-<head>
-  <meta charset="UTF-8" />
-  <title>个人博客</title>
-  
-  <!-- Viewport & color scheme 视口与颜色方案 -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <meta name="color-scheme" content="light dark" />
-  <meta name="theme-color" content="#ffffff" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212" />
+  <head>
+    <meta charset="UTF-8" />
+    <title>个人博客</title>
 
-  <!-- Stylesheets 样式表 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css">
-  <link rel="stylesheet" href="../statics/css/deepseek.css" />
+    <!-- Viewport & color scheme 视口与颜色方案 -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="#121212"
+    />
 
-  <!-- Third-party libs 外部库（defer 避免阻塞渲染） -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js" defer></script>
-</head>
+    <!-- Stylesheets 样式表 -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css"
+    />
+    <link rel="stylesheet" href="../statics/css/deepseek.css" />
 
-<body>
-  <!-- Header 页头 -->
-  <header>您的健康AI助手</header>
+    <!-- Third-party libs 外部库（defer 避免阻塞渲染） -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"
+      defer
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"
+      defer
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js" defer></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"
+      defer
+    ></script>
+  </head>
 
-  <!-- Chat container 聊天容器 -->
-  <div class="chat-container">
-    <!-- Message list 消息列表：使用可访问性语义 -->
-    <div class="message-list" id="messageList" role="log" aria-live="polite" aria-relevant="additions"></div>
+  <body>
+    <!-- Header 页头 -->
+    <header>您的健康AI助手</header>
 
-    <!-- Input area 输入区 -->
-    <div class="input-container">
-      <input
-        type="text"
-        id="userInput"
-        placeholder="请输入你的消息..."
-        autocomplete="off"
-        enterkeyhint="send"
-        aria-label="输入你的消息"
-        onkeydown="if(event.key === 'Enter') sendMessage()"
-      />
-      <button type="button" id="sendBtn" onclick="sendMessage()" aria-label="发送消息">发送</button>
+    <!-- Chat container 聊天容器 -->
+    <div class="chat-container">
+      <!-- Message list 消息列表：使用可访问性语义 -->
+      <div
+        class="message-list"
+        id="messageList"
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions"
+      ></div>
+
+      <!-- Input area 输入区 -->
+      <div class="input-container">
+        <input
+          type="text"
+          id="userInput"
+          placeholder="请输入你的消息..."
+          autocomplete="off"
+          enterkeyhint="send"
+          aria-label="输入你的消息"
+          onkeydown="if(event.key === 'Enter') sendMessage()"
+        />
+        <button
+          type="button"
+          id="sendBtn"
+          onclick="sendMessage()"
+          aria-label="发送消息"
+        >
+          发送
+        </button>
+      </div>
     </div>
-  </div>
 
-  <script>
-    // Wait for deferred libs 等第三方库加载完成
-    window.addEventListener('DOMContentLoaded', () => {
-      // marked config: soft line breaks & safer defaults
-      if (window.marked) {
-        marked.setOptions({ breaks: true, mangle: false, headerIds: false });
+    <script>
+      // Wait for deferred libs 等第三方库加载完成
+      window.addEventListener("DOMContentLoaded", () => {
+        // marked config: soft line breaks & safer defaults
+        if (window.marked) {
+          marked.setOptions({ breaks: true, mangle: false, headerIds: false });
+        }
+        generateGreeting();
+      });
+
+      /**
+       * Sanitize + render Markdown 安全渲染 Markdown
+       * - 使用 DOMPurify 进行 XSS 过滤
+       */
+      function renderMarkdownSafe(mdText) {
+        const html = window.marked ? marked.parse(mdText || "") : mdText || "";
+        return window.DOMPurify
+          ? DOMPurify.sanitize(html, { USE_PROFILES: { html: true } })
+          : html;
       }
-      generateGreeting();
-    });
 
-    /**
-     * Sanitize + render Markdown 安全渲染 Markdown
-     * - 使用 DOMPurify 进行 XSS 过滤
-     */
-    function renderMarkdownSafe(mdText) {
-      const html = (window.marked ? marked.parse(mdText || '') : (mdText || ''));
-      return window.DOMPurify ? DOMPurify.sanitize(html, { USE_PROFILES: { html: true } }) : html;
-    }
+      // 初始问候
+      function generateGreeting() {
+        const hour = new Date().getHours();
+        let greet = "您好！有什么健康问题尽管问我哦~";
+        if (hour >= 5 && hour < 11)
+          greet = "早上好 ☀️，我可以帮你分析饮食、作息或体检报告。";
+        else if (hour < 14) greet = "中午好 🍵，注意补水，有什么想问的？";
+        else if (hour < 18)
+          greet = "下午好 🌿，需要我看看你的训练/饮食计划吗？";
+        else greet = "晚上好 🌙，今天感觉怎么样？我可以帮你做个总结。";
+        addMessage(greet, "bot");
+      }
 
-    // 初始问候
-    function generateGreeting() {
-      const hour = new Date().getHours();
-      let greet = '您好！有什么健康问题尽管问我哦~';
-      if (hour >= 5 && hour < 11) greet = '早上好 ☀️，我可以帮你分析饮食、作息或体检报告。';
-      else if (hour < 14) greet = '中午好 🍵，注意补水，有什么想问的？';
-      else if (hour < 18) greet = '下午好 🌿，需要我看看你的训练/饮食计划吗？';
-      else greet = '晚上好 🌙，今天感觉怎么样？我可以帮你做个总结。';
-      addMessage(greet, 'bot');
-    }
+      // 打字中占位气泡 typing bubble
+      function addTypingBubble() {
+        const msgList = document.getElementById("messageList");
+        const wrap = document.createElement("div");
+        wrap.className = "message bot typing";
+        wrap.setAttribute("aria-label", "正在回复");
+        wrap.innerHTML =
+          '<span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>';
+        msgList.appendChild(wrap);
+        msgList.scrollTop = msgList.scrollHeight;
+        return wrap;
+      }
 
-    // 打字中占位气泡 typing bubble
-    function addTypingBubble() {
-      const msgList = document.getElementById('messageList');
-      const wrap = document.createElement('div');
-      wrap.className = 'message bot typing';
-      wrap.setAttribute('aria-label', '正在回复');
-      wrap.innerHTML = '<span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>';
-      msgList.appendChild(wrap);
-      msgList.scrollTop = msgList.scrollHeight;
-      return wrap;
-    }
+      async function sendMessage() {
+        const inputEl = document.getElementById("userInput");
+        const btn = document.getElementById("sendBtn");
+        const message = inputEl.value.trim();
+        if (!message) return;
 
-    async function sendMessage() {
-      const inputEl = document.getElementById('userInput');
-      const btn = document.getElementById('sendBtn');
-      const message = inputEl.value.trim();
-      if (!message) return;
+        inputEl.disabled = true;
+        btn.disabled = true;
 
-      inputEl.disabled = true;
-      btn.disabled = true;
+        addMessage(message, "user");
+        inputEl.value = "";
 
-      addMessage(message, 'user');
-      inputEl.value = '';
+        const thinkingMsg = addTypingBubble();
 
-      const thinkingMsg = addTypingBubble();
+        try {
+          // 首先尝试使用流式接口
+          const response = await fetch(
+            "https://zhucan.xyz:5000/deepseek/chat_stream",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message }),
+            }
+          );
 
-      try {
-        // 首先尝试使用流式接口
-        const response = await fetch('https://zhucan.xyz:5000/deepseek/chat_stream', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message })
-        });
+          if (response.ok) {
+            // 移除打字中状态
+            thinkingMsg.classList.remove("typing");
 
-        if (response.ok) {
-          // 移除打字中状态
-          thinkingMsg.classList.remove('typing');
-          
-          // 处理流式响应
-          await handleStreamResponse(thinkingMsg, response);
-          
-          if (window.Prism) Prism.highlightAll();
-        } else {
-          // 流式接口失败，回退到普通接口 + 打字机效果
+            // 处理流式响应
+            await handleStreamResponse(thinkingMsg, response);
+
+            if (window.Prism) Prism.highlightAll();
+          } else {
+            // 流式接口失败，回退到普通接口 + 打字机效果
+            await fallbackToLegacy(thinkingMsg, message);
+          }
+        } catch (error) {
+          // 网络错误，也回退到普通接口
           await fallbackToLegacy(thinkingMsg, message);
+        } finally {
+          inputEl.disabled = false;
+          btn.disabled = false;
+          inputEl.focus();
         }
-      } catch (error) {
-        // 网络错误，也回退到普通接口
-        await fallbackToLegacy(thinkingMsg, message);
-      } finally {
-        inputEl.disabled = false;
-        btn.disabled = false;
-        inputEl.focus();
       }
-    }
 
-    // 回退到普通接口 + 打字机效果
-    async function fallbackToLegacy(thinkingMsg, message) {
-      try {
-        const response = await fetch('https://zhucan.xyz:5000/deepseek/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message })
-        });
+      // 回退到普通接口 + 打字机效果
+      async function fallbackToLegacy(thinkingMsg, message) {
+        try {
+          const response = await fetch(
+            "https://zhucan.xyz:5000/deepseek/chat",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message }),
+            }
+          );
 
-        const data = await response.json().catch(() => ({}));
-        if (response.ok && data && typeof data.reply === 'string') {
-          thinkingMsg.classList.remove('typing');
-          
-          // 启动打字机效果
-          await typewriterEffect(thinkingMsg, data.reply);
-          
-          if (window.Prism) Prism.highlightAll();
-        } else {
-          thinkingMsg.classList.remove('typing');
-          thinkingMsg.textContent = '❌ 出错了：' + (data.error || response.status + ' ' + response.statusText);
+          const data = await response.json().catch(() => ({}));
+          if (response.ok && data && typeof data.reply === "string") {
+            thinkingMsg.classList.remove("typing");
+
+            // 启动打字机效果
+            await typewriterEffect(thinkingMsg, data.reply);
+
+            if (window.Prism) Prism.highlightAll();
+          } else {
+            thinkingMsg.classList.remove("typing");
+            thinkingMsg.textContent =
+              "❌ 出错了：" +
+              (data.error || response.status + " " + response.statusText);
+          }
+        } catch (error) {
+          thinkingMsg.classList.remove("typing");
+          thinkingMsg.textContent =
+            "⚠️ 无法连接服务器：" +
+            (error && error.message ? error.message : "Network error");
         }
-      } catch (error) {
-        thinkingMsg.classList.remove('typing');
-        thinkingMsg.textContent = '⚠️ 无法连接服务器：' + (error && error.message ? error.message : 'Network error');
       }
-    }
 
-    // 处理流式响应
-    async function handleStreamResponse(element, response) {
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let fullText = '';
-      
-      // 创建内容容器
-      const content = document.createElement('div');
-      content.className = 'msg-content';
-      element.appendChild(content);
-      
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          
-          if (done) break;
-          
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop(); // 保留不完整的行
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const dataStr = line.slice(6);
-              if (dataStr === '[DONE]') {
-                // 最终渲染完整的markdown并高亮代码
-                content.innerHTML = renderMarkdownSafe(fullText);
-                if (window.Prism) Prism.highlightAll();
-                return;
-              }
-              
-              try {
-                const data = JSON.parse(dataStr);
-                if (data.type === 'content' && data.content) {
-                  fullText += data.content;
-                  // 实时显示当前内容
+      // 处理流式响应
+      async function handleStreamResponse(element, response) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let fullText = "";
+
+        // 创建内容容器
+        const content = document.createElement("div");
+        content.className = "msg-content";
+        element.appendChild(content);
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop(); // 保留不完整的行
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const dataStr = line.slice(6);
+                if (dataStr === "[DONE]") {
+                  // 最终渲染完整的markdown并高亮代码
                   content.innerHTML = renderMarkdownSafe(fullText);
-                  
-                  // 滚动到底部
-                  const msgList = document.getElementById('messageList');
-                  msgList.scrollTop = msgList.scrollHeight;
-                } else if (data.type === 'error') {
-                  content.innerHTML = '❌ 错误：' + data.error;
+                  if (window.Prism) Prism.highlightAll();
                   return;
                 }
-              } catch (e) {
-                console.warn('解析流数据失败:', e);
+
+                try {
+                  const data = JSON.parse(dataStr);
+                  if (data.type === "content" && data.content) {
+                    fullText += data.content;
+                    // 实时显示当前内容
+                    content.innerHTML = renderMarkdownSafe(fullText);
+
+                    // 滚动到底部
+                    const msgList = document.getElementById("messageList");
+                    msgList.scrollTop = msgList.scrollHeight;
+                  } else if (data.type === "error") {
+                    content.innerHTML = "❌ 错误：" + data.error;
+                    return;
+                  }
+                } catch (e) {
+                  console.warn("解析流数据失败:", e);
+                }
               }
             }
           }
+        } catch (error) {
+          console.error("流式响应处理错误:", error);
+          content.innerHTML = "⚠️ 响应处理错误：" + error.message;
+        } finally {
+          reader.releaseLock();
         }
-      } catch (error) {
-        console.error('流式响应处理错误:', error);
-        content.innerHTML = '⚠️ 响应处理错误：' + error.message;
-      } finally {
-        reader.releaseLock();
       }
-    }
 
-    // 打字机效果函数
-    async function typewriterEffect(element, text) {
-      // 清空元素内容
-      element.innerHTML = '';
-      
-      // 创建内容容器
-      const content = document.createElement('div');
-      content.className = 'msg-content';
-      element.appendChild(content);
-      
-      // 逐字显示文本
-      for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        
-        // 处理换行符
-        if (char === '\n') {
-          content.innerHTML += '<br>';
-        } else {
-          // 渲染当前文本（包含已显示的字符）
-          const currentText = text.substring(0, i + 1);
-          content.innerHTML = renderMarkdownSafe(currentText);
+      // 打字机效果函数
+      async function typewriterEffect(element, text) {
+        // 清空元素内容
+        element.innerHTML = "";
+
+        // 创建内容容器
+        const content = document.createElement("div");
+        content.className = "msg-content";
+        element.appendChild(content);
+
+        // 逐字显示文本
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i];
+
+          // 处理换行符
+          if (char === "\n") {
+            content.innerHTML += "<br>";
+          } else {
+            // 渲染当前文本（包含已显示的字符）
+            const currentText = text.substring(0, i + 1);
+            content.innerHTML = renderMarkdownSafe(currentText);
+          }
+
+          // 滚动到底部
+          const msgList = document.getElementById("messageList");
+          msgList.scrollTop = msgList.scrollHeight;
+
+          // 动态调整打字速度：标点符号稍慢，普通字符稍快
+          let currentSpeed = 30; // 默认30ms
+          if (
+            ["。", "！", "？", "；", "：", ".", "!", "?", ";", ":"].includes(
+              char
+            )
+          ) {
+            currentSpeed = 60; // 标点符号停顿时间更长
+          } else if (["，", "、", ",", " "].includes(char)) {
+            currentSpeed = 45; // 逗号和空格稍慢
+          }
+
+          // 等待一段时间再显示下一个字符
+          await new Promise((resolve) => setTimeout(resolve, currentSpeed));
         }
-        
-        // 滚动到底部
-        const msgList = document.getElementById('messageList');
-        msgList.scrollTop = msgList.scrollHeight;
-        
-        // 动态调整打字速度：标点符号稍慢，普通字符稍快
-        let currentSpeed = 30; // 默认30ms
-        if (['。', '！', '？', '；', '：', '.', '!', '?', ';', ':'].includes(char)) {
-          currentSpeed = 60; // 标点符号停顿时间更长
-        } else if (['，', '、', ',', ' '].includes(char)) {
-          currentSpeed = 45; // 逗号和空格稍慢
-        }
-        
-        // 等待一段时间再显示下一个字符
-        await new Promise(resolve => setTimeout(resolve, currentSpeed));
-      }
-      
-      // 最终渲染完整的markdown并高亮代码
-      content.innerHTML = renderMarkdownSafe(text);
-      if (window.Prism) Prism.highlightAll();
-    }
 
-    // 停止打字功能
-    function stopTyping() {
-      if (currentTypingTask !== null) {
-        currentTypingTask = 'stop';
-        const stopBtn = document.getElementById('stopTyping');
-        stopBtn.style.display = 'none';
-      }
-    }
-
-    // 添加消息到列表
-    function addMessage(text, sender, returnElement = false) {
-      const msgList = document.getElementById('messageList');
-      const msgDiv = document.createElement('div');
-      msgDiv.className = 'message ' + sender;
-      const content = document.createElement('div');
-      content.className = 'msg-content';
-
-      if (sender === 'bot') {
+        // 最终渲染完整的markdown并高亮代码
         content.innerHTML = renderMarkdownSafe(text);
-      } else {
-        // User text as plain text to avoid injection 用户消息按纯文本插入
-        content.textContent = text;
+        if (window.Prism) Prism.highlightAll();
       }
 
-      msgDiv.appendChild(content);
-      msgList.appendChild(msgDiv);
-      msgList.scrollTop = msgList.scrollHeight;
-      if (window.Prism) Prism.highlightAll();
-      return returnElement ? msgDiv : undefined;
-    }
-  </script>
-</body>
+      // 停止打字功能
+      function stopTyping() {
+        if (currentTypingTask !== null) {
+          currentTypingTask = "stop";
+          const stopBtn = document.getElementById("stopTyping");
+          stopBtn.style.display = "none";
+        }
+      }
+
+      // 添加消息到列表
+      function addMessage(text, sender, returnElement = false) {
+        const msgList = document.getElementById("messageList");
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "message " + sender;
+        const content = document.createElement("div");
+        content.className = "msg-content";
+
+        if (sender === "bot") {
+          content.innerHTML = renderMarkdownSafe(text);
+        } else {
+          // User text as plain text to avoid injection 用户消息按纯文本插入
+          content.textContent = text;
+        }
+
+        msgDiv.appendChild(content);
+        msgList.appendChild(msgDiv);
+        msgList.scrollTop = msgList.scrollHeight;
+        if (window.Prism) Prism.highlightAll();
+        return returnElement ? msgDiv : undefined;
+      }
+    </script>
+  </body>
 </html>

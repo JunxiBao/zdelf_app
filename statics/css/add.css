@@ -58,7 +58,7 @@
 }
 
 body {
-  font-family: 'Segoe UI', 'PingFang SC', Arial, sans-serif;
+  font-family: "Segoe UI", "PingFang SC", Arial, sans-serif;
   background: #fff;
   margin: 0;
   padding: 0;
@@ -313,7 +313,7 @@ body {
 
 @keyframes pop {
   0% {
-    transform: scale(.96);
+    transform: scale(0.96);
     opacity: 0;
   }
 
@@ -324,7 +324,6 @@ body {
 }
 
 @keyframes shake {
-
   10%,
   90% {
     transform: translateX(-1px);
@@ -348,23 +347,24 @@ body {
 }
 
 .shake {
-  animation: shake .3s ease both;
+  animation: shake 0.3s ease both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   * {
-    animation-duration: .001s !important;
+    animation-duration: 0.001s !important;
     animation-iteration-count: 1 !important;
     transition: none !important;
   }
 }
 
 .record-container {
-  animation: fadeInUp .35s ease-out both;
+  animation: fadeInUp 0.35s ease-out both;
 }
 
 .record-textarea {
-  transition: height .15s ease, border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+  transition: height 0.15s ease, border-color 0.2s ease,
+    background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .record-textarea:focus {
@@ -375,11 +375,11 @@ body {
   position: relative;
   overflow: hidden;
   transform: translateZ(0);
-  transition: transform .06s ease, background .2s ease, box-shadow .2s ease;
+  transition: transform 0.06s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .record-btn:active {
-  transform: scale(.98);
+  transform: scale(0.98);
 }
 
 .btn-ripple {
@@ -390,8 +390,12 @@ body {
   width: 20px;
   height: 20px;
   transform: translate(-50%, -50%) scale(0);
-  background: radial-gradient(circle, rgba(255, 255, 255, .45) 0%, rgba(255, 255, 255, 0) 60%);
-  animation: ripple .5s ease-out forwards;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  animation: ripple 0.5s ease-out forwards;
 }
 
 @keyframes ripple {
@@ -403,13 +407,13 @@ body {
 
 /* 顶部提示弹窗优化（入场弹性） */
 .popup-content {
-  transform: translateY(6px) scale(.98);
+  transform: translateY(6px) scale(0.98);
   opacity: 0;
-  transition: transform .2s ease, opacity .2s ease;
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .popup.show .popup-content {
-  animation: pop .22s ease-out forwards;
+  animation: pop 0.22s ease-out forwards;
 }
 
 /* 全屏加载遮罩，配合 #spinner 使用 */
@@ -418,7 +422,7 @@ body {
   inset: 0;
   z-index: 998;
   display: none;
-  background: rgba(0, 0, 0, .08);
+  background: rgba(0, 0, 0, 0.08);
   backdrop-filter: blur(2px);
 }
 
@@ -428,13 +432,14 @@ body {
 
 @media (prefers-color-scheme: dark) {
   .loading-overlay {
-    background: rgba(255, 255, 255, .06);
+    background: rgba(255, 255, 255, 0.06);
   }
 }
 
 /* 日期输入微动画 */
 .record-date {
-  transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .record-date:focus {
@@ -443,6 +448,6 @@ body {
 
 @media (max-width: 600px) {
   .record-btn {
-    box-shadow: 0 6px 16px rgba(98, 0, 234, .16);
+    box-shadow: 0 6px 16px rgba(98, 0, 234, 0.16);
   }
 }

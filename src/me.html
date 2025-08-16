@@ -10,114 +10,162 @@
   - This page is styled via me.css and controlled by me.js (initMe/destroyMe)
 -->
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#ffffff" />
-  <title>个人博客</title>
-  <!-- Page-specific stylesheet for the "My" profile page -->
-  <!-- Optional: existing project stylesheet -->
-  <link rel="stylesheet" href="../statics/css/me.css" />
-</head>
-<body>
-  <!-- Main application container for the profile page -->
-  <main class="app" aria-label="我的">
-    <!-- Top bar with title -->
-    <header class="topbar">
-      <div class="title">我的</div>
-    </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <title>个人博客</title>
+    <!-- Page-specific stylesheet for the "My" profile page -->
+    <!-- Optional: existing project stylesheet -->
+    <link rel="stylesheet" href="../statics/css/me.css" />
+  </head>
+  <body>
+    <!-- Main application container for the profile page -->
+    <main class="app" aria-label="我的">
+      <!-- Top bar with title -->
+      <header class="topbar">
+        <div class="title">我的</div>
+      </header>
 
-    <!-- Profile Card -->
+      <!-- Profile Card -->
       <!-- Profile Card: shows avatar, name, email, and edit button -->
-    <section class="card" aria-label="用户资料">
-      <div class="profile">
-        <div class="avatar" aria-hidden="true">
-          <div class="avatar-inner" id="avatarInitials">JB</div>
+      <section class="card" aria-label="用户资料">
+        <div class="profile">
+          <div class="avatar" aria-hidden="true">
+            <div class="avatar-inner" id="avatarInitials">JB</div>
+          </div>
+          <div class="profile-info">
+            <div class="name" id="displayName">Junxi Bao</div>
+            <div class="meta"><span id="displayAge">年龄：无</span></div>
+            <div class="meta"><span id="displayPhone">手机号：无</span></div>
+          </div>
+          <button class="edit-btn rippleable" id="editProfileBtn">
+            <span class="material-icons-outlined" aria-hidden="true">edit</span>
+            编辑
+          </button>
         </div>
-        <div class="profile-info">
-          <div class="name" id="displayName">Junxi Bao</div>
-          <div class="meta"><span id="displayAge">年龄：无</span></div>
-          <div class="meta"><span id="displayPhone">手机号：无</span></div>
+
+        <!-- Quick action buttons for frequently used features -->
+        <!-- Quick actions -->
+        <div class="quick-actions">
+          <!-- Favorites action -->
+          <div
+            class="q-item rippleable"
+            data-action="favorites"
+            role="button"
+            tabindex="0"
+            aria-label="收藏"
+          >
+            <span class="material-icons-outlined" aria-hidden="true">star</span>
+            <span>收藏</span>
+          </div>
+          <!-- History action -->
+          <div
+            class="q-item rippleable"
+            data-action="history"
+            role="button"
+            tabindex="0"
+            aria-label="历史"
+          >
+            <span class="material-icons-outlined" aria-hidden="true"
+              >history</span
+            >
+            <span>历史</span>
+          </div>
+          <!-- Follow action -->
+          <div
+            class="q-item rippleable"
+            data-action="follow"
+            role="button"
+            tabindex="0"
+            aria-label="关注"
+          >
+            <span class="material-icons-outlined" aria-hidden="true"
+              >person_add</span
+            >
+            <span>关注</span>
+          </div>
+          <!-- Footprint action -->
+          <div
+            class="q-item rippleable"
+            data-action="footprint"
+            role="button"
+            tabindex="0"
+            aria-label="足迹"
+          >
+            <span class="material-icons-outlined" aria-hidden="true"
+              >directions_walk</span
+            >
+            <span>足迹</span>
+          </div>
         </div>
-        <button class="edit-btn rippleable" id="editProfileBtn">
-          <span class="material-icons-outlined" aria-hidden="true">edit</span>
-          编辑
+      </section>
+
+      <!-- Settings List -->
+      <!-- Settings list: account, notifications, appearance, help -->
+      <section class="list" aria-label="设置列表">
+        <!-- Account settings -->
+        <div class="li rippleable" data-action="account">
+          <span class="material-icons-outlined" aria-hidden="true"
+            >manage_accounts</span
+          >
+          <div>
+            <div class="label">账户设置</div>
+            <div class="desc">用户名、头像、隐私</div>
+          </div>
+          <span class="material-icons-outlined" aria-hidden="true"
+            >chevron_right</span
+          >
+        </div>
+        <!-- Notifications -->
+        <div class="li rippleable" data-action="notifications">
+          <span class="material-icons-outlined" aria-hidden="true"
+            >notifications_active</span
+          >
+          <div>
+            <div class="label">通知</div>
+            <div class="desc">推送、邮件偏好</div>
+          </div>
+          <span class="material-icons-outlined" aria-hidden="true"
+            >chevron_right</span
+          >
+        </div>
+        <!-- Help & Feedback -->
+        <div class="li rippleable" data-action="help">
+          <span class="material-icons-outlined" aria-hidden="true"
+            >help_center</span
+          >
+          <div>
+            <div class="label">帮助与反馈</div>
+            <div class="desc">常见问题、联系我们</div>
+          </div>
+          <span class="material-icons-outlined" aria-hidden="true"
+            >chevron_right</span
+          >
+        </div>
+      </section>
+      <footer class="footer">
+        <p>
+          <a
+            href="https://beian.miit.gov.cn"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            浙ICP备2023040285号
+          </a>
+        </p>
+      </footer>
+      <!-- Logout -->
+      <!-- Logout button section -->
+      <div class="logout">
+        <button class="rippleable" id="logoutBtn" aria-label="退出登录">
+          <span class="material-icons-outlined" aria-hidden="true">logout</span>
+          退出登录
         </button>
       </div>
-
-      <!-- Quick action buttons for frequently used features -->
-      <!-- Quick actions -->
-      <div class="quick-actions">
-        <!-- Favorites action -->
-        <div class="q-item rippleable" data-action="favorites" role="button" tabindex="0" aria-label="收藏">
-          <span class="material-icons-outlined" aria-hidden="true">star</span>
-          <span>收藏</span>
-        </div>
-        <!-- History action -->
-        <div class="q-item rippleable" data-action="history" role="button" tabindex="0" aria-label="历史">
-          <span class="material-icons-outlined" aria-hidden="true">history</span>
-          <span>历史</span>
-        </div>
-        <!-- Follow action -->
-        <div class="q-item rippleable" data-action="follow" role="button" tabindex="0" aria-label="关注">
-          <span class="material-icons-outlined" aria-hidden="true">person_add</span>
-          <span>关注</span>
-        </div>
-        <!-- Footprint action -->
-        <div class="q-item rippleable" data-action="footprint" role="button" tabindex="0" aria-label="足迹">
-          <span class="material-icons-outlined" aria-hidden="true">directions_walk</span>
-          <span>足迹</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Settings List -->
-      <!-- Settings list: account, notifications, appearance, help -->
-    <section class="list" aria-label="设置列表">
-      <!-- Account settings -->
-      <div class="li rippleable" data-action="account">
-        <span class="material-icons-outlined" aria-hidden="true">manage_accounts</span>
-        <div>
-          <div class="label">账户设置</div>
-          <div class="desc">用户名、头像、隐私</div>
-        </div>
-        <span class="material-icons-outlined" aria-hidden="true">chevron_right</span>
-      </div>
-      <!-- Notifications -->
-      <div class="li rippleable" data-action="notifications">
-        <span class="material-icons-outlined" aria-hidden="true">notifications_active</span>
-        <div>
-          <div class="label">通知</div>
-          <div class="desc">推送、邮件偏好</div>
-        </div>
-        <span class="material-icons-outlined" aria-hidden="true">chevron_right</span>
-      </div>
-      <!-- Help & Feedback -->
-      <div class="li rippleable" data-action="help">
-        <span class="material-icons-outlined" aria-hidden="true">help_center</span>
-        <div>
-          <div class="label">帮助与反馈</div>
-          <div class="desc">常见问题、联系我们</div>
-        </div>
-        <span class="material-icons-outlined" aria-hidden="true">chevron_right</span>
-      </div>
-    </section>
-  <footer class="footer">
-    <p>
-      <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">
-        浙ICP备2023040285号
-      </a>
-    </p>
-  </footer>
-    <!-- Logout -->
-      <!-- Logout button section -->
-    <div class="logout">
-      <button class="rippleable" id="logoutBtn" aria-label="退出登录">
-        <span class="material-icons-outlined" aria-hidden="true">logout</span>
-        退出登录
-      </button>
-    </div>
-  </main>
-
-</body>
+    </main>
+  </body>
 </html>
