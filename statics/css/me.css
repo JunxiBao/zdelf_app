@@ -271,6 +271,67 @@
    position: relative;
  }
 
+/* ICP / record footer */
+.footer {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+  background: var(--card);
+  box-shadow: var(--shadow-2);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  border: 1px solid var(--divider);
+}
+
+.footer p {
+  margin: 0;
+}
+
+.footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1;
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: color .2s ease, background-color .2s ease, transform .15s ease, box-shadow .2s ease;
+}
+
+.footer a:hover {
+  color: var(--brand);
+  background: linear-gradient(180deg, rgba(26, 115, 232, 0.08), transparent);
+  transform: translateY(-1px);
+}
+
+.footer a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, .25);
+}
+
+/* External-link hint (subtle) */
+.footer a::after {
+  content: "↗";
+  font-size: 12px;
+  opacity: .6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .footer a:focus-visible {
+    box-shadow: 0 0 0 3px rgba(138, 180, 248, .35);
+  }
+}
+
+/* Keep footer tidy on small screens */
+@media (max-width: 420px) {
+  .footer a {
+    font-size: 11px;
+    padding: 8px;
+  }
+}
+
 /* Ripple effect (Material-like) for interactive elements */
  .rippleable {
    position: relative;
