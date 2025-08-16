@@ -62,40 +62,56 @@ A comprehensive health and wellness management application built with modern web
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/JunxiBao/health
    cd health
    ```
 
 2. **Set up environment variables**
    ```bash
-   # Create .env file in src/backend/
-   DB_HOST=localhost
-   DB_USER=your_username
-   DB_PASSWORD=your_password
-   DB_NAME=health_db
-   DEEPSEEK_API_KEY=your_deepseek_api_key
+   # Create .env file in src/backend/routes and complete these data.
+   DB_HOST
+   DB_USER
+   DB_PASSWORD
+   DB_NAME
+   DEEPSEEK_API_KEY
+
+   ALIYUN_ACCESS_KEY_ID
+   ALIYUN_ACCESS_KEY_SECRET
+   ALIYUN_REGION_ID
+   ALIYUN_SIGN_NAME
+   ALIYUN_TEMPLATE_CODE
+   SERVER_SECRET
+   OTP_TTL_SECONDS
+   OTP_LENGTH
+   OTP_SEND_COOLDOWN_SECONDS
+   OTP_DAILY_LIMIT_PER_PHONE
+   OTP_VERIFY_MAX_FAILS
+   
    ```
 
-3. **Install Python dependencies**
+1. **Install Python dependencies**
    ```bash
-   cd src/backend
    pip install -r requirements.txt
    ```
 
-4. **Set up MySQL database**
+2. **Set up MySQL database**
    ```sql
-   CREATE DATABASE health_db;
+   CREATE DATABASE health;
+   use health;
    CREATE TABLE users (
-       user_id INT AUTO_INCREMENT PRIMARY KEY,
-       username VARCHAR(50) UNIQUE NOT NULL,
-       password VARCHAR(255) NOT NULL,
-       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+       user_id VARCHAR(36) PRIMARY KEY,
+       username CHAR(20) UNIQUE NOT NULL,
+       password VARCHAR(64) NOT NULL,
+       age INT,
+       phone_number VARCHAR(20) UNIQUE
+       
    );
    ```
 
-5. **Launch the application**
+3. **Launch the application**
    ```bash
    # From project root
+   chmod 777 launch.sh
    ./launch.sh
    ```
 
