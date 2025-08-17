@@ -158,12 +158,8 @@
   /* =============================
    * 6) Register handler
    * ============================= */
-  // API endpoints (auto-detect base, compatible with reverse proxy or direct)
-  // 自动探测后端基址
-  var API_BASE =
-    !location.port && location.protocol.startsWith("http")
-      ? location.protocol + "//" + location.hostname + ":5000"
-      : "";
+  // 同源请求，交给 Nginx 反代；如需覆盖，可提前设置 window.__API_BASE__
+  var API_BASE = "";
   if (typeof window !== "undefined" && window.__API_BASE__) {
     API_BASE = window.__API_BASE__;
   }
