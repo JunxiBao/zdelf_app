@@ -19,13 +19,28 @@ headers = {
     'Authorization': f'Bearer {API_KEY}'
 }
 
+# HTTP timeouts (connect, read)
+CONNECT_TIMEOUT = 5
+READ_TIMEOUT = 30
+STREAM_READ_TIMEOUT = 65
+
+def _auth_headers():
+    key = os.getenv('DEEPSEEK_API_KEY')
+    if not key:
+        logger.error("/deepseek missing DEEPSEEK_API_KEY env")
+        return None
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {key}'
+    }
+
 @deepseek_blueprint.route('/chat', methods=['POST'])
 def deepseek_chat():
     """传统聊天接口 - 完整返回回复"""
     if request.method == 'OPTIONS':
         return '', 200
     try:
-        user_input = request.json.get('message', '')
+        user_input = (request.get_json(silent=True) or {}).get('message', '')
         logger.info("/deepseek/chat request message_len=%d", len(user_input or ""))
         if not user_input:
             logger.warning("/deepseek/chat missing message in request")
@@ -41,7 +56,10 @@ def deepseek_chat():
         }
 
         logger.info("/deepseek/chat calling provider model=%s temperature=%s", "deepseek-chat", 0.7)
-        response = requests.post(API_URL, headers=headers, json=data)
+        _h = _auth_headers()
+        if _h is None:
+            return jsonify({'error': 'Server misconfigured: missing DEEPSEEK_API_KEY'}), 500
+        response = requests.post(API_URL, headers=_h, json=data, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
 
         logger.info("/deepseek/chat provider status=%s", response.status_code)
         if response.status_code == 200:
@@ -63,7 +81,7 @@ def deepseek_chat_stream():
     if request.method == 'OPTIONS':
         return '', 200
     try:
-        user_input = request.json.get('message', '')
+        user_input = (request.get_json(silent=True) or {}).get('message', '')
         logger.info("/deepseek/chat_stream request message_len=%d", len(user_input or ""))
         if not user_input:
             logger.warning("/deepseek/chat_stream missing message in request")
@@ -80,7 +98,10 @@ def deepseek_chat_stream():
         }
 
         logger.info("/deepseek/chat_stream calling provider model=%s temperature=%s stream=%s", "deepseek-chat", 0.7, True)
-        response = requests.post(API_URL, headers=headers, json=data, stream=True)
+        _h = _auth_headers()
+        if _h is None:
+            return jsonify({'error': 'Server misconfigured: missing DEEPSEEK_API_KEY'}), 500
+        response = requests.post(API_URL, headers=_h, json=data, stream=True, timeout=(CONNECT_TIMEOUT, STREAM_READ_TIMEOUT))
 
         logger.info("/deepseek/chat_stream provider status=%s", response.status_code)
         if response.status_code == 200:
@@ -113,7 +134,7 @@ def deepseek_chat_stream():
                     logger.info("/deepseek/chat_stream stream end")
                     yield "data: [DONE]\n\n"
 
-            return Response(generate(), mimetype='text/plain')
+            return Response(generate(), mimetype='text/event-stream', headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
         else:
             logger.warning("/deepseek/chat_stream provider error status=%s body_len=%d", response.status_code, len(response.text or ""))
             return jsonify({'error': response.text}), response.status_code
@@ -130,7 +151,7 @@ def deepseek_structured():
     if request.method == 'OPTIONS':
         return '', 200
     try:
-        user_input = request.json.get('message', '')
+        user_input = (request.get_json(silent=True) or {}).get('message', '')
         logger.info("/deepseek/structured request message_len=%d", len(user_input or ""))
         if not user_input:
             logger.warning("/deepseek/structured missing message in request")
@@ -152,7 +173,10 @@ def deepseek_structured():
         }
 
         logger.info("/deepseek/structured calling provider model=%s temperature=%s", "deepseek-chat", 0.3)
-        response = requests.post(API_URL, headers=headers, json=data)
+        _h = _auth_headers()
+        if _h is None:
+            return jsonify({'error': 'Server misconfigured: missing DEEPSEEK_API_KEY'}), 500
+        response = requests.post(API_URL, headers=_h, json=data, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
 
         logger.info("/deepseek/structured provider status=%s", response.status_code)
         if response.status_code == 200:

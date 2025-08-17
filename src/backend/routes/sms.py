@@ -23,6 +23,7 @@ import logging
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify
 import mysql.connector
+from mysql.connector import errors as mysql_errors
 
 # 可选：阿里云短信 SDK（需要: pip install alibabacloud_dysmsapi20170525 alibabacloud_tea_openapi alibabacloud_tea_util）
 try:
@@ -93,32 +94,45 @@ def normalize_cn_phone(raw: str) -> str:
 
 # ---------- 工具函数 ----------
 
-def get_db():
-    """Create a new MySQL connection using DB_CONFIG."""
-    return mysql.connector.connect(**DB_CONFIG)
+def _get_conn(autocommit=False):
+    """Create MySQL connection with sane timeouts and per-session max execution time."""
+    conn = mysql.connector.connect(**DB_CONFIG, connection_timeout=5, autocommit=autocommit)
+    cur = conn.cursor()
+    try:
+        cur.execute("SET SESSION MAX_EXECUTION_TIME=15000")  # 15s for any single statement
+    finally:
+        cur.close()
+    return conn
 
 
 def ensure_tables():
     """Ensure the sms_codes table exists. Does not mutate users schema."""
-    conn = get_db()
+    conn = _get_conn(autocommit=False)
     cur = conn.cursor()
-    # 存储验证码与频控数据
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS sms_codes (
-            phone VARCHAR(20) PRIMARY KEY,
-            code_hash VARCHAR(64),
-            expires_at DATETIME,
-            last_sent_at DATETIME,
-            day_key DATE,
-            daily_count INT DEFAULT 0,
-            fail_count INT DEFAULT 0
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-        """
-    )
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS sms_codes (
+                phone VARCHAR(20) PRIMARY KEY,
+                code_hash VARCHAR(64),
+                expires_at DATETIME,
+                last_sent_at DATETIME,
+                day_key DATE,
+                daily_count INT DEFAULT 0,
+                fail_count INT DEFAULT 0
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            """
+        )
+        conn.commit()
+    finally:
+        try:
+            cur.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 # 哈希验证码（不明文入库）
@@ -185,8 +199,8 @@ def sms_send():
 
     try:
         ensure_tables()
-        data = request.get_json(force=True)
-        raw_phone = (data or {}).get('phone', '').strip()
+        data = request.get_json(silent=True) or {}
+        raw_phone = data.get('phone', '').strip()
         if not raw_phone:
             logger.warning("/sms/send invalid phone raw=%r", raw_phone)
             return jsonify({"success": False, "message": "手机号格式不正确（仅支持中国大陆 11 位或带 +86）"}), 400
@@ -200,40 +214,47 @@ def sms_send():
 
         now = datetime.utcnow()  # store UTC timestamps in DB
 
-        conn = get_db()
+        conn = _get_conn(autocommit=False)
         cur = conn.cursor(dictionary=True)
+        try:
+            # Read existing OTP row for this phone (if any)
+            cur.execute("SELECT * FROM sms_codes WHERE phone=%s", (phone,))
+            row = cur.fetchone()
 
-        # Read existing OTP row for this phone (if any)
-        cur.execute("SELECT * FROM sms_codes WHERE phone=%s", (phone,))
-        row = cur.fetchone()
+            # Generate a new OTP and store only its HMAC hash (+ expiry)
+            code = gen_code(OTP_LENGTH)
+            masked_code = code[:2] + "*"*(len(code)-2)
+            expires_at = now + timedelta(seconds=OTP_TTL_SECONDS)
+            logger.debug("/sms/send generated OTP(masked) for %s expires_at=%s", phone, expires_at.isoformat())
 
+            code_hash = hash_code(phone, code)
 
-        # Generate a new OTP and store only its HMAC hash (+ expiry)
-        code = gen_code(OTP_LENGTH)
-        masked_code = code[:2] + "*"*(len(code)-2)
-        expires_at = now + timedelta(seconds=OTP_TTL_SECONDS)
-        logger.debug("/sms/send generated OTP(masked) for %s expires_at=%s", phone, expires_at.isoformat())
-
-        code_hash = hash_code(phone, code)
-
-        if row:
-            cur.execute(
-                """
-                UPDATE sms_codes SET code_hash=%s, expires_at=%s, last_sent_at=%s
-                WHERE phone=%s
-                """,
-                (code_hash, expires_at, now, phone)
-            )
-        else:
-            cur.execute(
-                """
-                INSERT INTO sms_codes (phone, code_hash, expires_at, last_sent_at, day_key, daily_count, fail_count)
-                VALUES (%s, %s, %s, %s, NULL, 0, 0)
-                """,
-                (phone, code_hash, expires_at, now)
-            )
-        conn.commit()
-        cur.close(); conn.close()
+            if row:
+                cur.execute(
+                    """
+                    UPDATE sms_codes SET code_hash=%s, expires_at=%s, last_sent_at=%s
+                    WHERE phone=%s
+                    """,
+                    (code_hash, expires_at, now, phone)
+                )
+            else:
+                cur.execute(
+                    """
+                    INSERT INTO sms_codes (phone, code_hash, expires_at, last_sent_at, day_key, daily_count, fail_count)
+                    VALUES (%s, %s, %s, %s, NULL, 0, 0)
+                    """,
+                    (phone, code_hash, expires_at, now)
+                )
+            conn.commit()
+        finally:
+            try:
+                cur.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
         # Send via Aliyun (provider-side throttling such as daily caps is expected)
         try:
@@ -247,6 +268,12 @@ def sms_send():
 
         return jsonify({"success": True, "message": "验证码已发送"})
 
+    except mysql_errors.Error as e:
+        if getattr(e, 'errno', None) in (3024, 1205, 1213):
+            logger.warning("/sms/send db timeout/deadlock errno=%s msg=%s", getattr(e, 'errno', None), str(e))
+            return jsonify({"success": False, "message": "数据库超时或死锁，请稍后重试"}), 504
+        logger.exception("/sms/send db error: %s", e)
+        return jsonify({"success": False, "message": "数据库错误", "error": str(e)}), 500
     except Exception as e:
         logger.exception("/sms/send server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
@@ -264,9 +291,9 @@ def sms_verify():
 
     try:
         ensure_tables()
-        data = request.get_json(force=True)
-        raw_phone = (data or {}).get('phone', '').strip()
-        code = (data or {}).get('code', '').strip()
+        data = request.get_json(silent=True) or {}
+        raw_phone = data.get('phone', '').strip()
+        code = data.get('code', '').strip()
         # Basic format validation
         phone = normalize_cn_phone(raw_phone)
         if not phone:
@@ -276,62 +303,67 @@ def sms_verify():
             logger.warning("/sms/verify invalid code format phone=%s", phone)
             return jsonify({"success": False, "message": f"验证码应为 {OTP_LENGTH} 位数字"}), 400
 
-        conn = get_db()
+        conn = _get_conn(autocommit=False)
         cur = conn.cursor(dictionary=True)
+        try:
+            # Fetch current OTP row
+            cur.execute("SELECT * FROM sms_codes WHERE phone=%s", (phone,))
+            row = cur.fetchone()
+            if not row or not row.get('code_hash'):
+                return jsonify({"success": False, "message": "验证码不存在或已过期"}), 400
 
-        # Fetch current OTP row
-        cur.execute("SELECT * FROM sms_codes WHERE phone=%s", (phone,))
-        row = cur.fetchone()
-        if not row or not row.get('code_hash'):
-            cur.close(); conn.close()
-            return jsonify({"success": False, "message": "验证码不存在或已过期"}), 400
+            # TTL check
+            expires_at = row['expires_at']
+            if isinstance(expires_at, str):
+                expires_at = datetime.fromisoformat(expires_at)
+            if datetime.utcnow() > expires_at:
+                logger.info("/sms/verify expired phone=%s", phone)
+                return jsonify({"success": False, "message": "验证码已过期"}), 400
 
-        # TTL check
-        expires_at = row['expires_at']
-        if isinstance(expires_at, str):
-            expires_at = datetime.fromisoformat(expires_at)
-        if datetime.utcnow() > expires_at:
-            logger.info("/sms/verify expired phone=%s", phone)
-            cur.close(); conn.close()
-            return jsonify({"success": False, "message": "验证码已过期"}), 400
+            # Max wrong attempts (local protection)
+            fail_count = row.get('fail_count', 0) or 0
+            if fail_count >= OTP_VERIFY_MAX_FAILS:
+                logger.warning("/sms/verify too many attempts phone=%s fail_count=%d", phone, fail_count)
+                return jsonify({"success": False, "message": "尝试次数过多，请稍后再试"}), 429
 
-        # Max wrong attempts (local protection)
-        fail_count = row.get('fail_count', 0) or 0
-        if fail_count >= OTP_VERIFY_MAX_FAILS:
-            logger.warning("/sms/verify too many attempts phone=%s fail_count=%d", phone, fail_count)
-            cur.close(); conn.close()
-            return jsonify({"success": False, "message": "尝试次数过多，请稍后再试"}), 429
+            # Hash compare (no plaintext OTP stored)
+            incoming_hash = hash_code(phone, code)
+            if incoming_hash != row['code_hash']:
+                cur.execute("UPDATE sms_codes SET fail_count = fail_count + 1 WHERE phone=%s", (phone,))
+                conn.commit()
+                left = max(0, OTP_VERIFY_MAX_FAILS - fail_count - 1)
+                logger.warning("/sms/verify wrong code phone=%s attempts_left=%d", phone, left)
+                return jsonify({"success": False, "message": f"验证码不正确，还可尝试 {left} 次"}), 400
 
-        # Hash compare (no plaintext OTP stored)
-        incoming_hash = hash_code(phone, code)
-        if incoming_hash != row['code_hash']:
-            cur.execute("UPDATE sms_codes SET fail_count = fail_count + 1 WHERE phone=%s", (phone,))
+            # Success: clear OTP state
+            cur.execute(
+                "UPDATE sms_codes SET code_hash=NULL, expires_at=NULL, fail_count=0 WHERE phone=%s",
+                (phone,)
+            )
+
+            # Map phone to user (supports legacy username==+86...)
+            try:
+                logger.info("/sms/verify lookup phone=%s", phone)
+            except Exception:
+                pass
+            cur.execute("SELECT user_id FROM users WHERE phone_number=%s OR username=%s LIMIT 1", (phone, phone))
+            user = cur.fetchone()
+            try:
+                logger.info("/sms/verify user lookup result: %s", user)
+            except Exception:
+                pass
+
             conn.commit()
-            cur.close(); conn.close()
-            left = max(0, OTP_VERIFY_MAX_FAILS - fail_count - 1)
-            logger.warning("/sms/verify wrong code phone=%s attempts_left=%d", phone, left)
-            return jsonify({"success": False, "message": f"验证码不正确，还可尝试 {left} 次"}), 400
 
-        # Success: clear OTP state
-        cur.execute(
-            "UPDATE sms_codes SET code_hash=NULL, expires_at=NULL, fail_count=0 WHERE phone=%s",
-            (phone,)
-        )
-
-        # Map phone to user (supports legacy username==+86...)
-        try:
-            logger.info("/sms/verify lookup phone=%s", phone)
-        except Exception:
-            pass
-        cur.execute("SELECT user_id FROM users WHERE phone_number=%s OR username=%s LIMIT 1", (phone, phone))
-        user = cur.fetchone()
-        try:
-            logger.info("/sms/verify user lookup result: %s", user)
-        except Exception:
-            pass
-
-        conn.commit()
-        cur.close(); conn.close()
+        finally:
+            try:
+                cur.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
         if user and user.get('user_id'):
             logger.info("/sms/verify success with user user_id=%s phone=%s", user["user_id"], phone)

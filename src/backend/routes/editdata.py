@@ -4,6 +4,7 @@ import logging
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify
 import mysql.connector
+from mysql.connector import errors as mysql_errors
 
 load_dotenv()
 
@@ -18,6 +19,16 @@ db_config = {
     "password": os.getenv("DB_PASSWORD"),
     "database": os.getenv("DB_NAME"),
 }
+
+def _get_conn():
+    # 连接超时 5s；进入会话后设置语句最大执行时间 15s，避免卡死
+    conn = mysql.connector.connect(**db_config, connection_timeout=5, autocommit=False)
+    cur = conn.cursor()
+    try:
+        cur.execute("SET SESSION MAX_EXECUTION_TIME=15000")  # 15s
+    finally:
+        cur.close()
+    return conn
 
 ALLOWED_TABLES = {"users"}  # 为了安全只允许更新 users 表，如需扩展可加入白名单
 
@@ -58,7 +69,7 @@ def editdata():
         return '', 200
 
     try:
-        data = request.get_json(force=True)
+        data = request.get_json(silent=True) or {}
         logger.info("/editdata request data=%s", data)
 
         table_name = (data.get("table_name") or "users").strip()
@@ -115,34 +126,38 @@ def editdata():
             params.append(username)
 
         # 执行更新
-        conn = mysql.connector.connect(**db_config)
+        conn = _get_conn()
         cursor = conn.cursor(dictionary=True)
+        try:
+            update_sql = f"UPDATE {table_name} SET " + ", ".join(updated_fields) + where_clause
+            logger.info("/editdata executing update table=%s set=%s where=%s params=%s", table_name, ", ".join(updated_fields), where_clause.strip(), params)
+            cursor.execute(update_sql, params)
+            conn.commit()
 
-        update_sql = f"UPDATE {table_name} SET " + ", ".join(updated_fields) + where_clause
-        logger.info("/editdata executing update table=%s set=%s where=%s params=%s", table_name, ", ".join(updated_fields), where_clause.strip(), params)
-        cursor.execute(update_sql, params)
-        conn.commit()
+            affected = cursor.rowcount
+            if affected <= 0:
+                logger.warning("/editdata no match or unchanged table=%s username=%s user_id=%s", table_name, username, user_id)
+                return jsonify({"success": False, "message": "未找到匹配用户或数据未变更", "affected": 0}), 404
 
-        affected = cursor.rowcount
-        if affected <= 0:
-            logger.warning("/editdata no match or unchanged table=%s username=%s user_id=%s", table_name, username, user_id)
-            cursor.close(); conn.close()
-            return jsonify({"success": False, "message": "未找到匹配用户或数据未变更", "affected": 0}), 404
-
-        # 可选：返回最新数据
-        # 重新查询更新后的记录
-        select_params = []
-        select_where = ""
-        if user_id:
-            select_where = " WHERE user_id = %s"; select_params.append(user_id)
-        else:
-            select_where = " WHERE username = %s"; select_params.append(username)
-        select_sql = f"SELECT * FROM {table_name}" + select_where
-        cursor.execute(select_sql, select_params)
-        updated_row = cursor.fetchone()
-
-        cursor.close()
-        conn.close()
+            # 返回最新数据
+            select_params = []
+            select_where = ""
+            if user_id:
+                select_where = " WHERE user_id = %s"; select_params.append(user_id)
+            else:
+                select_where = " WHERE username = %s"; select_params.append(username)
+            select_sql = f"SELECT * FROM {table_name}" + select_where
+            cursor.execute(select_sql, select_params)
+            updated_row = cursor.fetchone()
+        finally:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
         logger.info("/editdata success table=%s affected=%d username=%s user_id=%s updated_fields=%s", table_name, affected, username, user_id, [f.split('=')[0].strip() for f in updated_fields])
 
@@ -154,6 +169,13 @@ def editdata():
             "data": updated_row
         })
 
+    except mysql_errors.Error as e:
+        # 3024: MAX_EXECUTION_TIME exceeded; 1205: Lock wait timeout; 1213: Deadlock found
+        if getattr(e, 'errno', None) in (3024, 1205, 1213):
+            logger.warning("/editdata db timeout/deadlock errno=%s msg=%s", getattr(e, 'errno', None), str(e))
+            return jsonify({"success": False, "message": "数据库超时或死锁，请稍后重试"}), 504
+        logger.exception("/editdata db error: %s", e)
+        return jsonify({"success": False, "message": "数据库错误", "error": str(e)}), 500
     except Exception as e:
         logger.exception("/editdata server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
