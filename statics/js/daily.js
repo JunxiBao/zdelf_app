@@ -14,6 +14,18 @@
  * 所有 DOM 查询都应使用该 ShadowRoot，避免影响宿主文档。
  */
 
+(function () {
+  'use strict';
+  console.debug('[daily] daily.js evaluated');
+  let cleanupFns = [];
+  let fetchController = null;
+  function abortInFlight() {
+    if (fetchController) {
+      try { fetchController.abort(); } catch (_) {}
+    }
+    fetchController = null;
+  }
+
 // -----------------------------
 // State / 模块状态
 // -----------------------------
@@ -66,39 +78,51 @@ function displayGreeting(username, root = dailyRoot) {
  *   否则请求后端，用返回的用户名（若存在）。
  */
 function getUsername() {
-  const userId = localStorage.getItem("userId");
-  console.log("🧪 获取到的 userId:", userId);
+  const userId = localStorage.getItem('userId');
+  console.log('🧪 获取到的 userId:', userId);
 
-  if (!userId || userId === "undefined" || userId === "null") {
-    console.warn("⚠️ 未获取到有效 userId，显示访客");
-    displayGreeting("访客", dailyRoot);
+  if (!userId || userId === 'undefined' || userId === 'null') {
+    console.warn('⚠️ 未获取到有效 userId，显示访客');
+    displayGreeting('访客', dailyRoot);
     return;
   }
 
-  console.log("🌐 测试网络连接...");
-  fetch("https://zhucan.xyz:5000/readdata", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ table_name: "users", user_id: userId }),
+  // 在发起新的请求前中止旧的
+  abortInFlight();
+  fetchController = new AbortController();
+
+  console.log('🌐 测试网络连接...');
+  fetch('https://zhucan.xyz:5000/readdata', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ table_name: 'users', user_id: userId }),
+    signal: fetchController.signal,
   })
     .then((response) => {
-      console.log("📡 收到响应，状态码:", response.status);
-      if (!response.ok)
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      console.log('📡 收到响应，状态码:', response.status);
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       return response.json();
     })
     .then((data) => {
-      console.log("📦 返回数据：", data);
+      console.log('📦 返回数据：', data);
       if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-        const username = data.data[0].username || "访客";
+        const username = data.data[0].username || '访客';
         displayGreeting(username, dailyRoot);
       } else {
-        displayGreeting("访客", dailyRoot);
+        displayGreeting('访客', dailyRoot);
       }
     })
     .catch((error) => {
-      console.error("❌ 获取用户信息失败:", error);
-      displayGreeting("访客", dailyRoot);
+      if (error && error.name === 'AbortError') {
+        console.warn('⏹️ 请求已取消');
+      } else {
+        console.error('❌ 获取用户信息失败:', error);
+        displayGreeting('访客', dailyRoot);
+      }
+    })
+    .finally(() => {
+      // 清理 controller 引用
+      fetchController = null;
     });
 }
 
@@ -114,74 +138,71 @@ function getUsername() {
 function initDaily(shadowRoot) {
   // Cache and use the ShadowRoot / 记录并使用 ShadowRoot
   dailyRoot = shadowRoot || document;
-  console.log("✅ initDaily 执行", { hasShadowRoot: !!shadowRoot });
+  console.log('✅ initDaily 执行', { hasShadowRoot: !!shadowRoot });
+
+  // 启动前中止可能在途的请求
+  abortInFlight();
 
   // Render greeting / 渲染问候语
   getUsername();
 
   // Wire up doctor popup interactions scoped to Shadow DOM
-  // 在 Shadow DOM 作用域内绑定“问诊”弹窗交互
-  const doctorButton = dailyRoot.querySelector("#doctor-button");
-  const doctorPopup = dailyRoot.querySelector("#doctor-popup");
+  const doctorButton = dailyRoot.querySelector('#doctor-button');
+  const doctorPopup = dailyRoot.querySelector('#doctor-popup');
 
   if (!doctorButton || !doctorPopup) {
-    console.warn("⚠️ 未找到 doctorButton 或 doctorPopup（可能 DOM 尚未就绪）");
+    console.warn('⚠️ 未找到 doctorButton 或 doctorPopup（可能 DOM 尚未就绪）');
     return;
   }
 
-  // Remove stale listeners if re-initializing / 重新进入时先清理旧监听
-  if (onDoctorClick && doctorButton)
-    doctorButton.removeEventListener("click", onDoctorClick);
-  if (onDocumentClick)
-    document.removeEventListener("click", onDocumentClick, true);
-  if (doctorObserver) {
-    doctorObserver.disconnect();
-    doctorObserver = null;
-  }
+  // 防止重复绑定：先移除旧监听
+  if (onDoctorClick && doctorButton) doctorButton.removeEventListener('click', onDoctorClick);
+  if (onDocumentClick) document.removeEventListener('click', onDocumentClick, true);
+  if (doctorObserver) { doctorObserver.disconnect(); doctorObserver = null; }
 
   // Click to toggle popup / 点击切换弹窗
   onDoctorClick = () => {
-    if (!doctorPopup.classList.contains("show")) {
-      doctorPopup.classList.add("show");
-      doctorPopup.style.display = "block";
-    } else if (!doctorPopup.classList.contains("hiding")) {
-      doctorPopup.classList.add("hiding");
-      doctorPopup.addEventListener("transitionend", function handler() {
-        doctorPopup.classList.remove("show", "hiding");
-        doctorPopup.style.display = "none";
-        doctorPopup.removeEventListener("transitionend", handler);
+    if (!doctorPopup.classList.contains('show')) {
+      doctorPopup.classList.add('show');
+      doctorPopup.style.display = 'block';
+    } else if (!doctorPopup.classList.contains('hiding')) {
+      doctorPopup.classList.add('hiding');
+      doctorPopup.addEventListener('transitionend', function handler() {
+        doctorPopup.classList.remove('show', 'hiding');
+        doctorPopup.style.display = 'none';
+        doctorPopup.removeEventListener('transitionend', handler);
       });
     }
   };
-  doctorButton.addEventListener("click", onDoctorClick);
+  doctorButton.addEventListener('click', onDoctorClick);
+  cleanupFns.push(() => doctorButton.removeEventListener('click', onDoctorClick));
 
-  // Click outside to close (capture to see outside shadow) / 点击外部关闭（捕获阶段）
+  // Click outside to close (capture to see outside shadow)
   onDocumentClick = (event) => {
     if (
-      doctorPopup.classList.contains("show") &&
+      doctorPopup.classList.contains('show') &&
       !doctorButton.contains(event.target) &&
       !doctorPopup.contains(event.target)
     ) {
-      doctorPopup.classList.add("hiding");
-      doctorPopup.addEventListener("transitionend", function handler() {
-        doctorPopup.classList.remove("show", "hiding");
-        doctorPopup.style.display = "none";
-        doctorPopup.removeEventListener("transitionend", handler);
+      doctorPopup.classList.add('hiding');
+      doctorPopup.addEventListener('transitionend', function handler() {
+        doctorPopup.classList.remove('show', 'hiding');
+        doctorPopup.style.display = 'none';
+        doctorPopup.removeEventListener('transitionend', handler);
       });
     }
   };
-  document.addEventListener("click", onDocumentClick, true);
+  document.addEventListener('click', onDocumentClick, true);
+  cleanupFns.push(() => document.removeEventListener('click', onDocumentClick, true));
 
   // Keep display state consistent when class changes / 观察类名变化统一显示状态
   doctorObserver = new MutationObserver(() => {
-    if (doctorPopup.classList.contains("show")) {
-      doctorPopup.style.display = "block";
+    if (doctorPopup.classList.contains('show')) {
+      doctorPopup.style.display = 'block';
     }
   });
-  doctorObserver.observe(doctorPopup, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
+  doctorObserver.observe(doctorPopup, { attributes: true, attributeFilter: ['class'] });
+  cleanupFns.push(() => { try { doctorObserver && doctorObserver.disconnect(); } catch(_) {} doctorObserver = null; });
 }
 
 /**
@@ -189,28 +210,17 @@ function initDaily(shadowRoot) {
  * 清理监听与观察者，便于无痕卸载。
  */
 function destroyDaily() {
-  const doctorButton =
-    dailyRoot && dailyRoot.querySelector
-      ? dailyRoot.querySelector("#doctor-button")
-      : null;
-  const doctorPopup =
-    dailyRoot && dailyRoot.querySelector
-      ? dailyRoot.querySelector("#doctor-popup")
-      : null;
+  // 中止在途请求
+  abortInFlight();
 
-  if (doctorButton && onDoctorClick)
-    doctorButton.removeEventListener("click", onDoctorClick);
-  if (onDocumentClick)
-    document.removeEventListener("click", onDocumentClick, true);
-  if (doctorObserver) {
-    doctorObserver.disconnect();
-    doctorObserver = null;
-  }
+  // 统一执行清理函数
+  cleanupFns.forEach(fn => { try { fn(); } catch (_) {} });
+  cleanupFns = [];
 
   onDoctorClick = null;
   onDocumentClick = null;
   dailyRoot = document;
-  console.log("🧹 destroyDaily 清理完成");
+  console.log('🧹 destroyDaily 清理完成');
 }
 
 // -----------------------------
@@ -218,3 +228,4 @@ function destroyDaily() {
 // -----------------------------
 window.initDaily = initDaily;
 window.destroyDaily = destroyDaily;
+})();
