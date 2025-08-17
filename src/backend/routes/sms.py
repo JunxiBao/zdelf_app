@@ -18,6 +18,7 @@ import time
 import hashlib
 import random
 from datetime import datetime, timedelta
+import logging
 
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify
@@ -38,6 +39,8 @@ except Exception:
     _ALIYUN_SMS_AVAILABLE = False
 
 load_dotenv()
+
+logger = logging.getLogger("sms")
 
 # Flask blueprint that mounts /sms/send and /sms/verify
 sms_blueprint = Blueprint('sms', __name__)
@@ -184,9 +187,16 @@ def sms_send():
         ensure_tables()
         data = request.get_json(force=True)
         raw_phone = (data or {}).get('phone', '').strip()
+        if not raw_phone:
+            logger.warning("/sms/send invalid phone raw=%r", raw_phone)
+            return jsonify({"success": False, "message": "手机号格式不正确（仅支持中国大陆 11 位或带 +86）"}), 400
+
         phone = normalize_cn_phone(raw_phone)
         if not phone:
+            logger.warning("/sms/send invalid phone raw=%r", raw_phone)
             return jsonify({"success": False, "message": "手机号格式不正确（仅支持中国大陆 11 位或带 +86）"}), 400
+
+        logger.info("/sms/send request phone=%s", phone)
 
         now = datetime.utcnow()  # store UTC timestamps in DB
 
@@ -200,8 +210,11 @@ def sms_send():
 
         # Generate a new OTP and store only its HMAC hash (+ expiry)
         code = gen_code(OTP_LENGTH)
-        code_hash = hash_code(phone, code)
+        masked_code = code[:2] + "*"*(len(code)-2)
         expires_at = now + timedelta(seconds=OTP_TTL_SECONDS)
+        logger.debug("/sms/send generated OTP(masked) for %s expires_at=%s", phone, expires_at.isoformat())
+
+        code_hash = hash_code(phone, code)
 
         if row:
             cur.execute(
@@ -225,7 +238,9 @@ def sms_send():
         # Send via Aliyun (provider-side throttling such as daily caps is expected)
         try:
             send_sms_code_via_aliyun(phone, code)
+            logger.info("/sms/send success phone=%s", phone)
         except Exception as e:
+            logger.exception("/sms/send failed phone=%s error=%s", phone, e)
             # 发送失败时，建议回滚当次计数（这里简单返回错误信息，不做回滚）
             # Hint: BUSINESS_LIMIT_CONTROL indicates Aliyun daily cap has been hit.
             return jsonify({"success": False, "message": f"短信发送失败: {str(e)}"}), 500
@@ -233,6 +248,7 @@ def sms_send():
         return jsonify({"success": True, "message": "验证码已发送"})
 
     except Exception as e:
+        logger.exception("/sms/send server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
 
@@ -254,8 +270,10 @@ def sms_verify():
         # Basic format validation
         phone = normalize_cn_phone(raw_phone)
         if not phone:
+            logger.warning("/sms/verify invalid phone raw=%r", raw_phone)
             return jsonify({"success": False, "message": "手机号格式不正确（仅支持中国大陆 11 位或带 +86）"}), 400
         if not code or not code.isdigit() or len(code) != OTP_LENGTH:
+            logger.warning("/sms/verify invalid code format phone=%s", phone)
             return jsonify({"success": False, "message": f"验证码应为 {OTP_LENGTH} 位数字"}), 400
 
         conn = get_db()
@@ -273,12 +291,14 @@ def sms_verify():
         if isinstance(expires_at, str):
             expires_at = datetime.fromisoformat(expires_at)
         if datetime.utcnow() > expires_at:
+            logger.info("/sms/verify expired phone=%s", phone)
             cur.close(); conn.close()
             return jsonify({"success": False, "message": "验证码已过期"}), 400
 
         # Max wrong attempts (local protection)
         fail_count = row.get('fail_count', 0) or 0
         if fail_count >= OTP_VERIFY_MAX_FAILS:
+            logger.warning("/sms/verify too many attempts phone=%s fail_count=%d", phone, fail_count)
             cur.close(); conn.close()
             return jsonify({"success": False, "message": "尝试次数过多，请稍后再试"}), 429
 
@@ -289,6 +309,7 @@ def sms_verify():
             conn.commit()
             cur.close(); conn.close()
             left = max(0, OTP_VERIFY_MAX_FAILS - fail_count - 1)
+            logger.warning("/sms/verify wrong code phone=%s attempts_left=%d", phone, left)
             return jsonify({"success": False, "message": f"验证码不正确，还可尝试 {left} 次"}), 400
 
         # Success: clear OTP state
@@ -299,13 +320,13 @@ def sms_verify():
 
         # Map phone to user (supports legacy username==+86...)
         try:
-            print(f"[SMS VERIFY] lookup phone=<{phone}>")
+            logger.info("/sms/verify lookup phone=%s", phone)
         except Exception:
             pass
         cur.execute("SELECT user_id FROM users WHERE phone_number=%s OR username=%s LIMIT 1", (phone, phone))
         user = cur.fetchone()
         try:
-            print(f"[SMS VERIFY] user lookup result: {user}")
+            logger.info("/sms/verify user lookup result: %s", user)
         except Exception:
             pass
 
@@ -313,6 +334,7 @@ def sms_verify():
         cur.close(); conn.close()
 
         if user and user.get('user_id'):
+            logger.info("/sms/verify success with user user_id=%s phone=%s", user["user_id"], phone)
             # 与 /login 的返回风格对齐，同时兼容前端已使用的 user_id 键
             return jsonify({
                 "success": True,
@@ -321,10 +343,12 @@ def sms_verify():
                 "userId": user["user_id"]
             })
         else:
+            logger.info("/sms/verify success without user phone=%s", phone)
             return jsonify({
                 "success": True,
                 "message": "验证码校验通过"
             })
 
     except Exception as e:
+        logger.exception("/sms/verify server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500

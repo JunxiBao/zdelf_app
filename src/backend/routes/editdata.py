@@ -1,12 +1,13 @@
-
-
 import os
 import re
+import logging
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify
 import mysql.connector
 
 load_dotenv()
+
+logger = logging.getLogger("editdata")
 
 editdata_blueprint = Blueprint('editdata', __name__)
 
@@ -58,7 +59,7 @@ def editdata():
 
     try:
         data = request.get_json(force=True)
-        print("编辑数据收到的请求：", data)
+        logger.info("/editdata request data=%s", data)
 
         table_name = (data.get("table_name") or "users").strip()
         user_id = data.get("user_id")
@@ -66,9 +67,11 @@ def editdata():
 
         # 验证表名
         if not _validate_table(table_name):
+            logger.warning("/editdata invalid table_name=%s", table_name)
             return jsonify({"success": False, "message": "非法表名"}), 400
 
         if not user_id and not username:
+            logger.warning("/editdata missing user identity user_id=%s username=%s", user_id, username)
             return jsonify({"success": False, "message": "缺少用户标识（user_id 或 username）"}), 400
 
         # 读取将要更新的字段
@@ -80,8 +83,10 @@ def editdata():
             try:
                 age_val = int(data.get("age"))
             except (TypeError, ValueError):
+                logger.warning("/editdata invalid age format age=%r username=%s user_id=%s", data.get("age"), username, user_id)
                 return jsonify({"success": False, "message": "年龄必须为整数"}), 400
             if age_val < 0 or age_val > 120:
+                logger.warning("/editdata invalid age range age=%s username=%s user_id=%s", age_val, username, user_id)
                 return jsonify({"success": False, "message": "年龄范围应在 0~120"}), 400
             updated_fields.append("age = %s")
             params.append(age_val)
@@ -90,12 +95,14 @@ def editdata():
         new_password = data.get("new_password") or data.get("password")
         if new_password is not None and new_password != "":
             # 至少 1 大写 + 1 小写 + 1 数字，长度 8-20，允许常见符号
-            if not re.fullmatch(r"(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]{8,20}", str(new_password)):
+            if not re.fullmatch(r"(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=?\[\]{};':\"\\|,.<>\/?]{8,20}", str(new_password)):
+                logger.warning("/editdata invalid password format username=%s user_id=%s", username, user_id)
                 return jsonify({"success": False, "message": "新密码必须为8到20位，包含大写字母、小写字母和数字，一些特殊字符不能包括"}), 400
             updated_fields.append("password = %s")
             params.append(new_password)
 
         if not updated_fields:
+            logger.warning("/editdata no fields to update username=%s user_id=%s", username, user_id)
             return jsonify({"success": False, "message": "没有需要更新的字段"}), 400
 
         # WHERE 条件
@@ -112,12 +119,13 @@ def editdata():
         cursor = conn.cursor(dictionary=True)
 
         update_sql = f"UPDATE {table_name} SET " + ", ".join(updated_fields) + where_clause
-        print(f"执行更新: {update_sql} 参数: {params}")
+        logger.info("/editdata executing update table=%s set=%s where=%s params=%s", table_name, ", ".join(updated_fields), where_clause.strip(), params)
         cursor.execute(update_sql, params)
         conn.commit()
 
         affected = cursor.rowcount
         if affected <= 0:
+            logger.warning("/editdata no match or unchanged table=%s username=%s user_id=%s", table_name, username, user_id)
             cursor.close(); conn.close()
             return jsonify({"success": False, "message": "未找到匹配用户或数据未变更", "affected": 0}), 404
 
@@ -136,6 +144,8 @@ def editdata():
         cursor.close()
         conn.close()
 
+        logger.info("/editdata success table=%s affected=%d username=%s user_id=%s updated_fields=%s", table_name, affected, username, user_id, [f.split('=')[0].strip() for f in updated_fields])
+
         return jsonify({
             "success": True,
             "message": "更新成功",
@@ -145,5 +155,5 @@ def editdata():
         })
 
     except Exception as e:
-        print("❌ 更新数据错误：", e)
+        logger.exception("/editdata server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500

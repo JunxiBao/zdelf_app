@@ -4,8 +4,11 @@ from flask import Blueprint, request, jsonify
 import mysql.connector
 import uuid
 import re
+import logging
 
 load_dotenv()
+
+logger = logging.getLogger("register")
 
 register_blueprint = Blueprint('register', __name__)
 
@@ -46,7 +49,7 @@ def register():
         return '', 200
     try:
         data = request.get_json(force=True)
-        print("注册收到的数据：", data)
+        logger.info("/register request data=%s", data)
 
         username = (data.get("username") or '').strip()
         password = (data.get("password") or '')
@@ -58,12 +61,15 @@ def register():
         try:
             age = int(age)
             if age < 1 or age > 120:
+                logger.warning("/register invalid age=%s for username=%s", age, username)
                 return jsonify({"success": False, "message": "年龄必须是1-120之间的整数"}), 400
         except (TypeError, ValueError):
+            logger.warning("/register invalid age format=%s", age)
             return jsonify({"success": False, "message": "年龄格式不正确"}), 400
 
         # 必填校验
         if not username or not password or age is None or not phone:
+            logger.warning("/register missing fields username=%s age=%s phone=%s", username, age, phone)
             return jsonify({"success": False, "message": "缺少用户名、密码、年龄或手机号，或手机号格式不正确（仅支持中国大陆）"}), 400
 
         conn = mysql.connector.connect(**db_config)
@@ -81,6 +87,7 @@ def register():
                 (username, password, age, phone, placeholder['user_id'])
             )
             conn.commit()
+            logger.info("/register updated placeholder user_id=%s phone=%s username=%s", placeholder['user_id'], phone, username)
             cursor.close()
             conn.close()
             return jsonify({"success": True, "message": "注册成功（占位账号已更新）"})
@@ -88,6 +95,7 @@ def register():
         # 用户名唯一
         cursor.execute("SELECT 1 FROM users WHERE username=%s", (username,))
         if cursor.fetchone():
+            logger.warning("/register username exists username=%s", username)
             cursor.close()
             conn.close()
             return jsonify({"success": False, "message": "用户名已存在"}), 409
@@ -95,6 +103,7 @@ def register():
         # 手机号唯一
         cursor.execute("SELECT 1 FROM users WHERE phone_number=%s", (phone,))
         if cursor.fetchone():
+            logger.warning("/register phone already registered phone=%s", phone)
             cursor.close()
             conn.close()
             return jsonify({"success": False, "message": "该手机号已注册"}), 409
@@ -105,6 +114,7 @@ def register():
             (user_id, username, password, age, phone)
         )
         conn.commit()
+        logger.info("/register new user created user_id=%s username=%s phone=%s", user_id, username, phone)
 
         cursor.close()
         conn.close()
@@ -112,5 +122,5 @@ def register():
         return jsonify({"success": True, "message": "注册成功"})
 
     except Exception as e:
-        print("❌ 注册错误：", e)
+        logger.exception("/register server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500

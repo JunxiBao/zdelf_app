@@ -2,8 +2,11 @@ from flask import Blueprint, request, jsonify
 import mysql.connector
 import os
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
+
+logger = logging.getLogger("login")
 
 login_blueprint = Blueprint('login', __name__)
 
@@ -20,12 +23,13 @@ def login():
         return '', 200
     try:
         data = request.get_json(force=True)
-        print("收到的数据：", data)
+        logger.info("/login request data=%s", data)
 
         username = data.get("username")
         password = data.get("password")
 
         if not username or not password:
+            logger.warning("/login missing username or password data=%s", data)
             return jsonify({"success": False, "message": "缺少用户名或密码"}), 400
 
         conn = mysql.connector.connect(**db_config)
@@ -38,10 +42,12 @@ def login():
         conn.close()
 
         if user:
+            logger.info("/login success username=%s user_id=%s", username, user['user_id'])
             return jsonify({"success": True, "userId": user["user_id"]})
         else:
+            logger.warning("/login failed invalid credentials username=%s", username)
             return jsonify({"success": False, "message": "用户名或密码错误"}), 401
 
     except Exception as e:
-        print("❌ 登陆错误：", e)
+        logger.exception("/login server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500

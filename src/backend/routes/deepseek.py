@@ -1,4 +1,5 @@
 import os
+import logging
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify, Response, stream_template
 import json
@@ -6,6 +7,8 @@ import requests
 import time
 
 load_dotenv()
+
+logger = logging.getLogger("deepseek")
 
 deepseek_blueprint = Blueprint('deepseek', __name__)
 API_KEY = os.getenv('DEEPSEEK_API_KEY')
@@ -23,7 +26,9 @@ def deepseek_chat():
         return '', 200
     try:
         user_input = request.json.get('message', '')
+        logger.info("/deepseek/chat request message_len=%d", len(user_input or ""))
         if not user_input:
+            logger.warning("/deepseek/chat missing message in request")
             return jsonify({'error': 'Missing message'}), 400
 
         data = {
@@ -35,17 +40,21 @@ def deepseek_chat():
             "temperature": 0.7
         }
 
+        logger.info("/deepseek/chat calling provider model=%s temperature=%s", "deepseek-chat", 0.7)
         response = requests.post(API_URL, headers=headers, json=data)
 
+        logger.info("/deepseek/chat provider status=%s", response.status_code)
         if response.status_code == 200:
             result = response.json()
             reply = result['choices'][0]['message']['content']
+            logger.info("/deepseek/chat success reply_len=%d", len(reply or ""))
             return jsonify({'reply': reply})
         else:
+            logger.warning("/deepseek/chat provider error status=%s body_len=%d", response.status_code, len(response.text or ""))
             return jsonify({'error': response.text}), response.status_code
         
     except Exception as e:
-        print("❌ deepseek请求错误：", e)
+        logger.exception("/deepseek/chat server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
 @deepseek_blueprint.route('/chat_stream', methods=['POST'])
@@ -55,7 +64,9 @@ def deepseek_chat_stream():
         return '', 200
     try:
         user_input = request.json.get('message', '')
+        logger.info("/deepseek/chat_stream request message_len=%d", len(user_input or ""))
         if not user_input:
+            logger.warning("/deepseek/chat_stream missing message in request")
             return jsonify({'error': 'Missing message'}), 400
 
         data = {
@@ -68,10 +79,13 @@ def deepseek_chat_stream():
             "stream": True
         }
 
+        logger.info("/deepseek/chat_stream calling provider model=%s temperature=%s stream=%s", "deepseek-chat", 0.7, True)
         response = requests.post(API_URL, headers=headers, json=data, stream=True)
 
+        logger.info("/deepseek/chat_stream provider status=%s", response.status_code)
         if response.status_code == 200:
             def generate():
+                logger.info("/deepseek/chat_stream stream start")
                 try:
                     for line in response.iter_lines():
                         if line:
@@ -86,22 +100,26 @@ def deepseek_chat_stream():
                                         delta = chunk['choices'][0].get('delta', {})
                                         if 'content' in delta:
                                             content = delta['content']
-                                            # 返回完整的文本块，前端处理打字效果
+                                            # debug: chunk length only, never log full content
+                                            logger.debug("/deepseek/chat_stream chunk len=%d", len(content or ""))
                                             yield f"data: {json.dumps({'content': content, 'type': 'content'})}\n\n"
                                 except json.JSONDecodeError:
+                                    logger.debug("/deepseek/chat_stream non-json line encountered")
                                     continue
                 except Exception as e:
-                    print(f"流式响应错误: {e}")
+                    logger.exception("/deepseek/chat_stream stream error: %s", e)
                     yield f"data: {json.dumps({'error': str(e), 'type': 'error'})}\n\n"
                 finally:
+                    logger.info("/deepseek/chat_stream stream end")
                     yield "data: [DONE]\n\n"
 
             return Response(generate(), mimetype='text/plain')
         else:
+            logger.warning("/deepseek/chat_stream provider error status=%s body_len=%d", response.status_code, len(response.text or ""))
             return jsonify({'error': response.text}), response.status_code
         
     except Exception as e:
-        print("❌ deepseek流式请求错误：", e)
+        logger.exception("/deepseek/chat_stream server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
 
@@ -113,7 +131,9 @@ def deepseek_structured():
         return '', 200
     try:
         user_input = request.json.get('message', '')
+        logger.info("/deepseek/structured request message_len=%d", len(user_input or ""))
         if not user_input:
+            logger.warning("/deepseek/structured missing message in request")
             return jsonify({'error': 'Missing message'}), 400
 
         data = {
@@ -131,23 +151,30 @@ def deepseek_structured():
             "temperature": 0.3
         }
 
+        logger.info("/deepseek/structured calling provider model=%s temperature=%s", "deepseek-chat", 0.3)
         response = requests.post(API_URL, headers=headers, json=data)
 
+        logger.info("/deepseek/structured provider status=%s", response.status_code)
         if response.status_code == 200:
             result = response.json()
             reply = result['choices'][0]['message']['content']
+            logger.info("/deepseek/structured success reply_len=%d", len(reply or ""))
             # 去除 markdown 包裹
             if reply.startswith("```json"):
                 reply = reply.strip("`")  # 去掉所有反引号
                 reply = reply.replace("json", "", 1).strip()  # 去掉 "json" 标签
             try:
                 parsed = json.loads(reply)
+                try_keys = list(parsed.keys()) if isinstance(parsed, dict) else None
+                logger.info("/deepseek/structured parsed_json keys=%s", try_keys)
                 return jsonify(parsed)
             except json.JSONDecodeError:
+                logger.warning("/deepseek/structured json decode failed returning raw reply_len=%d", len(reply or ""))
                 return jsonify({"raw": reply})
         else:
+            logger.warning("/deepseek/structured provider error status=%s body_len=%d", response.status_code, len(response.text or ""))
             return jsonify({'error': response.text}), response.status_code
         
     except Exception as e:
-        print("❌ deepseek/structured 请求错误：", e)
+        logger.exception("/deepseek/structured server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500

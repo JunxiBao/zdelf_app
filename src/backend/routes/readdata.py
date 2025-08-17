@@ -2,8 +2,11 @@ import os
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify
 import mysql.connector
+import logging
 
 load_dotenv()
+
+logger = logging.getLogger("readdata")
 
 readdata_blueprint = Blueprint('readdata', __name__)
 
@@ -20,13 +23,14 @@ def readdata():
         return '', 200
     try:
         data = request.get_json(force=True)
-        print("读取数据收到的请求：", data)
+        logger.info("/readdata request data=%s", data)
 
         table_name = data.get("table_name")
         user_id = data.get("user_id")
         username = data.get("username")
         
         if not table_name:
+            logger.warning("/readdata missing table_name in request data=%s", data)
             return jsonify({"success": False, "message": "缺少表名参数"}), 400
 
         conn = mysql.connector.connect(**db_config)
@@ -42,13 +46,15 @@ def readdata():
             query += " WHERE username = %s"
             params.append(username)
         
-        print(f"执行查询: {query} 参数: {params}")
+        logger.info("/readdata executing query=%s params=%s", query, params)
         
         cursor.execute(query, params)
         results = cursor.fetchall()
 
         cursor.close()
         conn.close()
+
+        logger.info("/readdata success table=%s count=%d", table_name, len(results))
 
         return jsonify({
             "success": True, 
@@ -58,5 +64,5 @@ def readdata():
         })
 
     except Exception as e:
-        print("❌ 读取数据错误：", e)
+        logger.exception("/readdata server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
