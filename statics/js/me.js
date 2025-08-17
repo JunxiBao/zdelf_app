@@ -376,7 +376,7 @@
       window.API_BASE ||
       ""
     ).trim();
-    const defaultBase = "https://zhucan.xyz:5000";
+    const defaultBase = ""; // same-origin base; Nginx will proxy to backend
     const apiBase = (configuredBase || defaultBase).replace(/\/$/, "");
 
     // Initial paint with defaults ("无")
