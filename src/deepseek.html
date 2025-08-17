@@ -141,7 +141,7 @@
         try {
           // 首先尝试使用流式接口
           const response = await fetch(
-            "https://zhucan.xyz:5000/deepseek/chat_stream",
+            "/deepseek/chat_stream",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -175,7 +175,7 @@
       async function fallbackToLegacy(thinkingMsg, message) {
         try {
           const response = await fetch(
-            "https://zhucan.xyz:5000/deepseek/chat",
+            "/deepseek/chat",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },

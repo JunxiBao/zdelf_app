@@ -1,4 +1,5 @@
 from flask import Flask, request, g, jsonify
+from werkzeug.exceptions import HTTPException
 from flask_cors import CORS
 from routes.login import login_blueprint
 from routes.register import register_blueprint
@@ -38,8 +39,21 @@ def _log_response(resp):
     logging.getLogger("app").info("[%s] <- %s in %.1fms status=%s", getattr(g, "request_id", "-"), request.path, dur_ms, resp.status_code)
     return resp
 
+
+# Handle HTTP exceptions with a custom response
+@app.errorhandler(HTTPException)
+def _handle_http_exc(e):
+    rid = getattr(g, "request_id", "-")
+    return jsonify({
+        "error": e.name,
+        "message": e.description,
+        "request_id": rid
+    }), e.code
+
 @app.errorhandler(Exception)
 def _handle_err(e):
+    if isinstance(e, HTTPException):
+        raise e
     rid = getattr(g, "request_id", "-")
     logging.getLogger("app").exception("[%s] Unhandled error: %s", rid, e)
     return jsonify({"error": "internal_error", "request_id": rid}), 500

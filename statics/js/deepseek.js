@@ -36,7 +36,7 @@ async function sendMessage() {
   const thinkingMsg = addTypingBubble();
 
   try {
-    const response = await fetch("https://zhucan.xyz:5000/deepseek/chat", {
+    const response = await fetch("/deepseek/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message }),

@@ -92,7 +92,7 @@ function getUsername() {
   fetchController = new AbortController();
 
   console.log('🌐 测试网络连接...');
-  fetch('https://zhucan.xyz:5000/readdata', {
+  fetch('/readdata', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ table_name: 'users', user_id: userId }),

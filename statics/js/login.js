@@ -132,7 +132,7 @@
   /* =============================
    * 6) Login handler (async/await)
    * ============================= */
-  var LOGIN_ENDPOINT = "https://zhucan.xyz:5000/login";
+  var LOGIN_ENDPOINT = "/login";
   async function handleLogin() {
     var usernameEl = document.getElementById("username");
     var passwordEl = document.getElementById("password");
