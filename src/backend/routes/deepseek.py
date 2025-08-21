@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify, Response, stream_template
 import json
 import requests
-import time
 
 load_dotenv()
 

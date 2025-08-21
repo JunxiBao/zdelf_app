@@ -12,7 +12,7 @@ import time, uuid
 import os
 from logging.handlers import RotatingFileHandler
 
-
+# ==== make blue prints ====
 app = Flask(__name__)
 app.register_blueprint(login_blueprint)
 app.register_blueprint(register_blueprint)
@@ -20,9 +20,13 @@ app.register_blueprint(readdata_blueprint)
 app.register_blueprint(editdata_blueprint)
 app.register_blueprint(deepseek_blueprint, url_prefix='/deepseek')
 app.register_blueprint(sms_blueprint)
+
+# ==== CORS rule ====
 CORS(app, resources={r"/*": {"origins": "https://zhucan.xyz"}}, supports_credentials=True)
 
 # ===== Request lifecycle logging & health check =====
+
+## ==set timer and calculate the time the request need ==
 @app.before_request
 def _start_timer():
     g._ts = time.time()
@@ -40,7 +44,7 @@ def _log_response(resp):
     return resp
 
 
-# Handle HTTP exceptions with a custom response
+## ==let frontend get JSON response==
 @app.errorhandler(HTTPException)
 def _handle_http_exc(e):
     rid = getattr(g, "request_id", "-")
@@ -50,6 +54,7 @@ def _handle_http_exc(e):
         "request_id": rid
     }), e.code
 
+## ==exception of the previous response==
 @app.errorhandler(Exception)
 def _handle_err(e):
     if isinstance(e, HTTPException):
@@ -58,11 +63,15 @@ def _handle_err(e):
     logging.getLogger("app").exception("[%s] Unhandled error: %s", rid, e)
     return jsonify({"error": "internal_error", "request_id": rid}), 500
 
+
+## ==Health check URL==
 @app.get("/healthz")
 def _healthz():
     return {"status": "ok"}, 200
 # ===== End request lifecycle logging =====
 
+# ===== Logging configuration =====
+# ? the log doesn't show's correctly
 os.makedirs("./log", exist_ok=True)
 handler = RotatingFileHandler("./log/app.out", maxBytes=5_000_000, backupCount=3, encoding="utf-8")
 formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
@@ -73,5 +82,8 @@ root.setLevel(logging.INFO)
 if not any(isinstance(h, RotatingFileHandler) and getattr(h, "baseFilename", "").endswith("app.out") for h in root.handlers):
     root.addHandler(handler)
 
-# NOTE: Do not run a dev server in production. Use Gunicorn/Uvicorn, e.g.:
-# gunicorn app:app --bind 127.0.0.1:8000 --workers 2 --threads 4 --timeout 30
+# Ensure our application logger emits INFO and propagates to root handler
+_app_logger = logging.getLogger("app")
+_app_logger.setLevel(logging.INFO)
+
+# !NOTE: Do not run a dev server in production. Use Gunicorn/Uvicorn, e.g.:
