@@ -23,6 +23,23 @@
       href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css"
     />
     <link rel="stylesheet" href="../statics/css/deepseek.css" />
+    <style>
+      .context-reminder.subtle {
+        font-size: 0.8em;
+        opacity: 0.6;
+        max-width: none;
+        margin-top: 6px;
+        text-align: right;
+        border: none;
+        background: transparent;
+        color: inherit;
+      }
+      @media (prefers-color-scheme: dark) {
+        .context-reminder.subtle {
+          color: #aaa;
+        }
+      }
+    </style>
 
     <!-- Third-party libs 外部库（defer 避免阻塞渲染） -->
     <script
@@ -74,6 +91,10 @@
         >
           发送
         </button>
+      </div>
+      <!-- Reminder 提醒 -->
+      <div class="context-reminder subtle" role="note" aria-label="上下文提醒">
+        ⚠️ 提醒：此AI不会记录上下文，每次对话都是独立的。
       </div>
     </div>
 
