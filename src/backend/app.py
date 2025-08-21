@@ -72,8 +72,8 @@ def _healthz():
 
 # ===== Logging configuration =====
 # ? the log doesn't show's correctly
-os.makedirs("./log", exist_ok=True)
-handler = RotatingFileHandler("./log/app.out", maxBytes=5_000_000, backupCount=3, encoding="utf-8")
+os.makedirs("../../log", exist_ok=True)
+handler = RotatingFileHandler("../../log/app.out", maxBytes=5_000_000, backupCount=3, encoding="utf-8")
 formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
 handler.setFormatter(formatter)
 

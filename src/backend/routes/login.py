@@ -7,7 +7,7 @@ import logging
 
 load_dotenv()
 
-logger = logging.getLogger("login")
+logger = logging.getLogger("app.login")
 
 login_blueprint = Blueprint('login', __name__)
 

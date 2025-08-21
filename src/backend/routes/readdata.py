@@ -7,7 +7,7 @@ import logging
 
 load_dotenv()
 
-logger = logging.getLogger("readdata")
+logger = logging.getLogger("app.readdata")
 
 readdata_blueprint = Blueprint('readdata', __name__)
 

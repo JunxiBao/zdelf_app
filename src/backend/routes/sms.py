@@ -41,7 +41,7 @@ except Exception:
 
 load_dotenv()
 
-logger = logging.getLogger("sms")
+logger = logging.getLogger("app.sms")
 
 # Flask blueprint that mounts /sms/send and /sms/verify
 sms_blueprint = Blueprint('sms', __name__)

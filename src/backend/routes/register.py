@@ -9,7 +9,7 @@ import logging
 
 load_dotenv()
 
-logger = logging.getLogger("register")
+logger = logging.getLogger("app.register")
 
 register_blueprint = Blueprint('register', __name__)
 

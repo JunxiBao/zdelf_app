@@ -8,7 +8,7 @@ from mysql.connector import errors as mysql_errors
 
 load_dotenv()
 
-logger = logging.getLogger("editdata")
+logger = logging.getLogger("app.editdata")
 
 editdata_blueprint = Blueprint('editdata', __name__)
 

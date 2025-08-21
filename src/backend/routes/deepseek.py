@@ -7,7 +7,7 @@ import requests
 
 load_dotenv()
 
-logger = logging.getLogger("deepseek")
+logger = logging.getLogger("app.deepseek")
 
 deepseek_blueprint = Blueprint('deepseek', __name__)
 API_KEY = os.getenv('DEEPSEEK_API_KEY')
