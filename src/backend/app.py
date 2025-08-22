@@ -11,7 +11,6 @@
         - deepseek
         - sms
 """
-from click import Tuple
 from flask import Flask, Response, request, g, jsonify
 from werkzeug.exceptions import HTTPException
 from flask_cors import CORS
@@ -60,7 +59,7 @@ def _log_response(resp)-> None:
 
 # let frontend get JSON response
 @app.errorhandler(HTTPException)
-def _handle_http_exc(e) -> Tuple[Response, int]:
+def _handle_http_exc(e):
     rid = getattr(g, "request_id", "-")
     return jsonify({
         "error": e.name,
@@ -70,7 +69,7 @@ def _handle_http_exc(e) -> Tuple[Response, int]:
 
 # exception of the previous response
 @app.errorhandler(Exception)
-def _handle_err(e) -> Tuple[Response, int]:
+def _handle_err(e):
     if isinstance(e, HTTPException):
         raise e
     rid = getattr(g, "request_id", "-")
@@ -80,7 +79,7 @@ def _handle_err(e) -> Tuple[Response, int]:
 
 # Health check URL
 @app.get("/healthz")
-def _healthz() -> Tuple[Response, int]:
+def _healthz():
     return {"status": "ok"}, 200
 # End request lifecycle logging
 

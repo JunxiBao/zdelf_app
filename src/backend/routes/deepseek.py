@@ -10,7 +10,6 @@
 
 import os
 import logging
-from click import Tuple
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify, Response, stream_template
 import json
@@ -46,7 +45,7 @@ def _auth_headers() -> dict | None:
     }
 
 @deepseek_blueprint.route('/chat', methods=['POST'])
-def deepseek_chat() -> Tuple[Response, int]:
+def deepseek_chat():
     """Traditional chat interface - Complete return reply"""
     if request.method == 'OPTIONS':
         return '', 200
@@ -87,7 +86,7 @@ def deepseek_chat() -> Tuple[Response, int]:
         return jsonify({"success": False, "message": "service error", "error": str(e)}), 500
 
 @deepseek_blueprint.route('/chat_stream', methods=['POST'])
-def deepseek_chat_stream() -> Tuple[Response, int]:
+def deepseek_chat_stream():
     """Streaming chat interface - Supports returning word by word"""
     if request.method == 'OPTIONS':
         return '', 200
@@ -158,7 +157,7 @@ def deepseek_chat_stream() -> Tuple[Response, int]:
 
 
 @deepseek_blueprint.route('/structured', methods=['POST'])
-def deepseek_structured() -> Tuple[Response, int]:
+def deepseek_structured():
     '''This function will extract the information input by the user into JSON format and return it'''
     if request.method == 'OPTIONS':
         return '', 200
