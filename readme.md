@@ -184,7 +184,7 @@ A comprehensive health and wellness management application built with modern web
 
 ### Production Setup
 - **SSL Certificate**: Let's Encrypt integration
-- **Domain Configuration**: zhucan.xyz domain setup
+- **Domain Configuration**: zdelf.cn domain setup
 - **Process Management**: Background service with nohup
 - **Logging**: Comprehensive application logging
 
