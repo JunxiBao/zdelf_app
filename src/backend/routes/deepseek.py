@@ -1,10 +1,22 @@
+"""
+ Created on Fri Aug 22 2025 09:38:32
+ Author: JunxiBao
+ File: deepseek.py
+ Description: This file contains the deepseek blueprint, uses can use js to interact with the deepseek API
+    routes include:
+        - /chat (chat_stream)
+        - /structure
+"""
+
 import os
 import logging
+from click import Tuple
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify, Response, stream_template
 import json
 import requests
 
+# read API key from .env
 load_dotenv()
 
 logger = logging.getLogger("app.deepseek")
@@ -23,7 +35,7 @@ CONNECT_TIMEOUT = 5
 READ_TIMEOUT = 30
 STREAM_READ_TIMEOUT = 65
 
-def _auth_headers():
+def _auth_headers() -> dict | None:
     key = os.getenv('DEEPSEEK_API_KEY')
     if not key:
         logger.error("/deepseek missing DEEPSEEK_API_KEY env")
@@ -34,8 +46,8 @@ def _auth_headers():
     }
 
 @deepseek_blueprint.route('/chat', methods=['POST'])
-def deepseek_chat():
-    """传统聊天接口 - 完整返回回复"""
+def deepseek_chat() -> Tuple[Response, int]:
+    """Traditional chat interface - Complete return reply"""
     if request.method == 'OPTIONS':
         return '', 200
     try:
@@ -72,11 +84,11 @@ def deepseek_chat():
         
     except Exception as e:
         logger.exception("/deepseek/chat server error: %s", e)
-        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
+        return jsonify({"success": False, "message": "service error", "error": str(e)}), 500
 
 @deepseek_blueprint.route('/chat_stream', methods=['POST'])
-def deepseek_chat_stream():
-    """流式聊天接口 - 支持一个字一个字返回"""
+def deepseek_chat_stream() -> Tuple[Response, int]:
+    """Streaming chat interface - Supports returning word by word"""
     if request.method == 'OPTIONS':
         return '', 200
     try:
@@ -140,13 +152,14 @@ def deepseek_chat_stream():
         
     except Exception as e:
         logger.exception("/deepseek/chat_stream server error: %s", e)
-        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
+        return jsonify({"success": False, "message": "service error", "error": str(e)}), 500
 
 
 
 
 @deepseek_blueprint.route('/structured', methods=['POST'])
-def deepseek_structured():
+def deepseek_structured() -> Tuple[Response, int]:
+    '''This function will extract the information input by the user into JSON format and return it'''
     if request.method == 'OPTIONS':
         return '', 200
     try:
@@ -161,11 +174,11 @@ def deepseek_structured():
             "messages": [
                 {
                     "role": "system",
-                    "content": "你是一个健康助手，善于从自然语言中提取结构化健康数据。请你根据用户的描述，整理出日期、饮食内容、身体症状三部分，并返回一个标准 JSON 对象。"
+                    "content": "你是一个健康助手，善于从自然语言中提取结构化健康数据。请你根据用户的描述，整理出日期、饮食（不区分早餐午餐晚餐，统一合并）、身体症状三部分，并返回一个标准 JSON 对象。"
                 },
                 {
                     "role": "user",
-                    "content": f"请从以下记录中提取信息，并以 JSON 格式返回（字段包括：日期、饮食、身体症状）。\n\n{user_input}"
+                    "content": f"请从以下记录中提取信息，并以 JSON 格式返回（字段包括：日期、饮食（不区分早餐午餐晚餐，统一合并）、身体症状。\n\n{user_input}"
                 }
             ],
             "temperature": 0.3
@@ -182,10 +195,10 @@ def deepseek_structured():
             result = response.json()
             reply = result['choices'][0]['message']['content']
             logger.info("/deepseek/structured success reply_len=%d", len(reply or ""))
-            # 去除 markdown 包裹
+            # Remove the markdown package
             if reply.startswith("```json"):
-                reply = reply.strip("`")  # 去掉所有反引号
-                reply = reply.replace("json", "", 1).strip()  # 去掉 "json" 标签
+                reply = reply.strip("`")  # Remove all backticks
+                reply = reply.replace("json", "", 1).strip()  # Remove the "json" label
             try:
                 parsed = json.loads(reply)
                 try_keys = list(parsed.keys()) if isinstance(parsed, dict) else None
@@ -200,4 +213,4 @@ def deepseek_structured():
         
     except Exception as e:
         logger.exception("/deepseek/structured server error: %s", e)
-        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
+        return jsonify({"success": False, "message": "service error", "error": str(e)}), 500
