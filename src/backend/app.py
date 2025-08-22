@@ -23,7 +23,7 @@ from routes.sms import sms_blueprint
 import logging
 import time, uuid
 import os
-from logging.handlers import RotatingFileHandler
+from concurrent_log_handler import ConcurrentRotatingFileHandler as RotatingFileHandler
 
 # make blue prints
 app = Flask(__name__)
