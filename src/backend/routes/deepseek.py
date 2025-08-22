@@ -34,7 +34,10 @@ CONNECT_TIMEOUT = 5
 READ_TIMEOUT = 30
 STREAM_READ_TIMEOUT = 65
 
-def _auth_headers() -> dict | None:
+def _auth_headers():
+    """
+    Verify the key
+    """
     key = os.getenv('DEEPSEEK_API_KEY')
     if not key:
         logger.error("/deepseek missing DEEPSEEK_API_KEY env")
@@ -54,7 +57,7 @@ def deepseek_chat():
         logger.info("/deepseek/chat request message_len=%d", len(user_input or ""))
         if not user_input:
             logger.warning("/deepseek/chat missing message in request")
-            return jsonify({'error': 'Missing message'}), 400
+            return jsonify({'error': '缺少消息内容'}), 400
 
         data = {
             "model": "deepseek-chat",
@@ -68,7 +71,7 @@ def deepseek_chat():
         logger.info("/deepseek/chat calling provider model=%s temperature=%s", "deepseek-chat", 0.7)
         _h = _auth_headers()
         if _h is None:
-            return jsonify({'error': 'Server misconfigured: missing DEEPSEEK_API_KEY'}), 500
+            return jsonify({'error': '服务器配置错误: 缺少 DEEPSEEK_API_KEY'}), 500
         response = requests.post(API_URL, headers=_h, json=data, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
 
         logger.info("/deepseek/chat provider status=%s", response.status_code)
@@ -83,7 +86,7 @@ def deepseek_chat():
         
     except Exception as e:
         logger.exception("/deepseek/chat server error: %s", e)
-        return jsonify({"success": False, "message": "service error", "error": str(e)}), 500
+        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
 @deepseek_blueprint.route('/chat_stream', methods=['POST'])
 def deepseek_chat_stream():
@@ -95,7 +98,7 @@ def deepseek_chat_stream():
         logger.info("/deepseek/chat_stream request message_len=%d", len(user_input or ""))
         if not user_input:
             logger.warning("/deepseek/chat_stream missing message in request")
-            return jsonify({'error': 'Missing message'}), 400
+            return jsonify({'error': '缺少信息'}), 400
 
         data = {
             "model": "deepseek-chat",
@@ -110,7 +113,7 @@ def deepseek_chat_stream():
         logger.info("/deepseek/chat_stream calling provider model=%s temperature=%s stream=%s", "deepseek-chat", 0.7, True)
         _h = _auth_headers()
         if _h is None:
-            return jsonify({'error': 'Server misconfigured: missing DEEPSEEK_API_KEY'}), 500
+            return jsonify({'error': '服务器配置错误: 缺少 DEEPSEEK_API_KEY'}), 500
         response = requests.post(API_URL, headers=_h, json=data, stream=True, timeout=(CONNECT_TIMEOUT, STREAM_READ_TIMEOUT))
 
         logger.info("/deepseek/chat_stream provider status=%s", response.status_code)
@@ -151,8 +154,7 @@ def deepseek_chat_stream():
         
     except Exception as e:
         logger.exception("/deepseek/chat_stream server error: %s", e)
-        return jsonify({"success": False, "message": "service error", "error": str(e)}), 500
-
+        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
 
 
@@ -166,7 +168,7 @@ def deepseek_structured():
         logger.info("/deepseek/structured request message_len=%d", len(user_input or ""))
         if not user_input:
             logger.warning("/deepseek/structured missing message in request")
-            return jsonify({'error': 'Missing message'}), 400
+            return jsonify({'error': '缺少信息'}), 400
 
         data = {
             "model": "deepseek-chat",
@@ -186,7 +188,7 @@ def deepseek_structured():
         logger.info("/deepseek/structured calling provider model=%s temperature=%s", "deepseek-chat", 0.3)
         _h = _auth_headers()
         if _h is None:
-            return jsonify({'error': 'Server misconfigured: missing DEEPSEEK_API_KEY'}), 500
+            return jsonify({'error': '服务器配置错误: 缺少 DEEPSEEK_API_KEY'}), 500
         response = requests.post(API_URL, headers=_h, json=data, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
 
         logger.info("/deepseek/structured provider status=%s", response.status_code)
@@ -212,4 +214,4 @@ def deepseek_structured():
         
     except Exception as e:
         logger.exception("/deepseek/structured server error: %s", e)
-        return jsonify({"success": False, "message": "service error", "error": str(e)}), 500
+        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500

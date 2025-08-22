@@ -1,15 +1,12 @@
 """
-SMS routes (send / verify) for CN mainland phone numbers.
+ Created on Fri Aug 22 2025 13:03:28
+ Author: JunxiBao
+ File: sms.py
+ Description: SMS routes (send / verify) for CN mainland phone numbers.
 - Stores OTP hashes locally (no plaintext) with TTL.
 - Delegates rate limiting to Aliyun (no local cooldown or daily limit).
 - Verification enforces TTL and max fail attempts locally.
-
-短信路由（发送/校验），中国大陆手机号：
-- 本地仅存验证码哈希与过期时间；
-- 频控交由阿里云；
-- 校验时做有效期和最大失败次数限制。
 """
-
 import os
 import re
 import hmac
@@ -25,7 +22,6 @@ from flask import Blueprint, request, jsonify
 import mysql.connector
 from mysql.connector import errors as mysql_errors
 
-# 可选：阿里云短信 SDK（需要: pip install alibabacloud_dysmsapi20170525 alibabacloud_tea_openapi alibabacloud_tea_util）
 try:
     from alibabacloud_dysmsapi20170525.client import Client as DysmsapiClient
     from alibabacloud_tea_openapi import models as open_api_models
@@ -58,7 +54,7 @@ ALIYUN_ACCESS_KEY_ID = os.getenv("ALIYUN_ACCESS_KEY_ID")
 ALIYUN_ACCESS_KEY_SECRET = os.getenv("ALIYUN_ACCESS_KEY_SECRET")
 ALIYUN_REGION_ID = os.getenv("ALIYUN_REGION_ID", "cn-hangzhou")
 ALIYUN_SIGN_NAME = os.getenv("ALIYUN_SIGN_NAME")
-ALIYUN_TEMPLATE_CODE = os.getenv("ALIYUN_TEMPLATE_CODE")  # 模板示例：您的验证码为：${code}，5分钟内有效
+ALIYUN_TEMPLATE_CODE = os.getenv("ALIYUN_TEMPLATE_CODE") 
 
 SERVER_SECRET = os.getenv("SERVER_SECRET", "replace-with-strong-random")
 
@@ -71,28 +67,29 @@ OTP_VERIFY_MAX_FAILS = int(os.getenv("OTP_VERIFY_MAX_FAILS", "5"))
 # Generic E.164-ish quick check (loose). Real validation is in normalize_cn_phone().
 PHONE_REGEX = re.compile(r"^\+?\d{6,15}$")
 
-# 仅支持中国大陆手机号：+86***********、86***********、或 11 位以 1 开头
+# Only support China mobile phone number: +86XXXXXXXXXXX, 86XXXXXXXXXXX, or 11 bits to 1 beginning
 CN_MOBILE_RE = re.compile(r"^1[3-9]\d{9}$")
 
 def normalize_cn_phone(raw: str) -> str:
-    """Normalize CN mainland phone to E.164 (+86XXXXXXXXXXX).
+    """
+    Normalize CN mainland phone to E.164 (+86XXXXXXXXXXX).
     Accepts inputs like '+86...', '86...', or plain 11-digit starting with '1'.
     Returns normalized "+86" format, or empty string if invalid.
     """
     if not raw:
         return ''
     s = str(raw).strip().replace(' ', '').replace('-', '')
-    # 去掉前缀，拿出纯数字
+    # Remove prefix and extract pure digits
     digits = re.sub(r"[^0-9]", "", s)
-    # +86 / 86 前缀
+    # +86 / 86 prefix
     if s.startswith('+86') or s.startswith('86'):
-        digits = digits[-11:]  # 取末 11 位
-    # 纯 11 位以 1 开头
+        digits = digits[-11:]  # Take last 11 digits
+    # Pure 11 digits starting with 1
     if len(digits) == 11 and CN_MOBILE_RE.match(digits):
         return '+86' + digits
     return ''
 
-# ---------- 工具函数 ----------
+# ----------- Utility Functions -----------
 
 def _get_conn(autocommit=False):
     """Create MySQL connection with sane timeouts and per-session max execution time."""
@@ -135,7 +132,7 @@ def ensure_tables():
             pass
 
 
-# 哈希验证码（不明文入库）
+# Hash verification code (not stored in plain text)
 
 def hash_code(phone: str, code: str) -> str:
     """HMAC-SHA256 of "phone:code" using SERVER_SECRET; stored in DB (no plaintext)."""
@@ -150,7 +147,7 @@ def gen_code(length: int = 6) -> str:
     return str(n).zfill(length)
 
 
-# ---------- 阿里云短信 ----------
+# ---------- alibaba cloud SMS ----------
 
 def get_aliyun_client():
     """Create and return a DysmsapiClient. Raises if SDK/keys missing."""
@@ -185,7 +182,7 @@ def send_sms_code_via_aliyun(phone: str, code: str):
     return True
 
 
-# ---------- 路由 ----------
+# ---------- route ----------
 
 @sms_blueprint.route('/sms/send', methods=['POST', 'OPTIONS'])
 def sms_send():
@@ -262,7 +259,6 @@ def sms_send():
             logger.info("/sms/send success phone=%s", phone)
         except Exception as e:
             logger.exception("/sms/send failed phone=%s error=%s", phone, e)
-            # 发送失败时，建议回滚当次计数（这里简单返回错误信息，不做回滚）
             # Hint: BUSINESS_LIMIT_CONTROL indicates Aliyun daily cap has been hit.
             return jsonify({"success": False, "message": f"短信发送失败: {str(e)}"}), 500
 
@@ -367,7 +363,6 @@ def sms_verify():
 
         if user and user.get('user_id'):
             logger.info("/sms/verify success with user user_id=%s phone=%s", user["user_id"], phone)
-            # 与 /login 的返回风格对齐，同时兼容前端已使用的 user_id 键
             return jsonify({
                 "success": True,
                 "message": "验证码校验通过",

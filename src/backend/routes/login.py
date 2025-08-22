@@ -21,7 +21,7 @@ db_config = {
 
 # Helper to get MySQL connection with timeouts and per-session query timeout
 def _get_conn():
-    # 登录查询：连接超时 5s，并设置单条语句最大执行 15s，避免卡住
+    # Login query: The connection times out for 5 seconds, and set the maximum execution time for a single statement to 15 seconds to avoid getting stuck
     conn = mysql.connector.connect(**db_config, connection_timeout=5, autocommit=True)
     cur = conn.cursor()
     try:

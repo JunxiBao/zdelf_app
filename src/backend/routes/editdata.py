@@ -6,6 +6,7 @@ from flask import Blueprint, request, jsonify
 import mysql.connector
 from mysql.connector import errors as mysql_errors
 
+# read information of DB
 load_dotenv()
 
 logger = logging.getLogger("app.editdata")
@@ -21,7 +22,7 @@ db_config = {
 }
 
 def _get_conn():
-    # 连接超时 5s；进入会话后设置语句最大执行时间 15s，避免卡死
+    # Connection timeout: 5 seconds; After entering the session, set the maximum execution time of the statement to 15 seconds to avoid freezing
     conn = mysql.connector.connect(**db_config, connection_timeout=5, autocommit=False)
     cur = conn.cursor()
     try:
@@ -30,33 +31,32 @@ def _get_conn():
         cur.close()
     return conn
 
-ALLOWED_TABLES = {"users"}  # 为了安全只允许更新 users 表，如需扩展可加入白名单
+ALLOWED_TABLES = {"users"}  # For security reasons, only the users table is allowed to be updated. If you need to expand it, you can add it to the whitelist
 
-
-def _validate_table(name: str) -> bool:
+def _validate_table(name: str):
     if not name:
         return False
     if name in ALLOWED_TABLES:
         return True
-    # 可选：放开更多表时使用字符校验（字母/数字/下划线）
+    # Optional: Use character validation (letters/numbers/underscores) when expanding to more tables
     return bool(re.fullmatch(r"[A-Za-z0-9_]+", name))
 
 
 @editdata_blueprint.route('/editdata', methods=['POST', 'OPTIONS'])
 def editdata():
     """
-    更新用户资料（age / password）。
+    Update user profile(age / password).
 
-    请求 JSON 示例：
+    Request JSON example:
     {
-      "table_name": "users",            # 可选，默认 users
-      "user_id": "uuid-xxx",            # user_id 和 username 至少提供一个
+      "table_name": "users",            # Optional, default is users
+      "user_id": "uuid-xxx",            # user_id and username must provide at least one
       "username": "JunxiBao",
-      "age": 20,                          # 可选：更新年龄（0~120 的整数）
-      "new_password": "Abc12345"         # 可选：更新密码（或使用字段名 password）
+      "age": 20,                          # Optional: update age (integer 0~120)
+      "new_password": "Abc12345"         # Optional: update password (or use field name password)
     }
 
-    响应：
+    Response:
     {
       "success": true,
       "message": "更新成功",
@@ -76,7 +76,7 @@ def editdata():
         user_id = data.get("user_id")
         username = data.get("username")
 
-        # 验证表名
+        # Verification form name
         if not _validate_table(table_name):
             logger.warning("/editdata invalid table_name=%s", table_name)
             return jsonify({"success": False, "message": "非法表名"}), 400
@@ -85,11 +85,11 @@ def editdata():
             logger.warning("/editdata missing user identity user_id=%s username=%s", user_id, username)
             return jsonify({"success": False, "message": "缺少用户标识（user_id 或 username）"}), 400
 
-        # 读取将要更新的字段
+        # Read the fields to be updated
         updated_fields = []
         params = []
 
-        # 年龄校验
+        # Age validation
         if "age" in data and data.get("age") is not None:
             try:
                 age_val = int(data.get("age"))
@@ -102,13 +102,13 @@ def editdata():
             updated_fields.append("age = %s")
             params.append(age_val)
 
-        # 密码校验（new_password 或 password 二选一）
+        # Password validation (new_password or password, one of them must be provided)
         new_password = data.get("new_password") or data.get("password")
         if new_password is not None and new_password != "":
-            # 至少 1 大写 + 1 小写 + 1 数字，长度 8-20，允许常见符号
+            # At least 1 uppercase + 1 lowercase + 1 number, length 8-20, allow common symbols
             if not re.fullmatch(r"(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=?\[\]{};':\"\\|,.<>\/?]{8,20}", str(new_password)):
                 logger.warning("/editdata invalid password format username=%s user_id=%s", username, user_id)
-                return jsonify({"success": False, "message": "新密码必须为8到20位，包含大写字母、小写字母和数字，一些特殊字符不能包括"}), 400
+                return jsonify({"success": False, "message": "新密码必须为8到20位，包含大写字母、小写字母和数字"}), 400
             updated_fields.append("password = %s")
             params.append(new_password)
 
@@ -116,7 +116,7 @@ def editdata():
             logger.warning("/editdata no fields to update username=%s user_id=%s", username, user_id)
             return jsonify({"success": False, "message": "没有需要更新的字段"}), 400
 
-        # WHERE 条件
+        # WHERE Condition
         where_clause = ""
         if user_id:
             where_clause = " WHERE user_id = %s"
@@ -125,7 +125,7 @@ def editdata():
             where_clause = " WHERE username = %s"
             params.append(username)
 
-        # 执行更新
+        # Perform the update
         conn = _get_conn()
         cursor = conn.cursor(dictionary=True)
         try:
@@ -139,7 +139,7 @@ def editdata():
                 logger.warning("/editdata no match or unchanged table=%s username=%s user_id=%s", table_name, username, user_id)
                 return jsonify({"success": False, "message": "未找到匹配用户或数据未变更", "affected": 0}), 404
 
-            # 返回最新数据
+            # Return the latest data
             select_params = []
             select_where = ""
             if user_id:

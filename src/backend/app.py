@@ -11,7 +11,7 @@
         - deepseek
         - sms
 """
-from flask import Flask, Response, request, g, jsonify
+from flask import Flask, request, g, jsonify
 from werkzeug.exceptions import HTTPException
 from flask_cors import CORS
 from routes.login import login_blueprint
@@ -42,17 +42,18 @@ CORS(app, resources={r"/*": {"origins": "https://zhucan.xyz"}}, supports_credent
 # set timer and calculate the time the request need 
 @app.before_request
 def _start_timer() -> None:
-    g._ts = time.time()
+    g._ts = time.perf_counter()
     g.request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
     logging.getLogger("app").info("[%s] -> %s %s body_len=%s", g.request_id, request.method, request.path, request.content_length or 0)
 
 @app.after_request
 def _log_response(resp)-> None:
     try:
-        dur_ms = (time.time() - g._ts) * 1000
+        dur_ms = (time.perf_counter() - g._ts) * 1000
     except Exception:
         dur_ms = -1
     resp.headers["X-Request-ID"] = getattr(g, "request_id", "-")
+    resp.headers["Server-Timing"] = f"app;dur={dur_ms:.1f}"
     logging.getLogger("app").info("[%s] <- %s in %.1fms status=%s", getattr(g, "request_id", "-"), request.path, dur_ms, resp.status_code)
     return resp
 
@@ -82,22 +83,17 @@ def _handle_err(e):
 def _healthz():
     return {"status": "ok"}, 200
 # End request lifecycle logging
-
+# * log config
 # Logging configuration
 os.makedirs("../../log", exist_ok=True)
 
-# --- Remove any existing non-file (console) handlers
 root = logging.getLogger()
 root.setLevel(logging.INFO)
-for h in list(root.handlers):
-    # Keep only RotatingFileHandler; remove others (e.g., default StreamHandler)
-    if not isinstance(h, RotatingFileHandler):
-        root.removeHandler(h)
-
 # Color (ANSI) file
-color_handler = RotatingFileHandler("../../log/app.out", maxBytes=5_000_000, backupCount=3, encoding="utf-8")
+file_handler = RotatingFileHandler("../../log/app.out", maxBytes=5_000_000, backupCount=3, encoding="utf-8")
 
-class ColorFormatter(logging.Formatter):
+# the color of logs
+class ConsoleColorFormatter(logging.Formatter):
     COLORS = {
         logging.DEBUG: "\033[37m",
         logging.INFO: "\033[36m",
@@ -112,15 +108,24 @@ class ColorFormatter(logging.Formatter):
         message = super().format(record)
         return f"{color}{message}{self.RESET}"
 
-color_formatter = ColorFormatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
-color_handler.setFormatter(color_formatter)
+console_formatter = ConsoleColorFormatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
+plain_formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
+file_handler.setFormatter(plain_formatter)
 
 # Attach handler once
-def _has_handler(base_name: str) -> bool:
+def _has_file_handler(base_name: str) -> bool:
     return any(isinstance(h, RotatingFileHandler) and getattr(h, "baseFilename", "").endswith(base_name) for h in root.handlers)
 
-if not _has_handler("app.out"):
-    root.addHandler(color_handler)
+if not _has_file_handler("app.out"):
+    root.addHandler(file_handler)
+
+def _has_console_handler() -> bool:
+    return any(isinstance(h, logging.StreamHandler) for h in root.handlers)
+
+if not _has_console_handler():
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(console_formatter)
+    root.addHandler(console_handler)
 
 # use app to replace root, enhance logging
 _app_logger = logging.getLogger("app")

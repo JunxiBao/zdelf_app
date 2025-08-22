@@ -18,11 +18,11 @@ db_config = {
     "database": os.getenv("DB_NAME")
 }
 
-# 允许读取的表白名单，避免 SQL 注入风险
+# Allowed table whitelist to prevent SQL injection risks
 ALLOWED_TABLES = {"users"}
 
 def _get_conn():
-    # 只读查询：连接超时 5s，并设置单条语句最大执行 15s
+    # Read-only query: connection timeout 5s, and set single statement max execution 15s
     conn = mysql.connector.connect(**db_config, connection_timeout=5, autocommit=True)
     cur = conn.cursor()
     try:
@@ -62,7 +62,6 @@ def readdata():
             elif username:
                 query += " WHERE username = %s"
                 params.append(username)
-            # 防止一次性拉爆：最多返回 1000 条
             query += " LIMIT 1000"
 
             logger.info("/readdata executing query=%s params=%s", query, params)
