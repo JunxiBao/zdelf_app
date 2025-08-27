@@ -163,9 +163,13 @@
   if (typeof window !== "undefined" && window.__API_BASE__) {
     API_BASE = window.__API_BASE__;
   }
+  // Normalize API_BASE to avoid double slashes
+  if (API_BASE && API_BASE.endsWith("/")) {
+    API_BASE = API_BASE.slice(0, -1);
+  }
   var SMS_SEND_ENDPOINT = API_BASE + "/sms/send";
   var SMS_VERIFY_ENDPOINT = API_BASE + "/sms/verify";
-  var REGISTER_ENDPOINT = API_BASE + "account/register";
+  var REGISTER_ENDPOINT = API_BASE + "/account/register";
   async function handleRegister() {
     var usernameEl = document.getElementById("username");
     var passwordEl = document.getElementById("password");
