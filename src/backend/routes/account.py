@@ -143,3 +143,52 @@ def register():
     except Exception as e:
         logger.exception("/register server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
+
+
+# 账号注销
+@register_blueprint.route('/delete_account', methods=['POST', 'OPTIONS'])
+def delete_account():
+    if request.method == 'OPTIONS':
+        return '', 200
+    try:
+        data = request.get_json(silent=True) or {}
+        username = (data.get("username") or '').strip()
+        user_id = (data.get("user_id") or '').strip()
+        logger.info("/delete_account request username=%s user_id=%s", username, user_id)
+
+        if not username and not user_id:
+            return jsonify({"success": False, "message": "必须提供用户名或用户ID"}), 400
+
+        conn = _get_conn()
+        cursor = conn.cursor()
+        try:
+            if user_id:
+                cursor.execute("DELETE FROM users WHERE user_id=%s", (user_id,))
+            else:
+                cursor.execute("DELETE FROM users WHERE username=%s", (username,))
+            if cursor.rowcount == 0:
+                conn.rollback()
+                return jsonify({"success": False, "message": "未找到对应的账号"}), 404
+            conn.commit()
+            logger.info("/delete_account success username=%s user_id=%s", username, user_id)
+        finally:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+        return jsonify({"success": True, "message": "账号已注销"})
+
+    except mysql_errors.Error as e:
+        if getattr(e, 'errno', None) in (3024, 1205, 1213):
+            logger.warning("/delete_account db timeout/deadlock errno=%s msg=%s", getattr(e, 'errno', None), str(e))
+            return jsonify({"success": False, "message": "数据库超时或死锁，请稍后重试"}), 504
+        logger.exception("/delete_account db error: %s", e)
+        return jsonify({"success": False, "message": "数据库错误", "error": str(e)}), 500
+    except Exception as e:
+        logger.exception("/delete_account server error: %s", e)
+        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500

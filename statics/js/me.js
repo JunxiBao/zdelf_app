@@ -890,6 +890,85 @@
       );
     }
 
+    // 注销账号（不可恢复）
+    const deleteBtn = root.querySelector("#deleteAccountBtn");
+    if (deleteBtn) {
+      const deleteHandler = async () => {
+        // 双重确认，防止误触
+        const ok1 = await confirmDialog("此操作将永久删除您的账号与相关数据，且不可恢复。是否继续？");
+        if (!ok1) return;
+        const ok2 = await confirmDialog("再次确认：真的要注销账号吗？此操作不可撤销。");
+        if (!ok2) return;
+
+        // 禁用按钮，避免重复提交
+        deleteBtn.disabled = true;
+        deleteBtn.dataset._label = deleteBtn.textContent;
+        deleteBtn.textContent = "正在注销...";
+        try {
+          // 构建请求载荷：优先使用 userId，其次 username（后端路由：/account/delete_account）
+          const payload = {};
+          if (storedId) payload.user_id = String(storedId);
+          else if (storedUsername) payload.username = String(storedUsername);
+
+          // 调用后端注销接口
+          const resp = await fetch(apiBase + "/account/delete_account", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          let result = null;
+          try {
+            result = await resp.json();
+          } catch (_) {}
+
+          if (!resp.ok || !result || result.success !== true) {
+            const msg =
+              result && result.message
+                ? result.message
+                : "注销失败 (" + resp.status + ")";
+            showErrorModal(msg);
+            return;
+          }
+
+          // 清理本地缓存并反馈
+          try {
+            const keys = [
+              "UserID",
+              "userid",
+              "userId",
+              "Username",
+              "username",
+            ];
+            keys.forEach((k) => {
+              localStorage.removeItem(k);
+              sessionStorage.removeItem(k);
+            });
+          } catch (e) {}
+
+          showSuccessModal("账号已注销");
+          // 短暂延迟后跳转到登录页
+          setTimeout(() => {
+            window.location.replace("src/login.html");
+          }, 800);
+        } catch (e) {
+          console.warn("[me] 注销失败:", e);
+          showErrorModal("网络错误或服务器异常，请稍后再试");
+        } finally {
+          // 还原按钮态（若未跳转）
+          deleteBtn.disabled = false;
+          if (deleteBtn.dataset._label) {
+            deleteBtn.textContent = deleteBtn.dataset._label;
+            delete deleteBtn.dataset._label;
+          }
+        }
+      };
+      deleteBtn.addEventListener("click", deleteHandler);
+      cleanupFns.push(() =>
+        deleteBtn.removeEventListener("click", deleteHandler)
+      );
+    }
+
     // 列表项点击
     root.querySelectorAll("[data-action]").forEach((el) => {
       const actionHandler = () => toast("打开：" + el.dataset.action);

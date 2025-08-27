@@ -265,27 +265,56 @@ body {
   margin-top: 2px;
 }
 
-/* Logout button section */
+/* Logout section as two independent card buttons */
 .logout {
   margin-top: 18px;
   display: flex;
-  justify-content: center;
-  background: var(--card);
-  box-shadow: var(--shadow-2);
-  border-radius: var(--radius);
-  overflow: hidden;
+  gap: 12px;                 /* 间距由 gap 控制，不再使用白色底板 */
+  background: transparent;   /* 移除整体白色背景 */
+  box-shadow: none;          /* 移除整体阴影 */
+  border-radius: 0;
+  overflow: visible;
+  justify-content: stretch;
 }
 
 .logout button {
-  width: 100%;
-  border: none;
-  outline: none;
-  cursor: pointer;
+  flex: 1;                   /* 两个按钮均分宽度 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);               /* 每个按钮各自的卡片阴影 */
+  background: var(--card);                   /* 独立卡片底色 */
   padding: 14px 18px;
   font-weight: 700;
-  background: linear-gradient(180deg, rgba(229, 57, 53, 0.1), transparent);
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+  color: var(--text);
+}
+
+.logout button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+}
+
+/* Variant styles for different actions */
+#logoutBtn {
+  color: #7e3ff2; /* 紫色主色调（符合项目要求） */
+  background: linear-gradient(180deg, rgba(126, 63, 242, 0.08), transparent), var(--card);
+}
+#logoutBtn:hover {
+  background: linear-gradient(180deg, rgba(126, 63, 242, 0.12), transparent), var(--card);
+}
+
+#deleteAccountBtn {
   color: var(--danger);
-  position: relative;
+  background: linear-gradient(180deg, rgba(229, 57, 53, 0.08), transparent), var(--card);
+}
+#deleteAccountBtn:hover {
+  background: linear-gradient(180deg, rgba(229, 57, 53, 0.12), transparent), var(--card);
 }
 
 /* ICP / record footer */
