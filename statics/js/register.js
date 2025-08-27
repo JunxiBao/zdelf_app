@@ -165,7 +165,7 @@
   }
   var SMS_SEND_ENDPOINT = API_BASE + "/sms/send";
   var SMS_VERIFY_ENDPOINT = API_BASE + "/sms/verify";
-  var REGISTER_ENDPOINT = API_BASE + "/register";
+  var REGISTER_ENDPOINT = API_BASE + "account/register";
   async function handleRegister() {
     var usernameEl = document.getElementById("username");
     var passwordEl = document.getElementById("password");
