@@ -1,5 +1,11 @@
 marked.setOptions({ breaks: true });
 
+// Backend API base: use absolute by default, allow override via window.__API_BASE__
+const __API_BASE_DEFAULT__ = (typeof window !== "undefined" && window.__API_BASE__) || "https://app.zdelf.cn";
+const __API_BASE__ = __API_BASE_DEFAULT__ && __API_BASE_DEFAULT__.endsWith("/")
+  ? __API_BASE_DEFAULT__.slice(0, -1)
+  : __API_BASE_DEFAULT__;
+
 function generateGreeting() {
   const hour = new Date().getHours();
   let greet = "您好！有什么健康问题尽管问我哦~";
@@ -36,7 +42,7 @@ async function sendMessage() {
   const thinkingMsg = addTypingBubble();
 
   try {
-    const response = await fetch("/deepseek/chat", {
+    const response = await fetch(__API_BASE__ + "/deepseek/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message }),

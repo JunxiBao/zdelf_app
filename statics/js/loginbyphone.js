@@ -47,8 +47,9 @@
   }
 
   // 同源请求，交给 Nginx 反代；如需覆盖，可提前设置 window.__API_BASE__
-  const API_BASE = "";
-  const BASE = (typeof window !== "undefined" && window.__API_BASE__) || API_BASE;
+  const API_BASE = "https://app.zdelf.cn";
+  const RAW_BASE = (typeof window !== "undefined" && window.__API_BASE__) || API_BASE;
+  const BASE = RAW_BASE && RAW_BASE.endsWith("/") ? RAW_BASE.slice(0, -1) : RAW_BASE;
   const API_SEND = `${BASE}/sms/send`;
   const API_VERIFY = `${BASE}/sms/verify`;
 

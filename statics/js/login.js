@@ -132,7 +132,11 @@
   /* =============================
    * 6) Login handler (async/await)
    * ============================= */
-  var LOGIN_ENDPOINT = "/login";
+  var API_BASE = (typeof window !== "undefined" && window.__API_BASE__) || "https://app.zdelf.cn";
+  if (API_BASE && API_BASE.endsWith("/")) {
+    API_BASE = API_BASE.slice(0, -1);
+  }
+  var LOGIN_ENDPOINT = API_BASE + "/login";
   async function handleLogin() {
     var usernameEl = document.getElementById("username");
     var passwordEl = document.getElementById("password");

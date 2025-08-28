@@ -373,10 +373,11 @@
     // --- API base (shared in initMe) ---
     const configuredBase = (
       document.querySelector('meta[name="api-base"]')?.content ||
+      window.__API_BASE__ ||
       window.API_BASE ||
       ""
     ).trim();
-    const defaultBase = ""; // same-origin base; Nginx will proxy to backend
+    const defaultBase = "https://app.zdelf.cn"; // default to absolute domain for native containers
     const apiBase = (configuredBase || defaultBase).replace(/\/$/, "");
 
     // Initial paint with defaults ("无")

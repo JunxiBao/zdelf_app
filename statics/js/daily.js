@@ -16,6 +16,11 @@
 
 (function () {
   'use strict';
+  // Backend API base: absolute by default; can be overridden via window.__API_BASE__
+  const __API_BASE_DEFAULT__ = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
+  const __API_BASE__ = __API_BASE_DEFAULT__ && __API_BASE_DEFAULT__.endsWith('/')
+    ? __API_BASE_DEFAULT__.slice(0, -1)
+    : __API_BASE_DEFAULT__;
   console.debug('[daily] daily.js evaluated');
   let cleanupFns = [];
   let fetchController = null;
@@ -92,7 +97,7 @@ function getUsername() {
   fetchController = new AbortController();
 
   console.log('🌐 测试网络连接...');
-  fetch('/readdata', {
+  fetch(__API_BASE__ + '/readdata', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ table_name: 'users', user_id: userId }),

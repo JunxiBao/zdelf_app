@@ -4,6 +4,12 @@ function autoGrow(element) {
 }
 document.querySelectorAll(".record-textarea").forEach(autoGrow);
 
+// Backend API base: absolute by default; can be overridden via window.__API_BASE__
+const __API_BASE_DEFAULT__ = (typeof window !== "undefined" && window.__API_BASE__) || "https://app.zdelf.cn";
+const __API_BASE__ = __API_BASE_DEFAULT__ && __API_BASE_DEFAULT__.endsWith("/")
+  ? __API_BASE_DEFAULT__.slice(0, -1)
+  : __API_BASE_DEFAULT__;
+
 // 弹窗显示函数
 function showPopup() {
   const popup = document.getElementById("popup");
@@ -65,7 +71,7 @@ async function handleRecordSave() {
 
   try {
     const response = await fetch(
-      "/deepseek/structured",
+      __API_BASE__ + "/deepseek/structured",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
