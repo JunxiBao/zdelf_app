@@ -35,7 +35,7 @@ app.register_blueprint(deepseek_blueprint, url_prefix='/deepseek')
 app.register_blueprint(sms_blueprint)
 
 # *CORS rule，Prevent unauthorized requests, enhance security
-CORS(app, resources={r"/*": {"origins": "https://zdelf.cn"}}, supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 # Request lifecycle logging & health check
 
