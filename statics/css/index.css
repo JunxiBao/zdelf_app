@@ -312,7 +312,7 @@ body {
   pointer-events: auto;
   width: auto;
   min-width: unset;
-  max-width: unset;
+  max-width: 500px;
 }
 
 @media (max-width: 480px) {
@@ -320,6 +320,7 @@ body {
     left: 4px;
     right: 4px;
     padding: 16px 4px;
+    max-width: 90vw;
   }
 }
 

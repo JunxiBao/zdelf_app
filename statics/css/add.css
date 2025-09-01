@@ -511,11 +511,7 @@ body {
   transform: scale(1.02);
 }
 
-.mood-emoji {
-  font-size: 2em;
-  margin-bottom: 8px;
-  display: block;
-}
+
 
 .mood-text {
   font-size: 0.9em;
@@ -551,7 +547,7 @@ body {
 @media (prefers-color-scheme: dark) {
   .mood-selector {
     background: #1e1e1e;
-    border-color: #444;
+    border: 1px solid #444;
   }
 
   .mood-title {
@@ -597,6 +593,8 @@ body {
     border-color: #bb86fc;
     background: rgba(187, 134, 252, 0.1);
   }
+
+
 }
 
 /* 移动端适配 */
@@ -620,15 +618,28 @@ body {
     font-size: 0.7em;
   }
 
-  .mood-emoji {
-    font-size: 1.6em;
-    margin-bottom: 4px;
-  }
+
 
   .mood-text {
     font-size: 0.8em;
   }
+
+
+
+
 }
+
+/* 动作按钮容器样式 */
+.action-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+
 
 /* 图片占位空间样式 */
 .mood-image-placeholder {
@@ -661,11 +672,7 @@ body {
   background: rgba(98, 0, 234, 0.1);
 }
 
-.mood-emoji {
-  font-size: 1.8em;
-  margin-bottom: 6px;
-  display: block;
-}
+
 
 .mood-text {
   font-size: 0.9em;

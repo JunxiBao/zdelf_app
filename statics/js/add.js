@@ -15,8 +15,7 @@ function handleMoodSelection() {
 
       // 存储选中的心情
       selectedMood = {
-        mood: this.dataset.mood,
-        emoji: this.dataset.emoji
+        mood: this.dataset.mood
       };
 
       // 触觉反馈
@@ -82,7 +81,7 @@ async function handleRecordSave() {
     return;
   }
 
-  const content = `心情：${selectedMood.emoji} ${selectedMood.mood}`;
+  const content = `心情：${selectedMood.mood}`;
 
   // UI: 禁用交互 + 遮罩 + 按钮文案
   const overlay = ensureOverlay();
