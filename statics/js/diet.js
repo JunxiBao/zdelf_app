@@ -1,0 +1,380 @@
+// 全局变量
+let mealCounter = 1; // 餐次计数器
+let dietData = {}; // 存储饮食数据
+
+// 页面初始化
+function initDietPage() {
+    // 从本地存储加载已保存的数据
+    loadDietData();
+
+    // 为现有按钮添加事件监听器
+    const saveBtn = document.querySelector('.save-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function(e) {
+            attachButtonRipple(this);
+        });
+    }
+
+    const addBtn = document.querySelector('.add-meal-btn');
+    if (addBtn) {
+        addBtn.addEventListener('click', function(e) {
+            attachButtonRipple(this);
+        });
+    }
+
+    console.log('食物记录页面初始化完成');
+}
+
+// 返回上一页
+function goBack() {
+    try {
+        window.__hapticImpact__ && window.__hapticImpact__('Light');
+    } catch(_) {}
+
+    // 保存当前数据到本地存储
+    saveDietData();
+
+    // 返回到选项页面
+    window.location.href = 'options.html';
+}
+
+// 添加新餐次
+function addNewMeal() {
+    try {
+        window.__hapticImpact__ && window.__hapticImpact__('Light');
+    } catch(_) {}
+
+    mealCounter++;
+    const mealId = mealCounter;
+
+    // 创建新的餐次HTML
+    const mealHTML = `
+        <div class="meal-record" data-meal-id="${mealId}" style="animation: fadeInUp 0.5s ease-out;">
+            <div class="meal-header">
+                <div class="meal-time">
+                    <label for="time-${mealId}">时间</label>
+                    <input type="time" id="time-${mealId}" class="time-input">
+                </div>
+            </div>
+            <div class="meal-content">
+                <textarea id="food-${mealId}" placeholder="记录您摄入的食物..." rows="4"></textarea>
+            </div>
+            <div class="meal-actions">
+                <button class="delete-meal-btn" onclick="deleteMeal(${mealId})">删除</button>
+            </div>
+        </div>
+    `;
+
+    // 添加到容器中
+    const dietContainer = document.querySelector('.diet-container');
+    dietContainer.insertAdjacentHTML('beforeend', mealHTML);
+
+    // 设置当前时间为默认值
+    const now = new Date();
+    const timeString = now.toTimeString().slice(0, 5); // HH:MM 格式
+    document.getElementById(`time-${mealId}`).value = timeString;
+
+    // 显示删除按钮（除了第一个餐次）
+    if (mealCounter > 1) {
+        document.querySelector('.delete-meal-btn[style*="display: none"]').style.display = 'block';
+    }
+
+    console.log(`添加新餐次: ${mealId}`);
+}
+
+// 删除餐次
+function deleteMeal(mealId) {
+    try {
+        window.__hapticImpact__ && window.__hapticImpact__('Medium');
+    } catch(_) {}
+
+    // 确认删除
+    if (!confirm('确定要删除这个餐次记录吗？')) {
+        return;
+    }
+
+    const mealElement = document.querySelector(`[data-meal-id="${mealId}"]`);
+    if (mealElement) {
+        // 添加删除动画
+        mealElement.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => {
+            mealElement.remove();
+
+            // 如果只剩一个餐次，隐藏删除按钮
+            const remainingMeals = document.querySelectorAll('.meal-record');
+            if (remainingMeals.length === 1) {
+                const deleteBtn = remainingMeals[0].querySelector('.delete-meal-btn');
+                if (deleteBtn) {
+                    deleteBtn.style.display = 'none';
+                }
+            }
+
+            console.log(`删除餐次: ${mealId}`);
+        }, 300);
+    }
+}
+
+// 保存所有餐次数据
+function saveAllMeals() {
+    try {
+        window.__hapticImpact__ && window.__hapticImpact__('Light');
+    } catch(_) {}
+
+    const saveBtn = document.querySelector('.save-btn');
+    const spinner = document.getElementById('save-spinner');
+    const btnText = saveBtn.querySelector('.btn-text');
+
+    // 禁用按钮并显示保存中状态
+    const originalText = btnText.textContent;
+    saveBtn.disabled = true;
+    btnText.textContent = '保存中...';
+    spinner.classList.add('show');
+
+    try {
+        let allMealsData = {};
+        let validMealsCount = 0;
+
+        // 收集所有餐次数据
+        const mealRecords = document.querySelectorAll('.meal-record');
+
+        mealRecords.forEach((mealElement, index) => {
+            const mealId = mealElement.dataset.mealId;
+            const timeValue = document.getElementById(`time-${mealId}`).value;
+            const foodValue = document.getElementById(`food-${mealId}`).value.trim();
+
+            // 只有当有内容时才保存
+            if (foodValue || timeValue) {
+                const mealData = {
+                    time: timeValue,
+                    food: foodValue,
+                    timestamp: new Date().toISOString(),
+                    mealId: parseInt(mealId)
+                };
+
+                allMealsData[`meal_${mealId}`] = mealData;
+                validMealsCount++;
+            }
+        });
+
+        if (validMealsCount === 0) {
+            showToast('请至少记录一餐的食物信息');
+            return;
+        }
+
+        // 保存到全局数据
+        dietData = { ...dietData, ...allMealsData };
+
+        // 保存到本地存储
+        localStorage.setItem('health_diet_data', JSON.stringify(dietData));
+
+        // 显示成功提示
+        showToast(`成功保存 ${validMealsCount} 餐食物记录！`);
+
+        console.log('保存所有餐次数据:', allMealsData);
+
+    } catch (error) {
+        console.error('保存数据失败:', error);
+        showToast('保存失败，请重试');
+    } finally {
+        // 恢复按钮状态
+        setTimeout(() => {
+            btnText.textContent = originalText;
+            saveBtn.disabled = false;
+            spinner.classList.remove('show');
+        }, 1500);
+    }
+}
+
+// 从本地存储加载数据
+function loadDietData() {
+    try {
+        const storedData = localStorage.getItem('health_diet_data');
+        if (storedData) {
+            dietData = JSON.parse(storedData);
+
+            // 按mealId排序并重新创建餐次
+            const sortedMeals = Object.values(dietData)
+                .sort((a, b) => a.mealId - b.mealId);
+
+            // 清除现有餐次（保留第一个）
+            const mealRecords = document.querySelectorAll('.meal-record');
+            for (let i = 1; i < mealRecords.length; i++) {
+                mealRecords[i].remove();
+            }
+
+            // 重新创建餐次
+            sortedMeals.forEach((mealData, index) => {
+                if (index === 0) {
+                    // 更新第一个餐次
+                    fillMealData(1, mealData);
+                } else {
+                    // 添加新的餐次
+                    addNewMeal();
+                    fillMealData(mealData.mealId, mealData);
+                }
+            });
+
+            // 更新计数器
+            const maxMealId = Math.max(...Object.values(dietData).map(m => m.mealId));
+            mealCounter = maxMealId;
+
+            console.log('加载已保存的饮食数据:', dietData);
+        }
+    } catch (error) {
+        console.error('加载饮食数据失败:', error);
+    }
+}
+
+// 填充餐次数据
+function fillMealData(mealId, data) {
+    try {
+        if (data.time) {
+            document.getElementById(`time-${mealId}`).value = data.time;
+        }
+        if (data.food) {
+            document.getElementById(`food-${mealId}`).value = data.food;
+        }
+    } catch (error) {
+        console.error(`填充餐次${mealId}数据失败:`, error);
+    }
+}
+
+// 保存饮食数据到本地存储
+function saveDietData() {
+    try {
+        localStorage.setItem('health_diet_data', JSON.stringify(dietData));
+    } catch (error) {
+        console.error('保存饮食数据到本地存储失败:', error);
+    }
+}
+
+// 显示提示消息
+function showToast(message) {
+    // 创建toast元素
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(98, 0, 234, 0.9);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 0.9em;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(98, 0, 234, 0.3);
+        z-index: 1000;
+        animation: toastIn 0.3s ease-out;
+    `;
+
+    // 添加深色模式适配
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        toast.style.background = 'rgba(187, 134, 252, 0.9)';
+    }
+
+    document.body.appendChild(toast);
+
+    // 3秒后自动移除
+    setTimeout(() => {
+        toast.style.animation = 'toastOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// 为按钮添加涟漪效果
+function attachButtonRipple(btn) {
+    if (!btn) return;
+
+    // 清除之前的涟漪效果
+    const existingRipple = btn.querySelector('.btn-ripple');
+    if (existingRipple) {
+        existingRipple.remove();
+    }
+
+    const ripple = document.createElement("span");
+    ripple.className = "btn-ripple";
+    ripple.style.left = "50%";
+    ripple.style.top = "50%";
+    ripple.style.transform = "translate(-50%, -50%)";
+    btn.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 520);
+}
+
+// 添加CSS动画
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes toastIn {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    }
+
+    @keyframes toastOut {
+        from {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+    }
+
+    .btn-ripple {
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+        inset: 0;
+        width: 20px;
+        height: 20px;
+        transform: translate(-50%, -50%) scale(0);
+        background: radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.45) 0%,
+            rgba(255, 255, 255, 0) 60%
+        );
+        animation: ripple 0.5s ease-out forwards;
+    }
+
+    @keyframes ripple {
+        to {
+            transform: translate(-50%, -50%) scale(12);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', initDietPage);
+
+// 支持键盘导航
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        goBack();
+    }
+});
+
+// 页面离开前保存数据
+window.addEventListener('beforeunload', function() {
+    saveDietData();
+});

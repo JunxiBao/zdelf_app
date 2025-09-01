@@ -1,0 +1,340 @@
+/* 基础样式 */
+body {
+    font-family: "Segoe UI", "PingFang SC", Arial, sans-serif;
+    background: #fff;
+    margin: 0;
+    padding: 0;
+    color: #222;
+    min-height: 100vh;
+    padding-bottom: 20px;
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #121212;
+        color: #eee;
+    }
+}
+
+/* 返回按钮样式 */
+.back-button-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(98, 0, 234, 0.1);
+    border: 1px solid #6200ea;
+    border-radius: 8px;
+    color: #6200ea;
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(98, 0, 234, 0.1);
+}
+
+.back-btn:hover {
+    background: #6200ea;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
+}
+
+.back-btn:active {
+    transform: translateY(0);
+}
+
+/* 页面标题样式 */
+.options-title {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: #6200ea;
+    text-align: center;
+    margin: 80px 20px 30px 20px;
+    letter-spacing: 1px;
+    padding-top: 10px;
+}
+
+/* 选项容器样式 */
+.options-container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* 选项卡样式 */
+.option-card {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.option-card:hover {
+    border-color: #6200ea;
+    background: #f8f8ff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.15);
+}
+
+.option-card:active {
+    transform: translateY(0);
+}
+
+/* 选项图标样式 */
+.option-icon {
+    flex-shrink: 0;
+    margin-right: 16px;
+}
+
+.icon-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6200ea, #bb86fc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+    transition: all 0.2s ease;
+}
+
+.option-card:hover .icon-placeholder {
+    transform: scale(1.1);
+}
+
+/* 选项内容样式 */
+.option-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.option-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 4px 0;
+    letter-spacing: 0.5px;
+}
+
+.option-description {
+    font-size: 0.9em;
+    color: #666;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* 箭头样式 */
+.option-arrow {
+    flex-shrink: 0;
+    margin-left: 12px;
+    font-size: 1.2em;
+    color: #ccc;
+    transition: all 0.2s ease;
+}
+
+.option-card:hover .option-arrow {
+    color: #6200ea;
+    transform: translateX(4px);
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    .back-btn {
+        background: rgba(187, 134, 252, 0.1);
+        border-color: #bb86fc;
+        color: #bb86fc;
+    }
+
+    .back-btn:hover {
+        background: #bb86fc;
+        color: #000;
+    }
+
+    .options-title {
+        color: #bb86fc;
+    }
+
+    .option-card {
+        background: #1e1e1e;
+        border-color: #444;
+        color: #eee;
+    }
+
+    .option-card:hover {
+        border-color: #bb86fc;
+        background: #2b2b2b;
+        box-shadow: 0 8px 24px rgba(187, 134, 252, 0.2);
+    }
+
+    .option-title {
+        color: #ddd;
+    }
+
+    .option-description {
+        color: #aaa;
+    }
+
+    .option-arrow {
+        color: #666;
+    }
+
+    .option-card:hover .option-arrow {
+        color: #bb86fc;
+    }
+}
+
+/* 移动端适配 */
+@media (max-width: 600px) {
+    .options-title {
+        font-size: 1.3em;
+        margin: 70px 16px 24px 16px;
+    }
+
+    .options-container {
+        padding: 0 16px;
+        gap: 12px;
+    }
+
+    .option-card {
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    .option-icon {
+        margin-right: 12px;
+    }
+
+    .icon-placeholder {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3em;
+    }
+
+    .option-title {
+        font-size: 1em;
+    }
+
+    .option-description {
+        font-size: 0.85em;
+    }
+
+    .back-btn {
+        padding: 8px 12px;
+        font-size: 0.85em;
+    }
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.option-card {
+    animation: slideIn 0.4s ease-out both;
+}
+
+.option-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.option-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.option-card:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.options-title {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* 按钮涟漪效果 */
+.option-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.option-card::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(98, 0, 234, 0.1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+    pointer-events: none;
+}
+
+.option-card:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .option-card::before {
+        background: rgba(187, 134, 252, 0.1);
+    }
+}
+
+/* 无障碍支持 */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001s !important;
+    }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+    .option-card {
+        border-width: 3px;
+    }
+
+    .option-card:hover {
+        border-width: 4px;
+    }
+}

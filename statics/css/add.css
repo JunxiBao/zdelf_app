@@ -576,8 +576,8 @@ body {
   }
 
   .mood-image-placeholder {
-    border-color: #555;
-    background: #333;
+    border-color: #555 !important;
+    background: #4a3a5a !important;
   }
 
   .mood-image-content {
@@ -585,8 +585,8 @@ body {
   }
 
   .mood-btn:hover .mood-image-placeholder {
-    border-color: #bb86fc;
-    background: #444;
+    border-color: #bb86fc !important;
+    background: #5a4a6a !important;
   }
 
   .mood-btn.selected .mood-image-placeholder {
@@ -645,26 +645,34 @@ body {
 .mood-image-placeholder {
   width: 60px;
   height: 60px;
-  border: 2px dashed #ddd;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 8px;
-  background: #f9f9f9;
+  background: #faf7ff;
   transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.mood-image {
+  width: 50%;
+  height: 50%;
+  object-fit: contain;
+  border-radius: 6px;
 }
 
 .mood-image-content {
-  font-size: 0.75em;
-  color: #999;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+  font-size: 1.5em;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mood-btn:hover .mood-image-placeholder {
   border-color: #6200ea;
-  background: #f0f0ff;
+  background: #f4efff;
 }
 
 .mood-btn.selected .mood-image-placeholder {

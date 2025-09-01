@@ -1,0 +1,520 @@
+/* 基础样式 */
+body {
+    font-family: "Segoe UI", "PingFang SC", Arial, sans-serif;
+    background: #fff;
+    margin: 0;
+    padding: 0;
+    color: #222;
+    min-height: 100vh;
+    padding-bottom: 20px;
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #121212;
+        color: #eee;
+    }
+}
+
+/* 返回按钮样式 */
+.back-button-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(98, 0, 234, 0.1);
+    border: 1px solid #6200ea;
+    border-radius: 8px;
+    color: #6200ea;
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(98, 0, 234, 0.1);
+}
+
+.back-btn:hover {
+    background: #6200ea;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
+}
+
+.back-btn:active {
+    transform: translateY(0);
+}
+
+/* 页面标题样式 */
+.page-title {
+    font-size: 1.8em;
+    font-weight: 600;
+    color: #6200ea;
+    text-align: center;
+    margin: 80px 20px 30px 20px;
+    letter-spacing: 1px;
+    padding-top: 10px;
+}
+
+/* 指标容器样式 */
+.metrics-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 指标卡片样式 */
+.metric-card {
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card:hover {
+    border-color: #6200ea;
+    background: #faf7ff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.15);
+}
+
+/* 指标图标样式 */
+.metric-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.icon-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6200ea, #bb86fc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
+}
+
+/* 指标内容样式 */
+.metric-content {
+    margin-right: 70px; /* 为图标留出空间 */
+}
+
+.metric-title {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 8px 0;
+    letter-spacing: 0.5px;
+}
+
+.metric-description {
+    font-size: 0.9em;
+    color: #666;
+    margin: 0 0 16px 0;
+    line-height: 1.4;
+}
+
+/* 输入区域样式 */
+.metric-input {
+    margin-bottom: 16px;
+}
+
+/* 文本输入框样式 */
+.metric-input textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    font-family: inherit;
+    resize: vertical;
+    transition: all 0.2s ease;
+    background: #fafaff;
+    color: #222;
+    box-sizing: border-box;
+}
+
+.metric-input textarea:focus {
+    border-color: #6200ea;
+    background: #fff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+}
+
+.metric-input textarea::placeholder {
+    color: #999;
+}
+
+/* 输入组样式 */
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.input-group input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    background: #fafaff;
+    color: #222;
+    box-sizing: border-box;
+}
+
+.input-group input:focus {
+    border-color: #6200ea;
+    background: #fff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+}
+
+.input-group input::placeholder {
+    color: #999;
+}
+
+.unit {
+    font-size: 1em;
+    font-weight: 500;
+    color: #6200ea;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* 输入网格样式 */
+.input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.input-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.input-item label {
+    font-size: 0.85em;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 2px;
+}
+
+.input-item input {
+    padding: 10px 12px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 0.95em;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    background: #fafaff;
+    color: #222;
+}
+
+.input-item input:focus {
+    border-color: #6200ea;
+    background: #fff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(98, 0, 234, 0.1);
+}
+
+.input-item input::placeholder {
+    color: #999;
+}
+
+.unit-small {
+    font-size: 0.75em;
+    color: #666;
+    margin-left: 4px;
+}
+
+/* 全局操作按钮样式 */
+.global-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
+    padding: 20px 0;
+}
+
+.global-save-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 32px;
+    background: linear-gradient(135deg, #6200ea, #bb86fc);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(98, 0, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+    min-width: 200px;
+    justify-content: center;
+}
+
+.global-save-btn:hover {
+    background: linear-gradient(135deg, #4b00b5, #9c66d6);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.4);
+}
+
+.global-save-btn:active {
+    transform: translateY(0);
+}
+
+.global-save-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-text {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.loading-spinner {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid #fff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    display: none;
+}
+
+.loading-spinner.show {
+    display: block;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    .back-btn {
+        background: rgba(187, 134, 252, 0.1);
+        border-color: #bb86fc;
+        color: #bb86fc;
+    }
+
+    .back-btn:hover {
+        background: #bb86fc;
+        color: #000;
+    }
+
+    .page-title {
+        color: #bb86fc;
+    }
+
+    .metric-card {
+        background: #1e1e1e;
+        border-color: #444;
+        color: #eee;
+    }
+
+    .metric-card:hover {
+        border-color: #bb86fc;
+        background: #2b2b2b;
+        box-shadow: 0 8px 24px rgba(187, 134, 252, 0.2);
+    }
+
+    .metric-title {
+        color: #ddd;
+    }
+
+    .metric-description {
+        color: #aaa;
+    }
+
+    .metric-input textarea {
+        background: #1e1e1e;
+        border-color: #444;
+        color: #eee;
+    }
+
+    .metric-input textarea:focus {
+        background: #222;
+        border-color: #bb86fc;
+    }
+
+    .input-group input {
+        background: #1e1e1e;
+        border-color: #444;
+        color: #eee;
+    }
+
+    .input-group input:focus {
+        background: #222;
+        border-color: #bb86fc;
+    }
+
+    .input-item input {
+        background: #1e1e1e;
+        border-color: #444;
+        color: #eee;
+    }
+
+    .input-item input:focus {
+        background: #222;
+        border-color: #bb86fc;
+    }
+
+    .input-item label {
+        color: #ccc;
+    }
+
+    .unit {
+        color: #bb86fc;
+    }
+
+    .unit-small {
+        color: #aaa;
+    }
+
+    .save-btn {
+        background: #bb86fc;
+        color: #000;
+    }
+
+    .global-save-btn {
+        background: linear-gradient(135deg, #bb86fc, #6200ea);
+    }
+
+    .global-save-btn:hover {
+        background: linear-gradient(135deg, #9c66d6, #4b00b5);
+    }
+}
+
+/* 移动端适配 */
+@media (max-width: 600px) {
+    .page-title {
+        font-size: 1.5em;
+        margin: 70px 16px 24px 16px;
+    }
+
+    .metrics-container {
+        padding: 0 16px;
+        gap: 16px;
+    }
+
+    .metric-card {
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .metric-icon {
+        position: static;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 16px;
+    }
+
+    .metric-content {
+        margin-right: 0;
+        text-align: center;
+    }
+
+    .metric-title {
+        font-size: 1.1em;
+    }
+
+    .metric-description {
+        font-size: 0.85em;
+    }
+
+    .input-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .metric-actions {
+        justify-content: center;
+    }
+
+    .global-save-btn {
+        width: 100%;
+        max-width: 300px;
+        padding: 14px 24px;
+        font-size: 1em;
+    }
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.metric-card {
+    animation: fadeInUp 0.5s ease-out both;
+}
+
+.metric-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.metric-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.metric-card:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.metric-card:nth-child(4) {
+    animation-delay: 0.4s;
+}
+
+.metric-card:nth-child(5) {
+    animation-delay: 0.5s;
+}
+
+.page-title {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* 无障碍支持 */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001s !important;
+    }
+}

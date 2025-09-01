@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>食物记录</title>
+    <link rel="stylesheet" href="../statics/css/diet.css">
+    <link rel="icon" href="../images/writing.png" type="image/png">
+</head>
+<body>
+    <!-- 顶部图标 -->
+    <div style="position: absolute; top: 15px; left: 15px; z-index: 10;">
+        <img src="../images/writing.png" alt="Writing" style="height: 50px" />
+    </div>
+
+    <!-- 返回按钮 -->
+    <div class="back-button-container">
+        <button class="back-btn" onclick="goBack()">
+            <span>← 返回</span>
+        </button>
+    </div>
+
+    <!-- 页面标题 -->
+    <div class="page-title">
+        食物记录
+    </div>
+
+    <!-- 食物记录容器 -->
+    <div class="diet-container">
+        <!-- 第一餐记录 -->
+        <div class="meal-record" data-meal-id="1">
+            <div class="meal-header">
+                <div class="meal-time">
+                    <label for="time-1">时间</label>
+                    <input type="time" id="time-1" class="time-input">
+                </div>
+            </div>
+            <div class="meal-content">
+                <textarea id="food-1" placeholder="记录您摄入的食物..." rows="4"></textarea>
+            </div>
+            <div class="meal-actions">
+                <button class="delete-meal-btn" onclick="deleteMeal(1)" style="display: none;">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部操作区域 -->
+    <div class="bottom-actions">
+        <button class="save-btn" onclick="saveAllMeals()">
+            <span class="btn-text">保存记录</span>
+            <div class="loading-spinner" id="save-spinner"></div>
+        </button>
+    </div>
+
+    <!-- 右下角加号按钮 -->
+    <div class="add-button-container">
+        <button class="add-meal-btn" onclick="addNewMeal()">
+            <span class="add-icon">+</span>
+        </button>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="../statics/js/diet.js"></script>
+</body>
+</html>

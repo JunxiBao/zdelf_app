@@ -65,12 +65,9 @@ function attachButtonRipple(btn) {
   });
 }
 
-async function handleRecordSave() {
+function handleRecordSave() {
   const date = document.getElementById("record-date").value;
   const moodSelector = document.querySelector(".mood-selector");
-
-  const spinner = document.getElementById("spinner");
-  const saveBtn = document.querySelector(".record-btn");
 
   if (!selectedMood) {
     // 用轻微抖动替代弹窗告警
@@ -81,140 +78,15 @@ async function handleRecordSave() {
     return;
   }
 
-  const content = `心情：${selectedMood.mood}`;
+  // 保存心情数据到本地存储
+  const recordData = {
+    date: date,
+    mood: selectedMood.mood
+  };
+  localStorage.setItem('health_record_data', JSON.stringify(recordData));
 
-  // UI: 禁用交互 + 遮罩 + 按钮文案
-  const overlay = ensureOverlay();
-  overlay.classList.add("show");
-  spinner.classList.add("show");
-  saveBtn.disabled = true;
-  const prevText = saveBtn.textContent;
-  saveBtn.textContent = "保存中…";
-
-  try {
-    const response = await fetch(
-      __API_BASE__ + "/deepseek/structured",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: `日期：${date}\n${content}`,
-        }),
-      }
-    );
-
-    const data = await response.json();
-    const prettyJSON = JSON.stringify(data, null, 2);
-
-    // 半透明遮罩 + 面板
-    const modal = document.createElement("div");
-    modal.style.cssText = `position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.25); backdrop-filter: blur(2px); opacity: 0; transition: opacity .2s ease;`;
-
-    const panel = document.createElement("div");
-    panel.style.cssText = `transform: scale(.96); opacity: 0; transition: transform .2s ease, opacity .2s ease; background: #fff; color: #000; border: 1px solid #ccc; padding: 20px; max-width: 80vw; max-height: 80vh; overflow: auto; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.2);`;
-
-    if (
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    ) {
-      panel.style.background = "#1e1e1e";
-      panel.style.color = "#ddd";
-      panel.style.border = "1px solid #444";
-    }
-
-    panel.innerHTML = `
-      <h3 style="margin: 0 0 12px; color: var(--ai-panel-heading-color, #222);">AI分析结果</h3>
-      <textarea
-        id="aiResultEditor"
-        style="
-          width: 70vw;
-          max-width: 900px;
-          height: 50vh;
-          min-height: 260px;
-          resize: vertical;
-          padding: 10px;
-          border: 1px solid #ccc;
-          font-size: 14px;
-          background: var(--ai-panel-textarea-bg, #f5f5f5);
-          color: var(--ai-panel-textarea-color, #222);
-        "
-      ></textarea>
-      <div style="display:flex; gap:12px; justify-content:center; margin-top: 16px;">
-        <button id="copyBtn" class="record-btn" style="max-width:220px; padding: 10px 18px;">复制到剪贴板</button>
-        <button id="closeModalBtn" class="record-btn" style="max-width:220px; padding: 10px 18px;">确定</button>
-      </div>`;
-
-    // Dark mode adaptation
-    if (
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    ) {
-      const textareaEl = panel.querySelector("#aiResultEditor");
-      textareaEl.style.background = "#2b2b2b";
-      textareaEl.style.color = "#ddd";
-      textareaEl.style.border = "1px solid #444";
-      const heading = panel.querySelector("h3");
-      if (heading) heading.style.color = "#ddd";
-      panel.querySelectorAll(".record-btn").forEach((btn) => {
-        btn.style.background = "#6a5acd";
-        btn.style.color = "#fff";
-        btn.style.border = "1px solid #836fff";
-      });
-    }
-
-    modal.appendChild(panel);
-    document.body.appendChild(modal);
-
-    // 填充文本，避免 innerHTML 转义问题
-    panel.querySelector("#aiResultEditor").value = prettyJSON;
-
-    // 入场动画
-    requestAnimationFrame(() => {
-      modal.style.opacity = "1";
-      panel.style.transform = "scale(1)";
-      panel.style.opacity = "1";
-    });
-
-    // 关闭逻辑
-    function closeModal() {
-      modal.style.opacity = "0";
-      panel.style.transform = "scale(.96)";
-      panel.style.opacity = "0";
-      setTimeout(() => modal.remove(), 180);
-    }
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) closeModal();
-    });
-    panel.querySelector("#closeModalBtn").addEventListener("click", closeModal);
-    document.addEventListener("keydown", function escClose(ev) {
-      if (ev.key === "Escape") {
-        closeModal();
-        document.removeEventListener("keydown", escClose);
-      }
-    });
-
-    // 复制功能
-    panel.querySelector("#copyBtn").addEventListener("click", async () => {
-      try {
-        try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
-        await navigator.clipboard.writeText(
-          panel.querySelector("#aiResultEditor").value
-        );
-        showPopup();
-      } catch (_) {}
-    });
-  } catch (error) {
-    console.error("❌ 请求错误", error);
-    moodSelector.classList.remove("shake");
-    void moodSelector.offsetWidth;
-    moodSelector.classList.add("shake");
-  } finally {
-    spinner.classList.remove("show");
-    overlay.classList.remove("show");
-    saveBtn.disabled = false;
-    saveBtn.textContent = prevText;
-    showPopup();
-  }
+  // 直接跳转到选项页面
+  window.location.href = 'src/options.html';
 }
 
 function initAdd() {

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>健康记录选项</title>
+    <link rel="stylesheet" href="../statics/css/options.css">
+    <link rel="icon" href="../images/writing.png" type="image/png">
+</head>
+<body>
+    <!-- 顶部图标 -->
+    <div style="position: absolute; top: 15px; left: 15px; z-index: 10;">
+        <img src="../images/writing.png" alt="Writing" style="height: 50px" />
+    </div>
+
+    <!-- 返回按钮 -->
+    <div class="back-button-container">
+        <button class="back-btn" onclick="goBack()">
+            <span>← 返回</span>
+        </button>
+    </div>
+
+    <!-- 页面标题 -->
+    <div class="options-title">
+        选择继续记录的项目
+    </div>
+
+    <!-- 选项容器 -->
+    <div class="options-container">
+        <div class="option-card" data-type="metrics">
+            <div class="option-icon">
+                <div class="icon-placeholder">📊</div>
+            </div>
+            <div class="option-content">
+                <h3 class="option-title">健康指标</h3>
+                <p class="option-description">记录血压、心率、血糖等健康数据</p>
+            </div>
+            <div class="option-arrow">→</div>
+        </div>
+
+        <div class="option-card" data-type="diet">
+            <div class="option-icon">
+                <div class="icon-placeholder">🥗</div>
+            </div>
+            <div class="option-content">
+                <h3 class="option-title">饮食记录</h3>
+                <p class="option-description">记录一日三餐和零食摄入情况</p>
+            </div>
+            <div class="option-arrow">→</div>
+        </div>
+
+        <div class="option-card" data-type="cases">
+            <div class="option-icon">
+                <div class="icon-placeholder">📋</div>
+            </div>
+            <div class="option-content">
+                <h3 class="option-title">病例</h3>
+                <p class="option-description">查看和管理个人健康病例</p>
+            </div>
+            <div class="option-arrow">→</div>
+        </div>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="../statics/js/options.js"></script>
+</body>
+</html>

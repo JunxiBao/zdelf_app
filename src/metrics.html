@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>健康指标记录</title>
+    <link rel="stylesheet" href="../statics/css/metrics.css">
+    <link rel="icon" href="../images/writing.png" type="image/png">
+</head>
+<body>
+    <!-- 顶部图标 -->
+    <div style="position: absolute; top: 15px; left: 15px; z-index: 10;">
+        <img src="../images/writing.png" alt="Writing" style="height: 50px" />
+    </div>
+
+    <!-- 返回按钮 -->
+    <div class="back-button-container">
+        <button class="back-btn" onclick="goBack()">
+            <span>← 返回</span>
+        </button>
+    </div>
+
+    <!-- 页面标题 -->
+    <div class="page-title">
+        健康指标记录
+    </div>
+
+    <!-- 指标容器 -->
+    <div class="metrics-container">
+        <!-- 症状记录 -->
+        <div class="metric-card" data-type="symptoms">
+            <div class="metric-icon">
+                <div class="icon-placeholder">🤒</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">症状</h3>
+                <p class="metric-description">记录身体不适症状</p>
+                <div class="metric-input">
+                    <textarea id="symptoms-input" placeholder="描述您的症状..." rows="3"></textarea>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 体温记录 -->
+        <div class="metric-card" data-type="temperature">
+            <div class="metric-icon">
+                <div class="icon-placeholder">🌡️</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">体温</h3>
+                <p class="metric-description">记录体温数值</p>
+                <div class="metric-input">
+                    <div class="input-group">
+                        <input type="number" id="temperature-input" step="0.1" min="35" max="45" placeholder="36.5">
+                        <span class="unit">°C</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 尿常规 -->
+        <div class="metric-card" data-type="urinalysis">
+            <div class="metric-icon">
+                <div class="icon-placeholder">🧪</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">尿常规</h3>
+                <p class="metric-description">尿液常规检查结果</p>
+                <div class="metric-input">
+                    <div class="input-grid">
+                        <div class="input-item">
+                            <label for="protein-input">蛋白质</label>
+                            <input type="text" id="protein-input" placeholder="阴性/+">
+                        </div>
+                        <div class="input-item">
+                            <label for="glucose-input">葡萄糖</label>
+                            <input type="text" id="glucose-input" placeholder="阴性/+">
+                        </div>
+                        <div class="input-item">
+                            <label for="ketones-input">酮体</label>
+                            <input type="text" id="ketones-input" placeholder="阴性/+">
+                        </div>
+                        <div class="input-item">
+                            <label for="blood-input">潜血</label>
+                            <input type="text" id="blood-input" placeholder="阴性/+">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 24h尿蛋白测定 -->
+        <div class="metric-card" data-type="proteinuria">
+            <div class="metric-icon">
+                <div class="icon-placeholder">🕐</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">24h尿蛋白测定</h3>
+                <p class="metric-description">24小时尿蛋白含量</p>
+                <div class="metric-input">
+                    <div class="input-group">
+                        <input type="number" id="proteinuria-input" step="0.1" min="0" placeholder="0.0">
+                        <span class="unit">g/24h</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 血常规 -->
+        <div class="metric-card" data-type="blood-test">
+            <div class="metric-icon">
+                <div class="icon-placeholder">🩸</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">血常规</h3>
+                <p class="metric-description">血液常规检查结果</p>
+                <div class="metric-input">
+                    <div class="input-grid">
+                        <div class="input-item">
+                            <label for="wbc-input">白细胞(WBC)</label>
+                            <input type="number" id="wbc-input" step="0.1" placeholder="0.0">
+                            <span class="unit-small">×10⁹/L</span>
+                        </div>
+                        <div class="input-item">
+                            <label for="rbc-input">红细胞(RBC)</label>
+                            <input type="number" id="rbc-input" step="0.1" placeholder="0.0">
+                            <span class="unit-small">×10¹²/L</span>
+                        </div>
+                        <div class="input-item">
+                            <label for="hb-input">血红蛋白(Hb)</label>
+                            <input type="number" id="hb-input" step="1" placeholder="0">
+                            <span class="unit-small">g/L</span>
+                        </div>
+                        <div class="input-item">
+                            <label for="plt-input">血小板(PLT)</label>
+                            <input type="number" id="plt-input" step="1" placeholder="0">
+                            <span class="unit-small">×10⁹/L</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 统一保存按钮 -->
+    <div class="global-actions">
+        <button class="global-save-btn" onclick="saveAllMetrics()">
+            <span class="btn-text">保存所有指标</span>
+            <div class="loading-spinner" id="global-spinner"></div>
+        </button>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="../statics/js/metrics.js"></script>
+</body>
+</html>

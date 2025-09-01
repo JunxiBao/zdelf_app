@@ -1,0 +1,490 @@
+/* 基础样式 */
+body {
+    font-family: "Segoe UI", "PingFang SC", Arial, sans-serif;
+    background: #fff;
+    margin: 0;
+    padding: 0;
+    color: #222;
+    min-height: 100vh;
+    padding-bottom: 100px; /* 为底部按钮留出空间 */
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #121212;
+        color: #eee;
+    }
+}
+
+/* 返回按钮样式 */
+.back-button-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(98, 0, 234, 0.1);
+    border: 1px solid #6200ea;
+    border-radius: 8px;
+    color: #6200ea;
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(98, 0, 234, 0.1);
+}
+
+.back-btn:hover {
+    background: #6200ea;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
+}
+
+.back-btn:active {
+    transform: translateY(0);
+}
+
+/* 页面标题样式 */
+.page-title {
+    font-size: 1.8em;
+    font-weight: 600;
+    color: #6200ea;
+    text-align: center;
+    margin: 80px 20px 30px 20px;
+    letter-spacing: 1px;
+    padding-top: 10px;
+}
+
+/* 食物记录容器样式 */
+.diet-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 餐次记录样式 */
+.meal-record {
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.meal-record:hover {
+    border-color: #6200ea;
+    background: #faf7ff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.15);
+}
+
+/* 餐次头部样式 */
+.meal-header {
+    display: flex;
+    margin-bottom: 16px;
+    align-items: flex-end;
+}
+
+.meal-time {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+.meal-time label {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: #555;
+}
+
+.time-input {
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    background: #fafaff;
+    color: #222;
+    width: 100%;
+}
+
+.time-input:focus {
+    border-color: #6200ea;
+    background: #fff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+}
+
+.time-input::placeholder {
+    color: #999;
+}
+
+/* 餐次内容样式 */
+.meal-content {
+    margin-bottom: 16px;
+}
+
+.meal-content textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    font-family: inherit;
+    resize: vertical;
+    transition: all 0.2s ease;
+    background: #fafaff;
+    color: #222;
+    box-sizing: border-box;
+    line-height: 1.5;
+}
+
+.meal-content textarea:focus {
+    border-color: #6200ea;
+    background: #fff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+}
+
+.meal-content textarea::placeholder {
+    color: #999;
+}
+
+/* 餐次操作样式 */
+.meal-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.delete-meal-btn {
+    padding: 8px 16px;
+    background: #ff4757;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.8;
+}
+
+.delete-meal-btn:hover {
+    background: #ff3742;
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+}
+
+.delete-meal-btn:active {
+    transform: translateY(0);
+}
+
+/* 底部操作区域样式 */
+.bottom-actions {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+}
+
+.save-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #6200ea, #bb86fc);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(98, 0, 234, 0.3);
+    min-width: 140px;
+    justify-content: center;
+}
+
+.save-btn:hover {
+    background: linear-gradient(135deg, #4b00b5, #9c66d6);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.4);
+}
+
+.save-btn:active {
+    transform: translateY(0);
+}
+
+.save-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-text {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.loading-spinner {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid #fff;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    animation: spin 1s linear infinite;
+    display: none;
+}
+
+.loading-spinner.show {
+    display: block;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 右下角加号按钮样式 */
+.add-button-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 100;
+}
+
+.add-meal-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6200ea, #bb86fc);
+    border: none;
+    color: #fff;
+    font-size: 2em;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(98, 0, 234, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-meal-btn:hover {
+    background: linear-gradient(135deg, #4b00b5, #9c66d6);
+    transform: scale(1.1);
+    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.5);
+}
+
+.add-meal-btn:active {
+    transform: scale(1);
+}
+
+.add-icon {
+    line-height: 1;
+    display: block;
+    margin-top: -2px;
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    .back-btn {
+        background: rgba(187, 134, 252, 0.1);
+        border-color: #bb86fc;
+        color: #bb86fc;
+    }
+
+    .back-btn:hover {
+        background: #bb86fc;
+        color: #000;
+    }
+
+    .page-title {
+        color: #bb86fc;
+    }
+
+    .meal-record {
+        background: #1e1e1e;
+        border-color: #444;
+        color: #eee;
+    }
+
+    .meal-record:hover {
+        border-color: #bb86fc;
+        background: #2b2b2b;
+        box-shadow: 0 8px 24px rgba(187, 134, 252, 0.2);
+    }
+
+    .time-input {
+        background: #1e1e1e;
+        border-color: #444;
+        color: #eee;
+    }
+
+    .time-input:focus {
+        background: #222;
+        border-color: #bb86fc;
+    }
+
+    .meal-content textarea {
+        background: #1e1e1e;
+        border-color: #444;
+        color: #eee;
+    }
+
+    .meal-content textarea:focus {
+        background: #222;
+        border-color: #bb86fc;
+    }
+
+    .meal-time label {
+        color: #ccc;
+    }
+
+    .save-btn {
+        background: linear-gradient(135deg, #bb86fc, #6200ea);
+    }
+
+    .save-btn:hover {
+        background: linear-gradient(135deg, #9c66d6, #4b00b5);
+    }
+
+    .add-meal-btn {
+        background: linear-gradient(135deg, #bb86fc, #6200ea);
+    }
+
+    .add-meal-btn:hover {
+        background: linear-gradient(135deg, #9c66d6, #4b00b5);
+    }
+}
+
+/* 移动端适配 */
+@media (max-width: 600px) {
+    .page-title {
+        font-size: 1.5em;
+        margin: 70px 16px 24px 16px;
+    }
+
+    .diet-container {
+        padding: 0 16px;
+        gap: 16px;
+    }
+
+    .meal-record {
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    .meal-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .meal-time {
+        flex: none;
+    }
+
+    .meal-content textarea {
+        min-height: 80px;
+        font-size: 0.95em;
+    }
+
+    .bottom-actions {
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .save-btn {
+        padding: 12px 24px;
+        font-size: 0.95em;
+        min-width: 120px;
+    }
+
+    .add-button-container {
+        bottom: 16px;
+        right: 16px;
+    }
+
+    .add-meal-btn {
+        width: 56px;
+        height: 56px;
+        font-size: 1.8em;
+    }
+
+    .delete-meal-btn {
+        padding: 6px 12px;
+        font-size: 0.85em;
+    }
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.meal-record {
+    animation: fadeInUp 0.5s ease-out both;
+}
+
+.meal-record:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.meal-record:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.meal-record:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.meal-record:nth-child(4) {
+    animation-delay: 0.4s;
+}
+
+.meal-record:nth-child(5) {
+    animation-delay: 0.5s;
+}
+
+.page-title {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* 无障碍支持 */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001s !important;
+    }
+}
