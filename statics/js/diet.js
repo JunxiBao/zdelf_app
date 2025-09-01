@@ -1,6 +1,7 @@
 // 全局变量
 let mealCounter = 1; // 餐次计数器
 let dietData = {}; // 存储饮食数据
+let pendingDeleteMealId = null; // 待删除的餐次ID
 
 // 页面初始化
 function initDietPage() {
@@ -88,12 +89,54 @@ function deleteMeal(mealId) {
         window.__hapticImpact__ && window.__hapticImpact__('Medium');
     } catch(_) {}
 
-    // 确认删除
-    if (!confirm('确定要删除这个餐次记录吗？')) {
-        return;
-    }
+    // 显示自定义确认弹窗
+    pendingDeleteMealId = mealId;
+    showDeleteModal();
+}
 
+// 显示删除确认弹窗
+function showDeleteModal() {
+    const modal = document.getElementById('delete-modal');
+    modal.classList.add('show');
+
+    // 添加遮罩层点击关闭功能
+    const overlay = modal.querySelector('.delete-modal-overlay');
+    overlay.onclick = cancelDelete;
+
+    // 添加ESC键关闭功能
+    document.addEventListener('keydown', handleModalKeydown);
+}
+
+// 隐藏删除确认弹窗
+function hideDeleteModal() {
+    const modal = document.getElementById('delete-modal');
+    modal.classList.remove('show');
+    pendingDeleteMealId = null;
+
+    // 移除事件监听器
+    document.removeEventListener('keydown', handleModalKeydown);
+}
+
+// 取消删除
+function cancelDelete() {
+    try {
+        window.__hapticImpact__ && window.__hapticImpact__('Light');
+    } catch(_) {}
+
+    hideDeleteModal();
+}
+
+// 确认删除
+function confirmDelete() {
+    try {
+        window.__hapticImpact__ && window.__hapticImpact__('Light');
+    } catch(_) {}
+
+    if (pendingDeleteMealId === null) return;
+
+    const mealId = pendingDeleteMealId;
     const mealElement = document.querySelector(`[data-meal-id="${mealId}"]`);
+
     if (mealElement) {
         // 添加删除动画
         mealElement.style.animation = 'fadeOut 0.3s ease-out';
@@ -111,6 +154,17 @@ function deleteMeal(mealId) {
 
             console.log(`删除餐次: ${mealId}`);
         }, 300);
+    }
+
+    hideDeleteModal();
+}
+
+// 处理弹窗键盘事件
+function handleModalKeydown(event) {
+    if (event.key === 'Escape') {
+        cancelDelete();
+    } else if (event.key === 'Enter') {
+        confirmDelete();
     }
 }
 
@@ -306,6 +360,17 @@ function attachButtonRipple(btn) {
 // 添加CSS动画
 const style = document.createElement('style');
 style.textContent = `
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+    }
+
     @keyframes toastIn {
         from {
             opacity: 0;
@@ -370,7 +435,13 @@ document.addEventListener('DOMContentLoaded', initDietPage);
 // 支持键盘导航
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
-        goBack();
+        // 如果弹窗正在显示，关闭弹窗；否则返回上一页
+        const modal = document.getElementById('delete-modal');
+        if (modal.classList.contains('show')) {
+            cancelDelete();
+        } else {
+            goBack();
+        }
     }
 });
 

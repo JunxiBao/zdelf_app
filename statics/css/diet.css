@@ -264,6 +264,146 @@ body {
     100% { transform: rotate(360deg); }
 }
 
+/* 自定义删除确认弹窗样式 */
+.delete-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-modal.show {
+    display: flex;
+}
+
+.delete-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.delete-modal-content {
+    position: relative;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: 90%;
+    margin: 20px;
+    animation: modalSlideIn 0.3s ease-out;
+    overflow: hidden;
+}
+
+.delete-modal-header {
+    padding: 24px 24px 16px 24px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: center;
+}
+
+.delete-modal-header h3 {
+    margin: 0;
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #333;
+}
+
+.delete-modal-body {
+    padding: 20px 24px;
+    text-align: center;
+}
+
+.delete-modal-body p {
+    margin: 0 0 8px 0;
+    font-size: 1em;
+    color: #555;
+    line-height: 1.5;
+}
+
+.delete-modal-warning {
+    color: #ff6b6b !important;
+    font-weight: 500;
+    font-size: 0.9em !important;
+}
+
+.delete-modal-actions {
+    display: flex;
+    gap: 12px;
+    padding: 16px 24px 24px 24px;
+    justify-content: center;
+}
+
+.delete-modal-cancel {
+    flex: 1;
+    padding: 12px 20px;
+    background: #f5f5f5;
+    color: #666;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.delete-modal-cancel:hover {
+    background: #e8e8e8;
+    border-color: #ccc;
+}
+
+.delete-modal-confirm {
+    flex: 1;
+    padding: 12px 20px;
+    background: #ff4757;
+    color: #fff;
+    border: 2px solid #ff4757;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.delete-modal-confirm:hover {
+    background: #ff3742;
+    border-color: #ff3742;
+}
+
+.delete-modal-confirm:active,
+.delete-modal-cancel:active {
+    transform: scale(0.98);
+}
+
+/* 弹窗动画 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
 /* 右下角加号按钮样式 */
 .add-button-container {
     position: fixed;
@@ -374,6 +514,39 @@ body {
 
     .add-meal-btn:hover {
         background: linear-gradient(135deg, #9c66d6, #4b00b5);
+    }
+
+    /* 深色模式下的自定义弹窗 */
+    .delete-modal-content {
+        background: #1e1e1e;
+        border: 1px solid #444;
+    }
+
+    .delete-modal-header h3 {
+        color: #ddd;
+    }
+
+    .delete-modal-body p {
+        color: #ccc;
+    }
+
+    .delete-modal-warning {
+        color: #ff6b6b !important;
+    }
+
+    .delete-modal-header {
+        border-bottom-color: #444;
+    }
+
+    .delete-modal-cancel {
+        background: #2b2b2b;
+        color: #ccc;
+        border-color: #444;
+    }
+
+    .delete-modal-cancel:hover {
+        background: #333;
+        border-color: #555;
     }
 }
 

@@ -59,6 +59,24 @@
         </button>
     </div>
 
+    <!-- 自定义删除确认弹窗 -->
+    <div id="delete-modal" class="delete-modal">
+        <div class="delete-modal-overlay"></div>
+        <div class="delete-modal-content">
+            <div class="delete-modal-header">
+                <h3>确认删除</h3>
+            </div>
+            <div class="delete-modal-body">
+                <p>确定要删除这个餐次记录吗？</p>
+                <p class="delete-modal-warning">此操作无法撤销</p>
+            </div>
+            <div class="delete-modal-actions">
+                <button class="delete-modal-cancel" onclick="cancelDelete()">取消</button>
+                <button class="delete-modal-confirm" onclick="confirmDelete()">确定删除</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 加载脚本 -->
     <script src="../statics/js/diet.js"></script>
 </body>
