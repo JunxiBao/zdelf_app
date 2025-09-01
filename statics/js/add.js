@@ -1,8 +1,29 @@
-function autoGrow(element) {
-  element.style.height = "auto";
-  element.style.height = element.scrollHeight + "px";
+// 全局变量存储选中的心情
+let selectedMood = null;
+
+// 心情选择处理函数
+function handleMoodSelection() {
+  const moodBtns = document.querySelectorAll('.mood-btn');
+
+  moodBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      // 移除其他按钮的选中状态
+      moodBtns.forEach(b => b.classList.remove('selected'));
+
+      // 添加选中状态到当前按钮
+      this.classList.add('selected');
+
+      // 存储选中的心情
+      selectedMood = {
+        mood: this.dataset.mood,
+        emoji: this.dataset.emoji
+      };
+
+      // 触觉反馈
+      try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
+    });
+  });
 }
-document.querySelectorAll(".record-textarea").forEach(autoGrow);
 
 // Backend API base: absolute by default; can be overridden via window.__API_BASE__
 const __API_BASE_DEFAULT__ = (typeof window !== "undefined" && window.__API_BASE__) || "https://app.zdelf.cn";
@@ -46,22 +67,22 @@ function attachButtonRipple(btn) {
 }
 
 async function handleRecordSave() {
-  const textarea = document.querySelector(".record-textarea");
-  const content = textarea.value.trim();
   const date = document.getElementById("record-date").value;
+  const moodSelector = document.querySelector(".mood-selector");
 
   const spinner = document.getElementById("spinner");
   const saveBtn = document.querySelector(".record-btn");
 
-  if (!content) {
+  if (!selectedMood) {
     // 用轻微抖动替代弹窗告警
     try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {}
-    textarea.classList.remove("shake");
-    void textarea.offsetWidth; // 触发重绘
-    textarea.classList.add("shake");
-    textarea.focus();
+    moodSelector.classList.remove("shake");
+    void moodSelector.offsetWidth; // 触发重绘
+    moodSelector.classList.add("shake");
     return;
   }
+
+  const content = `心情：${selectedMood.emoji} ${selectedMood.mood}`;
 
   // UI: 禁用交互 + 遮罩 + 按钮文案
   const overlay = ensureOverlay();
@@ -185,9 +206,9 @@ async function handleRecordSave() {
     });
   } catch (error) {
     console.error("❌ 请求错误", error);
-    textarea.classList.remove("shake");
-    void textarea.offsetWidth;
-    textarea.classList.add("shake");
+    moodSelector.classList.remove("shake");
+    void moodSelector.offsetWidth;
+    moodSelector.classList.add("shake");
   } finally {
     spinner.classList.remove("show");
     overlay.classList.remove("show");
@@ -216,6 +237,9 @@ function initAdd() {
       }
     },
   });
+
+  // 初始化心情选择器
+  handleMoodSelection();
 }
 
 if (document.getElementById("record-date")) {

@@ -451,3 +451,229 @@ body {
     box-shadow: 0 6px 16px rgba(98, 0, 234, 0.16);
   }
 }
+
+/* ===== 心情选择器样式 ===== */
+.mood-selector {
+  margin-bottom: 18px;
+  padding: 20px;
+  background: #fafaff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(98, 0, 234, 0.04);
+  border: 1px solid #e0e0e0;
+}
+
+.mood-title {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #6200ea;
+  margin-bottom: 16px;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.mood-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.mood-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 16px 12px;
+  background: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  min-height: 100px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mood-btn:hover {
+  border-color: #6200ea;
+  background: #f8f8ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(98, 0, 234, 0.12);
+}
+
+.mood-btn.selected {
+  border-color: #6200ea;
+  background: #6200ea;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(98, 0, 234, 0.2);
+  transform: scale(1.02);
+}
+
+.mood-emoji {
+  font-size: 2em;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.mood-text {
+  font-size: 0.9em;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.mood-btn.selected .mood-text {
+  color: #fff;
+}
+
+/* 心情按钮的涟漪效果 */
+.mood-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+  pointer-events: none;
+}
+
+.mood-btn:active::before {
+  width: 120px;
+  height: 120px;
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .mood-selector {
+    background: #1e1e1e;
+    border-color: #444;
+  }
+
+  .mood-title {
+    color: #bb86fc;
+  }
+
+  .mood-btn {
+    background: #2b2b2b;
+    border-color: #444;
+    color: #eee;
+  }
+
+  .mood-btn:hover {
+    border-color: #bb86fc;
+    background: #333;
+  }
+
+  .mood-btn.selected {
+    border-color: #bb86fc;
+    background: #bb86fc;
+    color: #000;
+  }
+
+  .mood-btn.selected .mood-text {
+    color: #000;
+  }
+
+  .mood-image-placeholder {
+    border-color: #555;
+    background: #333;
+  }
+
+  .mood-image-content {
+    color: #ccc;
+  }
+
+  .mood-btn:hover .mood-image-placeholder {
+    border-color: #bb86fc;
+    background: #444;
+  }
+
+  .mood-btn.selected .mood-image-placeholder {
+    border-color: #bb86fc;
+    background: rgba(187, 134, 252, 0.1);
+  }
+}
+
+/* 移动端适配 */
+@media (max-width: 600px) {
+  .mood-options {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+    .mood-btn {
+    padding: 14px 10px;
+    min-height: 90px;
+  }
+
+  .mood-image-placeholder {
+    width: 50px;
+    height: 50px;
+  }
+
+  .mood-image-content {
+    font-size: 0.7em;
+  }
+
+  .mood-emoji {
+    font-size: 1.6em;
+    margin-bottom: 4px;
+  }
+
+  .mood-text {
+    font-size: 0.8em;
+  }
+}
+
+/* 图片占位空间样式 */
+.mood-image-placeholder {
+  width: 60px;
+  height: 60px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  background: #f9f9f9;
+  transition: all 0.2s ease;
+}
+
+.mood-image-content {
+  font-size: 0.75em;
+  color: #999;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.mood-btn:hover .mood-image-placeholder {
+  border-color: #6200ea;
+  background: #f0f0ff;
+}
+
+.mood-btn.selected .mood-image-placeholder {
+  border-color: #6200ea;
+  background: rgba(98, 0, 234, 0.1);
+}
+
+.mood-emoji {
+  font-size: 1.8em;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.mood-text {
+  font-size: 0.9em;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* 心情选择器的抖动动画 */
+.mood-selector.shake {
+  animation: shake 0.3s ease both;
+}
