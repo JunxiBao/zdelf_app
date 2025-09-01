@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -8,8 +8,84 @@
     />
     <link rel="stylesheet" href="../statics/css/square.css" />
     <title>个人博客</title>
+    <style>
+      #doctor-button {
+        position: fixed;
+        bottom: 25vh;
+        right: -25px;
+        width: 50px;
+        height: 50px;
+        cursor: pointer;
+        transition: right 0.3s ease;
+        opacity: 0.3;
+        z-index: 1001;
+      }
+      #doctor-button:hover {
+        right: 0;
+        opacity: 1;
+      }
+      #doctor-button img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        border-radius: 5px;
+      }
+      #doctor-popup {
+        display: none;
+        position: fixed;
+        bottom: 150px;
+        right: 20px;
+        width: 360px;
+        height: 460px;
+        border: none;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        background: #fff;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      #doctor-popup.show {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+      }
+      #doctor-popup.hiding {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      #doctor-popup iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 10px;
+      }
+      @keyframes fadeInScale {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      #doctor-popup.show iframe {
+        animation: fadeInScale 0.3s ease;
+      }
+    </style>
   </head>
   <body>
     <h1>square</h1>
+
+    <div id="doctor-button">
+      <img src="../images/doctor.png" alt="doctor toggle" />
+    </div>
+
+    <div id="doctor-popup">
+      <iframe src="/src/deepseek.html"></iframe>
+    </div>
   </body>
 </html>

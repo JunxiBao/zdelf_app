@@ -16,6 +16,8 @@
   // Array of teardown callbacks to run when leaving the page
   let cleanupFns = [];
 
+
+
   // Abort controller for in-flight requests
   let fetchController = null;
   function abortInFlight() {
@@ -44,6 +46,7 @@
    */
   function addRipple(e) {
     const target = e.currentTarget;
+    try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
     const rect = target.getBoundingClientRect();
     const ripple = document.createElement("span");
     const size = Math.max(rect.width, rect.height);
@@ -866,14 +869,20 @@
     const editBtn = root.querySelector("#editProfileBtn");
     if (editBtn) {
       const editHandler = () => openEditDialog();
+      const h = () => { try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {} };
       editBtn.addEventListener("click", editHandler);
+      editBtn.addEventListener("click", h);
       cleanupFns.push(() => editBtn.removeEventListener("click", editHandler));
+      cleanupFns.push(() => editBtn.removeEventListener("click", h));
     }
+
+
 
     // 退出登录
     const logoutBtn = root.querySelector("#logoutBtn");
     if (logoutBtn) {
       const logoutHandler = async () => {
+        try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {}
         const ok = await confirmDialog("确定要退出登录吗？");
         if (!ok) return;
         try {
@@ -895,6 +904,7 @@
     const deleteBtn = root.querySelector("#deleteAccountBtn");
     if (deleteBtn) {
       const deleteHandler = async () => {
+        try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {}
         // 双重确认，防止误触
         const ok1 = await confirmDialog("此操作将永久删除您的账号与相关数据，且不可恢复。是否继续？");
         if (!ok1) return;
@@ -984,6 +994,9 @@
    */
   function destroyMe() {
     abortInFlight();
+
+
+
     cleanupFns.forEach((fn) => {
       try {
         fn();

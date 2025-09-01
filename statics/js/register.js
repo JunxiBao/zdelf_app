@@ -12,6 +12,15 @@
 (function () {
   "use strict";
 
+  // Lightweight haptics bridge for standalone page
+  try {
+    if (!window.__hapticImpact__) {
+      var isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
+      function getHaptics() { var C = window.Capacitor || {}; return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null; }
+      window.__hapticImpact__ = function(style){ if (!isNative) return; var h = getHaptics(); if (!h) return; try { h.impact && h.impact({ style: style }); } catch(_) {} };
+    }
+  } catch(_) {}
+
   /* =============================
    * 1) Viewport & scroll handling
    * ============================= */
@@ -87,6 +96,7 @@
       alert(message);
       return;
     }
+    try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
     popupText.textContent = message;
     popup.classList.add("show");
     setTimeout(function () {
@@ -146,7 +156,10 @@
 
     // Register button
     var registerBtn = document.getElementById("registerBtn");
-    if (registerBtn) registerBtn.addEventListener("click", handleRegister);
+    if (registerBtn) {
+      registerBtn.addEventListener("click", function(){ try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {} });
+      registerBtn.addEventListener("click", handleRegister);
+    }
 
     // Password toggles
     bindPasswordToggles();
@@ -309,6 +322,7 @@
         }
       }
       btn.addEventListener("click", function () {
+        try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
         var show = input.getAttribute("type") === "password";
         var icon = show ? eyeOff : eye;
         if (icon && icon.animate) {

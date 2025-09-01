@@ -34,6 +34,7 @@ function ensureOverlay() {
 function attachButtonRipple(btn) {
   if (!btn) return;
   btn.addEventListener("click", function (e) {
+    try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
     const rect = this.getBoundingClientRect();
     const ripple = document.createElement("span");
     ripple.className = "btn-ripple";
@@ -54,6 +55,7 @@ async function handleRecordSave() {
 
   if (!content) {
     // 用轻微抖动替代弹窗告警
+    try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {}
     textarea.classList.remove("shake");
     void textarea.offsetWidth; // 触发重绘
     textarea.classList.add("shake");
@@ -174,6 +176,7 @@ async function handleRecordSave() {
     // 复制功能
     panel.querySelector("#copyBtn").addEventListener("click", async () => {
       try {
+        try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
         await navigator.clipboard.writeText(
           panel.querySelector("#aiResultEditor").value
         );

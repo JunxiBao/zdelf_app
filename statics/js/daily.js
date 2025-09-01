@@ -167,6 +167,7 @@ function initDaily(shadowRoot) {
 
   // Click to toggle popup / 点击切换弹窗
   onDoctorClick = () => {
+    try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
     if (!doctorPopup.classList.contains('show')) {
       doctorPopup.classList.add('show');
       doctorPopup.style.display = 'block';
@@ -189,6 +190,7 @@ function initDaily(shadowRoot) {
       !doctorButton.contains(event.target) &&
       !doctorPopup.contains(event.target)
     ) {
+      try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
       doctorPopup.classList.add('hiding');
       doctorPopup.addEventListener('transitionend', function handler() {
         doctorPopup.classList.remove('show', 'hiding');

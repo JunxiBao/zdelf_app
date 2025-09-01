@@ -20,6 +20,56 @@ const content = document.getElementById("content");
 const modal = document.getElementById("modal");
 const modalContent = document.getElementById("modalContent");
 
+// Haptics helper (only active in Capacitor native runtime)
+const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
+function getHaptics() {
+  const C = window.Capacitor || {};
+  return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null;
+}
+function hapticImpact(style) {
+  if (!isNative) return;
+  const h = getHaptics();
+  if (!h) return;
+  try {
+    h.impact && h.impact({ style });
+  } catch (e) {
+    // no-op in web or if plugin not available
+  }
+}
+
+// Expose haptics globally for subpages
+window.__hapticImpact__ = hapticImpact;
+
+// StatusBar helper
+function getStatusBar() {
+  const C = window.Capacitor || {};
+  return (C.Plugins && C.Plugins.StatusBar) || window.StatusBar || C.StatusBar || null;
+}
+
+// Apply status bar theme based on prefers-color-scheme
+function applyStatusBarTheme() {
+  if (!isNative) return;
+  const sb = getStatusBar();
+  if (!sb) return;
+  const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  try {
+    // Ensure it does not overlay the webview
+    if (typeof sb.setOverlaysWebView === 'function') {
+      sb.setOverlaysWebView({ overlay: false });
+    }
+    // Set text/icon style to contrast with background
+    if (typeof sb.setStyle === 'function') {
+      sb.setStyle({ style: isDark ? 'Light' : 'Dark' });
+    }
+    // Android: set background color explicitly to match theme
+    if (typeof sb.setBackgroundColor === 'function') {
+      sb.setBackgroundColor({ color: isDark ? '#18181C' : '#FFFFFF' });
+    }
+  } catch (e) {
+    // ignore if not supported
+  }
+}
+
 // Keep dynamic content scrollable and size it under the fixed bottom nav
 function setNavHeightVar() {
   const nav = document.querySelector(".nav-container");
@@ -234,6 +284,7 @@ function updateActive(index) {
 
 navItems.forEach((item, index) => {
   item.addEventListener("click", () => {
+    hapticImpact("Light");
     updateActive(index);
   });
 });
@@ -281,6 +332,7 @@ centerBtn.addEventListener("click", () => {
     openModal();
     centerBtn.classList.add("rotate");
   }
+  hapticImpact("Medium");
 });
 
 // Click outside (backdrop) closes the modal
@@ -288,11 +340,25 @@ modal.addEventListener("click", (e) => {
   if (e.target === modal) {
     closeModal();
     centerBtn.classList.remove("rotate");
+    hapticImpact("Light");
   }
 });
 
 // Boot the default tab once the shell is ready
 document.addEventListener("DOMContentLoaded", () => {
   setNavHeightVar();
+  // Ensure status bar does not overlay the webview in native runtime
+  if (isNative) {
+    applyStatusBarTheme();
+    // react to theme changes
+    if (window.matchMedia) {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      if (typeof mq.addEventListener === 'function') {
+        mq.addEventListener('change', applyStatusBarTheme);
+      } else if (typeof mq.addListener === 'function') {
+        mq.addListener(applyStatusBarTheme);
+      }
+    }
+  }
   updateActive(0);
 });
