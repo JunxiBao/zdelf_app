@@ -446,10 +446,154 @@ body {
   box-shadow: 0 6px 20px rgba(98, 0, 234, 0.12);
 }
 
+/* ===== Flatpickr 深色模式样式 ===== */
+.flatpickr-calendar.health-dark-theme,
+.flatpickr-calendar.flatpickr-dark {
+    background: #1e1e1e !important;
+    border: 1px solid #444 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-months,
+.flatpickr-calendar.flatpickr-dark .flatpickr-months {
+    background: #1e1e1e !important;
+    border-bottom: 1px solid #444 !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-month,
+.flatpickr-calendar.flatpickr-dark .flatpickr-month {
+    background: #1e1e1e !important;
+    color: #eee !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-current-month,
+.flatpickr-calendar.flatpickr-dark .flatpickr-current-month {
+    color: #eee !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-calendar.flatpickr-dark .flatpickr-current-month .flatpickr-monthDropdown-months {
+    background: #2b2b2b !important;
+    color: #eee !important;
+    border: 1px solid #444 !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-monthDropdown-months:hover,
+.flatpickr-calendar.flatpickr-dark .flatpickr-monthDropdown-months:hover {
+    background: #333 !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-next-month,
+.flatpickr-calendar.health-dark-theme .flatpickr-prev-month,
+.flatpickr-calendar.flatpickr-dark .flatpickr-next-month,
+.flatpickr-calendar.flatpickr-dark .flatpickr-prev-month {
+    color: #eee !important;
+    background: #2b2b2b !important;
+    border: none !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-next-month:hover,
+.flatpickr-calendar.health-dark-theme .flatpickr-prev-month:hover,
+.flatpickr-calendar.flatpickr-dark .flatpickr-next-month:hover,
+.flatpickr-calendar.flatpickr-dark .flatpickr-prev-month:hover {
+    background: #333 !important;
+    color: #fff !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-weekdays,
+.flatpickr-calendar.flatpickr-dark .flatpickr-weekdays {
+    background: #1e1e1e !important;
+    color: #ccc !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-weekday,
+.flatpickr-calendar.flatpickr-dark .flatpickr-weekday {
+    color: #ccc !important;
+    background: #1e1e1e !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-days,
+.flatpickr-calendar.flatpickr-dark .flatpickr-days {
+    background: #1e1e1e !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-day,
+.flatpickr-calendar.flatpickr-dark .flatpickr-day {
+    color: #eee !important;
+    background: #1e1e1e !important;
+    border: none !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-day:hover,
+.flatpickr-calendar.flatpickr-dark .flatpickr-day:hover {
+    background: #333 !important;
+    color: #fff !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-day.selected,
+.flatpickr-calendar.flatpickr-dark .flatpickr-day.selected {
+    background: #6200ea !important;
+    color: #fff !important;
+    border-color: #6200ea !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-day.selected:hover,
+.flatpickr-calendar.flatpickr-dark .flatpickr-day.selected:hover {
+    background: #4b00b5 !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-day.today,
+.flatpickr-calendar.flatpickr-dark .flatpickr-day.today {
+    background: #333 !important;
+    color: #fff !important;
+    border-color: #6200ea !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-day.today:hover,
+.flatpickr-calendar.flatpickr-dark .flatpickr-day.today:hover {
+    background: #4b00b5 !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-day.prevMonthDay,
+.flatpickr-calendar.health-dark-theme .flatpickr-day.nextMonthDay,
+.flatpickr-calendar.flatpickr-dark .flatpickr-day.prevMonthDay,
+.flatpickr-calendar.flatpickr-dark .flatpickr-day.nextMonthDay {
+    color: #666 !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-time,
+.flatpickr-calendar.flatpickr-dark .flatpickr-time {
+    background: #1e1e1e !important;
+    border-top: 1px solid #444 !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-time input,
+.flatpickr-calendar.flatpickr-dark .flatpickr-time input {
+    background: #2b2b2b !important;
+    color: #eee !important;
+    border: 1px solid #444 !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-time input:hover,
+.flatpickr-calendar.flatpickr-dark .flatpickr-time input:hover {
+    background: #333 !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-time .flatpickr-am-pm,
+.flatpickr-calendar.flatpickr-dark .flatpickr-time .flatpickr-am-pm {
+    color: #eee !important;
+    background: #2b2b2b !important;
+}
+
+.flatpickr-calendar.health-dark-theme .flatpickr-time .flatpickr-am-pm:hover,
+.flatpickr-calendar.flatpickr-dark .flatpickr-time .flatpickr-am-pm:hover {
+    background: #333 !important;
+}
+
 @media (max-width: 600px) {
-  .record-btn {
-    box-shadow: 0 6px 16px rgba(98, 0, 234, 0.16);
-  }
+    .record-btn {
+        box-shadow: 0 6px 16px rgba(98, 0, 234, 0.16);
+    }
 }
 
 /* ===== 心情选择器样式 ===== */
