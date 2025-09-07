@@ -1,6 +1,25 @@
 // 全局变量存储指标数据
 let metricsData = {};
 
+// 震动反馈初始化（兼容性处理）
+(function() {
+  'use strict';
+  // 如果全局震动反馈不存在，提供fallback实现
+  if (!window.__hapticImpact__) {
+    var isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
+    function getHaptics() {
+      var C = window.Capacitor || {};
+      return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null;
+    }
+    window.__hapticImpact__ = function(style){
+      if (!isNative) return;
+      var h = getHaptics();
+      if (!h) return;
+      try { h.impact && h.impact({ style: style }); } catch(_) {}
+    };
+  }
+})();
+
 // 页面初始化
 function initMetricsPage() {
     // 从本地存储加载已保存的数据
@@ -139,6 +158,11 @@ function saveAllMetrics() {
 
         // 显示成功提示
         showToast(`成功保存 ${Object.keys(allData).length} 项指标数据！`);
+
+        // 成功保存的强震动反馈
+        try {
+            window.__hapticImpact__ && window.__hapticImpact__('Heavy');
+        } catch(_) {}
 
         console.log('保存所有指标数据:', allData);
 

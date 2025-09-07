@@ -1,6 +1,25 @@
 // 全局变量存储记录数据
 let recordData = null;
 
+// 震动反馈初始化（兼容性处理）
+(function() {
+  'use strict';
+  // 如果全局震动反馈不存在，提供fallback实现
+  if (!window.__hapticImpact__) {
+    var isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
+    function getHaptics() {
+      var C = window.Capacitor || {};
+      return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null;
+    }
+    window.__hapticImpact__ = function(style){
+      if (!isNative) return;
+      var h = getHaptics();
+      if (!h) return;
+      try { h.impact && h.impact({ style: style }); } catch(_) {}
+    };
+  }
+})();
+
 // 页面初始化
 function initOptionsPage() {
     // 从本地存储获取记录数据
@@ -51,18 +70,30 @@ function handleOptionClick(event) {
 
 // 跳转到健康指标页面
 function navigateToMetrics() {
+    try {
+        window.__hapticImpact__ && window.__hapticImpact__('Medium');
+    } catch(_) {}
+
     // 跳转到健康指标录入页面
     window.location.href = 'metrics.html';
 }
 
 // 跳转到饮食记录页面
 function navigateToDiet() {
+    try {
+        window.__hapticImpact__ && window.__hapticImpact__('Medium');
+    } catch(_) {}
+
     // 跳转到饮食录入页面
     window.location.href = 'diet.html';
 }
 
 // 跳转到病例页面
 function navigateToCases() {
+    try {
+        window.__hapticImpact__ && window.__hapticImpact__('Light');
+    } catch(_) {}
+
     // 这里可以跳转到病例管理页面
     // 暂时显示提示信息
     showToast('病例功能开发中...');

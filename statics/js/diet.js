@@ -3,6 +3,25 @@ let mealCounter = 1; // 餐次计数器
 let dietData = {}; // 存储饮食数据
 let pendingDeleteMealId = null; // 待删除的餐次ID
 
+// 震动反馈初始化（兼容性处理）
+(function() {
+  'use strict';
+  // 如果全局震动反馈不存在，提供fallback实现
+  if (!window.__hapticImpact__) {
+    var isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
+    function getHaptics() {
+      var C = window.Capacitor || {};
+      return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null;
+    }
+    window.__hapticImpact__ = function(style){
+      if (!isNative) return;
+      var h = getHaptics();
+      if (!h) return;
+      try { h.impact && h.impact({ style: style }); } catch(_) {}
+    };
+  }
+})();
+
 // 页面初始化
 function initDietPage() {
     // 从本地存储加载已保存的数据
@@ -86,7 +105,7 @@ function addNewMeal() {
 // 删除餐次
 function deleteMeal(mealId) {
     try {
-        window.__hapticImpact__ && window.__hapticImpact__('Medium');
+        window.__hapticImpact__ && window.__hapticImpact__('Heavy');
     } catch(_) {}
 
     // 显示自定义确认弹窗
@@ -129,7 +148,7 @@ function cancelDelete() {
 // 确认删除
 function confirmDelete() {
     try {
-        window.__hapticImpact__ && window.__hapticImpact__('Light');
+        window.__hapticImpact__ && window.__hapticImpact__('Heavy');
     } catch(_) {}
 
     if (pendingDeleteMealId === null) return;
@@ -223,6 +242,11 @@ function saveAllMeals() {
 
         // 显示成功提示
         showToast(`成功保存 ${validMealsCount} 餐食物记录！`);
+
+        // 成功保存的强震动反馈
+        try {
+            window.__hapticImpact__ && window.__hapticImpact__('Heavy');
+        } catch(_) {}
 
         console.log('保存所有餐次数据:', allMealsData);
 

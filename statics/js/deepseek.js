@@ -1,3 +1,20 @@
+// Lightweight haptics bridge for standalone page (only if not already provided)
+try {
+  if (!window.__hapticImpact__) {
+    var isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
+    function getHaptics() {
+      var C = window.Capacitor || {};
+      return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null;
+    }
+    window.__hapticImpact__ = function(style){
+      if (!isNative) return;
+      var h = getHaptics();
+      if (!h) return;
+      try { h.impact && h.impact({ style: style }); } catch(_) {}
+    };
+  }
+} catch(_) {}
+
 marked.setOptions({ breaks: true });
 
 // Backend API base: use absolute by default, allow override via window.__API_BASE__
@@ -17,7 +34,20 @@ function generateGreeting() {
   addMessage(greet, "bot");
 }
 
-window.addEventListener("DOMContentLoaded", generateGreeting);
+window.addEventListener("DOMContentLoaded", function() {
+  generateGreeting();
+
+  // 为输入框添加键盘事件监听，增强震动反馈
+  const inputEl = document.getElementById("userInput");
+  if (inputEl) {
+    inputEl.addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        // Enter键发送消息时的震动反馈
+        try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
+      }
+    });
+  }
+});
 
 function addTypingBubble() {
   const msgList = document.getElementById("messageList");
@@ -34,6 +64,10 @@ async function sendMessage() {
   const inputEl = document.getElementById("userInput");
   const message = inputEl.value.trim();
   if (!message) return;
+
+  // 发送消息时的震动反馈
+  try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
+
   inputEl.disabled = true;
 
   addMessage(message, "user");

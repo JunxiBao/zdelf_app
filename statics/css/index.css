@@ -177,18 +177,17 @@ body {
 /* center (FAB-like) button */
 .center-button-wrapper {
   position: absolute;
-  top: -30px;
+  top: -35px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2000;
 }
 
 .center-button {
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   background: var(--color-primary);
   color: var(--color-primary-contrast);
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -197,10 +196,16 @@ body {
   transition: transform 0.4s ease, background-color 0.3s ease;
   box-shadow: var(--shadow-fab);
   position: relative;
+  clip-path: path('M35,62.27l-4.23-3.85C15.75,44.8,5.83,35.82,5.83,24.79 C5.83,15.81,12.89,8.75,21.87,8.75c5.08,0,9.95,2.36,13.13,6.1C38.18,11.11,43.05,8.75,48.13,8.75 C57.11,8.75,64.17,15.81,64.17,24.79c0,11.03-9.92,20.01-24.94,33.63L35,62.27z');
 }
 
-/* one-time ripple on load for FAB */
-.center-button::after {
+.center-button .material-symbols-rounded {
+  font-size: 32px;
+  transform: translateY(-2px);
+}
+
+/* 涟漪效果 */
+.center-button.ripple::after {
   content: "";
   position: absolute;
   left: 0;
@@ -228,8 +233,20 @@ body {
   }
 }
 
-.center-button.rotate {
-  transform: translateX(-0%) rotate(360deg);
+.center-button.pulse {
+  animation: heartPulse 0.6s ease-in-out;
+}
+
+@keyframes heartPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* icons */

@@ -87,7 +87,7 @@ if (document.fonts && document.fonts.ready) {
 // Subpage paths by tab index (HTML fragments or full HTML docs)
 const pageMap = [
   "../../src/daily.html",
-  "../../src/case.html",
+  "../../src/notification.html",
   "../../src/square.html",
   "../../src/me.html",
 ];
@@ -210,7 +210,7 @@ function loadPage(index) {
       // Load the corresponding page script with cache-busting
       const scriptMap = [
         "../../statics/js/daily.js",
-        "../../statics/js/case.js",
+        "../../statics/js/notification.js",
         "../../statics/js/square.js",
         "../../statics/js/me.js",
       ];
@@ -365,10 +365,10 @@ centerBtn.addEventListener("click", () => {
 
   if (isOpen) {
     closeModal();
-    centerBtn.classList.remove("rotate");
+    centerBtn.classList.remove("pulse");
   } else {
     openModal();
-    centerBtn.classList.add("rotate");
+    centerBtn.classList.add("pulse");
   }
   hapticImpact("Medium");
 });
@@ -377,7 +377,7 @@ centerBtn.addEventListener("click", () => {
 modal.addEventListener("click", (e) => {
   if (e.target === modal) {
     closeModal();
-    centerBtn.classList.remove("rotate");
+    centerBtn.classList.remove("pulse");
     hapticImpact("Light");
   }
 });

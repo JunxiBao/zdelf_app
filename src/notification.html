@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <link rel="stylesheet" href="../statics/css/notification.css" />
+    <title>用药提醒</title>
+  </head>
+  <body>
+    <!-- 提醒列表容器 -->
+    <div class="reminders-container" id="remindersContainer">
+      <div class="empty-state">
+        <div class="icon">💊</div>
+        <h3>还没有用药提醒</h3>
+        <p>点击此方框添加您的第一个药提醒</p>
+      </div>
+    </div>
+
+    <!-- 添加提醒按钮 -->
+    <!-- 已移除浮动按钮，改为列表底部添加卡片 -->
+    
+    <!-- 添加/编辑提醒模态框 -->
+    <div class="modal" id="reminderModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="modalTitle">添加用药提醒</h2>
+          <button class="modal-close" id="modalClose">&times;</button>
+        </div>
+
+        <form id="reminderForm">
+          <div class="form-group">
+            <label class="form-label" for="medicationName">药品名称 *</label>
+            <input type="text" class="form-input" id="medicationName" placeholder="请输入药品名称" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="startDate">开始日期 *</label>
+            <input type="date" class="form-input" id="startDate" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="endDate">结束日期*</label>
+            <input type="date" class="form-input" id="endDate" required>
+          </div>
+
+          <!-- 移除单一提醒时间输入 -->
+
+          <div class="form-group">
+            <label class="form-label" for="dailyCount">每日提醒次数 *</label>
+            <select class="form-input" id="dailyCount" required>
+              <option value="" disabled selected>请选择次数（1-20）</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+              <option value="13">13</option>
+              <option value="14">14</option>
+              <option value="15">15</option>
+              <option value="16">16</option>
+              <option value="17">17</option>
+              <option value="18">18</option>
+              <option value="19">19</option>
+              <option value="20">20</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="dailyTimesGroup" style="display:none;">
+            <label class="form-label">每天提醒时间 *</label>
+            <div id="dailyTimesList"></div>
+            <button type="button" class="btn btn-secondary" id="addDailyTimeBtn">新增提醒时间</button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="dosage">剂量</label>
+            <input type="text" class="form-input" id="dosage" placeholder="例如：1片、2ml">
+          </div>
+
+          <!-- 删除原有的自由文本频率输入 -->
+
+          <div class="form-group">
+            <label class="form-label" for="repeatInterval">循环频率</label>
+            <select class="form-input" id="repeatInterval">
+              <option value="none">不循环</option>
+              <!-- 移除每小时 -->
+              <option value="daily">每天</option>
+              <option value="weekly">每周</option>
+              <option value="monthly">每月</option>
+              <option value="yearly">每年</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="repeatCustomGroup" style="display:none;">
+            <label class="form-label" id="repeatCustomLabel" for="repeatCustomValue">自定义间隔</label>
+            <input type="number" min="1" step="1" class="form-input" id="repeatCustomValue" placeholder="例如：2">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="notes">备注</label>
+            <textarea class="form-input form-textarea" id="notes" placeholder="其他注意事项..."></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="cancelBtn">取消</button>
+            <button type="submit" class="btn btn-primary" id="saveBtn">保存</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 删除确认弹窗 -->
+    <div class="confirm-modal" id="deleteConfirmModal">
+      <div class="confirm-modal-content">
+        <div class="confirm-modal-header">
+          <h3 class="confirm-modal-title">确认删除</h3>
+        </div>
+
+        <div class="confirm-modal-body">
+          <div class="delete-warning">
+            <div class="warning-icon">⚠️</div>
+            <p class="warning-text">确定要删除这个用药提醒吗？</p>
+            <p class="warning-detail">此操作无法撤销，相关的定时提醒也将被取消。</p>
+          </div>
+        </div>
+
+        <div class="confirm-modal-actions">
+          <button type="button" class="btn btn-secondary" id="deleteCancelBtn">取消</button>
+          <button type="button" class="btn btn-danger" id="deleteConfirmBtn">确认删除</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../statics/js/notification.js"></script>
+  </body>
+</html>
