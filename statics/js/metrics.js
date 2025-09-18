@@ -1112,11 +1112,15 @@ async function resolveUserIdentity() {
         // 忽略缓存中的 username，统一通过 user_id 查询服务端获取
     }
 
-    // 2) 若本地无，则尝试从本地单独缓存键读取
+    // 2) 与 me.js 保持一致：优先从 localStorage/sessionStorage 读取 userId/UserID
     try {
-        const idOnly = localStorage.getItem('user_id') || '';
-        if (idOnly) {
-            user_id = idOnly;
+        const storedId =
+          localStorage.getItem('userId') ||
+          sessionStorage.getItem('userId') ||
+          localStorage.getItem('UserID') ||
+          sessionStorage.getItem('UserID') || '';
+        if (storedId) {
+            user_id = String(storedId);
         }
     } catch(_) {}
 
@@ -1137,11 +1141,10 @@ async function resolveUserIdentity() {
                 const rec = json.data[0] || {};
                 username = (rec.username || '').toString();
 
-                // 回写本地
+                // 回写本地（不覆盖现有 userId 键，仅更新 user_profile 和 username）
                 try {
                     const merged = Object.assign({}, cached || {}, { user_id, username });
                     localStorage.setItem('user_profile', JSON.stringify(merged));
-                    if (user_id) localStorage.setItem('user_id', user_id);
                     if (username) localStorage.setItem('username', username);
                 } catch(_) {}
 
