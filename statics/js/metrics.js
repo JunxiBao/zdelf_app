@@ -86,7 +86,8 @@ function saveAllMetrics() {
 
             switch(metricType) {
                 case 'symptoms':
-                    const symptoms = document.getElementById('symptoms-input').value.trim();
+                    const _symEl = document.getElementById('symptoms-input');
+                    const symptoms = _symEl ? _symEl.value.trim() : '';
                     if (symptoms) {
                         data = { symptoms };
                         hasValidData = true;
@@ -94,7 +95,8 @@ function saveAllMetrics() {
                     break;
 
                 case 'temperature':
-                    const temp = document.getElementById('temperature-input').value;
+                    const _tempEl = document.getElementById('temperature-input');
+                    const temp = _tempEl ? _tempEl.value : '';
                     if (temp && !isNaN(parseFloat(temp))) {
                         const tempValue = parseFloat(temp);
                         if (tempValue >= 35 && tempValue <= 45) {
@@ -105,10 +107,14 @@ function saveAllMetrics() {
                     break;
 
                 case 'urinalysis':
-                    const protein = document.getElementById('protein-input').value.trim();
-                    const glucose = document.getElementById('glucose-input').value.trim();
-                    const ketones = document.getElementById('ketones-input').value.trim();
-                    const blood = document.getElementById('blood-input').value.trim();
+                    const _proteinEl = document.getElementById('protein-input');
+                    const _glucoseEl = document.getElementById('glucose-input');
+                    const _ketonesEl = document.getElementById('ketones-input');
+                    const _bloodEl = document.getElementById('blood-input');
+                    const protein = _proteinEl ? _proteinEl.value.trim() : '';
+                    const glucose = _glucoseEl ? _glucoseEl.value.trim() : '';
+                    const ketones = _ketonesEl ? _ketonesEl.value.trim() : '';
+                    const blood = _bloodEl ? _bloodEl.value.trim() : '';
 
                     if (protein || glucose || ketones || blood) {
                         data = { protein, glucose, ketones, blood };
@@ -117,7 +123,8 @@ function saveAllMetrics() {
                     break;
 
                 case 'proteinuria':
-                    const protein24h = document.getElementById('proteinuria-input').value;
+                    const _p24El = document.getElementById('proteinuria-input');
+                    const protein24h = _p24El ? _p24El.value : '';
                     if (protein24h && !isNaN(parseFloat(protein24h))) {
                         const proteinValue = parseFloat(protein24h);
                         if (proteinValue >= 0) {
@@ -128,10 +135,14 @@ function saveAllMetrics() {
                     break;
 
                 case 'blood-test':
-                    const wbc = document.getElementById('wbc-input').value;
-                    const rbc = document.getElementById('rbc-input').value;
-                    const hb = document.getElementById('hb-input').value;
-                    const plt = document.getElementById('plt-input').value;
+                    const _wbcEl = document.getElementById('wbc-input');
+                    const _rbcEl = document.getElementById('rbc-input');
+                    const _hbEl = document.getElementById('hb-input');
+                    const _pltEl = document.getElementById('plt-input');
+                    const wbc = _wbcEl ? _wbcEl.value : '';
+                    const rbc = _rbcEl ? _rbcEl.value : '';
+                    const hb = _hbEl ? _hbEl.value : '';
+                    const plt = _pltEl ? _pltEl.value : '';
 
                     const bloodData = {};
                     if (wbc && !isNaN(parseFloat(wbc))) bloodData.wbc = parseFloat(wbc);
@@ -146,8 +157,10 @@ function saveAllMetrics() {
                     break;
 
                 case 'bleeding-point':
-                    const bleedingPoint = document.getElementById('bleeding-point-select').value;
-                    const otherBleedingText = document.getElementById('other-bleeding-text').value.trim();
+                    const _bpEl = document.getElementById('bleeding-point-select');
+                    const _bpOtherEl = document.getElementById('other-bleeding-text');
+                    const bleedingPoint = _bpEl ? _bpEl.value : '';
+                    const otherBleedingText = _bpOtherEl ? _bpOtherEl.value.trim() : '';
                     
                     if (bleedingPoint) {
                         data = { bleedingPoint };
@@ -159,7 +172,8 @@ function saveAllMetrics() {
                     break;
 
                 case 'self-rating':
-                    const rating = document.getElementById('self-rating-slider').value;
+                    const _ratingEl = document.getElementById('self-rating-slider');
+                    const rating = _ratingEl ? _ratingEl.value : '';
                     if (rating && !isNaN(parseInt(rating))) {
                         const ratingValue = parseInt(rating);
                         if (ratingValue >= 0 && ratingValue <= 10) {

@@ -42,7 +42,7 @@ KIND_TO_TABLE = {
 
 
 def _ensure_table(conn, table_name: str) -> None:
-    ddl = f"
+    ddl = f"""
     CREATE TABLE IF NOT EXISTS {table_name} (
         id VARCHAR(64) PRIMARY KEY,
         user_id VARCHAR(128) NULL,
@@ -54,7 +54,7 @@ def _ensure_table(conn, table_name: str) -> None:
         INDEX idx_username (username),
         INDEX idx_created_at (created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    ""
+    """
     cur = conn.cursor()
     try:
         cur.execute(ddl)
