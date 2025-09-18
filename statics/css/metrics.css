@@ -202,6 +202,419 @@ body {
     text-align: center;
 }
 
+/* 尿液检测指标矩阵样式 */
+.urinalysis-matrix {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.urinalysis-item {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+    animation: itemSlideIn 0.4s ease-out forwards;
+}
+
+/* 新增项目动画 */
+@keyframes itemSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    50% {
+        opacity: 0.8;
+        transform: translateY(-5px) scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 删除项目动画 */
+.urinalysis-item.removing {
+    animation: itemSlideOut 0.4s ease-in forwards;
+}
+
+@keyframes itemSlideOut {
+    0% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+        max-height: 200px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    50% {
+        opacity: 0.5;
+        transform: translateX(-20px) scale(0.95);
+        max-height: 200px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-100px) scale(0.8);
+        max-height: 0;
+        padding: 0;
+        margin-bottom: 0;
+        border-width: 0;
+    }
+}
+
+/* 单位参考值更新动画 */
+.unit-reference {
+    transition: all 0.3s ease;
+}
+
+.unit-display, .reference-display {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.unit-display.updating, .reference-display.updating {
+    animation: valueUpdate 0.3s ease-out;
+}
+
+@keyframes valueUpdate {
+    0% {
+        transform: scale(1);
+        background-color: rgba(98, 0, 234, 0.1);
+    }
+    50% {
+        transform: scale(1.05);
+        background-color: rgba(98, 0, 234, 0.2);
+    }
+    100% {
+        transform: scale(1);
+        background-color: rgba(98, 0, 234, 0.1);
+    }
+}
+
+/* 取消悬停高亮效果 */
+
+.item-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.urinalysis-select {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    font-family: inherit;
+    background: #fff;
+    color: #333;
+    transition: all 0.2s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.urinalysis-select:focus {
+    border-color: #6200ea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+}
+
+.remove-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: #ff4444;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.remove-btn:hover {
+    background: #cc0000;
+    transform: scale(1.1);
+}
+
+.remove-btn:active {
+    transform: scale(0.9);
+    transition: all 0.1s ease;
+}
+
+.remove-btn.removing {
+    animation: buttonRemove 0.3s ease-out;
+}
+
+@keyframes buttonRemove {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2) rotate(90deg);
+        background: #ff6666;
+    }
+    100% {
+        transform: scale(1) rotate(90deg);
+    }
+}
+
+.item-input {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.urinalysis-value {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    font-family: inherit;
+    background: #fff;
+    color: #333;
+    transition: all 0.2s ease;
+}
+
+.urinalysis-value:focus {
+    border-color: #6200ea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+}
+
+.unit-reference {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 120px;
+    gap: 4px;
+}
+
+.unit-display {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #6200ea;
+    padding: 4px 8px;
+    background: rgba(98, 0, 234, 0.1);
+    border-radius: 4px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.reference-display {
+    font-size: 0.8em;
+    color: #666;
+    padding: 2px 6px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 16px;
+    border: 2px dashed #6200ea;
+    border-radius: 12px;
+    background: rgba(98, 0, 234, 0.05);
+    color: #6200ea;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+}
+
+.add-btn:hover {
+    background: rgba(98, 0, 234, 0.1);
+    border-color: #4a00b8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
+}
+
+.add-btn:active {
+    transform: translateY(0) scale(0.98);
+    transition: all 0.1s ease;
+}
+
+.add-btn.clicking {
+    animation: buttonClick 0.3s ease-out;
+}
+
+@keyframes buttonClick {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.95);
+        background: rgba(98, 0, 234, 0.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.add-icon {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.add-text {
+    font-weight: 600;
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    .urinalysis-item {
+        background: #1f2937;
+        border-color: #374151;
+    }
+    
+    /* 取消深色模式悬停高亮效果 */
+    
+    .urinalysis-select,
+    .urinalysis-value {
+        background: #111827;
+        border-color: #374151;
+        color: #f9fafb;
+    }
+    
+    .urinalysis-select:focus,
+    .urinalysis-value:focus {
+        border-color: #a78bfa;
+        box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+    }
+    
+    .unit-display {
+        color: #a78bfa;
+        background: rgba(167, 139, 250, 0.2);
+    }
+    
+    .unit-display.updating, .reference-display.updating {
+        animation: valueUpdateDark 0.3s ease-out;
+    }
+    
+    @keyframes valueUpdateDark {
+        0% {
+            transform: scale(1);
+            background-color: rgba(167, 139, 250, 0.2);
+        }
+        50% {
+            transform: scale(1.05);
+            background-color: rgba(167, 139, 250, 0.4);
+        }
+        100% {
+            transform: scale(1);
+            background-color: rgba(167, 139, 250, 0.2);
+        }
+    }
+    
+    .reference-display {
+        color: #9ca3af;
+        background: #374151;
+    }
+    
+    .add-btn {
+        border-color: #a78bfa;
+        background: rgba(167, 139, 250, 0.1);
+        color: #a78bfa;
+    }
+    
+    .add-btn:hover {
+        background: rgba(167, 139, 250, 0.2);
+        border-color: #8b5cf6;
+    }
+    
+    .add-btn.clicking {
+        animation: buttonClickDark 0.3s ease-out;
+    }
+    
+    @keyframes buttonClickDark {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(0.95);
+            background: rgba(167, 139, 250, 0.3);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    .remove-btn.removing {
+        animation: buttonRemoveDark 0.3s ease-out;
+    }
+    
+    @keyframes buttonRemoveDark {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.2) rotate(90deg);
+            background: #ff8888;
+        }
+        100% {
+            transform: scale(1) rotate(90deg);
+        }
+    }
+    
+    /* 深色模式删除项目动画 */
+    .urinalysis-item.removing {
+        animation: itemSlideOutDark 0.4s ease-in forwards;
+    }
+    
+    @keyframes itemSlideOutDark {
+        0% {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            max-height: 200px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background: #1f2937;
+            border-color: #374151;
+        }
+        50% {
+            opacity: 0.5;
+            transform: translateX(-20px) scale(0.95);
+            max-height: 200px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background: #2d1b1b;
+            border-color: #7f1d1d;
+        }
+        100% {
+            opacity: 0;
+            transform: translateX(-100px) scale(0.8);
+            max-height: 0;
+            padding: 0;
+            margin-bottom: 0;
+            border-width: 0;
+            background: transparent;
+        }
+    }
+}
+
 /* 输入网格样式 */
 .input-grid {
     display: grid;

@@ -60,38 +60,6 @@
 
         </div>
 
-        <!-- 尿常规 -->
-        <div class="metric-card" data-type="urinalysis">
-            <div class="metric-icon">
-                <div class="icon-placeholder">🧪</div>
-            </div>
-            <div class="metric-content">
-                <h3 class="metric-title">尿常规</h3>
-                <p class="metric-description">尿液常规检查结果</p>
-                <div class="metric-input">
-                    <div class="input-grid">
-                        <div class="input-item">
-                            <label for="protein-input">蛋白质</label>
-                            <input type="text" id="protein-input" placeholder="阴性/+">
-                        </div>
-                        <div class="input-item">
-                            <label for="glucose-input">葡萄糖</label>
-                            <input type="text" id="glucose-input" placeholder="阴性/+">
-                        </div>
-                        <div class="input-item">
-                            <label for="ketones-input">酮体</label>
-                            <input type="text" id="ketones-input" placeholder="阴性/+">
-                        </div>
-                        <div class="input-item">
-                            <label for="blood-input">潜血</label>
-                            <input type="text" id="blood-input" placeholder="阴性/+">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
         <!-- 24h尿蛋白测定 -->
         <div class="metric-card" data-type="proteinuria">
             <div class="metric-icon">
@@ -139,6 +107,137 @@
                             <label for="plt-input">血小板(PLT)</label>
                             <input type="number" id="plt-input" step="1" placeholder="0">
                             <span class="unit-small">×10⁹/L</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 出血点记录 -->
+        <div class="metric-card" data-type="bleeding-point">
+            <div class="metric-icon">
+                <div class="icon-placeholder">🩹</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">出血点</h3>
+                <p class="metric-description">记录身体出血部位</p>
+                <div class="metric-input">
+                    <div class="bleeding-selector-container">
+                        <div class="custom-select-wrapper">
+                            <select id="bleeding-point-select" class="custom-select">
+                                <option value="">请选择出血部位</option>
+                                <option value="nose">👃 鼻子</option>
+                                <option value="gums">🦷 牙龈</option>
+                                <option value="skin">🩸 皮肤</option>
+                                <option value="joints">🦴 关节</option>
+                                <option value="muscles">💪 肌肉</option>
+                                <option value="urine">💧 尿液</option>
+                                <option value="stool">💩 大便</option>
+                                <option value="vomit">🤮 呕吐物</option>
+                                <option value="menstrual">🩸 月经</option>
+                                <option value="other">📝 其他</option>
+                            </select>
+                            <div class="select-arrow">
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div id="other-bleeding-input" class="other-input-container" style="display: none;">
+                            <div class="other-input-wrapper">
+                                <input type="text" id="other-bleeding-text" class="other-text-input" placeholder="请描述其他出血部位...">
+                                <div class="input-icon">✏️</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 尿液检测指标矩阵 -->
+        <div class="metric-card" data-type="urinalysis-matrix">
+            <div class="metric-icon">
+                <div class="icon-placeholder">🧪</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">尿常规</h3>
+                <p class="metric-description">选择并填写尿液检测项目</p>
+                <div class="metric-input">
+                    <div id="urinalysis-matrix-container" class="urinalysis-matrix">
+                        <div class="urinalysis-item">
+                            <div class="item-header">
+                                <select class="urinalysis-select" data-index="0">
+                                    <option value="">请选择检测项目</option>
+                                    <option value="ph" data-unit="" data-reference="5.0-8.0">pH</option>
+                                    <option value="color" data-unit="" data-reference="颜色">颜色</option>
+                                    <option value="nitrite" data-unit="" data-reference="阴性">亚硝酸盐</option>
+                                    <option value="glucose" data-unit="" data-reference="阴性">葡萄糖</option>
+                                    <option value="specific-gravity" data-unit="" data-reference="1.005-1.030">比重</option>
+                                    <option value="occult-blood" data-unit="" data-reference="阴性">隐血</option>
+                                    <option value="protein" data-unit="" data-reference="阴性">蛋白质</option>
+                                    <option value="bilirubin" data-unit="" data-reference="阴性">胆红素</option>
+                                    <option value="leukocyte-esterase" data-unit="" data-reference="阴性">白细胞酯酶</option>
+                                    <option value="rbc-count" data-unit="/μl" data-reference="0-17.0">红细胞（定量）</option>
+                                    <option value="wbc-count" data-unit="/μl" data-reference="0-28.0">白细胞（定量）</option>
+                                    <option value="hyaline-casts" data-unit="/μl" data-reference="0-1">透明管型</option>
+                                    <option value="conductivity" data-unit="mS/cm" data-reference="5-32">电导率</option>
+                                    <option value="crystals" data-unit="/μl" data-reference="">结晶</option>
+                                    <option value="osmolality" data-unit="mOsm/kgH2O" data-reference="40-1400">渗透压</option>
+                                    <option value="mucus" data-unit="/μl" data-reference="0-46">粘液丝</option>
+                                    <option value="squamous-epithelial" data-unit="/μl" data-reference="0-28">鳞状上皮细胞</option>
+                                    <option value="nonsquamous-epithelial" data-unit="/μl" data-reference="0-6">非鳞状上皮细胞</option>
+                                    <option value="wbc-clumps" data-unit="/μl" data-reference="0-2.0">白细胞团</option>
+                                    <option value="urine-creatinine" data-unit="g/L" data-reference="0.1-2.0">尿肌酐</option>
+                                    <option value="up-cr" data-unit="mg/gCr" data-reference="0-30">尿白蛋白/尿肌酐</option>
+                                    <option value="vitamin-c" data-unit="" data-reference="阴性">维生素C</option>
+                                    <option value="urine-rbc" data-unit="/μl" data-reference="0.0-30.7">尿红细胞计数</option>
+                                    <option value="urine-wbc" data-unit="/μl" data-reference="0.0-39.0">尿白细胞计数</option>
+                                    <option value="urine-epithelial" data-unit="/μl" data-reference="0.0-45.6">尿上皮细胞计数</option>
+                                </select>
+                                <button type="button" class="remove-btn" onclick="removeUrinalysisItem(this)" style="display: none;" onmousedown="try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}">×</button>
+                            </div>
+                            <div class="item-input">
+                                <input type="text" class="urinalysis-value" placeholder="请输入数值" data-index="0">
+                                <div class="unit-reference">
+                                    <span class="unit-display">单位</span>
+                                    <span class="reference-display">参考值</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="add-btn" onclick="addUrinalysisItem()" onmousedown="try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}">
+                        <span class="add-icon">＋</span>
+                        <span class="add-text">添加检测项目</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 自我评分 -->
+        <div class="metric-card" data-type="self-rating">
+            <div class="metric-icon">
+                <div class="icon-placeholder">⭐</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">自我评分</h3>
+                <p class="metric-description">请根据您当前的整体状况进行评分（0-10分）</p>
+                <div class="metric-input">
+                    <div class="rating-container">
+                        <div class="rating-labels">
+                            <span class="rating-label">0</span>
+                            <span class="rating-label">5</span>
+                            <span class="rating-label">10</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="self-rating-slider" class="rating-slider" min="0" max="10" step="1" value="5">
+                            <div class="slider-track"></div>
+                            <div class="slider-fill" id="slider-fill"></div>
+                        </div>
+                        <div class="rating-display">
+                            <span class="rating-value" id="rating-value">5</span>
+                            <span class="rating-unit">分</span>
                         </div>
                     </div>
                 </div>
