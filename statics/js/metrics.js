@@ -237,12 +237,10 @@ function saveAllMetrics() {
                     metricsData: allData
                 };
 
-                // 获取身份：从本地缓存尝试读取（与现有登录保持一致，若无则置空）
-                const user = (function(){
-                    try { return JSON.parse(localStorage.getItem('user_profile') || 'null'); } catch(_) { return null; }
-                })();
-                const user_id = user && (user.user_id || user.id) || '';
-                const username = user && user.username || '';
+                // 获取身份：优先从本地缓存，缺失时调用 /readdata 补全
+                const identity = await resolveUserIdentity();
+                const user_id = identity.user_id || '';
+                const username = identity.username || '';
 
                 var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
                 if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
@@ -1099,6 +1097,74 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// 解析用户身份：本地缓存优先，不足则通过 /readdata 查询
+async function resolveUserIdentity() {
+    // 1) 本地 user_profile
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem('user_profile') || 'null'); } catch(_) { cached = null; }
+
+    let user_id = '';
+    let username = '';
+
+    if (cached) {
+        user_id = (cached.user_id || cached.id || '').toString();
+        username = (cached.username || '').toString();
+        if (user_id || username) {
+            return { user_id, username };
+        }
+    }
+
+    // 2) 若本地无，则尝试从本地单独缓存键读取
+    try {
+        const idOnly = localStorage.getItem('user_id') || '';
+        const nameOnly = localStorage.getItem('username') || '';
+        if (idOnly || nameOnly) {
+            return { user_id: idOnly, username: nameOnly };
+        }
+    } catch(_) {}
+
+    // 3) 调用 /readdata（users 表），根据已有的 username 或 user_id 任一尝试
+    try {
+        var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
+        if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
+
+        // 从本地可能的弱标识尝试拼装查询
+        const maybeId = (cached && (cached.user_id || cached.id)) || (localStorage.getItem('user_id') || '');
+        const maybeName = (cached && cached.username) || (localStorage.getItem('username') || '');
+
+        const body = { table_name: 'users' };
+        if (maybeId) body.user_id = String(maybeId);
+        else if (maybeName) body.username = String(maybeName);
+
+        const res = await fetch(API_BASE + '/readdata', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const json = await res.json();
+        if (res.ok && json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+            const rec = json.data[0] || {};
+            user_id = (rec.user_id || rec.id || '').toString();
+            username = (rec.username || '').toString();
+
+            // 回写本地，便于下次直接使用
+            try {
+                const merged = Object.assign({}, cached || {}, { user_id, username });
+                localStorage.setItem('user_profile', JSON.stringify(merged));
+                if (user_id) localStorage.setItem('user_id', user_id);
+                if (username) localStorage.setItem('username', username);
+            } catch(_) {}
+
+            return { user_id, username };
+        }
+    } catch (e) {
+        console.warn('resolveUserIdentity 调用 /readdata 失败:', e);
+    }
+
+    // 兜底为空
+    return { user_id: '', username: '' };
+}
 
 // 尿液检测指标矩阵相关函数
 let urinalysisItemIndex = 0;
