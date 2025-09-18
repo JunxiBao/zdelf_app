@@ -1109,57 +1109,49 @@ async function resolveUserIdentity() {
 
     if (cached) {
         user_id = (cached.user_id || cached.id || '').toString();
-        username = (cached.username || '').toString();
-        if (user_id || username) {
-            return { user_id, username };
-        }
+        // 忽略缓存中的 username，统一通过 user_id 查询服务端获取
     }
 
     // 2) 若本地无，则尝试从本地单独缓存键读取
     try {
         const idOnly = localStorage.getItem('user_id') || '';
-        const nameOnly = localStorage.getItem('username') || '';
-        if (idOnly || nameOnly) {
-            return { user_id: idOnly, username: nameOnly };
+        if (idOnly) {
+            user_id = idOnly;
         }
     } catch(_) {}
 
-    // 3) 调用 /readdata（users 表），根据已有的 username 或 user_id 任一尝试
-    try {
-        var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
-        if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
+    // 3) 仅当存在 user_id 时，通过 /readdata 使用 user_id 查询 username
+    if (user_id) {
+        try {
+            var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
+            if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
 
-        // 从本地可能的弱标识尝试拼装查询
-        const maybeId = (cached && (cached.user_id || cached.id)) || (localStorage.getItem('user_id') || '');
-        const maybeName = (cached && cached.username) || (localStorage.getItem('username') || '');
+            const body = { table_name: 'users', user_id: String(user_id) };
+            const res = await fetch(API_BASE + '/readdata', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const json = await res.json();
+            if (res.ok && json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+                const rec = json.data[0] || {};
+                username = (rec.username || '').toString();
 
-        const body = { table_name: 'users' };
-        if (maybeId) body.user_id = String(maybeId);
-        else if (maybeName) body.username = String(maybeName);
+                // 回写本地
+                try {
+                    const merged = Object.assign({}, cached || {}, { user_id, username });
+                    localStorage.setItem('user_profile', JSON.stringify(merged));
+                    if (user_id) localStorage.setItem('user_id', user_id);
+                    if (username) localStorage.setItem('username', username);
+                } catch(_) {}
 
-        const res = await fetch(API_BASE + '/readdata', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-        const json = await res.json();
-        if (res.ok && json && json.success && Array.isArray(json.data) && json.data.length > 0) {
-            const rec = json.data[0] || {};
-            user_id = (rec.user_id || rec.id || '').toString();
-            username = (rec.username || '').toString();
-
-            // 回写本地，便于下次直接使用
-            try {
-                const merged = Object.assign({}, cached || {}, { user_id, username });
-                localStorage.setItem('user_profile', JSON.stringify(merged));
-                if (user_id) localStorage.setItem('user_id', user_id);
-                if (username) localStorage.setItem('username', username);
-            } catch(_) {}
-
-            return { user_id, username };
+                return { user_id, username };
+            }
+        } catch (e) {
+            console.warn('resolveUserIdentity 通过 user_id 调用 /readdata 失败:', e);
         }
-    } catch (e) {
-        console.warn('resolveUserIdentity 调用 /readdata 失败:', e);
+        // 查询失败时，至少返回 user_id，username 留空
+        return { user_id, username: '' };
     }
 
     // 兜底为空
