@@ -325,10 +325,15 @@ function fillFormData(type, data) {
                 break;
 
             case 'urinalysis':
-                if (data.protein) document.getElementById('protein-input').value = data.protein;
-                if (data.glucose) document.getElementById('glucose-input').value = data.glucose;
-                if (data.ketones) document.getElementById('ketones-input').value = data.ketones;
-                if (data.blood) document.getElementById('blood-input').value = data.blood;
+                // 页面可能没有独立的尿常规输入框（改为矩阵方式），因此需判空
+                const __proteinEl = document.getElementById('protein-input');
+                const __glucoseEl = document.getElementById('glucose-input');
+                const __ketonesEl = document.getElementById('ketones-input');
+                const __bloodEl = document.getElementById('blood-input');
+                if (__proteinEl && data.protein != null) __proteinEl.value = data.protein;
+                if (__glucoseEl && data.glucose != null) __glucoseEl.value = data.glucose;
+                if (__ketonesEl && data.ketones != null) __ketonesEl.value = data.ketones;
+                if (__bloodEl && data.blood != null) __bloodEl.value = data.blood;
                 break;
 
             case 'proteinuria':
