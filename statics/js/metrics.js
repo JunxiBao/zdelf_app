@@ -206,14 +206,51 @@ function saveAllMetrics() {
             return;
         }
 
-        // 保存所有数据
+        // 保存所有数据（本地）
         metricsData = { ...metricsData, ...allData };
-
-        // 保存到本地存储
         localStorage.setItem('health_metrics_data', JSON.stringify(metricsData));
 
-        // 显示成功提示
-        showToast(`成功保存 ${Object.keys(allData).length} 项指标数据！`);
+        // 自动上传到后端（metrics 表）
+        (async function uploadAfterSave(){
+            try {
+                const payload = {
+                    exportInfo: {
+                        exportTime: new Date().toISOString(),
+                        version: '1.0',
+                        appName: '紫癜精灵',
+                        dataType: 'health_metrics'
+                    },
+                    metricsData: allData
+                };
+
+                // 获取身份：从本地缓存尝试读取（与现有登录保持一致，若无则置空）
+                const user = (function(){
+                    try { return JSON.parse(localStorage.getItem('user_profile') || 'null'); } catch(_) { return null; }
+                })();
+                const user_id = user && (user.user_id || user.id) || '';
+                const username = user && user.username || '';
+
+                var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
+                if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
+
+                const resp = await fetch(API_BASE + '/uploadjson/metrics', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id, username, payload })
+                });
+                const resJson = await resp.json();
+                if (!resp.ok || !resJson.success) {
+                    console.warn('指标上传失败:', resJson);
+                    showToast('已保存本地，云端上传失败');
+                } else {
+                    console.log('指标上传成功:', resJson);
+                    showToast('已保存并上传云端');
+                }
+            } catch (e) {
+                console.warn('上传异常:', e);
+                showToast('已保存本地，云端上传异常');
+            }
+        })();
 
         // 成功保存的强震动反馈
         try {
@@ -1304,6 +1341,204 @@ function initUrinalysisMatrix() {
     
     // 初始化删除按钮状态
     updateRemoveButtons();
+}
+
+// 导出健康指标数据为JSON文件
+function exportMetricsData() {
+    try {
+        // 添加震动反馈
+        try {
+            window.__hapticImpact__ && window.__hapticImpact__('Medium');
+        } catch(_) {}
+        
+        // 收集所有指标数据
+        let allData = {};
+        let hasValidData = false;
+        
+        // 安全获取元素值的辅助函数
+        function getElementValue(id) {
+            const el = document.getElementById(id);
+            return el ? el.value : '';
+        }
+        
+        // 症状数据
+        const symptoms = getElementValue('symptoms-input').trim();
+        if (symptoms) {
+            allData.symptoms = {
+                symptoms,
+                timestamp: new Date().toISOString()
+            };
+            hasValidData = true;
+        }
+        
+        // 体温数据
+        const temp = getElementValue('temperature-input');
+        if (temp && !isNaN(parseFloat(temp))) {
+            const tempValue = parseFloat(temp);
+            if (tempValue >= 35 && tempValue <= 45) {
+                allData.temperature = {
+                    temperature: tempValue,
+                    timestamp: new Date().toISOString()
+                };
+                hasValidData = true;
+            }
+        }
+        
+        // 尿常规数据
+        const protein = getElementValue('protein-input').trim();
+        const glucose = getElementValue('glucose-input').trim();
+        const ketones = getElementValue('ketones-input').trim();
+        const blood = getElementValue('blood-input').trim();
+        
+        if (protein || glucose || ketones || blood) {
+            allData.urinalysis = {
+                protein, glucose, ketones, blood,
+                timestamp: new Date().toISOString()
+            };
+            hasValidData = true;
+        }
+        
+        // 24h尿蛋白数据
+        const protein24h = getElementValue('proteinuria-input');
+        if (protein24h && !isNaN(parseFloat(protein24h))) {
+            const proteinValue = parseFloat(protein24h);
+            if (proteinValue >= 0) {
+                allData.proteinuria = {
+                    proteinuria24h: proteinValue,
+                    timestamp: new Date().toISOString()
+                };
+                hasValidData = true;
+            }
+        }
+        
+        // 血常规数据
+        const wbc = getElementValue('wbc-input');
+        const rbc = getElementValue('rbc-input');
+        const hb = getElementValue('hb-input');
+        const plt = getElementValue('plt-input');
+        
+        const bloodData = {};
+        if (wbc && !isNaN(parseFloat(wbc))) bloodData.wbc = parseFloat(wbc);
+        if (rbc && !isNaN(parseFloat(rbc))) bloodData.rbc = parseFloat(rbc);
+        if (hb && !isNaN(parseInt(hb))) bloodData.hb = parseInt(hb);
+        if (plt && !isNaN(parseInt(plt))) bloodData.plt = parseInt(plt);
+        
+        if (Object.keys(bloodData).length > 0) {
+            allData['blood-test'] = {
+                ...bloodData,
+                timestamp: new Date().toISOString()
+            };
+            hasValidData = true;
+        }
+        
+        // 出血点数据
+        const bleedingPoint = getElementValue('bleeding-point-select');
+        const otherBleedingText = getElementValue('other-bleeding-text').trim();
+        
+        if (bleedingPoint) {
+            const bleedingData = { bleedingPoint };
+            if (bleedingPoint === 'other' && otherBleedingText) {
+                bleedingData.otherDescription = otherBleedingText;
+            }
+            allData['bleeding-point'] = {
+                ...bleedingData,
+                timestamp: new Date().toISOString()
+            };
+            hasValidData = true;
+        }
+        
+        // 自我评分数据
+        const rating = getElementValue('self-rating-slider');
+        if (rating && !isNaN(parseInt(rating))) {
+            const ratingValue = parseInt(rating);
+            if (ratingValue >= 0 && ratingValue <= 10) {
+                allData['self-rating'] = {
+                    selfRating: ratingValue,
+                    timestamp: new Date().toISOString()
+                };
+                hasValidData = true;
+            }
+        }
+        
+        // 尿液检测指标矩阵数据
+        const urinalysisItems = document.querySelectorAll('.urinalysis-item');
+        const urinalysisData = [];
+        
+        urinalysisItems.forEach((item, index) => {
+            const select = item.querySelector('.urinalysis-select');
+            const valueInput = item.querySelector('.urinalysis-value');
+            
+            if (select && select.value && valueInput && valueInput.value.trim()) {
+                urinalysisData.push({
+                    item: select.value,
+                    value: valueInput.value.trim(),
+                    index: index
+                });
+            }
+        });
+        
+        if (urinalysisData.length > 0) {
+            allData['urinalysis-matrix'] = {
+                urinalysisMatrix: urinalysisData,
+                timestamp: new Date().toISOString()
+            };
+            hasValidData = true;
+        }
+        
+        if (!hasValidData) {
+            showToast('没有数据可导出，请先填写一些指标数据');
+            return;
+        }
+        
+        // 创建导出数据对象
+        const exportData = {
+            exportInfo: {
+                exportTime: new Date().toISOString(),
+                version: '1.0',
+                appName: '紫癜精灵',
+                dataType: 'health_metrics'
+            },
+            metricsData: allData
+        };
+        
+        // 转换为JSON字符串
+        const jsonString = JSON.stringify(exportData, null, 2);
+        
+        // 创建Blob对象
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        
+        // 创建下载链接
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // 生成文件名（包含时间戳）
+        const now = new Date();
+        const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        link.download = `health_metrics_${timestamp}.json`;
+        
+        // 触发下载
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // 清理URL对象
+        URL.revokeObjectURL(url);
+        
+        // 显示成功提示
+        showToast(`成功导出 ${Object.keys(allData).length} 项指标数据！`);
+        
+        // 成功导出的强震动反馈
+        try {
+            window.__hapticImpact__ && window.__hapticImpact__('Heavy');
+        } catch(_) {}
+        
+        console.log('导出健康指标数据:', exportData);
+        
+    } catch (error) {
+        console.error('导出数据失败:', error);
+        showToast('导出失败，请重试');
+    }
 }
 
 // 页面加载完成后初始化

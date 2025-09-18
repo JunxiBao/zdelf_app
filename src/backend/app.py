@@ -20,6 +20,7 @@ from routes.readdata import readdata_blueprint
 from routes.editdata import editdata_blueprint
 from routes.deepseek import deepseek_blueprint
 from routes.sms import sms_blueprint
+from routes.uploadjson import uploadjson_blueprint
 import logging
 import time, uuid
 import os
@@ -33,6 +34,7 @@ app.register_blueprint(readdata_blueprint)
 app.register_blueprint(editdata_blueprint)
 app.register_blueprint(deepseek_blueprint, url_prefix='/deepseek')
 app.register_blueprint(sms_blueprint)
+app.register_blueprint(uploadjson_blueprint)
 
 # *CORS rule，Prevent unauthorized requests, enhance security
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
