@@ -378,7 +378,7 @@ function showDetailModal(fileId, type) {
       top: 0 !important;
       left: 0 !important;
       right: 0 !important;
-      bottom: 0 !important;
+      bottom: 80px !important;
       z-index: 99999 !important;
       display: flex !important;
       align-items: center !important;
@@ -386,7 +386,7 @@ function showDetailModal(fileId, type) {
       padding: 20px !important;
       box-sizing: border-box !important;
       width: 100vw !important;
-      height: 100vh !important;
+      height: calc(100vh - 80px) !important;
     }
 
     .modal-backdrop {
@@ -420,7 +420,7 @@ function showDetailModal(fileId, type) {
         0 0 0 1px rgba(255, 255, 255, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
       max-width: 90vw !important;
-      max-height: 90vh !important;
+      max-height: calc(100vh - 120px) !important;
       width: 100% !important;
       max-width: 700px !important;
       overflow: hidden !important;
@@ -517,7 +517,7 @@ function showDetailModal(fileId, type) {
 
     .modal-body {
       padding: 32px;
-      max-height: 65vh;
+      max-height: calc(100vh - 200px);
       overflow-y: auto;
       background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
       position: relative;
