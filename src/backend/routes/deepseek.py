@@ -41,7 +41,7 @@ MEDICAL_CITATIONS = {
     "饮食建议": [
         {
             "title": "中国居民膳食指南(2022)",
-            "url": "https://www.cnsoc.org/notice/2022/2022-04-26.html",
+            "url": "https://www.cnsoc.org/",
             "author": "中国营养学会",
             "year": "2022"
         },
@@ -50,48 +50,72 @@ MEDICAL_CITATIONS = {
             "url": "https://www.who.int/news-room/fact-sheets/detail/healthy-diet",
             "author": "世界卫生组织",
             "year": "2020"
+        },
+        {
+            "title": "中国营养学会官网",
+            "url": "https://www.cnsoc.org/",
+            "author": "中国营养学会",
+            "year": "2022"
         }
     ],
     "运动建议": [
-        {
-            "title": "中国人群身体活动指南(2021)",
-            "url": "https://www.cnsoc.org/notice/2021/2021-12-20.html",
-            "author": "中国营养学会",
-            "year": "2021"
-        },
         {
             "title": "WHO身体活动指南",
             "url": "https://www.who.int/news-room/fact-sheets/detail/physical-activity",
             "author": "世界卫生组织",
             "year": "2020"
+        },
+        {
+            "title": "中国营养学会官网",
+            "url": "https://www.cnsoc.org/",
+            "author": "中国营养学会",
+            "year": "2021"
         }
     ],
     "睡眠建议": [
         {
-            "title": "中国成人失眠诊断与治疗指南(2017)",
-            "url": "https://www.cnsoc.org/notice/2017/2017-12-20.html",
+            "title": "中华医学会官网",
+            "url": "https://www.cma.org.cn/",
             "author": "中华医学会神经病学分会",
             "year": "2017"
+        },
+        {
+            "title": "WHO睡眠健康指南",
+            "url": "https://www.who.int/news-room/fact-sheets/detail/healthy-diet",
+            "author": "世界卫生组织",
+            "year": "2020"
         }
     ],
     "心理健康": [
         {
-            "title": "中国心理健康蓝皮书(2019-2020)",
-            "url": "https://www.cnsoc.org/notice/2020/2020-12-20.html",
+            "title": "中国科学院心理研究所",
+            "url": "https://www.psych.ac.cn/",
             "author": "中国科学院心理研究所",
+            "year": "2020"
+        },
+        {
+            "title": "WHO心理健康指南",
+            "url": "https://www.who.int/news-room/fact-sheets/detail/mental-health-strengthening-our-response",
+            "author": "世界卫生组织",
             "year": "2020"
         }
     ],
     "慢性病管理": [
         {
-            "title": "中国2型糖尿病防治指南(2020年版)",
-            "url": "https://www.cnsoc.org/notice/2020/2020-12-20.html",
+            "title": "中华医学会官网",
+            "url": "https://www.cma.org.cn/",
             "author": "中华医学会糖尿病学分会",
             "year": "2020"
         },
         {
-            "title": "中国高血压防治指南(2018年修订版)",
-            "url": "https://www.cnsoc.org/notice/2018/2018-12-20.html",
+            "title": "WHO慢性病预防指南",
+            "url": "https://www.who.int/news-room/fact-sheets/detail/noncommunicable-diseases",
+            "author": "世界卫生组织",
+            "year": "2020"
+        },
+        {
+            "title": "中国高血压联盟",
+            "url": "https://www.cma.org.cn/",
             "author": "中国高血压联盟",
             "year": "2018"
         }
@@ -162,7 +186,7 @@ def _format_citations(citations):
     
     html = "\n\n**参考资料：**\n"
     for i, citation in enumerate(citations, 1):
-        html += f"{i}. [{citation['title']}]({citation['url']}) - {citation['author']} ({citation['year']})\n"
+        html += f"{i}. <a href=\"{citation['url']}\" target=\"_blank\" rel=\"noopener noreferrer\">{citation['title']}</a> - {citation['author']} ({citation['year']})\n"
     
     return html
 

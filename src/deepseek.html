@@ -69,10 +69,37 @@
       .citations a {
         color: #007bff;
         text-decoration: none;
+        cursor: pointer;
+        word-break: break-all;
       }
       
       .citations a:hover {
         text-decoration: underline;
+        color: #0056b3;
+      }
+      
+      .citations a:active {
+        color: #004085;
+      }
+      
+      /* 移动端优化 */
+      @media (max-width: 768px) {
+        .citations a {
+          display: inline-block;
+          padding: 2px 4px;
+          margin: 1px 0;
+          border-radius: 3px;
+          background-color: rgba(0, 123, 255, 0.1);
+          transition: background-color 0.2s;
+        }
+        
+        .citations a:hover {
+          background-color: rgba(0, 123, 255, 0.2);
+        }
+        
+        .citations a:active {
+          background-color: rgba(0, 123, 255, 0.3);
+        }
       }
       
       .disclaimer {
@@ -97,6 +124,16 @@
         
         .citations a {
           color: #63b3ed;
+          cursor: pointer;
+        }
+        
+        .citations a:hover {
+          color: #4299e1;
+          text-decoration: underline;
+        }
+        
+        .citations a:active {
+          color: #3182ce;
         }
         
         .disclaimer {
@@ -214,7 +251,7 @@
             aria-label="清除会话"
             title="清除对话历史"
           >
-            🗑️
+            清除
           </button>
           <button
             type="button"
