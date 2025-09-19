@@ -436,7 +436,7 @@ function showDetailModal(fileId, type) {
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      padding: 20px 20px 100px 20px !important;
+      padding: 20px !important;
       box-sizing: border-box !important;
       width: 100vw !important;
       height: 100vh !important;
@@ -473,7 +473,7 @@ function showDetailModal(fileId, type) {
         0 0 0 1px rgba(255, 255, 255, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
       max-width: 90vw !important;
-      max-height: calc(100vh - 200px) !important;
+      max-height: calc(100vh - 120px) !important;
       width: 100% !important;
       max-width: 700px !important;
       overflow: hidden !important;
