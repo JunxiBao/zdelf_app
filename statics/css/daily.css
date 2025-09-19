@@ -325,6 +325,8 @@ body {
   animation: modalSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   position: relative;
+  /* 调试样式 */
+  border: 5px solid red !important;
 }
 
 .modal-content::before {
