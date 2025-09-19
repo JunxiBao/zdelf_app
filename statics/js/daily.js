@@ -353,13 +353,6 @@ function bindUnifiedCardEvents(container) {
  * showDetailModal — 显示详情弹窗
  */
 function showDetailModal(fileId, type) {
-  // 获取当前页面的Shadow DOM
-  const shadowRoot = document.querySelector('#content').shadowRoot;
-  if (!shadowRoot) {
-    console.error('Shadow DOM not found');
-    return;
-  }
-
   // 创建弹窗
   const modal = document.createElement('div');
   modal.className = 'detail-modal';
@@ -376,16 +369,530 @@ function showDetailModal(fileId, type) {
     </div>
   `;
 
-  shadowRoot.appendChild(modal);
+  // 注入详情弹窗样式到 Shadow DOM
+  const style = document.createElement('style');
+  style.textContent = `
+    /* 详情弹窗 */
+    .detail-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(12px);
+      animation: backdropFadeIn 0.4s ease-out;
+    }
+
+    @keyframes backdropFadeIn {
+      from { 
+        opacity: 0; 
+        backdrop-filter: blur(0px);
+      }
+      to { 
+        opacity: 1; 
+        backdrop-filter: blur(12px);
+      }
+    }
+
+    .modal-content {
+      position: relative;
+      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 28px;
+      box-shadow: 
+        0 32px 64px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      max-width: 90vw;
+      max-height: 90vh;
+      width: 100%;
+      max-width: 700px;
+      overflow: hidden;
+      animation: modalSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+    }
+
+    .modal-content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+      z-index: 1;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: scale(0.8) translateY(40px) rotateX(15deg);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0) rotateX(0deg);
+      }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 28px 32px 24px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .modal-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, rgba(255,255,255,0.15) 0%, transparent 50%, rgba(255,255,255,0.08) 100%);
+      pointer-events: none;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: white;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      position: relative;
+      z-index: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .close-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      font-size: 1.6rem;
+      color: white;
+      cursor: pointer;
+      padding: 12px;
+      border-radius: 16px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+      position: relative;
+      z-index: 1;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1) rotate(90deg);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .close-btn:active {
+      transform: scale(0.95) rotate(90deg);
+    }
+
+    .modal-body {
+      padding: 32px;
+      max-height: 65vh;
+      overflow-y: auto;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      position: relative;
+    }
+
+    .modal-body::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .modal-body::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 4px;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #667eea, #764ba2);
+      border-radius: 4px;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #5a67d8, #6b46c1);
+    }
+
+    /* 详情信息 */
+    .detail-info {
+      margin-bottom: 32px;
+      background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .detail-info::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .info-item:hover {
+      background: rgba(102, 126, 234, 0.05);
+      margin: 0 -24px;
+      padding-left: 24px;
+      padding-right: 24px;
+      border-radius: 8px;
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-item label {
+      font-weight: 700;
+      color: #1e293b;
+      font-size: 0.95rem;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 100px;
+    }
+
+    .info-item label::before {
+      content: '●';
+      color: #667eea;
+      font-size: 0.6rem;
+    }
+
+    .info-item span {
+      color: #475569;
+      font-size: 0.9rem;
+      font-weight: 500;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: right;
+    }
+
+    /* 格式化内容样式 */
+    .detail-data h4 {
+      margin: 0 0 24px 0;
+      color: #1e293b;
+      font-size: 1.3rem;
+      font-weight: 700;
+      text-align: center;
+      position: relative;
+      padding-bottom: 12px;
+    }
+
+    .detail-data h4::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      border-radius: 2px;
+    }
+
+    .formatted-content {
+      color: #1e293b;
+    }
+
+    .metrics-detail {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .detail-section {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .detail-section:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .detail-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #667eea, #764ba2);
+    }
+
+    .detail-section h5 {
+      margin: 0 0 16px 0;
+      color: #1e293b;
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .detail-section h5::before {
+      content: '▶';
+      color: #667eea;
+      font-size: 0.8rem;
+    }
+
+    .detail-section p {
+      margin: 0;
+      color: #475569;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      font-weight: 500;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+    }
+
+    .detail-item:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-color: rgba(102, 126, 234, 0.2);
+    }
+
+    .detail-item span:first-child {
+      color: #64748b;
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: -0.01em;
+    }
+
+    .detail-item span:last-child {
+      color: #1e293b;
+      font-weight: 700;
+      font-size: 0.95rem;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .matrix-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .matrix-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: linear-gradient(180deg, #667eea, #764ba2);
+    }
+
+    .matrix-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+      border-color: rgba(102, 126, 234, 0.3);
+    }
+
+    .item-name {
+      color: #64748b;
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: -0.01em;
+    }
+
+    .item-value {
+      color: #1e293b;
+      font-weight: 700;
+      font-size: 0.95rem;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .json-content {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      color: #495057;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+
+    /* 暗色模式支持 */
+    @media (prefers-color-scheme: dark) {
+      .modal-content {
+        background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .modal-header {
+        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+      }
+      
+      .modal-body {
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      }
+      
+      .detail-info {
+        background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .info-item label {
+        color: #e2e8f0;
+      }
+      
+      .info-item span {
+        color: #cbd5e1;
+      }
+      
+      .detail-data h4 {
+        color: #f1f5f9;
+      }
+      
+      .formatted-content {
+        color: #f1f5f9;
+      }
+      
+      .detail-section {
+        background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .detail-section h5 {
+        color: #f1f5f9;
+      }
+      
+      .detail-section p {
+        color: #cbd5e1;
+      }
+      
+      .detail-item {
+        background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .detail-item span:first-child {
+        color: #94a3b8;
+      }
+      
+      .detail-item span:last-child {
+        color: #f1f5f9;
+      }
+      
+      .matrix-item {
+        background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .item-name {
+        color: #94a3b8;
+      }
+      
+      .item-value {
+        color: #f1f5f9;
+      }
+      
+      .json-content {
+        background: #0f172a;
+        color: #e2e8f0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    }
+  `;
+  
+  modal.appendChild(style);
+  document.body.appendChild(modal);
 
   // 绑定关闭事件
   const closeBtn = modal.querySelector('.close-btn');
   const backdrop = modal.querySelector('.modal-backdrop');
   
   const closeModal = () => {
-    if (modal && modal.parentNode) {
-      modal.parentNode.removeChild(modal);
-    }
+    modal.remove();
   };
   
   closeBtn.addEventListener('click', closeModal);
@@ -441,9 +948,7 @@ function showAllItemsModal(type) {
   const backdrop = modal.querySelector('.modal-backdrop');
   
   const closeModal = () => {
-    if (modal && modal.parentNode) {
-      modal.parentNode.removeChild(modal);
-    }
+    modal.remove();
   };
   
   closeBtn.addEventListener('click', closeModal);

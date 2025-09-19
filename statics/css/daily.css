@@ -309,29 +309,22 @@ body {
   }
 }
 
-.detail-modal .modal-content {
-  position: relative !important;
-  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%) !important;
-  border-radius: 28px !important;
+.modal-content {
+  position: relative;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 28px;
   box-shadow: 
     0 32px 64px rgba(0, 0, 0, 0.25),
     0 0 0 1px rgba(255, 255, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
-  max-width: 90vw !important;
-  max-height: 90vh !important;
-  width: 100% !important;
-  max-width: 700px !important;
-  overflow: hidden !important;
-  animation: modalSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  position: relative !important;
-  /* 覆盖全局样式 */
-  left: auto !important;
-  right: auto !important;
-  top: auto !important;
-  bottom: auto !important;
-  margin: 0 auto !important;
-  padding: 0 !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 100%;
+  max-width: 700px;
+  overflow: hidden;
+  animation: modalSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
 }
 
 .modal-content::before {
@@ -356,18 +349,18 @@ body {
   }
 }
 
-.detail-modal .modal-header {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  padding: 28px 32px 24px !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  position: relative !important;
-  overflow: hidden !important;
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28px 32px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow: hidden;
 }
 
-.detail-modal .modal-header::before {
+.modal-header::before {
   content: '';
   position: absolute;
   top: 0;
@@ -378,7 +371,7 @@ body {
   pointer-events: none;
 }
 
-.detail-modal .modal-header h3 {
+.modal-header h3 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
@@ -389,7 +382,7 @@ body {
   letter-spacing: -0.02em;
 }
 
-.detail-modal .close-btn {
+.close-btn {
   background: rgba(255, 255, 255, 0.2);
   border: none;
   font-size: 1.6rem;
@@ -409,17 +402,17 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.detail-modal .close-btn:hover {
+.close-btn:hover {
   background: rgba(255, 255, 255, 0.3);
   transform: scale(1.1) rotate(90deg);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
-.detail-modal .close-btn:active {
+.close-btn:active {
   transform: scale(0.95) rotate(90deg);
 }
 
-.detail-modal .modal-body {
+.modal-body {
   padding: 32px;
   max-height: 65vh;
   overflow-y: auto;
@@ -427,26 +420,26 @@ body {
   position: relative;
 }
 
-.detail-modal .modal-body::-webkit-scrollbar {
+.modal-body::-webkit-scrollbar {
   width: 8px;
 }
 
-.detail-modal .modal-body::-webkit-scrollbar-track {
+.modal-body::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.05);
   border-radius: 4px;
 }
 
-.detail-modal .modal-body::-webkit-scrollbar-thumb {
+.modal-body::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #667eea, #764ba2);
   border-radius: 4px;
 }
 
-.detail-modal .modal-body::-webkit-scrollbar-thumb:hover {
+.modal-body::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #5a67d8, #6b46c1);
 }
 
 /* 详情信息 */
-.detail-modal .detail-info {
+.detail-info {
   margin-bottom: 32px;
   background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
   border-radius: 16px;
@@ -457,7 +450,7 @@ body {
   overflow: hidden;
 }
 
-.detail-modal .detail-info::before {
+.detail-info::before {
   content: '';
   position: absolute;
   top: 0;
@@ -467,7 +460,7 @@ body {
   background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
 }
 
-.detail-modal .info-item {
+.info-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -477,7 +470,7 @@ body {
   transition: all 0.2s ease;
 }
 
-.detail-modal .info-item:hover {
+.info-item:hover {
   background: rgba(102, 126, 234, 0.05);
   margin: 0 -24px;
   padding-left: 24px;
@@ -485,11 +478,11 @@ body {
   border-radius: 8px;
 }
 
-.detail-modal .info-item:last-child {
+.info-item:last-child {
   border-bottom: none;
 }
 
-.detail-modal .info-item label {
+.info-item label {
   font-weight: 700;
   color: #1e293b;
   font-size: 0.95rem;
@@ -500,13 +493,13 @@ body {
   min-width: 100px;
 }
 
-.detail-modal .info-item label::before {
+.info-item label::before {
   content: '●';
   color: #667eea;
   font-size: 0.6rem;
 }
 
-.detail-modal .info-item span {
+.info-item span {
   color: #475569;
   font-size: 0.9rem;
   font-weight: 500;
@@ -518,7 +511,7 @@ body {
 }
 
 /* 格式化内容样式 */
-.detail-modal .detail-data h4 {
+.detail-data h4 {
   margin: 0 0 24px 0;
   color: #1e293b;
   font-size: 1.3rem;
@@ -528,7 +521,7 @@ body {
   padding-bottom: 12px;
 }
 
-.detail-modal .detail-data h4::after {
+.detail-data h4::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -540,17 +533,17 @@ body {
   border-radius: 2px;
 }
 
-.detail-modal .formatted-content {
+.formatted-content {
   color: #1e293b;
 }
 
-.detail-modal .metrics-detail {
+.metrics-detail {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.detail-modal .detail-section {
+.detail-section {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 16px;
   padding: 24px;
@@ -561,12 +554,12 @@ body {
   transition: all 0.3s ease;
 }
 
-.detail-modal .detail-section:hover {
+.detail-section:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-.detail-modal .detail-section::before {
+.detail-section::before {
   content: '';
   position: absolute;
   top: 0;
@@ -576,7 +569,7 @@ body {
   background: linear-gradient(180deg, #667eea, #764ba2);
 }
 
-.detail-modal .detail-section h5 {
+.detail-section h5 {
   margin: 0 0 16px 0;
   color: #1e293b;
   font-size: 1.1rem;
@@ -587,13 +580,13 @@ body {
   letter-spacing: -0.01em;
 }
 
-.detail-modal .detail-section h5::before {
+.detail-section h5::before {
   content: '▶';
   color: #667eea;
   font-size: 0.8rem;
 }
 
-.detail-modal .detail-section p {
+.detail-section p {
   margin: 0;
   color: #475569;
   font-size: 0.95rem;
@@ -601,14 +594,14 @@ body {
   font-weight: 500;
 }
 
-.detail-modal .detail-grid {
+.detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
   margin-top: 8px;
 }
 
-.detail-modal .detail-item {
+.detail-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -620,20 +613,20 @@ body {
   transition: all 0.2s ease;
 }
 
-.detail-modal .detail-item:hover {
+.detail-item:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: rgba(102, 126, 234, 0.2);
 }
 
-.detail-modal .detail-item span:first-child {
+.detail-item span:first-child {
   color: #64748b;
   font-weight: 600;
   font-size: 0.9rem;
   letter-spacing: -0.01em;
 }
 
-.detail-modal .detail-item span:last-child {
+.detail-item span:last-child {
   color: #1e293b;
   font-weight: 700;
   font-size: 0.95rem;
@@ -643,14 +636,14 @@ body {
   background-clip: text;
 }
 
-.detail-modal .matrix-grid {
+.matrix-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
   margin-top: 8px;
 }
 
-.detail-modal .matrix-item {
+.matrix-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -664,7 +657,7 @@ body {
   overflow: hidden;
 }
 
-.detail-modal .matrix-item::before {
+.matrix-item::before {
   content: '';
   position: absolute;
   top: 0;
@@ -674,20 +667,20 @@ body {
   background: linear-gradient(180deg, #667eea, #764ba2);
 }
 
-.detail-modal .matrix-item:hover {
+.matrix-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   border-color: rgba(102, 126, 234, 0.3);
 }
 
-.detail-modal .item-name {
+.item-name {
   color: #64748b;
   font-weight: 600;
   font-size: 0.9rem;
   letter-spacing: -0.01em;
 }
 
-.detail-modal .item-value {
+.item-value {
   color: #1e293b;
   font-weight: 700;
   font-size: 0.95rem;
@@ -827,6 +820,23 @@ body {
     color: #f9fafb;
   }
 
+  .modal-content {
+    background: #1f2937;
+    color: #f9fafb;
+  }
+
+  .modal-header {
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+    border-color: #374151;
+  }
+
+  .modal-header h3 {
+    color: #f9fafb;
+  }
+
+  .close-btn {
+    color: #d1d5db;
+  }
 
   .close-btn:hover {
     background: rgba(255, 255, 255, 0.1);
