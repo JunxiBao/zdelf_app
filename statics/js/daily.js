@@ -157,46 +157,61 @@ function initDaily(shadowRoot) {
   // 为doctor按钮添加固定定位样式到Shadow DOM
   const doctorStyle = document.createElement('style');
   doctorStyle.textContent = `
+    /* 固定 doctor 按钮到视口右下，不依赖父级布局 */
     #doctor-button {
       position: fixed !important;
       bottom: 24px !important;
-      right: -25px !important;
-      width: 50px !important;
-      height: 50px !important;
+      right: 16px !important; /* 固定像素，避免 hover 滑出导致的抖动 */
+      width: 56px !important;
+      height: 56px !important;
       cursor: pointer !important;
-      transition: right 0.3s ease !important;
-      opacity: 0.3 !important;
-      z-index: 1001 !important;
+      opacity: 0.85 !important;
+      z-index: 2147483646 !important; /* 置于最顶层，仅次于系统级 */
+      transform: translateZ(0) !important; /* 防止因 3D 合成产生的抖动 */
+      will-change: transform !important;
+      transition: opacity 0.2s ease !important;
     }
     #doctor-button:hover {
-      right: 0 !important;
       opacity: 1 !important;
     }
     #doctor-button img {
       width: 100% !important;
       height: 100% !important;
       display: block !important;
-      border-radius: 5px !important;
+      border-radius: 10px !important;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18) !important;
+      background: #fff !important;
     }
   `;
   dailyRoot.appendChild(doctorStyle);
 
   // 强制应用样式到doctor按钮
   setTimeout(() => {
-    const doctorButton = dailyRoot.querySelector('#doctor-button');
+    const host = dailyRoot.host || document.querySelector('.page-host');
+    const shadowRoot = host && host.shadowRoot ? host.shadowRoot : dailyRoot;
+    const doctorButton = shadowRoot && shadowRoot.querySelector('#doctor-button');
     if (doctorButton) {
-      doctorButton.style.position = 'fixed';
-      doctorButton.style.bottom = '24px';
-      doctorButton.style.right = '-25px';
-      doctorButton.style.width = '50px';
-      doctorButton.style.height = '50px';
-      doctorButton.style.zIndex = '1001';
-      doctorButton.style.cursor = 'pointer';
-      doctorButton.style.opacity = '0.3';
-      doctorButton.style.transition = 'right 0.3s ease';
-      console.log('✅ Doctor按钮样式已强制应用');
+      // 确保节点在 Shadow 根的直接子级，避免被内部滚动容器/transform 影响
+      try {
+        if (doctorButton.parentElement !== shadowRoot) {
+          shadowRoot.appendChild(doctorButton);
+        }
+      } catch(_) {}
+      const s = doctorButton.style;
+      s.position = 'fixed';
+      s.bottom = '24px';
+      s.right = '16px';
+      s.width = '56px';
+      s.height = '56px';
+      s.zIndex = '2147483646';
+      s.opacity = '0.85';
+      s.transition = 'opacity 0.2s ease';
+      s.transform = 'translateZ(0)';
+      console.log('✅ Doctor按钮样式与层级已固定');
+    } else {
+      console.warn('⚠️ 未找到 #doctor-button，稍后重试');
     }
-  }, 100);
+  }, 150);
 
   // Wire up doctor popup interactions scoped to Shadow DOM
   const doctorButton = dailyRoot.querySelector('#doctor-button');
@@ -436,7 +451,7 @@ function showDetailModal(fileId, type) {
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      padding: 20px !important;
+      padding: 20px 20px 100px 20px !important;
       box-sizing: border-box !important;
       width: 100vw !important;
       height: 100vh !important;
@@ -473,7 +488,7 @@ function showDetailModal(fileId, type) {
         0 0 0 1px rgba(255, 255, 255, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
       max-width: 90vw !important;
-      max-height: calc(100vh - 120px) !important;
+      max-height: calc(100vh - 200px) !important;
       width: 100% !important;
       max-width: 700px !important;
       overflow: hidden !important;
