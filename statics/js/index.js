@@ -88,7 +88,7 @@ if (document.fonts && document.fonts.ready) {
 const pageMap = [
   "../../src/daily.html",
   "../../src/notification.html",
-  "../../src/square.html",
+  "../../src/deepseek.html",
   "../../src/me.html",
 ];
 
