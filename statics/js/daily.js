@@ -364,7 +364,10 @@ function showDetailModal(fileId, type) {
         <button class="close-btn">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="loading">正在加载详情...</div>
+        <div class="loading-container">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">正在加载详情...</div>
+        </div>
       </div>
     </div>
   `;
@@ -805,6 +808,38 @@ function showDetailModal(fileId, type) {
       overflow-x: auto;
     }
 
+    /* 加载动画样式 */
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      min-height: 200px;
+    }
+
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(102, 126, 234, 0.2);
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    .loading-text {
+      color: #64748b;
+      font-size: 1rem;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     /* 暗色模式支持 */
     @media (prefers-color-scheme: dark) {
       .modal-content {
@@ -884,6 +919,15 @@ function showDetailModal(fileId, type) {
         background: #0f172a;
         color: #e2e8f0;
         border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .loading-spinner {
+        border: 4px solid rgba(102, 126, 234, 0.2);
+        border-top: 4px solid #667eea;
+      }
+
+      .loading-text {
+        color: #cbd5e1;
       }
     }
   `;
