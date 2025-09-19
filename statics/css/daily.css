@@ -4,6 +4,15 @@ body {
   margin: 0;
   padding: 0;
   font-family: "Arial", sans-serif;
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-height: 100vh;
+}
+
+/* 页面容器 */
+.page-container {
+  min-height: 100vh;
+  position: relative;
 }
 
 .greeting-container {
@@ -35,13 +44,16 @@ body {
 
 /* 数据卡片容器 */
 .data-cards-container {
-  position: fixed;
-  top: 120px;
+  position: relative;
+  top: 0;
   left: 20px;
   right: 20px;
-  bottom: 20px;
-  overflow-y: auto;
+  bottom: auto;
+  overflow-y: visible;
   z-index: 100;
+  margin-top: 120px;
+  margin-bottom: 100px;
+  min-height: calc(100vh - 220px);
   padding-right: 10px;
 }
 
@@ -893,10 +905,13 @@ body {
   }
 
   .data-cards-container {
-    top: 100px;
+    top: 0;
     left: 10px;
     right: 10px;
-    bottom: 10px;
+    bottom: auto;
+    margin-top: 100px;
+    margin-bottom: 80px;
+    min-height: calc(100vh - 180px);
     grid-template-columns: 1fr;
     gap: 16px;
     padding: 16px;

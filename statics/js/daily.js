@@ -331,6 +331,9 @@ function bindUnifiedCardEvents(container) {
   container.querySelectorAll('.unified-card').forEach(card => {
     card.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (window.__hapticImpact__) {
+        window.__hapticImpact__('Medium');
+      }
       const fileId = card.dataset.fileId;
       const type = card.dataset.type;
       showDetailModal(fileId, type);
@@ -341,6 +344,9 @@ function bindUnifiedCardEvents(container) {
   container.querySelectorAll('.view-detail-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (window.__hapticImpact__) {
+        window.__hapticImpact__('Medium');
+      }
       const card = btn.closest('.unified-card');
       const fileId = card.dataset.fileId;
       const type = card.dataset.type;
@@ -950,8 +956,19 @@ function showDetailModal(fileId, type) {
     modal.remove();
   };
   
-  closeBtn.addEventListener('click', closeModal);
-  backdrop.addEventListener('click', closeModal);
+  closeBtn.addEventListener('click', () => {
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Light');
+    }
+    closeModal();
+  });
+  
+  backdrop.addEventListener('click', () => {
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Light');
+    }
+    closeModal();
+  });
 
   // 加载详情数据
   fetch(`${__API_BASE__}/getjson/${type}/${fileId}`)
@@ -1006,8 +1023,19 @@ function showAllItemsModal(type) {
     modal.remove();
   };
   
-  closeBtn.addEventListener('click', closeModal);
-  backdrop.addEventListener('click', closeModal);
+  closeBtn.addEventListener('click', () => {
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Light');
+    }
+    closeModal();
+  });
+  
+  backdrop.addEventListener('click', () => {
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Light');
+    }
+    closeModal();
+  });
 
   // 加载全部数据
   fetch(`${__API_BASE__}/getjson/${type}?user_id=${encodeURIComponent(userId)}&limit=100`)
