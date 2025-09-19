@@ -17,7 +17,12 @@ body {
   padding: 0;
   overflow: hidden;
   height: 100vh;
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
 }
 
 /* =========================================================
@@ -51,6 +56,9 @@ body {
   padding: 0;
   background: transparent;
   z-index: 1;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* =========================================================
@@ -59,7 +67,8 @@ body {
 .message-list {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  overflow-x: hidden;
+  padding: 20px 20px 100px 20px;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 0;
   box-shadow: none;
@@ -72,6 +81,7 @@ body {
   backdrop-filter: blur(20px);
   border: none;
   position: relative;
+  min-height: 0;
 }
 
 /* =========================================================
@@ -157,8 +167,12 @@ body {
   backdrop-filter: blur(20px);
   border: none;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
-  position: relative;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 10;
+  width: 100%;
 }
 
 textarea {

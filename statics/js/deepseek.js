@@ -57,6 +57,10 @@ function loadDeepSeekContent(root) {
     height: calc(100vh - 80px);
     border: none;
     background: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1;
   `;
   
   iframe.onload = () => {
