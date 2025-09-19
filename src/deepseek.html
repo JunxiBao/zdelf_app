@@ -40,18 +40,6 @@
         }
       }
       
-      /* Doctor logo styles (static, non-interactive) */
-      .doctor-logo {
-        position: fixed;
-        top: 10px;
-        left: 12px;
-        width: 32px;
-        height: 32px;
-        z-index: 1001;
-        user-select: none;
-        pointer-events: none;
-        opacity: 0.9;
-      }
     </style>
 
     <!-- Third-party libs 外部库（defer 避免阻塞渲染） -->
@@ -72,10 +60,11 @@
 
   <body>
     <!-- Header 页头 -->
-    <header>您的健康AI助手</header>
-
-    <!-- Doctor logo 医生Logo（非交互，仅展示） -->
-    <img class="doctor-logo" src="../images/doctor.png" alt="Doctor logo" />
+    <header>
+      <!-- Doctor logo 医生Logo（非交互，仅展示） -->
+      <img class="doctor-logo" src="../images/doctor.png" alt="Doctor logo" />
+      您的健康AI助手
+    </header>
 
     <!-- Chat container 聊天容器 -->
     <div class="chat-container">
@@ -93,10 +82,10 @@
         <input
           type="text"
           id="userInput"
-          placeholder="请输入你的消息..."
+          placeholder="请输入您的健康问题..."
           autocomplete="off"
           enterkeyhint="send"
-          aria-label="输入你的消息"
+          aria-label="输入您的健康问题"
           onkeydown="if(event.key === 'Enter') sendMessage()"
         />
         <button
@@ -110,7 +99,7 @@
       </div>
       <!-- Reminder 提醒 -->
       <div class="context-reminder subtle" role="note" aria-label="上下文提醒">
-        ⚠️ 提醒：此AI不会记录上下文。
+        💡 提示：AI助手可以帮您分析健康数据、提供饮食建议、解答健康疑问
       </div>
     </div>
 
