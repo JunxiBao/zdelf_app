@@ -160,7 +160,7 @@ header::before {
   z-index: 10;
 }
 
-input[type="text"] {
+textarea {
   flex: 1;
   padding: 16px 20px;
   font-size: 16px;
@@ -171,16 +171,22 @@ input[type="text"] {
   color: #1e293b;
   transition: all 0.3s ease;
   font-family: inherit;
+  min-height: 52px;
+  max-height: 120px;
+  resize: none;
+  overflow-y: auto;
+  line-height: 1.5;
+  vertical-align: top;
 }
 
-input[type="text"]:focus {
+textarea:focus {
   border-color: #667eea;
   background: white;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   transform: translateY(-1px);
 }
 
-input[type="text"]::placeholder {
+textarea::placeholder {
   color: #94a3b8;
 }
 
@@ -226,29 +232,6 @@ button:active {
   box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
 }
 
-/* =========================================================
-   Context Reminder
-========================================================= */
-.context-reminder {
-  text-align: center;
-  padding: 8px 20px;
-  background: rgba(102, 126, 234, 0.1);
-  border-radius: 0;
-  color: #667eea;
-  font-size: 0.8rem;
-  margin: 0;
-  border: none;
-  border-top: 1px solid rgba(102, 126, 234, 0.2);
-  position: relative;
-  z-index: 10;
-}
-
-.context-reminder.subtle {
-  font-size: 0.75rem;
-  opacity: 0.7;
-  background: rgba(102, 126, 234, 0.05);
-  border-top: 1px solid rgba(102, 126, 234, 0.1);
-}
 
 /* =========================================================
    Animations
@@ -292,9 +275,10 @@ button:active {
     padding: 12px 16px;
   }
   
-  input[type="text"] {
+  textarea {
     padding: 14px 16px;
     font-size: 15px;
+    min-height: 48px;
   }
   
   button {
@@ -335,9 +319,10 @@ button:active {
     padding: 10px 12px;
   }
   
-  input[type="text"] {
+  textarea {
     padding: 12px 14px;
     font-size: 14px;
+    min-height: 44px;
   }
   
   button {
@@ -394,31 +379,21 @@ button:active {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
   }
   
-  input[type="text"] {
+  textarea {
     background: #475569;
     color: #f1f5f9;
     border-color: #64748b;
   }
   
-  input[type="text"]:focus {
+  textarea:focus {
     background: #334155;
     border-color: #667eea;
   }
   
-  input[type="text"]::placeholder {
+  textarea::placeholder {
     color: #94a3b8;
   }
   
-  .context-reminder {
-    background: rgba(102, 126, 234, 0.2);
-    color: #a5b4fc;
-    border-color: rgba(102, 126, 234, 0.3);
-  }
-  
-  .context-reminder.subtle {
-    background: rgba(102, 126, 234, 0.1);
-    border-color: rgba(102, 126, 234, 0.2);
-  }
 }
 
 /* =========================================================

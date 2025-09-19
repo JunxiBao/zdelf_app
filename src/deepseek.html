@@ -79,15 +79,14 @@
 
       <!-- Input area 输入区 -->
       <div class="input-container">
-        <input
-          type="text"
+        <textarea
           id="userInput"
           placeholder="请输入您的健康问题..."
           autocomplete="off"
-          enterkeyhint="send"
           aria-label="输入您的健康问题"
-          onkeydown="if(event.key === 'Enter') sendMessage()"
-        />
+          onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"
+          rows="1"
+        ></textarea>
         <button
           type="button"
           id="sendBtn"
@@ -106,6 +105,15 @@
           marked.setOptions({ breaks: true, mangle: false, headerIds: false });
         }
         generateGreeting();
+        
+        // 自动调整textarea高度
+        const textarea = document.getElementById('userInput');
+        if (textarea) {
+          textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+          });
+        }
       });
 
       /**
