@@ -154,6 +154,33 @@ function initDaily(shadowRoot) {
   // Load and display user data cards / 加载并显示用户数据卡片
   loadUserDataCards();
 
+  // 为doctor按钮添加固定定位样式到Shadow DOM
+  const doctorStyle = document.createElement('style');
+  doctorStyle.textContent = `
+    #doctor-button {
+      position: fixed !important;
+      bottom: 24px !important;
+      right: -25px !important;
+      width: 50px !important;
+      height: 50px !important;
+      cursor: pointer !important;
+      transition: right 0.3s ease !important;
+      opacity: 0.3 !important;
+      z-index: 1001 !important;
+    }
+    #doctor-button:hover {
+      right: 0 !important;
+      opacity: 1 !important;
+    }
+    #doctor-button img {
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+      border-radius: 5px !important;
+    }
+  `;
+  dailyRoot.appendChild(doctorStyle);
+
   // Wire up doctor popup interactions scoped to Shadow DOM
   const doctorButton = dailyRoot.querySelector('#doctor-button');
   const doctorPopup = dailyRoot.querySelector('#doctor-popup');
@@ -940,17 +967,12 @@ function showDetailModal(fileId, type) {
   
   modal.appendChild(style);
   
+  // 将弹窗添加到主文档，而不是 Shadow DOM，以便正确控制滚动
+  document.body.appendChild(modal);
+  
   // 禁用页面滚动
   document.body.style.overflow = 'hidden';
   document.documentElement.style.overflow = 'hidden';
-
-  // 将弹窗添加到 Shadow DOM 的根元素中，而不是 document.body
-  const shadowRoot = document.querySelector('.page-host')?.shadowRoot;
-  if (shadowRoot) {
-    shadowRoot.appendChild(modal);
-  } else {
-    document.body.appendChild(modal);
-  }
 
   // 绑定关闭事件
   const closeBtn = modal.querySelector('.close-btn');
@@ -1020,11 +1042,12 @@ function showAllItemsModal(type) {
     </div>
   `;
 
+  // 将弹窗添加到主文档，而不是 Shadow DOM，以便正确控制滚动
+  document.body.appendChild(modal);
+  
   // 禁用页面滚动
   document.body.style.overflow = 'hidden';
   document.documentElement.style.overflow = 'hidden';
-
-  document.body.appendChild(modal);
 
   // 绑定关闭事件
   const closeBtn = modal.querySelector('.close-btn');
