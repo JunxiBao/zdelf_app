@@ -188,7 +188,7 @@ function handleModalKeydown(event) {
 }
 
 // 保存所有餐次数据
-function saveAllMeals() {
+async function saveAllMeals() {
     try {
         window.__hapticImpact__ && window.__hapticImpact__('Light');
     } catch(_) {}
@@ -252,10 +252,13 @@ function saveAllMeals() {
         };
 
         // 上传到后端数据库
-        uploadDietToServer(exportData);
-
-        // 显示成功提示
-        showToast(`成功保存 ${validMealsCount} 餐食物记录！`);
+        try {
+            await uploadDietToServer(exportData);
+            showToast(`成功保存 ${validMealsCount} 餐食物记录并上传云端！`);
+        } catch (uploadError) {
+            console.warn('饮食记录上传失败:', uploadError);
+            showToast(`已保存本地，云端上传失败`);
+        }
 
         // 成功保存的强震动反馈
         try {
@@ -467,76 +470,98 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// 解析用户身份信息
+// 解析用户身份：本地缓存优先，不足则通过 /readdata 查询
 async function resolveUserIdentity() {
-    // 优先从localStorage获取userId，与me.js保持一致
-    const storedId = localStorage.getItem('userId') || 
-                   localStorage.getItem('UserID') || 
-                   sessionStorage.getItem('userId') || 
-                   sessionStorage.getItem('UserID');
-    
-    if (!storedId) {
-        console.warn('[diet] 未找到用户ID');
-        return { user_id: null, username: null };
+    // 1) 本地 user_profile
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem('user_profile') || 'null'); } catch(_) { cached = null; }
+
+    let user_id = '';
+    let username = '';
+
+    if (cached) {
+        user_id = (cached.user_id || cached.id || '').toString();
+        // 忽略缓存中的 username，统一通过 user_id 查询服务端获取
     }
 
+    // 2) 与 me.js 保持一致：优先从 localStorage/sessionStorage 读取 userId/UserID
     try {
-        // 使用/readdata接口获取用户名
-        const response = await fetch('/readdata', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                table_name: 'users', 
-                user_id: storedId 
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const storedId =
+          localStorage.getItem('userId') ||
+          sessionStorage.getItem('userId') ||
+          localStorage.getItem('UserID') ||
+          sessionStorage.getItem('UserID') || '';
+        if (storedId) {
+            user_id = storedId.toString();
         }
-        
-        const result = await response.json();
-        if (result.success && result.data && result.data.length > 0) {
-            const userData = result.data[0];
-            return {
-                user_id: storedId,
-                username: userData.username || '未知用户'
-            };
+    } catch(_) {}
+
+    // 3) 如果 user_id 存在，通过 /readdata 获取 username
+    if (user_id) {
+        try {
+            var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
+            if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
+            
+            const resp = await fetch(API_BASE + '/readdata', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id })
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.success && data.data && data.data.username) {
+                    username = data.data.username;
+                } else {
+                    console.warn('[diet] /readdata 返回数据格式异常:', data);
+                }
+            } else {
+                console.warn('[diet] /readdata 请求失败:', resp.status, resp.statusText);
+            }
+        } catch (e) {
+            console.warn('[diet] 通过 user_id 调用 /readdata 失败:', e);
         }
-        
-        return { user_id: storedId, username: '未知用户' };
-    } catch (error) {
-        console.warn('[diet] 获取用户信息失败:', error);
-        return { user_id: storedId, username: '未知用户' };
+        // 查询失败时，至少返回 user_id，username 留空
+        return { user_id, username: '' };
     }
+
+    // 兜底为空
+    return { user_id: '', username: '' };
 }
 
 // 上传饮食数据到服务器
 async function uploadDietToServer(exportData) {
     try {
-        // 获取用户身份信息
-        const { user_id, username } = await resolveUserIdentity();
-        
+        // 获取用户身份信息 - 使用与metrics.js相同的函数
+        const identity = await resolveUserIdentity();
+        const user_id = identity.user_id || '';
+        const username = identity.username || '';
+
         if (!user_id) {
             console.warn('[diet] 无法获取用户ID，跳过服务器上传');
             return;
         }
 
-        // 构建上传数据
-        const uploadData = {
-            user_id: user_id,
-            username: username,
-            content: JSON.stringify(exportData),
-            file_name: `diet_${new Date().toISOString().slice(0, 10)}.json`
+        // 构建payload - 使用与metrics.js相同的格式
+        const payload = {
+            exportInfo: {
+                exportTime: new Date().toISOString(),
+                version: '1.0',
+                appName: '紫癜精灵',
+                dataType: 'diet_record'
+            },
+            dietData: exportData.dietData
         };
 
-        console.log('[diet] 上传数据到服务器:', uploadData);
+        console.log('[diet] 上传数据到服务器:', { user_id, username, payload });
 
-        // 上传到后端
-        const response = await fetch('/uploadjson/diet', {
+        // 上传到后端 - 使用与metrics.js相同的API地址和格式
+        var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
+        if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
+        
+        const response = await fetch(API_BASE + '/uploadjson/diet', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(uploadData)
+            body: JSON.stringify({ user_id, username, payload })
         });
 
         if (!response.ok) {
@@ -548,9 +573,11 @@ async function uploadDietToServer(exportData) {
             console.log('[diet] 饮食数据上传成功:', result);
         } else {
             console.warn('[diet] 饮食数据上传失败:', result.message);
+            throw new Error(result.message || '上传失败');
         }
     } catch (error) {
-        console.error('[diet] 上传饮食数据失败:', error);
+        console.warn('[diet] 上传饮食数据异常:', error);
+        throw error; // 重新抛出异常，让调用者处理
     }
 }
 

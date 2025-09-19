@@ -494,8 +494,8 @@ body {
     
     .urinalysis-select,
     .urinalysis-value {
-        background: #111827;
-        border-color: #374151;
+        background: #1e1e1e;
+        border-color: #444;
         color: #f9fafb;
     }
     
@@ -503,6 +503,7 @@ body {
     .urinalysis-value:focus {
         border-color: #a78bfa;
         box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+        background: #222;
     }
     
     .unit-display {

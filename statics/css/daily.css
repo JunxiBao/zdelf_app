@@ -122,14 +122,58 @@ body {
 }
 
 .card-type-badge {
-  background: linear-gradient(135deg, #6200ea 0%, #7c3aed 100%);
-  color: white;
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: white;
+}
+
+/* 健康指标 - 蓝色系 */
+.unified-card[data-type="metrics"] .card-type-badge {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* 饮食记录 - 绿色系 */
+.unified-card[data-type="diet"] .card-type-badge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+/* 病例记录 - 橙色系 */
+.unified-card[data-type="case"] .card-type-badge {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* 默认类型 - 紫色系 */
+.unified-card .card-type-badge {
+  background: linear-gradient(135deg, #6200ea 0%, #7c3aed 100%);
+  box-shadow: 0 2px 8px rgba(98, 0, 234, 0.3);
+}
+
+/* 卡片悬停效果 */
+.unified-card:hover .card-type-badge {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+/* 健康指标悬停效果 */
+.unified-card[data-type="metrics"]:hover .card-type-badge {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* 饮食记录悬停效果 */
+.unified-card[data-type="diet"]:hover .card-type-badge {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* 病例记录悬停效果 */
+.unified-card[data-type="case"]:hover .card-type-badge {
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
 }
 
 .card-date {
@@ -771,9 +815,32 @@ body {
     border-color: rgba(167, 139, 250, 0.1);
   }
 
-  .card-type-badge {
+  /* 健康指标 - 深色模式蓝色系 */
+  .unified-card[data-type="metrics"] .card-type-badge {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    color: #1e293b;
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.4);
+  }
+
+  /* 饮食记录 - 深色模式绿色系 */
+  .unified-card[data-type="diet"] .card-type-badge {
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+    color: #064e3b;
+    box-shadow: 0 2px 8px rgba(52, 211, 153, 0.4);
+  }
+
+  /* 病例记录 - 深色模式橙色系 */
+  .unified-card[data-type="case"] .card-type-badge {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #92400e;
+    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
+  }
+
+  /* 默认类型 - 深色模式紫色系 */
+  .unified-card .card-type-badge {
     background: linear-gradient(135deg, #a78bfa 0%, #c4b5fd 100%);
     color: #1f2937;
+    box-shadow: 0 2px 8px rgba(167, 139, 250, 0.4);
   }
 
   .card-date {

@@ -1014,8 +1014,8 @@ style.textContent = `
     /* 深色模式适配 */
     @media (prefers-color-scheme: dark) {
         .custom-select {
-            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-            border-color: #374151;
+            background: #1e1e1e;
+            border-color: #444;
             color: #f9fafb;
         }
 
@@ -1024,7 +1024,7 @@ style.textContent = `
         .custom-select:focus {
             border-color: #a78bfa;
             box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
-            background: linear-gradient(135deg, #1f2937 0%, #1e1b4b 100%);
+            background: #222;
         }
 
         .select-arrow {
@@ -1036,12 +1036,12 @@ style.textContent = `
         }
 
         .custom-select option {
-            background: #1f2937;
+            background: #1e1e1e;
             color: #f9fafb;
         }
 
         .custom-select option:hover {
-            background: #1e1b4b;
+            background: #333;
             color: #a78bfa;
         }
 
