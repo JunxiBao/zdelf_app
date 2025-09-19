@@ -134,17 +134,22 @@ function initSquare(rootEl) {
   const root = rootEl || document;
   currentShadowRoot = root;
 
-  // 直接加载DeepSeek.html内容
-  loadDeepSeekContent(root);
+  // 如果是在Shadow DOM中，直接加载DeepSeek.html内容
+  if (rootEl && rootEl !== document) {
+    loadDeepSeekContent(root);
+  } else {
+    // 如果直接访问DeepSeek.html，不需要额外处理
+    console.log('✅ 直接访问DeepSeek.html，无需额外加载');
+  }
 
   console.log('✅ initSquare 执行，AI助手页面已初始化');
 }
 
 /**
- * 加载DeepSeek.html内容
+ * 加载DeepSeek.html内容（仅在Shadow DOM中使用）
  */
 function loadDeepSeekContent(root) {
-  // 创建iframe来直接加载DeepSeek.html
+  // 创建iframe来加载DeepSeek.html
   const iframe = document.createElement('iframe');
   iframe.src = '../src/deepseek.html';
   iframe.style.cssText = `
