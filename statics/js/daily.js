@@ -940,6 +940,10 @@ function showDetailModal(fileId, type) {
   
   modal.appendChild(style);
   
+  // 禁用页面滚动
+  document.body.style.overflow = 'hidden';
+  document.documentElement.style.overflow = 'hidden';
+
   // 将弹窗添加到 Shadow DOM 的根元素中，而不是 document.body
   const shadowRoot = document.querySelector('.page-host')?.shadowRoot;
   if (shadowRoot) {
@@ -953,6 +957,9 @@ function showDetailModal(fileId, type) {
   const backdrop = modal.querySelector('.modal-backdrop');
   
   const closeModal = () => {
+    // 恢复页面滚动
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
     modal.remove();
   };
   
@@ -1013,6 +1020,10 @@ function showAllItemsModal(type) {
     </div>
   `;
 
+  // 禁用页面滚动
+  document.body.style.overflow = 'hidden';
+  document.documentElement.style.overflow = 'hidden';
+
   document.body.appendChild(modal);
 
   // 绑定关闭事件
@@ -1020,6 +1031,9 @@ function showAllItemsModal(type) {
   const backdrop = modal.querySelector('.modal-backdrop');
   
   const closeModal = () => {
+    // 恢复页面滚动
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
     modal.remove();
   };
   
