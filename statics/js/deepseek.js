@@ -116,3 +116,86 @@ function addMessage(text, sender, returnElement = false) {
   Prism.highlightAll();
   return returnElement ? msgDiv : undefined;
 }
+
+// ========================================
+// Square.js functionality integration
+// 集成square.js的功能
+// ========================================
+
+// Array of teardown callbacks to run when leaving the page
+let cleanupFns = [];
+let currentShadowRoot = null;
+
+/**
+ * Initialize the AI Assistant page UI.
+ * @param {Document|ShadowRoot} rootEl - Scope for DOM queries.
+ */
+function initSquare(rootEl) {
+  const root = rootEl || document;
+  currentShadowRoot = root;
+
+  // 直接加载DeepSeek.html内容
+  loadDeepSeekContent(root);
+
+  console.log('✅ initSquare 执行，AI助手页面已初始化');
+}
+
+/**
+ * 加载DeepSeek.html内容
+ */
+function loadDeepSeekContent(root) {
+  // 创建iframe来直接加载DeepSeek.html
+  const iframe = document.createElement('iframe');
+  iframe.src = '../src/deepseek.html';
+  iframe.style.cssText = `
+    width: 100%;
+    height: calc(100vh - 80px);
+    border: none;
+    background: white;
+  `;
+  
+  iframe.onload = () => {
+    console.log('✅ DeepSeek.html 加载完成');
+  };
+  
+  iframe.onerror = () => {
+    console.error('❌ DeepSeek.html 加载失败');
+    root.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #333;">
+        <h3>AI助手暂时无法访问</h3>
+        <p>请检查网络连接或稍后重试</p>
+      </div>
+    `;
+  };
+
+  // 清空root内容并添加iframe
+  root.innerHTML = '';
+  root.appendChild(iframe);
+}
+
+/**
+ * Cleanup function: run all stored teardown callbacks.
+ * Called before leaving the page to prevent leaks.
+ */
+function destroySquare() {
+  // 清理iframe
+  if (currentShadowRoot) {
+    const iframe = currentShadowRoot.querySelector('iframe');
+    if (iframe) {
+      iframe.src = '';
+      iframe.remove();
+    }
+  }
+
+  // 统一执行清理函数
+  cleanupFns.forEach(fn => { try { fn(); } catch (_) {} });
+  cleanupFns = [];
+  currentShadowRoot = null;
+
+  console.log('🧹 destroySquare 清理完成');
+}
+
+// Expose lifecycle functions to global scope for loader
+console.debug("[deepseek] exposing lifecycle: initSquare/destroySquare");
+window.initSquare = initSquare;
+window.destroySquare = destroySquare;

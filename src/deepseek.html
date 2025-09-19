@@ -39,6 +39,19 @@
           color: #aaa;
         }
       }
+      
+      /* Doctor logo styles (static, non-interactive) */
+      .doctor-logo {
+        position: fixed;
+        top: 10px;
+        left: 12px;
+        width: 32px;
+        height: 32px;
+        z-index: 1001;
+        user-select: none;
+        pointer-events: none;
+        opacity: 0.9;
+      }
     </style>
 
     <!-- Third-party libs 外部库（defer 避免阻塞渲染） -->
@@ -60,6 +73,9 @@
   <body>
     <!-- Header 页头 -->
     <header>您的健康AI助手</header>
+
+    <!-- Doctor logo 医生Logo（非交互，仅展示） -->
+    <img class="doctor-logo" src="../images/doctor.png" alt="Doctor logo" />
 
     <!-- Chat container 聊天容器 -->
     <div class="chat-container">

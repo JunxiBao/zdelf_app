@@ -211,7 +211,7 @@ function loadPage(index) {
       const scriptMap = [
         "../../statics/js/daily.js",
         "../../statics/js/notification.js",
-        "../../statics/js/square.js",
+        "../../statics/js/deepseek.js",
         "../../statics/js/me.js",
       ];
 
