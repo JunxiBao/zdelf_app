@@ -23,36 +23,7 @@ body {
 /* =========================================================
    Header Styles
 ========================================================= */
-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 16px 20px;
-  text-align: center;
-  font-size: 1.3rem;
-  font-weight: 700;
-  box-shadow: 0 2px 16px rgba(102, 126, 234, 0.2);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  overflow: hidden;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(255, 255, 255, 0.1) 100%);
-  pointer-events: none;
-}
+header { display: none; }
 
 /* Doctor logo styles */
 .doctor-logo {
@@ -72,7 +43,7 @@ header::before {
 ========================================================= */
 .chat-container {
   position: fixed;
-  top: 60px;
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
@@ -108,7 +79,8 @@ header::before {
    Message Styles
 ========================================================= */
 .message {
-  display: inline-block;
+  display: flex;
+  align-items: flex-end;
   padding: 16px 20px;
   border-radius: 20px;
   word-wrap: break-word;
@@ -126,6 +98,12 @@ header::before {
   align-self: flex-end;
   border-radius: 20px 20px 6px 20px;
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+  display: inline-block;
+  max-width: 85%;
+}
+
+.message.user .msg-content {
+  max-width: 100%;
 }
 
 .message.bot {
@@ -135,11 +113,35 @@ header::before {
   border-radius: 20px 20px 20px 6px;
   border: 1px solid rgba(59, 130, 246, 0.2);
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.15);
+  display: flex;
+  align-items: flex-end;
+  max-width: 85%;
 }
+
+/* avatar styles */
+.message .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px; /* 直角/轻圆角，展示doctor原图比例 */
+  flex: 0 0 36px;
+  object-fit: contain;
+  background: transparent;
+  box-shadow: none;
+}
+
+.message.bot .avatar {
+  margin-right: 10px;
+}
+
+.message.user .avatar { display: none; }
 
 .message .msg-content {
   position: relative;
   z-index: 1;
+}
+
+.message.bot .msg-content {
+  max-width: calc(100% - 46px);
 }
 
 /* =========================================================

@@ -59,12 +59,8 @@
   </head>
 
   <body>
-    <!-- Header 页头 -->
-    <header>
-      <!-- Doctor logo 医生Logo（非交互，仅展示） -->
-      <img class="doctor-logo" src="../images/doctor.png" alt="Doctor logo" />
-      您的健康AI助手
-    </header>
+    <!-- Header 页头（去掉标题与顶部logo，占位用于固定布局） -->
+    <header></header>
 
     <!-- Chat container 聊天容器 -->
     <div class="chat-container">
@@ -356,6 +352,16 @@
         const msgList = document.getElementById("messageList");
         const msgDiv = document.createElement("div");
         msgDiv.className = "message " + sender;
+
+        // avatar（仅机器人显示头像，用户不显示）
+        let avatar = null;
+        if (sender === 'bot') {
+          avatar = document.createElement('img');
+          avatar.className = 'avatar';
+          avatar.src = '../images/doctor.png';
+          avatar.alt = 'Doctor';
+        }
+
         const content = document.createElement("div");
         content.className = "msg-content";
 
@@ -366,6 +372,8 @@
           content.textContent = text;
         }
 
+        // iMessage-like layout: avatar + bubble（仅bot带头像）
+        if (avatar) msgDiv.appendChild(avatar);
         msgDiv.appendChild(content);
         msgList.appendChild(msgDiv);
         msgList.scrollTop = msgList.scrollHeight;
