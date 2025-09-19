@@ -40,6 +40,132 @@
         }
       }
       
+      /* 引用样式 */
+      .citations {
+        margin-top: 16px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-left: 4px solid #007bff;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+      
+      .citations h4 {
+        margin: 0 0 8px 0;
+        color: #007bff;
+        font-size: 0.95em;
+      }
+      
+      .citations ol {
+        margin: 0;
+        padding-left: 20px;
+      }
+      
+      .citations li {
+        margin-bottom: 6px;
+        line-height: 1.4;
+      }
+      
+      .citations a {
+        color: #007bff;
+        text-decoration: none;
+      }
+      
+      .citations a:hover {
+        text-decoration: underline;
+      }
+      
+      .disclaimer {
+        margin-top: 12px;
+        padding: 10px;
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 4px;
+        font-size: 0.9em;
+        color: #856404;
+      }
+      
+      @media (prefers-color-scheme: dark) {
+        .citations {
+          background: #2d3748;
+          border-left-color: #63b3ed;
+        }
+        
+        .citations h4 {
+          color: #63b3ed;
+        }
+        
+        .citations a {
+          color: #63b3ed;
+        }
+        
+        .disclaimer {
+          background: #744210;
+          border-color: #d69e2e;
+          color: #fbd38d;
+        }
+      }
+      
+      /* 按钮组样式 */
+      .button-group {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      
+      #clearBtn {
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.2s;
+      }
+      
+      #clearBtn:hover {
+        background: #5a6268;
+      }
+      
+      #sendBtn {
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.2s;
+      }
+      
+      #sendBtn:hover {
+        background: #0056b3;
+      }
+      
+      #sendBtn:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+      }
+      
+      @media (prefers-color-scheme: dark) {
+        #clearBtn {
+          background: #495057;
+        }
+        
+        #clearBtn:hover {
+          background: #343a40;
+        }
+        
+        #sendBtn {
+          background: #0d6efd;
+        }
+        
+        #sendBtn:hover {
+          background: #0b5ed7;
+        }
+      }
+      
     </style>
 
     <!-- Third-party libs 外部库（defer 避免阻塞渲染） -->
@@ -80,14 +206,25 @@
           onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"
           rows="1"
         ></textarea>
-        <button
-          type="button"
-          id="sendBtn"
-          onclick="sendMessage()"
-          aria-label="发送消息"
-        >
-          发送
-        </button>
+        <div class="button-group">
+          <button
+            type="button"
+            id="clearBtn"
+            onclick="clearSession()"
+            aria-label="清除会话"
+            title="清除对话历史"
+          >
+            🗑️
+          </button>
+          <button
+            type="button"
+            id="sendBtn"
+            onclick="sendMessage()"
+            aria-label="发送消息"
+          >
+            发送
+          </button>
+        </div>
     
 
     <script>
@@ -97,6 +234,10 @@
         if (window.marked) {
           marked.setOptions({ breaks: true, mangle: false, headerIds: false });
         }
+        
+        // 恢复会话ID
+        restoreSessionId();
+        
         generateGreeting();
         
         // 自动调整textarea高度
@@ -120,16 +261,81 @@
           : html;
       }
 
+      // 会话管理
+      let currentSessionId = null;
+      
+      // 生成会话ID
+      function generateSessionId() {
+        return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      }
+      
+      // 获取或创建会话ID
+      function getSessionId() {
+        if (!currentSessionId) {
+          currentSessionId = generateSessionId();
+          // 保存到localStorage
+          localStorage.setItem('qwen_session_id', currentSessionId);
+        }
+        return currentSessionId;
+      }
+      
+      // 从localStorage恢复会话ID
+      function restoreSessionId() {
+        const saved = localStorage.getItem('qwen_session_id');
+        if (saved) {
+          currentSessionId = saved;
+        }
+      }
+      
+      // 清除会话
+      async function clearSession() {
+        try {
+          const apiBase = window.__API_BASE__ || (window.parent && window.parent.__API_BASE__) || 'https://app.zdelf.cn';
+          const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
+          
+          const response = await fetch(`${baseUrl}/qwen/clear_session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: currentSessionId })
+          });
+          
+          if (response.ok) {
+            // 清除本地会话ID
+            currentSessionId = null;
+            localStorage.removeItem('qwen_session_id');
+            
+            // 清空消息列表
+            const msgList = document.getElementById("messageList");
+            msgList.innerHTML = '';
+            
+            // 重新生成问候
+            generateGreeting();
+            
+            console.log('会话已清除');
+          }
+        } catch (error) {
+          console.error('清除会话失败:', error);
+        }
+      }
+
       // 初始问候
       function generateGreeting() {
-        const hour = new Date().getHours();
-        let greet = "您好！有什么健康问题尽管问我哦~";
-        if (hour >= 5 && hour < 11)
-          greet = "早上好 ☀️，我可以帮你分析饮食、作息或体检报告。";
-        else if (hour < 14) greet = "中午好 🍵，注意补水，有什么想问的？";
-        else if (hour < 18)
-          greet = "下午好 🌿，需要我看看你的训练/饮食计划吗？";
-        else greet = "晚上好 🌙，今天感觉怎么样？我可以帮你做个总结。";
+        const now = new Date();
+        const hour = now.getHours();
+        console.log('当前时间:', now.toLocaleString(), '小时:', hour);
+        
+        let greet = "您好！我是您的健康助手，有什么健康问题尽管问我哦~";
+        if (hour >= 5 && hour < 11) {
+          greet = "早上好 ☀️，祝你有愉快的一天！有什么健康问题可以问我";
+        } else if (hour >= 11 && hour < 14) {
+          greet = "中午好 🍵，注意补水，有什么健康问题想问的？";
+        } else if (hour >= 14 && hour < 18) {
+          greet = "下午好 🌿，上午过得如何呢？有什么健康问题可以咨询我";
+        } else if (hour >= 18 && hour < 22) {
+          greet = "晚上好 🌙，今天感觉怎么样？可以准备休息喽～有什么健康问题可以问我";
+        } else {
+          greet = "夜深了 🌃，美好的一天过去了，早点休息哦～有什么健康问题可以问我";
+        }
         addMessage(greet, "bot");
       }
 
@@ -161,13 +367,23 @@
         const thinkingMsg = addTypingBubble();
 
         try {
+          // 获取API基础路径
+          const apiBase = window.__API_BASE__ || (window.parent && window.parent.__API_BASE__) || 'https://app.zdelf.cn';
+          const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
+          
+          // 获取会话ID
+          const sessionId = getSessionId();
+          
           // 首先尝试使用流式接口
           const response = await fetch(
-            "/deepseek/chat_stream",
+            `${baseUrl}/qwen/chat_stream`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ message }),
+              body: JSON.stringify({ 
+                message: message,
+                session_id: sessionId
+              }),
             }
           );
 
@@ -181,11 +397,11 @@
             if (window.Prism) Prism.highlightAll();
           } else {
             // 流式接口失败，回退到普通接口 + 打字机效果
-            await fallbackToLegacy(thinkingMsg, message);
+            await fallbackToLegacy(thinkingMsg, message, sessionId);
           }
         } catch (error) {
           // 网络错误，也回退到普通接口
-          await fallbackToLegacy(thinkingMsg, message);
+          await fallbackToLegacy(thinkingMsg, message, getSessionId());
         } finally {
           inputEl.disabled = false;
           btn.disabled = false;
@@ -194,14 +410,21 @@
       }
 
       // 回退到普通接口 + 打字机效果
-      async function fallbackToLegacy(thinkingMsg, message) {
+      async function fallbackToLegacy(thinkingMsg, message, sessionId) {
         try {
+          // 获取API基础路径
+          const apiBase = window.__API_BASE__ || (window.parent && window.parent.__API_BASE__) || 'https://app.zdelf.cn';
+          const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
+          
           const response = await fetch(
-            "/deepseek/chat",
+            `${baseUrl}/qwen/chat`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ message }),
+              body: JSON.stringify({ 
+                message: message,
+                session_id: sessionId
+              }),
             }
           );
 
@@ -266,6 +489,22 @@
                     // 实时显示当前内容
                     content.innerHTML = renderMarkdownSafe(fullText);
 
+                    // 滚动到底部
+                    const msgList = document.getElementById("messageList");
+                    msgList.scrollTop = msgList.scrollHeight;
+                  } else if (data.type === "citations" && data.content) {
+                    // 处理引用信息
+                    fullText += data.content;
+                    content.innerHTML = renderMarkdownSafe(fullText);
+                    
+                    // 滚动到底部
+                    const msgList = document.getElementById("messageList");
+                    msgList.scrollTop = msgList.scrollHeight;
+                  } else if (data.type === "disclaimer" && data.content) {
+                    // 处理免责声明
+                    fullText += data.content;
+                    content.innerHTML = renderMarkdownSafe(fullText);
+                    
                     // 滚动到底部
                     const msgList = document.getElementById("messageList");
                     msgList.scrollTop = msgList.scrollHeight;

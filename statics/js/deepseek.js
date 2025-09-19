@@ -1,10 +1,11 @@
 /**
  * deepseek.js — AI Assistant page logic (runs inside a Shadow DOM)
- * AI助手页脚本：在 Shadow DOM 内运行
+ * AI助手页脚本：在 Shadow DOM 内运行，现在使用通义千问API
  *
  * Responsibilities / 职责
  * - Load and display DeepSeek.html content / 加载并显示DeepSeek.html内容
  * - Expose lifecycle hooks: initDeepseek(shadowRoot), destroyDeepseek() / 导出生命周期钩子
+ * - Support context-aware conversations with Qwen API / 支持通义千问的上下文对话
  *
  * This module is loaded dynamically by the shell (index.js) and receives the
  * page's ShadowRoot via initDeepseek(shadowRoot). All DOM lookups must be scoped
@@ -36,10 +37,11 @@ let deepseekRoot = document; // Will be set by initDeepseek(shadowRoot) / 将由
 function initDeepseek(shadowRoot) {
   // Cache and use the ShadowRoot / 记录并使用 ShadowRoot
   deepseekRoot = shadowRoot || document;
+  currentShadowRoot = shadowRoot;
   console.log('✅ initDeepseek 执行', { hasShadowRoot: !!shadowRoot });
 
   // 直接加载DeepSeek.html内容
-  loadDeepSeekContent(deepseekRoot);
+  loadDeepSeekContent(shadowRoot);
 
   console.log('✅ initDeepseek 执行，AI助手页面已初始化');
 }
@@ -64,11 +66,17 @@ function loadDeepSeekContent(root) {
   `;
   
   iframe.onload = () => {
-    console.log('✅ DeepSeek.html 加载完成');
+    console.log('✅ AI助手页面加载完成 (使用通义千问API)');
+    // 将API基础路径传递给iframe
+    try {
+      iframe.contentWindow.__API_BASE__ = window.__API_BASE__ || 'https://app.zdelf.cn';
+    } catch (e) {
+      console.warn('无法设置iframe API路径:', e);
+    }
   };
   
   iframe.onerror = () => {
-    console.error('❌ DeepSeek.html 加载失败');
+    console.error('❌ AI助手页面加载失败');
     root.innerHTML = `
       <div style="text-align: center; padding: 40px; color: #333;">
         <h3>AI助手暂时无法访问</h3>
