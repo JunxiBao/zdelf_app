@@ -46,15 +46,17 @@ body {
 .data-cards-container {
   position: relative;
   top: 0;
-  left: 20px;
-  right: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 40px);
+  max-width: 800px;
   bottom: auto;
   overflow-y: visible;
   z-index: 100;
   margin-top: 120px;
   margin-bottom: 100px;
   min-height: calc(100vh - 220px);
-  padding-right: 10px;
+  padding: 0 20px;
 }
 
 /* 加载状态 */
@@ -297,6 +299,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .modal-backdrop {
@@ -337,6 +340,7 @@ body {
   animation: modalSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
+  margin: auto;
 }
 
 .modal-content::before {
@@ -833,8 +837,9 @@ body {
   }
 
   .modal-content {
-    background: #1f2937;
+    background: linear-gradient(145deg, #1f2937 0%, #111827 100%);
     color: #f9fafb;
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .modal-header {
@@ -906,8 +911,9 @@ body {
 
   .data-cards-container {
     top: 0;
-    left: 10px;
-    right: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 20px);
     bottom: auto;
     margin-top: 100px;
     margin-bottom: 80px;
@@ -947,6 +953,10 @@ body {
   .modal-content {
     background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 32px 64px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
   
   .modal-header {

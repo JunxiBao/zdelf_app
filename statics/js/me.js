@@ -980,9 +980,146 @@
       );
     }
 
+    // 帮助弹窗样式
+    function ensureHelpStyles() {
+      if (document.getElementById("help-modal-style")) return;
+      const s = document.createElement("style");
+      s.id = "help-modal-style";
+      s.textContent = `
+      .help-mask{position:fixed;inset:0;background:color-mix(in srgb, var(--text,#000) 20%, transparent);backdrop-filter:saturate(120%) blur(2px);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s ease;z-index:10000}
+      .help-mask.show{opacity:1}
+      .help-dialog{width:min(92vw,500px);background:var(--card,#fff);color:var(--text,#111);border-radius:16px;box-shadow:var(--shadow-3,0 10px 30px rgba(0,0,0,.15));transform:translateY(12px) scale(.98);opacity:0;transition:transform .2s ease,opacity .2s ease;border:1px solid var(--border,rgba(0,0,0,.06))}
+      .help-dialog.show{transform:translateY(0) scale(1);opacity:1}
+      .help-header{padding:20px 24px 16px;font-weight:700;font-size:18px;text-align:center;border-bottom:1px solid var(--divider,rgba(0,0,0,.1))}
+      .help-body{padding:20px 24px;line-height:1.6}
+      .help-section{margin-bottom:20px}
+      .help-section:last-child{margin-bottom:0}
+      .help-section h3{font-size:16px;font-weight:600;margin:0 0 12px 0;color:var(--text,#111)}
+      .help-section p{margin:0 0 8px 0;color:var(--text-secondary,#666)}
+      .help-section p:last-child{margin-bottom:0}
+      .contact-info{background:linear-gradient(135deg,rgba(126,63,242,0.08),transparent);padding:16px;border-radius:12px;border:1px solid rgba(126,63,242,0.2)}
+      .contact-email{color:var(--brand,#1a73e8);font-weight:600;text-decoration:none;word-break:break-all}
+      .contact-email:hover{text-decoration:underline}
+      .help-footer{display:flex;justify-content:center;padding:0 24px 20px}
+      .help-btn{appearance:none;border:0;padding:12px 24px;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;background:var(--brand,#1a73e8);color:#fff;transition:all 0.2s ease}
+      .help-btn:hover{background:var(--brand-700,#1558b3);transform:translateY(-1px)}
+      @media (prefers-color-scheme: dark){
+        .help-mask{background:color-mix(in srgb,#000 50%, transparent)}
+        .help-dialog{background:var(--card,#1e1f22);color:var(--text,#e6e6e6);border-color:var(--border,rgba(255,255,255,.08))}
+        .help-section h3{color:var(--text,#e6e6e6)}
+        .help-section p{color:var(--text-secondary,#9aa3af)}
+        .contact-info{background:linear-gradient(135deg,rgba(126,63,242,0.15),transparent);border-color:rgba(126,63,242,0.3)}
+        .contact-email{color:var(--brand,#8ab4f8)}
+      }
+      `;
+      document.head.appendChild(s);
+      cleanupFns.push(() => {
+        if (s.parentNode) s.remove();
+      });
+    }
+
+    function showHelpModal() {
+      ensureHelpStyles();
+      const mask = document.createElement("div");
+      mask.className = "help-mask";
+
+      const dialog = document.createElement("div");
+      dialog.className = "help-dialog";
+
+      const header = document.createElement("div");
+      header.className = "help-header";
+      header.textContent = "帮助与反馈";
+
+      const body = document.createElement("div");
+      body.className = "help-body";
+
+      // App介绍
+      const introSection = document.createElement("div");
+      introSection.className = "help-section";
+      const introTitle = document.createElement("h3");
+      introTitle.textContent = "关于我们的应用";
+      const introText = document.createElement("p");
+      introText.textContent = "这是一个专注于健康管理的智能应用，帮助您记录和分析健康数据，提供个性化的健康建议。";
+      introSection.append(introTitle, introText);
+
+      // 功能特色
+      const featuresSection = document.createElement("div");
+      featuresSection.className = "help-section";
+      const featuresTitle = document.createElement("h3");
+      featuresTitle.textContent = "主要功能";
+      const featuresText = document.createElement("p");
+      featuresText.innerHTML = "• 健康指标记录与分析<br>• 饮食管理<br>• 病例记录<br>• AI智能助手<br>• 数据可视化展示";
+      featuresSection.append(featuresTitle, featuresText);
+
+      // 联系方式
+      const contactSection = document.createElement("div");
+      contactSection.className = "help-section";
+      const contactTitle = document.createElement("h3");
+      contactTitle.textContent = "联系我们";
+      const contactInfo = document.createElement("div");
+      contactInfo.className = "contact-info";
+      const contactText = document.createElement("p");
+      contactText.textContent = "如有任何问题或建议，请通过以下方式联系我们：";
+      const emailLink = document.createElement("a");
+      emailLink.className = "contact-email";
+      emailLink.href = "mailto:junxibao@junxibao.com";
+      emailLink.textContent = "junxibao@junxibao.com";
+      contactInfo.append(contactText, emailLink);
+      contactSection.append(contactTitle, contactInfo);
+
+      body.append(introSection, featuresSection, contactSection);
+
+      const footer = document.createElement("div");
+      footer.className = "help-footer";
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "help-btn";
+      closeBtn.textContent = "我知道了";
+      footer.append(closeBtn);
+
+      dialog.append(header, body, footer);
+      mask.appendChild(dialog);
+      document.body.appendChild(mask);
+
+      requestAnimationFrame(() => {
+        mask.classList.add("show");
+        dialog.classList.add("show");
+      });
+
+      const close = () => {
+        dialog.classList.remove("show");
+        mask.classList.remove("show");
+        const onEnd = () => {
+          mask.removeEventListener("transitionend", onEnd);
+          if (mask.parentNode) mask.remove();
+        };
+        mask.addEventListener("transitionend", onEnd);
+      };
+
+      closeBtn.addEventListener("click", close, { once: true });
+      mask.addEventListener("click", (e) => {
+        if (e.target === mask) close();
+      });
+      document.addEventListener("keydown", function escHandler(ev) {
+        if (ev.key === "Escape") {
+          document.removeEventListener("keydown", escHandler);
+          close();
+        }
+      });
+
+      cleanupFns.push(() => {
+        if (mask.parentNode) mask.remove();
+      });
+    }
+
     // 列表项点击
     root.querySelectorAll("[data-action]").forEach((el) => {
-      const actionHandler = () => toast("打开：" + el.dataset.action);
+      const actionHandler = () => {
+        if (el.dataset.action === "help") {
+          showHelpModal();
+        } else {
+          toast("打开：" + el.dataset.action);
+        }
+      };
       el.addEventListener("click", actionHandler);
       cleanupFns.push(() => el.removeEventListener("click", actionHandler));
     });

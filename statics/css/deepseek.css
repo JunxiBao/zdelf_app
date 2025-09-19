@@ -68,8 +68,8 @@ body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 20px 20px 180px 20px;
-  background: rgba(255, 255, 255, 0.95);
+  padding: 20px 20px 100px 20px;
+  background: transparent;
   border-radius: 0;
   box-shadow: none;
   margin: 0;
@@ -78,7 +78,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  backdrop-filter: blur(20px);
+  backdrop-filter: none;
   border: none;
   position: relative;
   min-height: 0;
@@ -160,13 +160,12 @@ body {
   display: flex;
   gap: 12px;
   align-items: center;
-  background: rgba(255, 255, 255, 0.95);
+  background: transparent;
   padding: 16px 20px;
   border-radius: 0;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(20px);
+  box-shadow: none;
+  backdrop-filter: none;
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
   position: fixed;
   bottom: 40px;
   left: 0;
@@ -373,7 +372,7 @@ button:active {
   }
   
   .message-list {
-    background: rgba(30, 41, 59, 0.95);
+    background: transparent;
     border: none;
     box-shadow: none;
   }
@@ -390,8 +389,8 @@ button:active {
   }
   
   .input-container {
-    background: rgba(30, 41, 59, 0.95);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    border: none;
   }
   
   textarea {

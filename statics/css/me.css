@@ -190,41 +190,6 @@ body {
   border-radius: 10px;
 }
 
-/* Quick actions section (grid of shortcuts) */
-.quick-actions {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  padding: 16px;
-  border-top: 1px solid var(--divider);
-}
-
-/* Quick action item */
-.q-item {
-  display: grid;
-  gap: 8px;
-  place-items: center;
-  padding: 14px 8px;
-  border-radius: 12px;
-  position: relative;
-  background: linear-gradient(180deg, rgba(26, 115, 232, 0.06), transparent);
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.15s ease, background 0.2s ease;
-}
-
-.q-item:hover {
-  transform: translateY(-1px);
-}
-
-.q-item .material-icons-outlined {
-  font-size: 22px;
-}
-
-.q-item span {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
 
 /* List section (for settings, details, etc.) */
 .list {
@@ -428,12 +393,4 @@ body {
     height: 72px;
   }
 
-  .quick-actions {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-  }
-
-  .q-item {
-    padding: 12px 6px;
-  }
 }
