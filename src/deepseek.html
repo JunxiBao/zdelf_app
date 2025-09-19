@@ -293,7 +293,7 @@
           const apiBase = window.__API_BASE__ || (window.parent && window.parent.__API_BASE__) || 'https://app.zdelf.cn';
           const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
           
-          const response = await fetch(`${baseUrl}/qwen/clear_session`, {
+          const response = await fetch(`${baseUrl}/deepseek/clear_session`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ session_id: currentSessionId })
@@ -376,7 +376,7 @@
           
           // 首先尝试使用流式接口
           const response = await fetch(
-            `${baseUrl}/qwen/chat_stream`,
+            `${baseUrl}/deepseek/chat_stream`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -417,7 +417,7 @@
           const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
           
           const response = await fetch(
-            `${baseUrl}/qwen/chat`,
+            `${baseUrl}/deepseek/chat`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },

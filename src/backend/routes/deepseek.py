@@ -22,9 +22,9 @@ from datetime import datetime, timedelta
 # read API key from .env
 load_dotenv()
 
-logger = logging.getLogger("app.qwen")
+logger = logging.getLogger("app.deepseek")
 
-qwen_blueprint = Blueprint('qwen', __name__)
+deepseek_blueprint = Blueprint('deepseek', __name__)
 QWEN_API_KEY = os.getenv('QWEN_API_KEY')
 QWEN_API_URL = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation'
 
@@ -104,7 +104,7 @@ def _auth_headers():
     """
     key = os.getenv('QWEN_API_KEY')
     if not key:
-        logger.error("/qwen missing QWEN_API_KEY env")
+        logger.error("/deepseek missing QWEN_API_KEY env")
         return None
     return {
         'Content-Type': 'application/json',
@@ -197,8 +197,8 @@ def _cleanup_old_sessions():
         del conversation_sessions[session_id]
         logger.info(f"Cleaned up old session: {session_id}")
 
-@qwen_blueprint.route('/chat', methods=['POST'])
-def qwen_chat():
+@deepseek_blueprint.route('/chat', methods=['POST'])
+def deepseek_chat():
     """Traditional chat interface - Complete return reply"""
     if request.method == 'OPTIONS':
         return '', 200
@@ -206,9 +206,9 @@ def qwen_chat():
         user_input = (request.get_json(silent=True) or {}).get('message', '')
         session_id = (request.get_json(silent=True) or {}).get('session_id', str(uuid.uuid4()))
         
-        logger.info("/qwen/chat request message_len=%d session_id=%s", len(user_input or ""), session_id)
+        logger.info("/deepseek/chat request message_len=%d session_id=%s", len(user_input or ""), session_id)
         if not user_input:
-            logger.warning("/qwen/chat missing message in request")
+            logger.warning("/deepseek/chat missing message in request")
             return jsonify({'error': '缺少消息内容'}), 400
 
         # 获取或创建会话
@@ -250,13 +250,13 @@ def qwen_chat():
             }
         }
 
-        logger.info("/qwen/chat calling provider model=%s temperature=%s", "qwen-turbo", 0.7)
+        logger.info("/deepseek/chat calling provider model=%s temperature=%s", "qwen-turbo", 0.7)
         _h = _auth_headers()
         if _h is None:
             return jsonify({'error': '服务器配置错误: 缺少 QWEN_API_KEY'}), 500
         response = requests.post(QWEN_API_URL, headers=_h, json=data, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
 
-        logger.info("/qwen/chat provider status=%s", response.status_code)
+        logger.info("/deepseek/chat provider status=%s", response.status_code)
         if response.status_code == 200:
             result = response.json()
             reply = result['output']['text']
@@ -274,7 +274,7 @@ def qwen_chat():
             disclaimer = "\n\n⚠️ **重要提醒**：以上建议仅供参考，不能替代专业医疗诊断或治疗。如有健康问题，请及时咨询专业医生。"
             reply += disclaimer
             
-            logger.info("/qwen/chat success reply_len=%d citations=%d", len(reply or ""), len(citations))
+            logger.info("/deepseek/chat success reply_len=%d citations=%d", len(reply or ""), len(citations))
             return jsonify({
                 'reply': reply,
                 'citations': citations,
@@ -282,15 +282,15 @@ def qwen_chat():
                 'session_id': session_id
             })
         else:
-            logger.warning("/qwen/chat provider error status=%s body_len=%d", response.status_code, len(response.text or ""))
+            logger.warning("/deepseek/chat provider error status=%s body_len=%d", response.status_code, len(response.text or ""))
             return jsonify({'error': response.text}), response.status_code
         
     except Exception as e:
-        logger.exception("/qwen/chat server error: %s", e)
+        logger.exception("/deepseek/chat server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
-@qwen_blueprint.route('/chat_stream', methods=['POST'])
-def qwen_chat_stream():
+@deepseek_blueprint.route('/chat_stream', methods=['POST'])
+def deepseek_chat_stream():
     """Streaming chat interface - Supports returning word by word"""
     if request.method == 'OPTIONS':
         return '', 200
@@ -298,9 +298,9 @@ def qwen_chat_stream():
         user_input = (request.get_json(silent=True) or {}).get('message', '')
         session_id = (request.get_json(silent=True) or {}).get('session_id', str(uuid.uuid4()))
         
-        logger.info("/qwen/chat_stream request message_len=%d session_id=%s", len(user_input or ""), session_id)
+        logger.info("/deepseek/chat_stream request message_len=%d session_id=%s", len(user_input or ""), session_id)
         if not user_input:
-            logger.warning("/qwen/chat_stream missing message in request")
+            logger.warning("/deepseek/chat_stream missing message in request")
             return jsonify({'error': '缺少信息'}), 400
 
         # 获取或创建会话
@@ -342,13 +342,13 @@ def qwen_chat_stream():
             }
         }
 
-        logger.info("/qwen/chat_stream calling provider model=%s temperature=%s", "qwen-turbo", 0.7)
+        logger.info("/deepseek/chat_stream calling provider model=%s temperature=%s", "qwen-turbo", 0.7)
         _h = _auth_headers()
         if _h is None:
             return jsonify({'error': '服务器配置错误: 缺少 QWEN_API_KEY'}), 500
         response = requests.post(QWEN_API_URL, headers=_h, json=data, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
 
-        logger.info("/qwen/chat_stream provider status=%s", response.status_code)
+        logger.info("/deepseek/chat_stream provider status=%s", response.status_code)
         if response.status_code == 200:
             result = response.json()
             reply = result['output']['text']
@@ -358,7 +358,7 @@ def qwen_chat_stream():
             session['messages'].append({"role": "assistant", "content": reply})
             
             def generate():
-                logger.info("/qwen/chat_stream stream start")
+                logger.info("/deepseek/chat_stream stream start")
                 try:
                     # 模拟流式响应
                     full_text = reply
@@ -381,31 +381,31 @@ def qwen_chat_stream():
                     yield f"data: {json.dumps({'content': disclaimer, 'type': 'disclaimer'})}\n\n"
                     
                 except Exception as e:
-                    logger.exception("/qwen/chat_stream stream error: %s", e)
+                    logger.exception("/deepseek/chat_stream stream error: %s", e)
                     yield f"data: {json.dumps({'error': str(e), 'type': 'error'})}\n\n"
                 finally:
-                    logger.info("/qwen/chat_stream stream end")
+                    logger.info("/deepseek/chat_stream stream end")
                     yield "data: [DONE]\n\n"
 
             return Response(generate(), mimetype='text/event-stream', headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
         else:
-            logger.warning("/qwen/chat_stream provider error status=%s body_len=%d", response.status_code, len(response.text or ""))
+            logger.warning("/deepseek/chat_stream provider error status=%s body_len=%d", response.status_code, len(response.text or ""))
             return jsonify({'error': response.text}), response.status_code
         
     except Exception as e:
-        logger.exception("/qwen/chat_stream server error: %s", e)
+        logger.exception("/deepseek/chat_stream server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
-@qwen_blueprint.route('/structured', methods=['POST'])
-def qwen_structured():
+@deepseek_blueprint.route('/structured', methods=['POST'])
+def deepseek_structured():
     '''This function will extract the information input by the user into JSON format and return it'''
     if request.method == 'OPTIONS':
         return '', 200
     try:
         user_input = (request.get_json(silent=True) or {}).get('message', '')
-        logger.info("/qwen/structured request message_len=%d", len(user_input or ""))
+        logger.info("/deepseek/structured request message_len=%d", len(user_input or ""))
         if not user_input:
-            logger.warning("/qwen/structured missing message in request")
+            logger.warning("/deepseek/structured missing message in request")
             return jsonify({'error': '缺少信息'}), 400
 
         data = {
@@ -428,17 +428,17 @@ def qwen_structured():
             }
         }
 
-        logger.info("/qwen/structured calling provider model=%s temperature=%s", "qwen-turbo", 0.3)
+        logger.info("/deepseek/structured calling provider model=%s temperature=%s", "qwen-turbo", 0.3)
         _h = _auth_headers()
         if _h is None:
             return jsonify({'error': '服务器配置错误: 缺少 QWEN_API_KEY'}), 500
         response = requests.post(QWEN_API_URL, headers=_h, json=data, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
 
-        logger.info("/qwen/structured provider status=%s", response.status_code)
+        logger.info("/deepseek/structured provider status=%s", response.status_code)
         if response.status_code == 200:
             result = response.json()
             reply = result['output']['text']
-            logger.info("/qwen/structured success reply_len=%d", len(reply or ""))
+            logger.info("/deepseek/structured success reply_len=%d", len(reply or ""))
             # Remove the markdown package
             if reply.startswith("```json"):
                 reply = reply.strip("`")  # Remove all backticks
@@ -446,20 +446,20 @@ def qwen_structured():
             try:
                 parsed = json.loads(reply)
                 try_keys = list(parsed.keys()) if isinstance(parsed, dict) else None
-                logger.info("/qwen/structured parsed_json keys=%s", try_keys)
+                logger.info("/deepseek/structured parsed_json keys=%s", try_keys)
                 return jsonify(parsed)
             except json.JSONDecodeError:
-                logger.warning("/qwen/structured json decode failed returning raw reply_len=%d", len(reply or ""))
+                logger.warning("/deepseek/structured json decode failed returning raw reply_len=%d", len(reply or ""))
                 return jsonify({"raw": reply})
         else:
-            logger.warning("/qwen/structured provider error status=%s body_len=%d", response.status_code, len(response.text or ""))
+            logger.warning("/deepseek/structured provider error status=%s body_len=%d", response.status_code, len(response.text or ""))
             return jsonify({'error': response.text}), response.status_code
         
     except Exception as e:
-        logger.exception("/qwen/structured server error: %s", e)
+        logger.exception("/deepseek/structured server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
-@qwen_blueprint.route('/clear_session', methods=['POST'])
+@deepseek_blueprint.route('/clear_session', methods=['POST'])
 def clear_session():
     """清除会话历史"""
     if request.method == 'OPTIONS':
@@ -473,10 +473,10 @@ def clear_session():
         else:
             return jsonify({'error': '会话不存在'}), 404
     except Exception as e:
-        logger.exception("/qwen/clear_session server error: %s", e)
+        logger.exception("/deepseek/clear_session server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
-@qwen_blueprint.route('/session_info', methods=['GET'])
+@deepseek_blueprint.route('/session_info', methods=['GET'])
 def session_info():
     """获取会话信息"""
     try:
@@ -492,7 +492,7 @@ def session_info():
         else:
             return jsonify({'error': '会话不存在'}), 404
     except Exception as e:
-        logger.exception("/qwen/session_info server error: %s", e)
+        logger.exception("/deepseek/session_info server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
 # 定期清理旧会话
