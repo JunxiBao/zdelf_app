@@ -374,17 +374,19 @@ function showDetailModal(fileId, type) {
   style.textContent = `
     /* 详情弹窗 */
     .detail-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 10000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      box-sizing: border-box;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      z-index: 99999 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 20px !important;
+      box-sizing: border-box !important;
+      width: 100vw !important;
+      height: 100vh !important;
     }
 
     .modal-backdrop {
@@ -410,23 +412,22 @@ function showDetailModal(fileId, type) {
     }
 
     .modal-content {
-      position: relative;
-      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-      border-radius: 28px;
+      position: relative !important;
+      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%) !important;
+      border-radius: 28px !important;
       box-shadow: 
         0 32px 64px rgba(0, 0, 0, 0.25),
         0 0 0 1px rgba(255, 255, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.6);
-      max-width: 90vw;
-      max-height: 90vh;
-      width: 100%;
-      max-width: 700px;
-      overflow: hidden;
-      animation: modalSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      position: relative;
-      margin: auto;
-      transform: translateZ(0);
+        inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+      max-width: 90vw !important;
+      max-height: 90vh !important;
+      width: 100% !important;
+      max-width: 700px !important;
+      overflow: hidden !important;
+      animation: modalSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      margin: 0 auto !important;
+      transform: translateZ(0) !important;
     }
 
     .modal-content::before {
@@ -888,7 +889,14 @@ function showDetailModal(fileId, type) {
   `;
   
   modal.appendChild(style);
-  document.body.appendChild(modal);
+  
+  // 将弹窗添加到 Shadow DOM 的根元素中，而不是 document.body
+  const shadowRoot = document.querySelector('.page-host')?.shadowRoot;
+  if (shadowRoot) {
+    shadowRoot.appendChild(modal);
+  } else {
+    document.body.appendChild(modal);
+  }
 
   // 绑定关闭事件
   const closeBtn = modal.querySelector('.close-btn');
