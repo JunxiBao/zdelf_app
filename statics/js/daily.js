@@ -462,7 +462,7 @@ function showDetailModal(fileId, type) {
     }
 
     .modal-body {
-      padding: 32px;
+      padding: 32px 32px 60px 32px;
       max-height: calc(100vh - 200px);
       overflow-y: auto;
       background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);

@@ -68,7 +68,7 @@ body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 20px 20px 100px 20px;
+  padding: 20px 20px 150px 20px;
   background: transparent;
   border-radius: 0;
   box-shadow: none;
@@ -282,7 +282,7 @@ button:active {
 ========================================================= */
 @media (max-width: 768px) {
   .message-list {
-    padding: 16px;
+    padding: 16px 16px 120px 16px;
   }
   
   .message {
@@ -325,7 +325,7 @@ button:active {
 
 @media (max-width: 480px) {
   .message-list {
-    padding: 12px;
+    padding: 12px 12px 100px 12px;
   }
   
   .message {
