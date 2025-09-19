@@ -7,85 +7,98 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <link rel="stylesheet" href="../statics/css/square.css" />
-    <title>个人博客</title>
-    <style>
-      #doctor-button {
-        position: fixed;
-        bottom: 25vh;
-        right: -25px;
-        width: 50px;
-        height: 50px;
-        cursor: pointer;
-        transition: right 0.3s ease;
-        opacity: 0.3;
-        z-index: 1001;
-      }
-      #doctor-button:hover {
-        right: 0;
-        opacity: 1;
-      }
-      #doctor-button img {
-        width: 100%;
-        height: 100%;
-        display: block;
-        border-radius: 5px;
-      }
-      #doctor-popup {
-        display: none;
-        position: fixed;
-        bottom: 150px;
-        right: 20px;
-        width: 360px;
-        height: 460px;
-        border: none;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-        border-radius: 10px;
-        background: #fff;
-        z-index: 1000;
-        opacity: 0;
-        transform: translateY(20px);
-        transition: opacity 0.3s ease, transform 0.3s ease;
-      }
-      #doctor-popup.show {
-        display: block;
-        opacity: 1;
-        transform: translateY(0);
-      }
-      #doctor-popup.hiding {
-        opacity: 0;
-        transform: translateY(20px);
-        transition: opacity 0.3s ease, transform 0.3s ease;
-      }
-      #doctor-popup iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-        border-radius: 10px;
-      }
-      @keyframes fadeInScale {
-        from {
-          opacity: 0;
-          transform: scale(0.95);
-        }
-        to {
-          opacity: 1;
-          transform: scale(1);
-        }
-      }
-      #doctor-popup.show iframe {
-        animation: fadeInScale 0.3s ease;
-      }
-    </style>
+    <title>AI助手</title>
   </head>
   <body>
-    <h1>square</h1>
-
-    <div id="doctor-button">
-      <img src="../images/doctor.png" alt="doctor toggle" />
+    <div class="ai-assistant-container">
+      <div class="ai-header">
+        <h1>AI助手</h1>
+        <p>智能健康咨询助手，为您提供专业的健康建议</p>
+      </div>
+      <div class="ai-content" id="ai-content">
+        <div class="loading-container">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">正在加载AI助手...</div>
+        </div>
+      </div>
     </div>
-
-    <div id="doctor-popup">
-      <iframe src="/src/deepseek.html"></iframe>
-    </div>
+    
+    <style>
+      .ai-assistant-container {
+        padding: 20px;
+        min-height: calc(100vh - 80px);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+      
+      .ai-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      
+      .ai-header h1 {
+        font-size: 2rem;
+        margin: 0 0 10px 0;
+        font-weight: 700;
+      }
+      
+      .ai-header p {
+        font-size: 1rem;
+        margin: 0;
+        opacity: 0.9;
+      }
+      
+      .ai-content {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        min-height: 400px;
+      }
+      
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 200px;
+      }
+      
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .loading-text {
+        color: white;
+        font-size: 1rem;
+        opacity: 0.8;
+      }
+      
+      /* DeepSeek内容样式 */
+      .deepseek-container {
+        width: 100%;
+        height: 100%;
+      }
+      
+      .deepseek-container iframe {
+        width: 100%;
+        height: 500px;
+        border: none;
+        border-radius: 10px;
+        background: white;
+      }
+    </style>
   </body>
 </html>

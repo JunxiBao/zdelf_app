@@ -4,7 +4,7 @@
  *
  * Responsibilities / 职责
  * - Render greeting based on time & username / 根据时间与用户名显示问候语
- * - Wire up doctor popup interactions / 绑定“问诊弹窗”的交互
+ * - Load and display user data cards / 加载并显示用户数据卡片
  * - Expose lifecycle hooks: initDaily(shadowRoot), destroyDaily() / 导出生命周期钩子
  *
  * This module is loaded dynamically by the shell (index.js) and receives the
@@ -35,9 +35,6 @@
 // State / 模块状态
 // -----------------------------
 let dailyRoot = document; // Will be set by initDaily(shadowRoot) / 将由 initDaily 赋值
-let onDoctorClick = null; // Cached handler for cleanup / 缓存处理器，便于清理
-let onDocumentClick = null; // Ditto / 同上
-let doctorObserver = null; // MutationObserver reference / 观察者引用
 
 // -----------------------------
 // Utilities / 工具函数
@@ -153,125 +150,6 @@ function initDaily(shadowRoot) {
 
   // Load and display user data cards / 加载并显示用户数据卡片
   loadUserDataCards();
-
-  // 为doctor按钮添加固定定位样式到Shadow DOM
-  const doctorStyle = document.createElement('style');
-  doctorStyle.textContent = `
-    /* 固定 doctor 按钮到视口右下，不依赖父级布局 */
-    #doctor-button {
-      position: fixed !important;
-      bottom: 24px !important;
-      right: 16px !important; /* 固定像素，避免 hover 滑出导致的抖动 */
-      width: 56px !important;
-      height: 56px !important;
-      cursor: pointer !important;
-      opacity: 0.85 !important;
-      z-index: 2147483646 !important; /* 置于最顶层，仅次于系统级 */
-      transform: translateZ(0) !important; /* 防止因 3D 合成产生的抖动 */
-      will-change: transform !important;
-      transition: opacity 0.2s ease !important;
-    }
-    #doctor-button:hover {
-      opacity: 1 !important;
-    }
-    #doctor-button img {
-      width: 100% !important;
-      height: 100% !important;
-      display: block !important;
-      border-radius: 10px !important;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.18) !important;
-      background: #fff !important;
-    }
-  `;
-  dailyRoot.appendChild(doctorStyle);
-
-  // 强制应用样式到doctor按钮
-  setTimeout(() => {
-    const host = dailyRoot.host || document.querySelector('.page-host');
-    const shadowRoot = host && host.shadowRoot ? host.shadowRoot : dailyRoot;
-    const doctorButton = shadowRoot && shadowRoot.querySelector('#doctor-button');
-    if (doctorButton) {
-      // 确保节点在 Shadow 根的直接子级，避免被内部滚动容器/transform 影响
-      try {
-        if (doctorButton.parentElement !== shadowRoot) {
-          shadowRoot.appendChild(doctorButton);
-        }
-      } catch(_) {}
-      const s = doctorButton.style;
-      s.position = 'fixed';
-      s.bottom = '24px';
-      s.right = '16px';
-      s.width = '56px';
-      s.height = '56px';
-      s.zIndex = '2147483646';
-      s.opacity = '0.85';
-      s.transition = 'opacity 0.2s ease';
-      s.transform = 'translateZ(0)';
-      console.log('✅ Doctor按钮样式与层级已固定');
-    } else {
-      console.warn('⚠️ 未找到 #doctor-button，稍后重试');
-    }
-  }, 150);
-
-  // Wire up doctor popup interactions scoped to Shadow DOM
-  const doctorButton = dailyRoot.querySelector('#doctor-button');
-  const doctorPopup = dailyRoot.querySelector('#doctor-popup');
-
-  if (!doctorButton || !doctorPopup) {
-    console.warn('⚠️ 未找到 doctorButton 或 doctorPopup（可能 DOM 尚未就绪）');
-    return;
-  }
-
-  // 防止重复绑定：先移除旧监听
-  if (onDoctorClick && doctorButton) doctorButton.removeEventListener('click', onDoctorClick);
-  if (onDocumentClick) document.removeEventListener('click', onDocumentClick, true);
-  if (doctorObserver) { doctorObserver.disconnect(); doctorObserver = null; }
-
-  // Click to toggle popup / 点击切换弹窗
-  onDoctorClick = () => {
-    try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
-    if (!doctorPopup.classList.contains('show')) {
-      doctorPopup.classList.add('show');
-      doctorPopup.style.display = 'block';
-    } else if (!doctorPopup.classList.contains('hiding')) {
-      doctorPopup.classList.add('hiding');
-      doctorPopup.addEventListener('transitionend', function handler() {
-        doctorPopup.classList.remove('show', 'hiding');
-        doctorPopup.style.display = 'none';
-        doctorPopup.removeEventListener('transitionend', handler);
-      });
-    }
-  };
-  doctorButton.addEventListener('click', onDoctorClick);
-  cleanupFns.push(() => doctorButton.removeEventListener('click', onDoctorClick));
-
-  // Click outside to close (capture to see outside shadow)
-  onDocumentClick = (event) => {
-    if (
-      doctorPopup.classList.contains('show') &&
-      !doctorButton.contains(event.target) &&
-      !doctorPopup.contains(event.target)
-    ) {
-      try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
-      doctorPopup.classList.add('hiding');
-      doctorPopup.addEventListener('transitionend', function handler() {
-        doctorPopup.classList.remove('show', 'hiding');
-        doctorPopup.style.display = 'none';
-        doctorPopup.removeEventListener('transitionend', handler);
-      });
-    }
-  };
-  document.addEventListener('click', onDocumentClick, true);
-  cleanupFns.push(() => document.removeEventListener('click', onDocumentClick, true));
-
-  // Keep display state consistent when class changes / 观察类名变化统一显示状态
-  doctorObserver = new MutationObserver(() => {
-    if (doctorPopup.classList.contains('show')) {
-      doctorPopup.style.display = 'block';
-    }
-  });
-  doctorObserver.observe(doctorPopup, { attributes: true, attributeFilter: ['class'] });
-  cleanupFns.push(() => { try { doctorObserver && doctorObserver.disconnect(); } catch(_) {} doctorObserver = null; });
 }
 
 /**
@@ -1551,8 +1429,6 @@ function destroyDaily() {
   cleanupFns.forEach(fn => { try { fn(); } catch (_) {} });
   cleanupFns = [];
 
-  onDoctorClick = null;
-  onDocumentClick = null;
   dailyRoot = document;
   console.log('🧹 destroyDaily 清理完成');
 }
