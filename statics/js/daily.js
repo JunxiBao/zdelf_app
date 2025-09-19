@@ -387,6 +387,8 @@ function showDetailModal(fileId, type) {
     .then(res => res.json())
     .then(data => {
       if (data.success) {
+        // 添加数据类型到数据对象中
+        data.data.dataType = type;
         renderDetailContent(data.data, modal.querySelector('.modal-body'));
       } else {
         modal.querySelector('.modal-body').innerHTML = '<p>加载失败</p>';
@@ -615,16 +617,21 @@ function renderDetailContent(data, container) {
  * formatContentForDisplay — 格式化内容用于显示
  */
 function formatContentForDisplay(content, dataType) {
+  console.log('formatContentForDisplay called with:', { content, dataType });
+  
   const metricsData = content.metricsData || {};
   
   switch (dataType) {
     case 'metrics':
-      return formatMetricsForDisplay(metricsData);
+      const result = formatMetricsForDisplay(metricsData);
+      console.log('formatMetricsForDisplay result:', result);
+      return result;
     case 'diet':
       return formatDietForDisplay(content);
     case 'case':
       return formatCaseForDisplay(content);
     default:
+      console.log('Unknown dataType:', dataType);
       return '<p>暂无详细内容</p>';
   }
 }
@@ -633,7 +640,10 @@ function formatContentForDisplay(content, dataType) {
  * formatMetricsForDisplay — 格式化健康指标用于显示
  */
 function formatMetricsForDisplay(metricsData) {
+  console.log('formatMetricsForDisplay called with:', metricsData);
+  
   let html = '<div class="metrics-detail">';
+  let hasContent = false;
   
   // 症状
   if (metricsData.symptoms?.symptoms) {
@@ -643,6 +653,7 @@ function formatMetricsForDisplay(metricsData) {
         <p>${metricsData.symptoms.symptoms}</p>
       </div>
     `;
+    hasContent = true;
   }
   
   // 体温
@@ -653,22 +664,27 @@ function formatMetricsForDisplay(metricsData) {
         <p>${metricsData.temperature.temperature}°C</p>
       </div>
     `;
+    hasContent = true;
   }
   
   // 尿常规
   if (metricsData.urinalysis) {
     const urinalysis = metricsData.urinalysis;
-    html += `
-      <div class="detail-section">
-        <h5>尿常规检查</h5>
-        <div class="detail-grid">
-          ${urinalysis.protein ? `<div class="detail-item"><span>蛋白质:</span><span>${urinalysis.protein}</span></div>` : ''}
-          ${urinalysis.glucose ? `<div class="detail-item"><span>葡萄糖:</span><span>${urinalysis.glucose}</span></div>` : ''}
-          ${urinalysis.ketones ? `<div class="detail-item"><span>酮体:</span><span>${urinalysis.ketones}</span></div>` : ''}
-          ${urinalysis.blood ? `<div class="detail-item"><span>隐血:</span><span>${urinalysis.blood}</span></div>` : ''}
+    const hasUrinalysisData = urinalysis.protein || urinalysis.glucose || urinalysis.ketones || urinalysis.blood;
+    if (hasUrinalysisData) {
+      html += `
+        <div class="detail-section">
+          <h5>尿常规检查</h5>
+          <div class="detail-grid">
+            ${urinalysis.protein ? `<div class="detail-item"><span>蛋白质:</span><span>${urinalysis.protein}</span></div>` : ''}
+            ${urinalysis.glucose ? `<div class="detail-item"><span>葡萄糖:</span><span>${urinalysis.glucose}</span></div>` : ''}
+            ${urinalysis.ketones ? `<div class="detail-item"><span>酮体:</span><span>${urinalysis.ketones}</span></div>` : ''}
+            ${urinalysis.blood ? `<div class="detail-item"><span>隐血:</span><span>${urinalysis.blood}</span></div>` : ''}
+          </div>
         </div>
-      </div>
-    `;
+      `;
+      hasContent = true;
+    }
   }
   
   // 24h尿蛋白
@@ -679,22 +695,27 @@ function formatMetricsForDisplay(metricsData) {
         <p>${metricsData.proteinuria.proteinuria24h}g/24h</p>
       </div>
     `;
+    hasContent = true;
   }
   
   // 血常规
   if (metricsData['blood-test']) {
     const blood = metricsData['blood-test'];
-    html += `
-      <div class="detail-section">
-        <h5>血常规检查</h5>
-        <div class="detail-grid">
-          ${blood.wbc ? `<div class="detail-item"><span>白细胞:</span><span>${blood.wbc}×10⁹/L</span></div>` : ''}
-          ${blood.rbc ? `<div class="detail-item"><span>红细胞:</span><span>${blood.rbc}×10¹²/L</span></div>` : ''}
-          ${blood.hb ? `<div class="detail-item"><span>血红蛋白:</span><span>${blood.hb}g/L</span></div>` : ''}
-          ${blood.plt ? `<div class="detail-item"><span>血小板:</span><span>${blood.plt}×10⁹/L</span></div>` : ''}
+    const hasBloodData = blood.wbc || blood.rbc || blood.hb || blood.plt;
+    if (hasBloodData) {
+      html += `
+        <div class="detail-section">
+          <h5>血常规检查</h5>
+          <div class="detail-grid">
+            ${blood.wbc ? `<div class="detail-item"><span>白细胞:</span><span>${blood.wbc}×10⁹/L</span></div>` : ''}
+            ${blood.rbc ? `<div class="detail-item"><span>红细胞:</span><span>${blood.rbc}×10¹²/L</span></div>` : ''}
+            ${blood.hb ? `<div class="detail-item"><span>血红蛋白:</span><span>${blood.hb}g/L</span></div>` : ''}
+            ${blood.plt ? `<div class="detail-item"><span>血小板:</span><span>${blood.plt}×10⁹/L</span></div>` : ''}
+          </div>
         </div>
-      </div>
-    `;
+      `;
+      hasContent = true;
+    }
   }
   
   // 出血点
@@ -710,6 +731,7 @@ function formatMetricsForDisplay(metricsData) {
         <p>${bleedingText}</p>
       </div>
     `;
+    hasContent = true;
   }
   
   // 自我评分
@@ -720,6 +742,7 @@ function formatMetricsForDisplay(metricsData) {
         <p>${metricsData['self-rating'].selfRating}/10分</p>
       </div>
     `;
+    hasContent = true;
   }
   
   // 尿液检测矩阵
@@ -739,7 +762,18 @@ function formatMetricsForDisplay(metricsData) {
           </div>
         </div>
       `;
+      hasContent = true;
     }
+  }
+  
+  // 如果没有找到任何内容，显示原始数据
+  if (!hasContent) {
+    html += `
+      <div class="detail-section">
+        <h5>原始数据</h5>
+        <pre class="json-content">${JSON.stringify(metricsData, null, 2)}</pre>
+      </div>
+    `;
   }
   
   html += '</div>';
