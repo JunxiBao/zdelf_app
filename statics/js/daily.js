@@ -384,6 +384,7 @@ function showDetailModal(fileId, type) {
       align-items: center;
       justify-content: center;
       padding: 20px;
+      pointer-events: none;
     }
 
     .modal-backdrop {
@@ -395,6 +396,7 @@ function showDetailModal(fileId, type) {
       background: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(12px);
       animation: backdropFadeIn 0.4s ease-out;
+      pointer-events: auto;
     }
 
     @keyframes backdropFadeIn {
@@ -424,6 +426,7 @@ function showDetailModal(fileId, type) {
       animation: modalSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
       border: 1px solid rgba(255, 255, 255, 0.2);
       position: relative;
+      pointer-events: auto;
     }
 
     .modal-content::before {
