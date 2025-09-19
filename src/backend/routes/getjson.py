@@ -194,3 +194,4 @@ def get_file_detail(kind, file_id):
     except Exception as e:
         logger.exception("/getjson detail server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
+

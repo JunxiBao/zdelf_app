@@ -217,7 +217,7 @@ function initDaily(shadowRoot) {
 
 /**
  * loadUserDataCards — 加载并显示用户数据卡片
- * 从后端获取用户的 metrics/diet/case 数据并以卡片形式展示
+ * 从后端获取所有用户数据并按时间排序展示
  */
 function loadUserDataCards() {
   const userId = localStorage.getItem('userId') || 
@@ -245,10 +245,10 @@ function loadUserDataCards() {
     </div>
   `;
 
-  // 并行加载三种类型的数据
+  // 并行加载所有类型的数据
   const dataTypes = ['metrics', 'diet', 'case'];
   const promises = dataTypes.map(type => 
-    fetch(`${__API_BASE__}/getjson/${type}?user_id=${encodeURIComponent(userId)}&limit=10`)
+    fetch(`${__API_BASE__}/getjson/${type}?user_id=${encodeURIComponent(userId)}&limit=50`)
       .then(res => res.json())
       .then(data => ({ type, data }))
       .catch(err => {
@@ -258,44 +258,60 @@ function loadUserDataCards() {
   );
 
   Promise.all(promises).then(results => {
-    renderDataCards(results, cardsContainer);
+    // 合并所有数据并按时间排序
+    const allItems = [];
+    results.forEach(({ type, data }) => {
+      if (data.success && data.data) {
+        data.data.forEach(item => {
+          allItems.push({
+            ...item,
+            dataType: type
+          });
+        });
+      }
+    });
+
+    // 按创建时间降序排序
+    allItems.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    renderUnifiedCards(allItems, cardsContainer);
   });
 }
 
 /**
- * renderDataCards — 渲染数据卡片
+ * renderUnifiedCards — 渲染统一的数据卡片
  */
-function renderDataCards(results, container) {
-  const cardsHtml = results.map(({ type, data }) => {
-    if (!data.success || !data.data || data.data.length === 0) {
-      return `
-        <div class="data-card empty">
-          <div class="card-icon">${getTypeIcon(type)}</div>
-          <div class="card-content">
-            <h3>${getTypeTitle(type)}</h3>
-            <p>暂无数据</p>
-          </div>
-        </div>
-      `;
-    }
+function renderUnifiedCards(items, container) {
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div class="no-data-message">
+        <div class="no-data-icon">📝</div>
+        <h3>暂无数据记录</h3>
+        <p>开始记录您的健康数据吧</p>
+      </div>
+    `;
+    return;
+  }
 
+  const cardsHtml = items.map(item => {
+    const content = item.content || {};
+    const summary = parseContentToSummary(content, item.dataType);
+    
     return `
-      <div class="data-card">
-        <div class="card-icon">${getTypeIcon(type)}</div>
+      <div class="unified-card" data-file-id="${item.id}" data-type="${item.dataType}">
+        <div class="card-header">
+          <div class="card-type-badge">${getTypeTitle(item.dataType)}</div>
+          <div class="card-date">${formatDate(item.created_at)}</div>
+        </div>
         <div class="card-content">
-          <h3>${getTypeTitle(type)}</h3>
-          <p>共 ${data.count} 条记录</p>
-          <div class="recent-items">
-            ${data.data.slice(0, 3).map(item => `
-              <div class="recent-item" data-file-id="${item.id}" data-type="${type}">
-                <span class="item-title">${formatFileName(item.file_name)}</span>
-                <span class="item-date">${formatDate(item.created_at)}</span>
-              </div>
-            `).join('')}
+          <div class="card-summary">
+            ${summary}
           </div>
         </div>
-        <div class="card-actions">
-          <button class="view-all-btn" data-type="${type}">查看全部</button>
+        <div class="card-footer">
+          <div class="card-actions">
+            <button class="view-detail-btn">查看详情</button>
+          </div>
         </div>
       </div>
     `;
@@ -304,29 +320,31 @@ function renderDataCards(results, container) {
   container.innerHTML = cardsHtml;
 
   // 绑定点击事件
-  bindCardEvents(container);
+  bindUnifiedCardEvents(container);
 }
 
 /**
- * bindCardEvents — 绑定卡片事件
+ * bindUnifiedCardEvents — 绑定统一卡片事件
  */
-function bindCardEvents(container) {
-  // 点击最近项目查看详情
-  container.querySelectorAll('.recent-item').forEach(item => {
-    item.addEventListener('click', (e) => {
+function bindUnifiedCardEvents(container) {
+  // 点击卡片查看详情
+  container.querySelectorAll('.unified-card').forEach(card => {
+    card.addEventListener('click', (e) => {
       e.stopPropagation();
-      const fileId = item.dataset.fileId;
-      const type = item.dataset.type;
+      const fileId = card.dataset.fileId;
+      const type = card.dataset.type;
       showDetailModal(fileId, type);
     });
   });
 
-  // 点击查看全部按钮
-  container.querySelectorAll('.view-all-btn').forEach(btn => {
+  // 点击查看详情按钮
+  container.querySelectorAll('.view-detail-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const type = btn.dataset.type;
-      showAllItemsModal(type);
+      const card = btn.closest('.unified-card');
+      const fileId = card.dataset.fileId;
+      const type = card.dataset.type;
+      showDetailModal(fileId, type);
     });
   });
 }
@@ -435,17 +453,145 @@ function showAllItemsModal(type) {
 }
 
 /**
+ * parseContentToSummary — 解析内容为中文摘要
+ */
+function parseContentToSummary(content, dataType) {
+  const metricsData = content.metricsData || {};
+  const exportInfo = content.exportInfo || {};
+  
+  switch (dataType) {
+    case 'metrics':
+      return parseMetricsSummary(metricsData);
+    case 'diet':
+      return parseDietSummary(content);
+    case 'case':
+      return parseCaseSummary(content);
+    default:
+      return '未知数据类型';
+  }
+}
+
+/**
+ * parseMetricsSummary — 解析健康指标摘要
+ */
+function parseMetricsSummary(metricsData) {
+  const summaries = [];
+  
+  // 症状
+  if (metricsData.symptoms?.symptoms) {
+    summaries.push(`症状: ${metricsData.symptoms.symptoms}`);
+  }
+  
+  // 体温
+  if (metricsData.temperature?.temperature) {
+    summaries.push(`体温: ${metricsData.temperature.temperature}°C`);
+  }
+  
+  // 尿常规
+  if (metricsData.urinalysis) {
+    const urinalysis = metricsData.urinalysis;
+    const items = [];
+    if (urinalysis.protein) items.push(`蛋白质: ${urinalysis.protein}`);
+    if (urinalysis.glucose) items.push(`葡萄糖: ${urinalysis.glucose}`);
+    if (urinalysis.ketones) items.push(`酮体: ${urinalysis.ketones}`);
+    if (urinalysis.blood) items.push(`隐血: ${urinalysis.blood}`);
+    if (items.length > 0) {
+      summaries.push(`尿常规: ${items.join(', ')}`);
+    }
+  }
+  
+  // 24h尿蛋白
+  if (metricsData.proteinuria?.proteinuria24h) {
+    summaries.push(`24h尿蛋白: ${metricsData.proteinuria.proteinuria24h}g`);
+  }
+  
+  // 血常规
+  if (metricsData['blood-test']) {
+    const blood = metricsData['blood-test'];
+    const items = [];
+    if (blood.wbc) items.push(`白细胞: ${blood.wbc}×10⁹/L`);
+    if (blood.rbc) items.push(`红细胞: ${blood.rbc}×10¹²/L`);
+    if (blood.hb) items.push(`血红蛋白: ${blood.hb}g/L`);
+    if (blood.plt) items.push(`血小板: ${blood.plt}×10⁹/L`);
+    if (items.length > 0) {
+      summaries.push(`血常规: ${items.join(', ')}`);
+    }
+  }
+  
+  // 出血点
+  if (metricsData['bleeding-point']?.bleedingPoint) {
+    const bleeding = metricsData['bleeding-point'];
+    let bleedingText = getBleedingPointText(bleeding.bleedingPoint);
+    if (bleeding.otherDescription) {
+      bleedingText += ` (${bleeding.otherDescription})`;
+    }
+    summaries.push(`出血点: ${bleedingText}`);
+  }
+  
+  // 自我评分
+  if (metricsData['self-rating']?.selfRating !== undefined) {
+    summaries.push(`自我评分: ${metricsData['self-rating'].selfRating}/10分`);
+  }
+  
+  // 尿液检测矩阵
+  if (metricsData['urinalysis-matrix']?.urinalysisMatrix) {
+    const matrix = metricsData['urinalysis-matrix'].urinalysisMatrix;
+    if (matrix.length > 0) {
+      summaries.push(`尿液检测: ${matrix.length}项指标`);
+    }
+  }
+  
+  return summaries.length > 0 ? summaries.join(' | ') : '健康指标记录';
+}
+
+/**
+ * parseDietSummary — 解析饮食记录摘要
+ */
+function parseDietSummary(content) {
+  // 这里可以根据实际的饮食数据结构来解析
+  return '饮食记录数据';
+}
+
+/**
+ * parseCaseSummary — 解析病例记录摘要
+ */
+function parseCaseSummary(content) {
+  // 这里可以根据实际的病例数据结构来解析
+  return '病例记录数据';
+}
+
+/**
+ * getBleedingPointText — 获取出血点中文描述
+ */
+function getBleedingPointText(bleedingPoint) {
+  const bleedingMap = {
+    'nose': '鼻子',
+    'gums': '牙龈',
+    'skin': '皮肤',
+    'joints': '关节',
+    'muscles': '肌肉',
+    'urine': '尿液',
+    'stool': '大便',
+    'vomit': '呕吐物',
+    'menstrual': '月经',
+    'other': '其他'
+  };
+  return bleedingMap[bleedingPoint] || bleedingPoint;
+}
+
+/**
  * renderDetailContent — 渲染详情内容
  */
 function renderDetailContent(data, container) {
   const content = data.content || {};
   const exportInfo = content.exportInfo || {};
+  const dataType = data.dataType || 'unknown';
   
   container.innerHTML = `
     <div class="detail-info">
       <div class="info-item">
-        <label>文件名:</label>
-        <span>${data.file_name || '未知'}</span>
+        <label>记录类型:</label>
+        <span>${getTypeTitle(dataType)}</span>
       </div>
       <div class="info-item">
         <label>创建时间:</label>
@@ -455,16 +601,163 @@ function renderDetailContent(data, container) {
         <label>导出时间:</label>
         <span>${formatDate(exportInfo.exportTime)}</span>
       </div>
-      <div class="info-item">
-        <label>应用版本:</label>
-        <span>${exportInfo.version || '未知'}</span>
-      </div>
     </div>
     <div class="detail-data">
-      <h4>数据内容:</h4>
-      <pre class="json-content">${JSON.stringify(content, null, 2)}</pre>
+      <h4>详细内容:</h4>
+      <div class="formatted-content">
+        ${formatContentForDisplay(content, dataType)}
+      </div>
     </div>
   `;
+}
+
+/**
+ * formatContentForDisplay — 格式化内容用于显示
+ */
+function formatContentForDisplay(content, dataType) {
+  const metricsData = content.metricsData || {};
+  
+  switch (dataType) {
+    case 'metrics':
+      return formatMetricsForDisplay(metricsData);
+    case 'diet':
+      return formatDietForDisplay(content);
+    case 'case':
+      return formatCaseForDisplay(content);
+    default:
+      return '<p>暂无详细内容</p>';
+  }
+}
+
+/**
+ * formatMetricsForDisplay — 格式化健康指标用于显示
+ */
+function formatMetricsForDisplay(metricsData) {
+  let html = '<div class="metrics-detail">';
+  
+  // 症状
+  if (metricsData.symptoms?.symptoms) {
+    html += `
+      <div class="detail-section">
+        <h5>症状描述</h5>
+        <p>${metricsData.symptoms.symptoms}</p>
+      </div>
+    `;
+  }
+  
+  // 体温
+  if (metricsData.temperature?.temperature) {
+    html += `
+      <div class="detail-section">
+        <h5>体温</h5>
+        <p>${metricsData.temperature.temperature}°C</p>
+      </div>
+    `;
+  }
+  
+  // 尿常规
+  if (metricsData.urinalysis) {
+    const urinalysis = metricsData.urinalysis;
+    html += `
+      <div class="detail-section">
+        <h5>尿常规检查</h5>
+        <div class="detail-grid">
+          ${urinalysis.protein ? `<div class="detail-item"><span>蛋白质:</span><span>${urinalysis.protein}</span></div>` : ''}
+          ${urinalysis.glucose ? `<div class="detail-item"><span>葡萄糖:</span><span>${urinalysis.glucose}</span></div>` : ''}
+          ${urinalysis.ketones ? `<div class="detail-item"><span>酮体:</span><span>${urinalysis.ketones}</span></div>` : ''}
+          ${urinalysis.blood ? `<div class="detail-item"><span>隐血:</span><span>${urinalysis.blood}</span></div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  
+  // 24h尿蛋白
+  if (metricsData.proteinuria?.proteinuria24h) {
+    html += `
+      <div class="detail-section">
+        <h5>24小时尿蛋白</h5>
+        <p>${metricsData.proteinuria.proteinuria24h}g/24h</p>
+      </div>
+    `;
+  }
+  
+  // 血常规
+  if (metricsData['blood-test']) {
+    const blood = metricsData['blood-test'];
+    html += `
+      <div class="detail-section">
+        <h5>血常规检查</h5>
+        <div class="detail-grid">
+          ${blood.wbc ? `<div class="detail-item"><span>白细胞:</span><span>${blood.wbc}×10⁹/L</span></div>` : ''}
+          ${blood.rbc ? `<div class="detail-item"><span>红细胞:</span><span>${blood.rbc}×10¹²/L</span></div>` : ''}
+          ${blood.hb ? `<div class="detail-item"><span>血红蛋白:</span><span>${blood.hb}g/L</span></div>` : ''}
+          ${blood.plt ? `<div class="detail-item"><span>血小板:</span><span>${blood.plt}×10⁹/L</span></div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  
+  // 出血点
+  if (metricsData['bleeding-point']?.bleedingPoint) {
+    const bleeding = metricsData['bleeding-point'];
+    let bleedingText = getBleedingPointText(bleeding.bleedingPoint);
+    if (bleeding.otherDescription) {
+      bleedingText += ` (${bleeding.otherDescription})`;
+    }
+    html += `
+      <div class="detail-section">
+        <h5>出血点</h5>
+        <p>${bleedingText}</p>
+      </div>
+    `;
+  }
+  
+  // 自我评分
+  if (metricsData['self-rating']?.selfRating !== undefined) {
+    html += `
+      <div class="detail-section">
+        <h5>自我评分</h5>
+        <p>${metricsData['self-rating'].selfRating}/10分</p>
+      </div>
+    `;
+  }
+  
+  // 尿液检测矩阵
+  if (metricsData['urinalysis-matrix']?.urinalysisMatrix) {
+    const matrix = metricsData['urinalysis-matrix'].urinalysisMatrix;
+    if (matrix.length > 0) {
+      html += `
+        <div class="detail-section">
+          <h5>尿液检测指标</h5>
+          <div class="matrix-grid">
+            ${matrix.map(item => `
+              <div class="matrix-item">
+                <span class="item-name">${item.item}</span>
+                <span class="item-value">${item.value}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+  }
+  
+  html += '</div>';
+  return html;
+}
+
+/**
+ * formatDietForDisplay — 格式化饮食记录用于显示
+ */
+function formatDietForDisplay(content) {
+  return '<p>饮食记录详细内容</p>';
+}
+
+/**
+ * formatCaseForDisplay — 格式化病例记录用于显示
+ */
+function formatCaseForDisplay(content) {
+  return '<p>病例记录详细内容</p>';
 }
 
 /**
