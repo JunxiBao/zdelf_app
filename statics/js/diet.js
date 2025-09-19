@@ -240,6 +240,20 @@ function saveAllMeals() {
         // 保存到本地存储
         localStorage.setItem('health_diet_data', JSON.stringify(dietData));
 
+        // 创建导出数据对象
+        const exportData = {
+            exportInfo: {
+                exportTime: new Date().toISOString(),
+                version: '1.0',
+                appName: '紫癜精灵',
+                dataType: 'diet_record'
+            },
+            dietData: allMealsData
+        };
+
+        // 上传到后端数据库
+        uploadDietToServer(exportData);
+
         // 显示成功提示
         showToast(`成功保存 ${validMealsCount} 餐食物记录！`);
 
@@ -452,6 +466,93 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// 解析用户身份信息
+async function resolveUserIdentity() {
+    // 优先从localStorage获取userId，与me.js保持一致
+    const storedId = localStorage.getItem('userId') || 
+                   localStorage.getItem('UserID') || 
+                   sessionStorage.getItem('userId') || 
+                   sessionStorage.getItem('UserID');
+    
+    if (!storedId) {
+        console.warn('[diet] 未找到用户ID');
+        return { user_id: null, username: null };
+    }
+
+    try {
+        // 使用/readdata接口获取用户名
+        const response = await fetch('/readdata', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                table_name: 'users', 
+                user_id: storedId 
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        if (result.success && result.data && result.data.length > 0) {
+            const userData = result.data[0];
+            return {
+                user_id: storedId,
+                username: userData.username || '未知用户'
+            };
+        }
+        
+        return { user_id: storedId, username: '未知用户' };
+    } catch (error) {
+        console.warn('[diet] 获取用户信息失败:', error);
+        return { user_id: storedId, username: '未知用户' };
+    }
+}
+
+// 上传饮食数据到服务器
+async function uploadDietToServer(exportData) {
+    try {
+        // 获取用户身份信息
+        const { user_id, username } = await resolveUserIdentity();
+        
+        if (!user_id) {
+            console.warn('[diet] 无法获取用户ID，跳过服务器上传');
+            return;
+        }
+
+        // 构建上传数据
+        const uploadData = {
+            user_id: user_id,
+            username: username,
+            content: JSON.stringify(exportData),
+            file_name: `diet_${new Date().toISOString().slice(0, 10)}.json`
+        };
+
+        console.log('[diet] 上传数据到服务器:', uploadData);
+
+        // 上传到后端
+        const response = await fetch('/uploadjson/diet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(uploadData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (result.success) {
+            console.log('[diet] 饮食数据上传成功:', result);
+        } else {
+            console.warn('[diet] 饮食数据上传失败:', result.message);
+        }
+    } catch (error) {
+        console.error('[diet] 上传饮食数据失败:', error);
+    }
+}
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', initDietPage);

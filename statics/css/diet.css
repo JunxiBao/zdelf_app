@@ -122,6 +122,7 @@ body {
     background: #fafaff;
     color: #222;
     width: 100%;
+    text-align: center;
 }
 
 .time-input:focus {

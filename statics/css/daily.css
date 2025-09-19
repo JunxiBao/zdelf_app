@@ -53,7 +53,7 @@ body {
   bottom: auto;
   overflow-y: visible;
   z-index: 100;
-  margin-top: 120px;
+  margin-top: 80px;
   margin-bottom: 100px;
   min-height: calc(100vh - 220px);
   padding: 0 20px;
@@ -915,7 +915,7 @@ body {
     transform: translateX(-50%);
     width: calc(100% - 20px);
     bottom: auto;
-    margin-top: 100px;
+    margin-top: 70px;
     margin-bottom: 80px;
     min-height: calc(100vh - 180px);
     grid-template-columns: 1fr;

@@ -592,6 +592,64 @@ function showDetailModal(fileId, type) {
       gap: 20px;
     }
 
+    .diet-detail {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .meal-detail {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .meal-detail:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .meal-detail::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: linear-gradient(180deg, #10b981, #059669);
+    }
+
+    .meal-detail h5 {
+      margin: 0 0 12px 0;
+      color: #1e293b;
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .meal-detail h5::before {
+      content: '🍽️';
+      font-size: 0.9rem;
+    }
+
+    .meal-info p {
+      margin: 0 0 8px 0;
+      color: #475569;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .meal-info p:last-child {
+      margin-bottom: 0;
+    }
+
     .detail-section {
       background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
       border-radius: 16px;
@@ -826,6 +884,19 @@ function showDetailModal(fileId, type) {
       .detail-section {
         background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
         border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .meal-detail {
+        background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .meal-detail h5 {
+        color: #f1f5f9;
+      }
+
+      .meal-info p {
+        color: #cbd5e1;
       }
       
       .detail-section h5 {
@@ -1100,8 +1171,30 @@ function parseMetricsSummary(metricsData) {
  * parseDietSummary — 解析饮食记录摘要
  */
 function parseDietSummary(content) {
-  // 这里可以根据实际的饮食数据结构来解析
-  return '饮食记录数据';
+  const dietData = content.dietData || {};
+  const summaries = [];
+  
+  // 统计餐次数量
+  const mealCount = Object.keys(dietData).length;
+  if (mealCount > 0) {
+    summaries.push(`${mealCount}餐记录`);
+  }
+  
+  // 获取第一餐的时间作为参考
+  const firstMeal = Object.values(dietData)[0];
+  if (firstMeal && firstMeal.time) {
+    summaries.push(`时间: ${firstMeal.time}`);
+  }
+  
+  // 获取第一餐的食物内容（截取前20个字符）
+  if (firstMeal && firstMeal.food) {
+    const foodPreview = firstMeal.food.length > 20 
+      ? firstMeal.food.substring(0, 20) + '...' 
+      : firstMeal.food;
+    summaries.push(`内容: ${foodPreview}`);
+  }
+  
+  return summaries.length > 0 ? summaries.join(' | ') : '饮食记录';
 }
 
 /**
@@ -1334,7 +1427,37 @@ function formatMetricsForDisplay(metricsData) {
  * formatDietForDisplay — 格式化饮食记录用于显示
  */
 function formatDietForDisplay(content) {
-  return '<p>饮食记录详细内容</p>';
+  const dietData = content.dietData || {};
+  const meals = Object.values(dietData);
+  
+  if (meals.length === 0) {
+    return '<p>暂无饮食记录</p>';
+  }
+  
+  let html = '<div class="diet-detail">';
+  
+  // 按时间排序
+  const sortedMeals = meals.sort((a, b) => {
+    if (a.time && b.time) {
+      return a.time.localeCompare(b.time);
+    }
+    return 0;
+  });
+  
+  sortedMeals.forEach((meal, index) => {
+    html += `
+      <div class="meal-detail">
+        <h5>第${index + 1}餐</h5>
+        <div class="meal-info">
+          ${meal.time ? `<p><strong>时间:</strong> ${meal.time}</p>` : ''}
+          ${meal.food ? `<p><strong>食物:</strong> ${meal.food}</p>` : ''}
+        </div>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  return html;
 }
 
 /**
