@@ -384,7 +384,7 @@ function showDetailModal(fileId, type) {
       align-items: center;
       justify-content: center;
       padding: 20px;
-      pointer-events: none;
+      box-sizing: border-box;
     }
 
     .modal-backdrop {
@@ -396,7 +396,6 @@ function showDetailModal(fileId, type) {
       background: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(12px);
       animation: backdropFadeIn 0.4s ease-out;
-      pointer-events: auto;
     }
 
     @keyframes backdropFadeIn {
@@ -426,7 +425,8 @@ function showDetailModal(fileId, type) {
       animation: modalSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
       border: 1px solid rgba(255, 255, 255, 0.2);
       position: relative;
-      pointer-events: auto;
+      margin: auto;
+      transform: translateZ(0);
     }
 
     .modal-content::before {
@@ -443,11 +443,11 @@ function showDetailModal(fileId, type) {
     @keyframes modalSlideIn {
       from {
         opacity: 0;
-        transform: scale(0.8) translateY(40px) rotateX(15deg);
+        transform: scale(0.8) translateY(20px);
       }
       to {
         opacity: 1;
-        transform: scale(1) translateY(0) rotateX(0deg);
+        transform: scale(1) translateY(0);
       }
     }
 
