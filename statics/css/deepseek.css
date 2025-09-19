@@ -107,12 +107,14 @@ body {
   align-self: flex-end;
   border-radius: 20px 20px 6px 20px;
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
-  display: inline-block;
+  display: flex;
+  align-items: flex-end;
   max-width: 85%;
 }
 
 .message.user .msg-content {
-  max-width: 100%;
+  max-width: calc(100% - 0px);
+  flex: 1;
 }
 
 .message.bot {
@@ -147,6 +149,9 @@ body {
 .message .msg-content {
   position: relative;
   z-index: 1;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .message.bot .msg-content {

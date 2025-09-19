@@ -371,7 +371,7 @@ function showDetailModal(fileId, type) {
       max-width: 700px !important;
       overflow: hidden !important;
       animation: modalSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      border: none !important;
       margin: 0 auto !important;
       transform: translateZ(0) !important;
     }
@@ -786,8 +786,12 @@ function showDetailModal(fileId, type) {
     /* 暗色模式支持 */
     @media (prefers-color-scheme: dark) {
       .modal-content {
-        background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
+        border: none !important;
+        box-shadow: 
+          0 32px 64px rgba(0, 0, 0, 0.5),
+          0 0 0 1px rgba(255, 255, 255, 0.05),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
       }
       
       .modal-header {
