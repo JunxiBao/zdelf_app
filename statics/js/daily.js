@@ -353,6 +353,13 @@ function bindUnifiedCardEvents(container) {
  * showDetailModal — 显示详情弹窗
  */
 function showDetailModal(fileId, type) {
+  // 获取当前页面的Shadow DOM
+  const shadowRoot = document.querySelector('#content').shadowRoot;
+  if (!shadowRoot) {
+    console.error('Shadow DOM not found');
+    return;
+  }
+
   // 创建弹窗
   const modal = document.createElement('div');
   modal.className = 'detail-modal';
@@ -369,14 +376,16 @@ function showDetailModal(fileId, type) {
     </div>
   `;
 
-  document.body.appendChild(modal);
+  shadowRoot.appendChild(modal);
 
   // 绑定关闭事件
   const closeBtn = modal.querySelector('.close-btn');
   const backdrop = modal.querySelector('.modal-backdrop');
   
   const closeModal = () => {
-    modal.remove();
+    if (modal && modal.parentNode) {
+      modal.parentNode.removeChild(modal);
+    }
   };
   
   closeBtn.addEventListener('click', closeModal);
@@ -432,7 +441,9 @@ function showAllItemsModal(type) {
   const backdrop = modal.querySelector('.modal-backdrop');
   
   const closeModal = () => {
-    modal.remove();
+    if (modal && modal.parentNode) {
+      modal.parentNode.removeChild(modal);
+    }
   };
   
   closeBtn.addEventListener('click', closeModal);

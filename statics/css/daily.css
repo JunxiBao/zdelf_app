@@ -332,8 +332,6 @@ body {
   bottom: auto !important;
   margin: 0 auto !important;
   padding: 0 !important;
-  /* 调试样式 */
-  border: 5px solid red !important;
 }
 
 .modal-content::before {
