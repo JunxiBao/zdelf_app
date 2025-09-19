@@ -181,6 +181,23 @@ function initDaily(shadowRoot) {
   `;
   dailyRoot.appendChild(doctorStyle);
 
+  // 强制应用样式到doctor按钮
+  setTimeout(() => {
+    const doctorButton = dailyRoot.querySelector('#doctor-button');
+    if (doctorButton) {
+      doctorButton.style.position = 'fixed';
+      doctorButton.style.bottom = '24px';
+      doctorButton.style.right = '-25px';
+      doctorButton.style.width = '50px';
+      doctorButton.style.height = '50px';
+      doctorButton.style.zIndex = '1001';
+      doctorButton.style.cursor = 'pointer';
+      doctorButton.style.opacity = '0.3';
+      doctorButton.style.transition = 'right 0.3s ease';
+      console.log('✅ Doctor按钮样式已强制应用');
+    }
+  }, 100);
+
   // Wire up doctor popup interactions scoped to Shadow DOM
   const doctorButton = dailyRoot.querySelector('#doctor-button');
   const doctorPopup = dailyRoot.querySelector('#doctor-popup');
@@ -414,15 +431,15 @@ function showDetailModal(fileId, type) {
       top: 0 !important;
       left: 0 !important;
       right: 0 !important;
-      bottom: 80px !important;
+      bottom: 0 !important;
       z-index: 99999 !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      padding: 20px !important;
+      padding: 20px 20px 100px 20px !important;
       box-sizing: border-box !important;
       width: 100vw !important;
-      height: calc(100vh - 80px) !important;
+      height: 100vh !important;
     }
 
     .modal-backdrop {
@@ -456,7 +473,7 @@ function showDetailModal(fileId, type) {
         0 0 0 1px rgba(255, 255, 255, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
       max-width: 90vw !important;
-      max-height: calc(100vh - 120px) !important;
+      max-height: calc(100vh - 200px) !important;
       width: 100% !important;
       max-width: 700px !important;
       overflow: hidden !important;
