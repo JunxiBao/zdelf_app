@@ -285,6 +285,21 @@
             this.style.height = Math.min(this.scrollHeight, 120) + 'px';
           });
         }
+
+        // 监听所有链接点击事件，确保在默认浏览器中打开
+        document.addEventListener('click', function(e) {
+          if (e.target.tagName === 'A' && e.target.href) {
+            e.preventDefault();
+            // 在默认浏览器中打开链接
+            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+              // 如果是在Capacitor环境中，使用Browser插件
+              window.Capacitor.Plugins.Browser.open({ url: e.target.href });
+            } else {
+              // 在普通浏览器环境中，使用window.open
+              window.open(e.target.href, '_blank', 'noopener,noreferrer');
+            }
+          }
+        });
       });
 
       /**
@@ -293,9 +308,23 @@
        */
       function renderMarkdownSafe(mdText) {
         const html = window.marked ? marked.parse(mdText || "") : mdText || "";
-        return window.DOMPurify
-          ? DOMPurify.sanitize(html, { USE_PROFILES: { html: true } })
+        let sanitizedHtml = window.DOMPurify
+          ? DOMPurify.sanitize(html, { 
+              USE_PROFILES: { html: true },
+              ADD_ATTR: ['target', 'rel'] // 允许target和rel属性
+            })
           : html;
+        
+        // 确保所有外部链接都在新窗口打开
+        sanitizedHtml = sanitizedHtml.replace(/<a\s+([^>]*?)href="([^"]*?)"([^>]*?)>/gi, (match, before, href, after) => {
+          // 如果是外部链接，确保有target="_blank"
+          if (href.startsWith('http') && !match.includes('target=')) {
+            return `<a ${before}href="${href}"${after} target="_blank" rel="noopener noreferrer">`;
+          }
+          return match;
+        });
+        
+        return sanitizedHtml;
       }
 
       // 会话管理
