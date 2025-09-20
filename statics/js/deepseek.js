@@ -1,12 +1,11 @@
 /**
  * deepseek.js — AI Assistant page logic (runs inside a Shadow DOM)
- * AI助手页脚本：在 Shadow DOM 内运行，现在使用火山引擎 DeepSeek v3.1 API
+ * AI助手页脚本：在 Shadow DOM 内运行，现在使用通义千问API
  *
  * Responsibilities / 职责
  * - Load and display DeepSeek.html content / 加载并显示DeepSeek.html内容
  * - Expose lifecycle hooks: initDeepseek(shadowRoot), destroyDeepseek() / 导出生命周期钩子
- * - Support context-aware conversations with DeepSeek v3.1 API / 支持 DeepSeek v3.1 的上下文对话
- * - Support real-time web search capabilities / 支持实时联网搜索功能
+ * - Support context-aware conversations with Qwen API / 支持通义千问的上下文对话
  *
  * This module is loaded dynamically by the shell (index.js) and receives the
  * page's ShadowRoot via initDeepseek(shadowRoot). All DOM lookups must be scoped
@@ -67,7 +66,7 @@ function loadDeepSeekContent(root) {
   `;
   
   iframe.onload = () => {
-    console.log('✅ AI助手页面加载完成 (使用火山引擎 DeepSeek v3.1 API)');
+    console.log('✅ AI助手页面加载完成 (使用通义千问API)');
     // 将API基础路径传递给iframe
     try {
       iframe.contentWindow.__API_BASE__ = window.__API_BASE__ || 'https://app.zdelf.cn';

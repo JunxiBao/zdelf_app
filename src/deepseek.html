@@ -2,7 +2,7 @@
 <html lang="zh">
   <head>
     <meta charset="UTF-8" />
-    <title>DeepSeek v3.1 健康助手</title>
+    <title>个人博客</title>
 
     <!-- Viewport & color scheme 视口与颜色方案 -->
     <meta
@@ -172,7 +172,27 @@
         }
       }
       
-      /* 发送按钮样式 */
+      /* 按钮组样式 */
+      .button-group {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      
+      #clearBtn {
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.2s;
+      }
+      
+      #clearBtn:hover {
+        background: #5a6268;
+      }
       
       #sendBtn {
         background: #007bff;
@@ -195,6 +215,14 @@
       }
       
       @media (prefers-color-scheme: dark) {
+        #clearBtn {
+          background: #495057;
+        }
+        
+        #clearBtn:hover {
+          background: #343a40;
+        }
+        
         #sendBtn {
           background: #0d6efd;
         }
@@ -238,20 +266,31 @@
       <div class="input-container">
         <textarea
           id="userInput"
-          placeholder="请输入您的健康问题... (DeepSeek v3.1 支持联网搜索)"
+          placeholder="请输入您的健康问题..."
           autocomplete="off"
           aria-label="输入您的健康问题"
           onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"
           rows="1"
         ></textarea>
-        <button
-          type="button"
-          id="sendBtn"
-          onclick="sendMessage()"
-          aria-label="发送消息"
-        >
-          发送
-        </button>
+        <div class="button-group">
+          <button
+            type="button"
+            id="clearBtn"
+            onclick="clearSession()"
+            aria-label="清除会话"
+            title="清除对话历史"
+          >
+            清除
+          </button>
+          <button
+            type="button"
+            id="sendBtn"
+            onclick="sendMessage()"
+            aria-label="发送消息"
+          >
+            发送
+          </button>
+        </div>
     
 
     <script>
@@ -343,7 +382,36 @@
         }
       }
       
-      // 注意：已移除清除会话功能
+      // 清除会话
+      async function clearSession() {
+        try {
+          const apiBase = window.__API_BASE__ || (window.parent && window.parent.__API_BASE__) || 'https://app.zdelf.cn';
+          const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
+          
+          const response = await fetch(`${baseUrl}/deepseek/clear_session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: currentSessionId })
+          });
+          
+          if (response.ok) {
+            // 清除本地会话ID
+            currentSessionId = null;
+            localStorage.removeItem('qwen_session_id');
+            
+            // 清空消息列表
+            const msgList = document.getElementById("messageList");
+            msgList.innerHTML = '';
+            
+            // 重新生成问候
+            generateGreeting();
+            
+            console.log('会话已清除');
+          }
+        } catch (error) {
+          console.error('清除会话失败:', error);
+        }
+      }
 
       // 初始问候
       function generateGreeting() {
@@ -351,17 +419,17 @@
         const hour = now.getHours();
         console.log('当前时间:', now.toLocaleString(), '小时:', hour);
         
-        let greet = "您好！我是基于 DeepSeek v3.1 的健康助手，具备联网搜索能力，有什么健康问题尽管问我哦~";
+        let greet = "您好！我是您的健康助手，有什么健康问题尽管问我哦~";
         if (hour >= 5 && hour < 11) {
-          greet = "早上好 ☀️，我是 DeepSeek v3.1 健康助手，可以实时搜索最新医疗信息，有什么健康问题可以问我";
+          greet = "早上好 ☀️，祝你有愉快的一天！有什么健康问题可以问我";
         } else if (hour >= 11 && hour < 14) {
-          greet = "中午好 🍵，我是 DeepSeek v3.1 健康助手，注意补水，有什么健康问题想问的？";
+          greet = "中午好 🍵，注意补水，有什么健康问题想问的？";
         } else if (hour >= 14 && hour < 18) {
-          greet = "下午好 🌿，我是 DeepSeek v3.1 健康助手，上午过得如何呢？有什么健康问题可以咨询我";
+          greet = "下午好 🌿，上午过得如何呢？有什么健康问题可以咨询我";
         } else if (hour >= 18 && hour < 22) {
-          greet = "晚上好 🌙，我是 DeepSeek v3.1 健康助手，今天感觉怎么样？可以准备休息喽～有什么健康问题可以问我";
+          greet = "晚上好 🌙，今天感觉怎么样？可以准备休息喽～有什么健康问题可以问我";
         } else {
-          greet = "夜深了 🌃，我是 DeepSeek v3.1 健康助手，美好的一天过去了，早点休息哦～有什么健康问题可以问我";
+          greet = "夜深了 🌃，美好的一天过去了，早点休息哦～有什么健康问题可以问我";
         }
         addMessage(greet, "bot");
       }
