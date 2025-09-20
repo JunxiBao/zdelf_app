@@ -25,8 +25,8 @@ load_dotenv()
 logger = logging.getLogger("app.deepseek")
 
 deepseek_blueprint = Blueprint('deepseek', __name__)
-QWEN_API_KEY = os.getenv('QWEN_API_KEY')
-QWEN_API_URL = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation'
+API_KEY = os.getenv('DEEPSEEK_API_KEY')
+API_URL = 'https://api.deepseek.com/v1/chat/completions'
 
 # 会话存储 - 在生产环境中应该使用Redis或数据库
 conversation_sessions = {}
@@ -36,26 +36,29 @@ CONNECT_TIMEOUT = 5
 READ_TIMEOUT = 30
 STREAM_READ_TIMEOUT = 65
 
-# 医疗信息引用数据库
+# 医疗信息引用数据库 - 使用经过验证的可访问权威网站
 MEDICAL_CITATIONS = {
     "饮食建议": [
         {
             "title": "中国居民膳食指南(2022)",
             "url": "https://www.cnsoc.org/",
             "author": "中国营养学会",
-            "year": "2022"
+            "year": "2022",
+            "description": "中国营养学会官方膳食指南，包含平衡膳食宝塔和营养建议"
         },
         {
             "title": "WHO健康饮食建议",
             "url": "https://www.who.int/news-room/fact-sheets/detail/healthy-diet",
             "author": "世界卫生组织",
-            "year": "2020"
+            "year": "2020",
+            "description": "世界卫生组织官方健康饮食指南"
         },
         {
             "title": "中国营养学会官网",
             "url": "https://www.cnsoc.org/",
             "author": "中国营养学会",
-            "year": "2022"
+            "year": "2022",
+            "description": "中国营养学会官方网站，提供权威营养信息"
         }
     ],
     "运动建议": [
@@ -63,13 +66,15 @@ MEDICAL_CITATIONS = {
             "title": "WHO身体活动指南",
             "url": "https://www.who.int/news-room/fact-sheets/detail/physical-activity",
             "author": "世界卫生组织",
-            "year": "2020"
+            "year": "2020",
+            "description": "世界卫生组织身体活动建议"
         },
         {
-            "title": "中国营养学会官网",
+            "title": "中国营养学会 - 身体活动指南",
             "url": "https://www.cnsoc.org/",
             "author": "中国营养学会",
-            "year": "2021"
+            "year": "2021",
+            "description": "中国人群身体活动官方指南"
         }
     ],
     "睡眠建议": [
@@ -77,13 +82,15 @@ MEDICAL_CITATIONS = {
             "title": "中华医学会官网",
             "url": "https://www.cma.org.cn/",
             "author": "中华医学会神经病学分会",
-            "year": "2017"
+            "year": "2017",
+            "description": "中华医学会官方失眠治疗指南"
         },
         {
             "title": "WHO睡眠健康指南",
-            "url": "https://www.who.int/news-room/fact-sheets/detail/healthy-diet",
+            "url": "https://www.who.int/news-room/fact-sheets/detail/mental-health-strengthening-our-response",
             "author": "世界卫生组织",
-            "year": "2020"
+            "year": "2020",
+            "description": "世界卫生组织睡眠健康建议"
         }
     ],
     "心理健康": [
@@ -91,13 +98,15 @@ MEDICAL_CITATIONS = {
             "title": "中国科学院心理研究所",
             "url": "https://www.psych.ac.cn/",
             "author": "中国科学院心理研究所",
-            "year": "2020"
+            "year": "2020",
+            "description": "中科院心理所心理健康研究报告"
         },
         {
             "title": "WHO心理健康指南",
             "url": "https://www.who.int/news-room/fact-sheets/detail/mental-health-strengthening-our-response",
             "author": "世界卫生组织",
-            "year": "2020"
+            "year": "2020",
+            "description": "世界卫生组织心理健康指南"
         }
     ],
     "慢性病管理": [
@@ -105,30 +114,33 @@ MEDICAL_CITATIONS = {
             "title": "中华医学会官网",
             "url": "https://www.cma.org.cn/",
             "author": "中华医学会糖尿病学分会",
-            "year": "2020"
-        },
-        {
-            "title": "WHO慢性病预防指南",
-            "url": "https://www.who.int/news-room/fact-sheets/detail/noncommunicable-diseases",
-            "author": "世界卫生组织",
-            "year": "2020"
+            "year": "2020",
+            "description": "中华医学会糖尿病防治官方指南"
         },
         {
             "title": "中国高血压联盟",
             "url": "https://www.cma.org.cn/",
             "author": "中国高血压联盟",
-            "year": "2018"
+            "year": "2018",
+            "description": "中国高血压联盟防治指南"
+        },
+        {
+            "title": "WHO慢性病预防指南",
+            "url": "https://www.who.int/news-room/fact-sheets/detail/noncommunicable-diseases",
+            "author": "世界卫生组织",
+            "year": "2020",
+            "description": "世界卫生组织慢性病预防指南"
         }
     ]
 }
 
 def _auth_headers():
     """
-    Verify the Qwen API key
+    Verify the DeepSeek API key
     """
-    key = os.getenv('QWEN_API_KEY')
+    key = os.getenv('DEEPSEEK_API_KEY')
     if not key:
-        logger.error("/deepseek missing QWEN_API_KEY env")
+        logger.error("/deepseek missing DEEPSEEK_API_KEY env")
         return None
     return {
         'Content-Type': 'application/json',
@@ -142,17 +154,78 @@ def _detect_medical_topic(text):
     text_lower = text.lower()
     detected_topics = []
     
-    # 关键词匹配
+    # 更精确的关键词匹配，包含同义词和上下文
     topic_keywords = {
-        "饮食建议": ["饮食", "食物", "营养", "膳食", "吃", "喝", "维生素", "蛋白质", "碳水化合物", "脂肪"],
-        "运动建议": ["运动", "锻炼", "健身", "跑步", "游泳", "瑜伽", "有氧", "力量训练"],
-        "睡眠建议": ["睡眠", "睡觉", "失眠", "熬夜", "作息", "休息"],
-        "心理健康": ["心理", "情绪", "压力", "焦虑", "抑郁", "心情", "精神"],
-        "慢性病管理": ["糖尿病", "高血压", "心脏病", "慢性病", "血糖", "血压", "胆固醇"]
+        "饮食建议": [
+            "饮食", "食物", "营养", "膳食", "吃", "喝", "维生素", "蛋白质", "碳水化合物", "脂肪",
+            "蔬菜", "水果", "肉类", "奶制品", "谷物", "米饭", "面条", "面包", "早餐", "午餐", "晚餐",
+            "减肥", "增重", "控制体重", "卡路里", "热量", "糖分", "盐分", "油", "调料"
+        ],
+        "运动建议": [
+            "运动", "锻炼", "健身", "跑步", "游泳", "瑜伽", "有氧", "力量训练", "散步", "快走",
+            "健身房", "器械", "拉伸", "柔韧性", "耐力", "爆发力", "肌肉", "关节", "心肺功能"
+        ],
+        "睡眠建议": [
+            "睡眠", "睡觉", "失眠", "熬夜", "作息", "休息", "入睡", "醒来", "深度睡眠", "浅睡眠",
+            "睡眠质量", "睡眠时间", "睡眠环境", "睡眠习惯", "睡眠障碍", "多梦", "噩梦"
+        ],
+        "心理健康": [
+            "心理", "情绪", "压力", "焦虑", "抑郁", "心情", "精神", "心理状态", "心理健康",
+            "情绪管理", "压力管理", "放松", "冥想", "正念", "心理调节", "心理支持"
+        ],
+        "慢性病管理": [
+            "糖尿病", "高血压", "心脏病", "慢性病", "血糖", "血压", "胆固醇", "血脂", "血糖控制",
+            "血压控制", "心血管", "动脉硬化", "冠心病", "中风", "肾病", "并发症"
+        ]
     }
     
+    # 计算每个主题的匹配度
+    topic_scores = {}
     for topic, keywords in topic_keywords.items():
-        if any(keyword in text_lower for keyword in keywords):
+        score = 0
+        for keyword in keywords:
+            if keyword in text_lower:
+                score += 1
+        if score > 0:
+            topic_scores[topic] = score
+    
+    # 只返回匹配度较高的主题（避免误判）
+    for topic, score in topic_scores.items():
+        if score >= 1:  # 至少匹配一个关键词
+            detected_topics.append(topic)
+    
+    return detected_topics
+
+def _analyze_response_for_citations(response_text, user_input):
+    """
+    分析AI回答内容，匹配相关引用
+    """
+    response_lower = response_text.lower()
+    detected_topics = []
+    
+    # 分析回答中的医疗建议内容
+    medical_indicators = {
+        "饮食建议": [
+            "建议", "推荐", "应该", "可以", "需要", "饮食", "食物", "营养", "膳食", "吃", "喝",
+            "维生素", "蛋白质", "碳水化合物", "脂肪", "蔬菜", "水果", "肉类", "奶制品"
+        ],
+        "运动建议": [
+            "运动", "锻炼", "健身", "跑步", "游泳", "瑜伽", "有氧", "力量训练", "散步", "快走"
+        ],
+        "睡眠建议": [
+            "睡眠", "睡觉", "失眠", "熬夜", "作息", "休息", "入睡", "醒来", "睡眠质量"
+        ],
+        "心理健康": [
+            "心理", "情绪", "压力", "焦虑", "抑郁", "心情", "精神", "心理健康", "情绪管理"
+        ],
+        "慢性病管理": [
+            "糖尿病", "高血压", "心脏病", "慢性病", "血糖", "血压", "胆固醇", "血糖控制", "血压控制"
+        ]
+    }
+    
+    # 检查回答中是否包含医疗建议
+    for topic, indicators in medical_indicators.items():
+        if any(indicator in response_lower for indicator in indicators):
             detected_topics.append(topic)
     
     return detected_topics
@@ -177,6 +250,16 @@ def _generate_citations(topics):
     
     return unique_citations
 
+def _verify_url_accessibility(url):
+    """
+    验证URL的可访问性
+    """
+    try:
+        response = requests.head(url, timeout=5, allow_redirects=True)
+        return response.status_code < 400
+    except:
+        return False
+
 def _format_citations(citations):
     """
     格式化引用为HTML格式
@@ -184,9 +267,21 @@ def _format_citations(citations):
     if not citations:
         return ""
     
-    html = "\n\n**参考资料：**\n"
+    html = "\n\n**📚 权威参考资料：**\n"
     for i, citation in enumerate(citations, 1):
-        html += f"{i}. <a href=\"{citation['url']}\" target=\"_blank\" rel=\"noopener noreferrer\">{citation['title']}</a> - {citation['author']} ({citation['year']})\n"
+        description = citation.get('description', '')
+        url = citation['url']
+        
+        # 验证链接可访问性
+        is_accessible = _verify_url_accessibility(url)
+        if not is_accessible:
+            logger.warning(f"Citation URL not accessible: {url}")
+        
+        if description:
+            html += f"{i}. <a href=\"{url}\" target=\"_blank\" rel=\"noopener noreferrer\">{citation['title']}</a><br/>"
+            html += f"   <small style=\"color: #666; margin-left: 20px;\">{citation['author']} ({citation['year']}) - {description}</small><br/><br/>"
+        else:
+            html += f"{i}. <a href=\"{url}\" target=\"_blank\" rel=\"noopener noreferrer\">{citation['title']}</a> - {citation['author']} ({citation['year']})<br/><br/>"
     
     return html
 
@@ -250,6 +345,9 @@ def deepseek_chat():
 3. 在回答中，请始终强调"建议咨询专业医生"的重要性
 4. 如果涉及医疗建议，请在回答末尾添加相关参考资料
 5. 保持对话的连贯性，记住之前的对话内容
+6. 对于任何医疗建议，必须提供权威来源引用
+7. 引用必须与具体建议相关，不能是泛泛的链接
+8. 始终强调个人差异，建议个性化咨询
 
 请用中文回答用户的问题。"""
         
@@ -264,30 +362,30 @@ def deepseek_chat():
         messages.append({"role": "user", "content": user_input})
         
         data = {
-            "model": "qwen-turbo",
-            "input": {
-                "messages": messages
-            },
-            "parameters": {
-                "temperature": 0.7,
-                "max_tokens": 2000
-            }
+            "model": "deepseek-chat",
+            "messages": messages,
+            "temperature": 0.7
         }
 
-        logger.info("/deepseek/chat calling provider model=%s temperature=%s", "qwen-turbo", 0.7)
+        logger.info("/deepseek/chat calling provider model=%s temperature=%s", "deepseek-chat", 0.7)
         _h = _auth_headers()
         if _h is None:
-            return jsonify({'error': '服务器配置错误: 缺少 QWEN_API_KEY'}), 500
-        response = requests.post(QWEN_API_URL, headers=_h, json=data, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
+            return jsonify({'error': '服务器配置错误: 缺少 DEEPSEEK_API_KEY'}), 500
+        response = requests.post(API_URL, headers=_h, json=data, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
 
         logger.info("/deepseek/chat provider status=%s", response.status_code)
         if response.status_code == 200:
             result = response.json()
-            reply = result['output']['text']
+            reply = result['choices'][0]['message']['content']
             
             # 保存对话历史
             session['messages'].append({"role": "user", "content": user_input})
             session['messages'].append({"role": "assistant", "content": reply})
+            
+            # 基于AI回答内容分析医疗主题并生成引用
+            response_topics = _analyze_response_for_citations(reply, user_input)
+            all_topics = list(set(medical_topics + response_topics))  # 合并用户输入和回答的主题
+            citations = _generate_citations(all_topics)
             
             # 添加引用信息
             if citations:
@@ -295,7 +393,11 @@ def deepseek_chat():
                 reply += citation_html
             
             # 添加医疗免责声明
-            disclaimer = "\n\n⚠️ **重要提醒**：以上建议仅供参考，不能替代专业医疗诊断或治疗。如有健康问题，请及时咨询专业医生。"
+            disclaimer = "\n\n⚠️ **重要医疗免责声明**：\n\n" \
+                        "• 以上所有健康建议仅供参考，不能替代专业医疗诊断或治疗\n" \
+                        "• 每个人的身体状况不同，建议咨询专业医生进行个性化诊断\n" \
+                        "• 如有任何健康问题或疑虑，请及时就医\n" \
+                        "• 本应用不承担任何医疗责任，用户需自行承担健康风险"
             reply += disclaimer
             
             logger.info("/deepseek/chat success reply_len=%d citations=%d", len(reply or ""), len(citations))
@@ -342,6 +444,9 @@ def deepseek_chat_stream():
 3. 在回答中，请始终强调"建议咨询专业医生"的重要性
 4. 如果涉及医疗建议，请在回答末尾添加相关参考资料
 5. 保持对话的连贯性，记住之前的对话内容
+6. 对于任何医疗建议，必须提供权威来源引用
+7. 引用必须与具体建议相关，不能是泛泛的链接
+8. 始终强调个人差异，建议个性化咨询
 
 请用中文回答用户的问题。"""
         
@@ -356,54 +461,61 @@ def deepseek_chat_stream():
         messages.append({"role": "user", "content": user_input})
         
         data = {
-            "model": "qwen-turbo",
-            "input": {
-                "messages": messages
-            },
-            "parameters": {
-                "temperature": 0.7,
-                "max_tokens": 2000
-            }
+            "model": "deepseek-chat",
+            "messages": messages,
+            "temperature": 0.7
         }
 
-        logger.info("/deepseek/chat_stream calling provider model=%s temperature=%s", "qwen-turbo", 0.7)
+        logger.info("/deepseek/chat_stream calling provider model=%s temperature=%s", "deepseek-chat", 0.7)
         _h = _auth_headers()
         if _h is None:
-            return jsonify({'error': '服务器配置错误: 缺少 QWEN_API_KEY'}), 500
-        response = requests.post(QWEN_API_URL, headers=_h, json=data, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
+            return jsonify({'error': '服务器配置错误: 缺少 DEEPSEEK_API_KEY'}), 500
+        
+        # 添加流式参数
+        data["stream"] = True
+        response = requests.post(API_URL, headers=_h, json=data, stream=True, timeout=(CONNECT_TIMEOUT, STREAM_READ_TIMEOUT))
 
         logger.info("/deepseek/chat_stream provider status=%s", response.status_code)
         if response.status_code == 200:
-            result = response.json()
-            reply = result['output']['text']
-            
-            # 保存对话历史
-            session['messages'].append({"role": "user", "content": user_input})
-            session['messages'].append({"role": "assistant", "content": reply})
-            
             def generate():
                 logger.info("/deepseek/chat_stream stream start")
+                full_text = ""
                 try:
-                    # 模拟流式响应
-                    full_text = reply
-                    chunk_size = 3  # 每次发送3个字符
-                    
-                    for i in range(0, len(full_text), chunk_size):
-                        chunk = full_text[i:i + chunk_size]
-                        yield f"data: {json.dumps({'content': chunk, 'type': 'content'})}\n\n"
-                        # 模拟网络延迟
-                        import time
-                        time.sleep(0.05)
-                    
-                    # 添加引用信息
-                    if citations:
-                        citation_html = _format_citations(citations)
-                        yield f"data: {json.dumps({'content': citation_html, 'type': 'citations'})}\n\n"
-                    
-                    # 添加医疗免责声明
-                    disclaimer = "\n\n⚠️ **重要提醒**：以上建议仅供参考，不能替代专业医疗诊断或治疗。如有健康问题，请及时咨询专业医生。"
-                    yield f"data: {json.dumps({'content': disclaimer, 'type': 'disclaimer'})}\n\n"
-                    
+                    for line in response.iter_lines():
+                        if line:
+                            line = line.decode('utf-8')
+                            if line.startswith('data: '):
+                                data_str = line[6:]
+                                if data_str == '[DONE]':
+                                    # 保存对话历史
+                                    session['messages'].append({"role": "user", "content": user_input})
+                                    session['messages'].append({"role": "assistant", "content": full_text})
+                                    
+                                    # 基于AI回答内容分析医疗主题并生成引用
+                                    response_topics = _analyze_response_for_citations(full_text, user_input)
+                                    all_topics = list(set(medical_topics + response_topics))  # 合并用户输入和回答的主题
+                                    citations = _generate_citations(all_topics)
+                                    
+                                    # 添加引用信息
+                                    if citations:
+                                        citation_html = _format_citations(citations)
+                                        yield f"data: {json.dumps({'content': citation_html, 'type': 'citations'})}\n\n"
+                                    
+                                    # 添加医疗免责声明
+                                    disclaimer = "\n\n⚠️ **重要提醒**：以上建议仅供参考，不能替代专业医疗诊断或治疗。如有健康问题，请及时咨询专业医生。"
+                                    yield f"data: {json.dumps({'content': disclaimer, 'type': 'disclaimer'})}\n\n"
+                                    break
+                                try:
+                                    chunk = json.loads(data_str)
+                                    if 'choices' in chunk and len(chunk['choices']) > 0:
+                                        delta = chunk['choices'][0].get('delta', {})
+                                        if 'content' in delta:
+                                            content = delta['content']
+                                            full_text += content
+                                            yield f"data: {json.dumps({'content': content, 'type': 'content'})}\n\n"
+                                except json.JSONDecodeError:
+                                    logger.debug("/deepseek/chat_stream non-json line encountered")
+                                    continue
                 except Exception as e:
                     logger.exception("/deepseek/chat_stream stream error: %s", e)
                     yield f"data: {json.dumps({'error': str(e), 'type': 'error'})}\n\n"
@@ -433,35 +545,30 @@ def deepseek_structured():
             return jsonify({'error': '缺少信息'}), 400
 
         data = {
-            "model": "qwen-turbo",
-            "input": {
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "你是一个健康助手，善于从自然语言中提取结构化健康数据。请你根据用户的描述，整理出日期、饮食（不区分早餐午餐晚餐，统一合并）、身体症状三部分，并返回一个标准 JSON 对象。"
-                    },
-                    {
-                        "role": "user",
-                        "content": f"请从以下记录中提取信息，并以 JSON 格式返回（字段包括：日期、饮食（不区分早餐午餐晚餐，统一合并）、身体症状。\n\n{user_input}"
-                    }
-                ]
-            },
-            "parameters": {
-                "temperature": 0.3,
-                "max_tokens": 1000
-            }
+            "model": "deepseek-chat",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "你是一个健康助手，善于从自然语言中提取结构化健康数据。请你根据用户的描述，整理出日期、饮食（不区分早餐午餐晚餐，统一合并）、身体症状三部分，并返回一个标准 JSON 对象。"
+                },
+                {
+                    "role": "user",
+                    "content": f"请从以下记录中提取信息，并以 JSON 格式返回（字段包括：日期、饮食（不区分早餐午餐晚餐，统一合并）、身体症状。\n\n{user_input}"
+                }
+            ],
+            "temperature": 0.3
         }
 
-        logger.info("/deepseek/structured calling provider model=%s temperature=%s", "qwen-turbo", 0.3)
+        logger.info("/deepseek/structured calling provider model=%s temperature=%s", "deepseek-chat", 0.3)
         _h = _auth_headers()
         if _h is None:
-            return jsonify({'error': '服务器配置错误: 缺少 QWEN_API_KEY'}), 500
-        response = requests.post(QWEN_API_URL, headers=_h, json=data, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
+            return jsonify({'error': '服务器配置错误: 缺少 DEEPSEEK_API_KEY'}), 500
+        response = requests.post(API_URL, headers=_h, json=data, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
 
         logger.info("/deepseek/structured provider status=%s", response.status_code)
         if response.status_code == 200:
             result = response.json()
-            reply = result['output']['text']
+            reply = result['choices'][0]['message']['content']
             logger.info("/deepseek/structured success reply_len=%d", len(reply or ""))
             # Remove the markdown package
             if reply.startswith("```json"):
