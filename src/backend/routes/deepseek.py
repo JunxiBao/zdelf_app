@@ -31,6 +31,7 @@ VOLCENGINE_API_KEY = os.getenv('VOLCENGINE_API_KEY')
 VOLCENGINE_MODEL_ID = os.getenv('VOLCENGINE_MODEL_ID')  # 推理接入点的 model_id
 VOLCENGINE_BOT_ID = os.getenv('VOLCENGINE_BOT_ID')  # Bot ID (bot-开头)
 VOLCENGINE_API_URL = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions'
+VOLCENGINE_BOT_API_URL = 'https://ark.cn-beijing.volces.com/api/v3/bot/chat'  # Bot API 端点
 
 # 备用：原始 DeepSeek API
 DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
@@ -39,9 +40,15 @@ DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions'
 # 优先使用火山引擎 DeepSeek v3.1，如果配置不存在则回退到原始API
 if VOLCENGINE_API_KEY and (VOLCENGINE_MODEL_ID or VOLCENGINE_BOT_ID):
     API_KEY = VOLCENGINE_API_KEY
-    API_URL = VOLCENGINE_API_URL
     # 优先使用 Model ID，如果没有则使用 Bot ID
-    MODEL_ID = VOLCENGINE_MODEL_ID if VOLCENGINE_MODEL_ID else VOLCENGINE_BOT_ID
+    if VOLCENGINE_MODEL_ID:
+        API_URL = VOLCENGINE_API_URL
+        MODEL_ID = VOLCENGINE_MODEL_ID
+        USE_BOT_API = False
+    else:
+        API_URL = VOLCENGINE_API_URL
+        MODEL_ID = "deepseek-chat"  # 使用标准模型名称
+        USE_BOT_API = True
     USE_VOLCENGINE = True
     logger.info("使用火山引擎 DeepSeek v3.1 联网版本")
 else:
@@ -49,6 +56,7 @@ else:
     API_URL = DEEPSEEK_API_URL
     MODEL_ID = "deepseek-chat"
     USE_VOLCENGINE = False
+    USE_BOT_API = False
     logger.info("使用原始 DeepSeek API")
 
 # 会话存储 - 在生产环境中应该使用Redis或数据库
@@ -72,10 +80,16 @@ def _auth_headers():
     
     if USE_VOLCENGINE:
         # 火山引擎 DeepSeek v3.1 请求头
-        return {
+        headers = {
             'Authorization': f'Bearer {API_KEY}',
             'Content-Type': 'application/json'
         }
+        
+        # 如果使用Bot API，添加Bot ID到请求头
+        if USE_BOT_API and VOLCENGINE_BOT_ID:
+            headers['X-Bot-Id'] = VOLCENGINE_BOT_ID
+            
+        return headers
     else:
         # 原始 DeepSeek API 请求头
         return {
@@ -170,6 +184,11 @@ def deepseek_chat():
             "messages": messages,
             "temperature": 0.7
         }
+        
+        # 如果使用Bot API，添加Bot相关参数
+        if USE_VOLCENGINE and USE_BOT_API:
+            data["bot_id"] = VOLCENGINE_BOT_ID
+            data["stream"] = False  # Bot API 可能不支持流式
 
         logger.info("/deepseek/chat calling provider model=%s temperature=%s", model_name, 0.7)
         _h = _auth_headers()
@@ -271,6 +290,11 @@ def deepseek_chat_stream():
             "messages": messages,
             "temperature": 0.7
         }
+        
+        # 如果使用Bot API，添加Bot相关参数
+        if USE_VOLCENGINE and USE_BOT_API:
+            data["bot_id"] = VOLCENGINE_BOT_ID
+            data["stream"] = False  # Bot API 可能不支持流式
 
         logger.info("/deepseek/chat_stream calling provider model=%s temperature=%s", model_name, 0.7)
         _h = _auth_headers()
