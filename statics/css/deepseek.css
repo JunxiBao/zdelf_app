@@ -90,7 +90,7 @@ body {
 .message {
   display: flex;
   align-items: flex-end;
-  padding: 16px 20px;
+  padding: 18px 24px;
   border-radius: 20px;
   word-wrap: break-word;
   line-height: 1.6;
@@ -152,6 +152,8 @@ body {
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: pre-wrap;
+  padding: 4px 0 4px 5px;
+  margin-left: 0;
 }
 
 .message.bot .msg-content {
@@ -287,7 +289,7 @@ button:active {
   
   .message {
     max-width: 90%;
-    padding: 14px 18px;
+    padding: 16px 20px;
   }
   
   .input-container {
@@ -330,7 +332,7 @@ button:active {
   
   .message {
     max-width: 95%;
-    padding: 12px 16px;
+    padding: 14px 18px;
     font-size: 15px;
   }
   
