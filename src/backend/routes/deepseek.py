@@ -27,7 +27,7 @@ logger = logging.getLogger("app.deepseek")
 deepseek_blueprint = Blueprint('deepseek', __name__)
 
 # 火山引擎 DeepSeek v3.1 配置
-VOLCENGINE_API_KEY = os.getenv('VOLCENGINE_API_KEY')
+ARK_API_KEY = os.getenv('ARK_API_KEY')  # 按照官网示例使用 ARK_API_KEY
 VOLCENGINE_MODEL_ID = os.getenv('VOLCENGINE_MODEL_ID')  # 推理接入点的 model_id
 VOLCENGINE_BOT_ID = os.getenv('VOLCENGINE_BOT_ID')  # Bot ID (bot-开头)
 VOLCENGINE_API_URL = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions'
@@ -38,8 +38,8 @@ DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
 DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions'
 
 # 优先使用火山引擎 DeepSeek v3.1，如果配置不存在则回退到原始API
-if VOLCENGINE_API_KEY and (VOLCENGINE_MODEL_ID or VOLCENGINE_BOT_ID):
-    API_KEY = VOLCENGINE_API_KEY
+if ARK_API_KEY and (VOLCENGINE_MODEL_ID or VOLCENGINE_BOT_ID):
+    API_KEY = ARK_API_KEY
     # 优先使用 Model ID，如果没有则使用 Bot ID
     if VOLCENGINE_MODEL_ID:
         API_URL = VOLCENGINE_API_URL
@@ -190,7 +190,7 @@ def deepseek_chat():
         logger.info("/deepseek/chat calling provider model=%s temperature=%s", model_name, 0.7)
         _h = _auth_headers()
         if _h is None:
-            error_msg = '服务器配置错误: 缺少 VOLCENGINE_API_KEY 和 (VOLCENGINE_MODEL_ID 或 VOLCENGINE_BOT_ID)' if USE_VOLCENGINE else '服务器配置错误: 缺少 DEEPSEEK_API_KEY'
+            error_msg = '服务器配置错误: 缺少 ARK_API_KEY 和 (VOLCENGINE_MODEL_ID 或 VOLCENGINE_BOT_ID)' if USE_VOLCENGINE else '服务器配置错误: 缺少 DEEPSEEK_API_KEY'
             return jsonify({'error': error_msg}), 500
         response = requests.post(API_URL, headers=_h, json=data, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
 
@@ -295,7 +295,7 @@ def deepseek_chat_stream():
         logger.info("/deepseek/chat_stream calling provider model=%s temperature=%s", model_name, 0.7)
         _h = _auth_headers()
         if _h is None:
-            error_msg = '服务器配置错误: 缺少 VOLCENGINE_API_KEY 和 (VOLCENGINE_MODEL_ID 或 VOLCENGINE_BOT_ID)' if USE_VOLCENGINE else '服务器配置错误: 缺少 DEEPSEEK_API_KEY'
+            error_msg = '服务器配置错误: 缺少 ARK_API_KEY 和 (VOLCENGINE_MODEL_ID 或 VOLCENGINE_BOT_ID)' if USE_VOLCENGINE else '服务器配置错误: 缺少 DEEPSEEK_API_KEY'
             return jsonify({'error': error_msg}), 500
         
         # 添加流式参数
