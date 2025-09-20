@@ -31,7 +31,7 @@ VOLCENGINE_API_KEY = os.getenv('VOLCENGINE_API_KEY')
 VOLCENGINE_MODEL_ID = os.getenv('VOLCENGINE_MODEL_ID')  # 推理接入点的 model_id
 VOLCENGINE_BOT_ID = os.getenv('VOLCENGINE_BOT_ID')  # Bot ID (bot-开头)
 VOLCENGINE_API_URL = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions'
-VOLCENGINE_BOT_API_URL = 'https://ark.cn-beijing.volces.com/api/v3/bot/chat'  # Bot API 端点
+VOLCENGINE_BOT_API_URL = 'https://ark.cn-beijing.volces.com/api/v3/bots'  # Bot API 端点
 
 # 备用：原始 DeepSeek API
 DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
@@ -46,8 +46,8 @@ if VOLCENGINE_API_KEY and (VOLCENGINE_MODEL_ID or VOLCENGINE_BOT_ID):
         MODEL_ID = VOLCENGINE_MODEL_ID
         USE_BOT_API = False
     else:
-        API_URL = VOLCENGINE_API_URL
-        MODEL_ID = "deepseek-chat"  # 使用标准模型名称
+        API_URL = VOLCENGINE_BOT_API_URL
+        MODEL_ID = VOLCENGINE_BOT_ID  # 使用 Bot ID 作为模型名称
         USE_BOT_API = True
     USE_VOLCENGINE = True
     logger.info("使用火山引擎 DeepSeek v3.1 联网版本")
@@ -85,9 +85,7 @@ def _auth_headers():
             'Content-Type': 'application/json'
         }
         
-        # 如果使用Bot API，添加Bot ID到请求头
-        if USE_BOT_API and VOLCENGINE_BOT_ID:
-            headers['X-Bot-Id'] = VOLCENGINE_BOT_ID
+        # Bot API 使用标准请求头，不需要额外参数
             
         return headers
     else:
@@ -185,9 +183,8 @@ def deepseek_chat():
             "temperature": 0.7
         }
         
-        # 如果使用Bot API，添加Bot相关参数
+        # Bot API 使用标准格式，不需要额外参数
         if USE_VOLCENGINE and USE_BOT_API:
-            data["bot_id"] = VOLCENGINE_BOT_ID
             data["stream"] = False  # Bot API 可能不支持流式
 
         logger.info("/deepseek/chat calling provider model=%s temperature=%s", model_name, 0.7)
@@ -291,9 +288,8 @@ def deepseek_chat_stream():
             "temperature": 0.7
         }
         
-        # 如果使用Bot API，添加Bot相关参数
+        # Bot API 使用标准格式，不需要额外参数
         if USE_VOLCENGINE and USE_BOT_API:
-            data["bot_id"] = VOLCENGINE_BOT_ID
             data["stream"] = False  # Bot API 可能不支持流式
 
         logger.info("/deepseek/chat_stream calling provider model=%s temperature=%s", model_name, 0.7)
