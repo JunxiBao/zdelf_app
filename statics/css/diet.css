@@ -412,45 +412,62 @@ body {
     }
 }
 
-/* 右下角加号按钮样式 */
-.add-button-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 100;
-}
-
+/* 添加餐次按钮样式 - 与metrics页面保持一致 */
 .add-meal-btn {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6200ea, #bb86fc);
-    border: none;
-    color: #fff;
-    font-size: 2em;
-    font-weight: 300;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 16px rgba(98, 0, 234, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 16px;
+    border: 2px dashed #6200ea;
+    border-radius: 12px;
+    background: rgba(98, 0, 234, 0.05);
+    color: #6200ea;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 16px;
 }
 
 .add-meal-btn:hover {
-    background: linear-gradient(135deg, #4b00b5, #9c66d6);
-    transform: scale(1.1);
-    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.5);
+    background: rgba(98, 0, 234, 0.1);
+    border-color: #4a00b8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
 }
 
 .add-meal-btn:active {
-    transform: scale(1);
+    transform: translateY(0) scale(0.98);
+    transition: all 0.1s ease;
+}
+
+.add-meal-btn.clicking {
+    animation: buttonClick 0.3s ease-out;
+}
+
+@keyframes buttonClick {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.95);
+        background: rgba(98, 0, 234, 0.2);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 
 .add-icon {
-    line-height: 1;
-    display: block;
-    margin-top: -2px;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.add-text {
+    font-size: 1em;
+    font-weight: 600;
 }
 
 /* 深色模式适配 */
@@ -523,11 +540,31 @@ body {
     }
 
     .add-meal-btn {
-        background: linear-gradient(135deg, #bb86fc, #6200ea);
+        border-color: #a78bfa;
+        background: rgba(167, 139, 250, 0.1);
+        color: #a78bfa;
     }
 
     .add-meal-btn:hover {
-        background: linear-gradient(135deg, #9c66d6, #4b00b5);
+        background: rgba(167, 139, 250, 0.2);
+        border-color: #8b5cf6;
+    }
+
+    .add-meal-btn.clicking {
+        animation: buttonClickDark 0.3s ease-out;
+    }
+
+    @keyframes buttonClickDark {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(0.95);
+            background: rgba(167, 139, 250, 0.3);
+        }
+        100% {
+            transform: scale(1);
+        }
     }
 
     /* 深色模式下的自定义弹窗 */
@@ -608,16 +645,6 @@ body {
         min-width: 120px;
     }
 
-    .add-button-container {
-        bottom: 16px;
-        right: 16px;
-    }
-
-    .add-meal-btn {
-        width: 56px;
-        height: 56px;
-        font-size: 1.8em;
-    }
 
     .delete-meal-btn {
         padding: 6px 12px;

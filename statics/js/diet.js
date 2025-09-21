@@ -27,6 +27,9 @@ function initDietPage() {
     // 从本地存储加载已保存的数据
     loadDietData();
 
+    // 为第一个餐次设置默认时间
+    setDefaultTimeForFirstMeal();
+
     // 为现有按钮添加事件监听器
     const saveBtn = document.querySelector('.save-btn');
     if (saveBtn) {
@@ -43,6 +46,16 @@ function initDietPage() {
     }
 
     console.log('食物记录页面初始化完成');
+}
+
+// 为第一个餐次设置默认时间
+function setDefaultTimeForFirstMeal() {
+    const firstTimeInput = document.getElementById('time-1');
+    if (firstTimeInput && !firstTimeInput.value) {
+        const now = new Date();
+        const timeString = now.toTimeString().slice(0, 5); // HH:MM 格式
+        firstTimeInput.value = timeString;
+    }
 }
 
 // 返回上一页
@@ -85,9 +98,10 @@ function addNewMeal() {
         </div>
     `;
 
-    // 添加到容器中
+    // 添加到容器中（在添加按钮之前）
     const dietContainer = document.querySelector('.diet-container');
-    dietContainer.insertAdjacentHTML('beforeend', mealHTML);
+    const addButton = dietContainer.querySelector('.add-meal-btn');
+    addButton.insertAdjacentHTML('beforebegin', mealHTML);
 
     // 设置当前时间为默认值
     const now = new Date();
@@ -209,29 +223,39 @@ async function saveAllMeals() {
 
         // 收集所有餐次数据
         const mealRecords = document.querySelectorAll('.meal-record');
+        const emptyMeals = []; // 记录空的餐次
 
         mealRecords.forEach((mealElement, index) => {
             const mealId = mealElement.dataset.mealId;
             const timeValue = document.getElementById(`time-${mealId}`).value;
             const foodValue = document.getElementById(`food-${mealId}`).value.trim();
 
-            // 只有当有内容时才保存
-            if (foodValue || timeValue) {
+            // 检查是否有食物内容
+            if (foodValue) {
                 const mealData = {
                     time: timeValue,
                     food: foodValue,
-                    timestamp: new Date().toISOString(),
                     mealId: parseInt(mealId)
                 };
 
                 allMealsData[`meal_${mealId}`] = mealData;
                 validMealsCount++;
+            } else {
+                // 记录空的餐次
+                emptyMeals.push(parseInt(mealId));
             }
         });
 
+        // 验证输入
         if (validMealsCount === 0) {
             showToast('请至少记录一餐的食物信息');
             return;
+        }
+
+        // 如果有空的餐次，提醒用户
+        if (emptyMeals.length > 0) {
+            const emptyMealNumbers = emptyMeals.join('、');
+            showToast(`第${emptyMealNumbers}餐没有输入食物内容，将跳过这些餐次`);
         }
 
         // 保存到全局数据
@@ -243,7 +267,16 @@ async function saveAllMeals() {
         // 创建导出数据对象
         const exportData = {
             exportInfo: {
-                exportTime: new Date().toISOString(),
+                exportTime: new Date().toLocaleString('zh-CN', { 
+                    timeZone: 'Asia/Shanghai',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                }),
                 version: '1.0',
                 appName: '紫癜精灵',
                 dataType: 'diet_record'
@@ -255,6 +288,14 @@ async function saveAllMeals() {
         try {
             await uploadDietToServer(exportData);
             showToast(`成功保存 ${validMealsCount} 餐食物记录并上传云端！`);
+            
+            // 清除表单数据
+            clearAllDietData();
+            
+            // 跳转到daily页面
+            setTimeout(() => {
+                window.location.href = '../index.html';
+            }, 1500);
         } catch (uploadError) {
             console.warn('饮食记录上传失败:', uploadError);
             showToast(`已保存本地，云端上传失败`);
@@ -544,7 +585,16 @@ async function uploadDietToServer(exportData) {
         // 构建payload - 使用与metrics.js相同的格式
         const payload = {
             exportInfo: {
-                exportTime: new Date().toISOString(),
+                exportTime: new Date().toLocaleString('zh-CN', { 
+                    timeZone: 'Asia/Shanghai',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                }),
                 version: '1.0',
                 appName: '紫癜精灵',
                 dataType: 'diet_record'
@@ -578,6 +628,37 @@ async function uploadDietToServer(exportData) {
     } catch (error) {
         console.warn('[diet] 上传饮食数据异常:', error);
         throw error; // 重新抛出异常，让调用者处理
+    }
+}
+
+// 清除所有饮食记录表单数据
+function clearAllDietData() {
+    try {
+        // 清除所有餐次记录
+        const dietContainer = document.querySelector('.diet-container');
+        if (dietContainer) {
+            // 保留第一个餐次记录，清除其他所有餐次
+            const mealRecords = dietContainer.querySelectorAll('.meal-record');
+            mealRecords.forEach((record, index) => {
+                if (index > 0) {
+                    // 删除除第一个之外的所有餐次
+                    record.remove();
+                } else {
+                    // 清除第一个餐次的内容
+                    const timeInput = record.querySelector('.time-input');
+                    const foodTextarea = record.querySelector('textarea');
+                    if (timeInput) timeInput.value = '';
+                    if (foodTextarea) foodTextarea.value = '';
+                }
+            });
+        }
+        
+        // 清除本地存储
+        localStorage.removeItem('health_diet_data');
+        
+        console.log('所有饮食记录表单数据已清除');
+    } catch (error) {
+        console.error('清除饮食记录表单数据失败:', error);
     }
 }
 

@@ -97,12 +97,19 @@ function saveAllMetrics() {
                 case 'temperature':
                     const _tempEl = document.getElementById('temperature-input');
                     const temp = _tempEl ? _tempEl.value : '';
+                    console.log('体温输入值:', temp, '元素:', _tempEl);
                     if (temp && !isNaN(parseFloat(temp))) {
                         const tempValue = parseFloat(temp);
+                        console.log('体温数值:', tempValue);
                         if (tempValue >= 35 && tempValue <= 45) {
                             data = { temperature: tempValue };
                             hasValidData = true;
+                            console.log('体温数据已保存:', data);
+                        } else {
+                            console.log('体温超出范围:', tempValue);
                         }
+                    } else {
+                        console.log('体温输入无效:', temp);
                     }
                     break;
 
@@ -208,10 +215,7 @@ function saveAllMetrics() {
             }
 
             if (Object.keys(data).length > 0) {
-                allData[metricType] = {
-                    ...data,
-                    timestamp: new Date().toISOString()
-                };
+                allData[metricType] = data;
             }
         }
 
@@ -229,7 +233,16 @@ function saveAllMetrics() {
             try {
                 const payload = {
                     exportInfo: {
-                        exportTime: new Date().toISOString(),
+                        exportTime: new Date().toLocaleString('zh-CN', { 
+                            timeZone: 'Asia/Shanghai',
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: false
+                        }),
                         version: '1.0',
                         appName: '紫癜精灵',
                         dataType: 'health_metrics'
@@ -257,6 +270,14 @@ function saveAllMetrics() {
                 } else {
                     console.log('指标上传成功:', resJson);
                     showToast('已保存并上传云端');
+                    
+                    // 清除表单数据
+                    clearAllFormData();
+                    
+                    // 跳转到daily页面
+                    setTimeout(() => {
+                        window.location.href = '../index.html';
+                    }, 1500);
                 }
             } catch (e) {
                 console.warn('上传异常:', e);
@@ -1445,23 +1466,28 @@ function exportMetricsData() {
         const symptoms = getElementValue('symptoms-input').trim();
         if (symptoms) {
             allData.symptoms = {
-                symptoms,
-                timestamp: new Date().toISOString()
+                symptoms
             };
             hasValidData = true;
         }
         
         // 体温数据
         const temp = getElementValue('temperature-input');
+        console.log('导出时体温输入值:', temp);
         if (temp && !isNaN(parseFloat(temp))) {
             const tempValue = parseFloat(temp);
+            console.log('导出时体温数值:', tempValue);
             if (tempValue >= 35 && tempValue <= 45) {
-                allData.temperature = {
-                    temperature: tempValue,
-                    timestamp: new Date().toISOString()
+                allData['temperature'] = {
+                    temperature: tempValue
                 };
                 hasValidData = true;
+                console.log('导出时体温数据已保存:', allData['temperature']);
+            } else {
+                console.log('导出时体温超出范围:', tempValue);
             }
+        } else {
+            console.log('导出时体温输入无效:', temp);
         }
         
         // 尿常规数据
@@ -1472,8 +1498,7 @@ function exportMetricsData() {
         
         if (protein || glucose || ketones || blood) {
             allData.urinalysis = {
-                protein, glucose, ketones, blood,
-                timestamp: new Date().toISOString()
+                protein, glucose, ketones, blood
             };
             hasValidData = true;
         }
@@ -1484,8 +1509,7 @@ function exportMetricsData() {
             const proteinValue = parseFloat(protein24h);
             if (proteinValue >= 0) {
                 allData.proteinuria = {
-                    proteinuria24h: proteinValue,
-                    timestamp: new Date().toISOString()
+                    proteinuria24h: proteinValue
                 };
                 hasValidData = true;
             }
@@ -1504,10 +1528,7 @@ function exportMetricsData() {
         if (plt && !isNaN(parseInt(plt))) bloodData.plt = parseInt(plt);
         
         if (Object.keys(bloodData).length > 0) {
-            allData['blood-test'] = {
-                ...bloodData,
-                timestamp: new Date().toISOString()
-            };
+            allData['blood-test'] = bloodData;
             hasValidData = true;
         }
         
@@ -1520,10 +1541,7 @@ function exportMetricsData() {
             if (bleedingPoint === 'other' && otherBleedingText) {
                 bleedingData.otherDescription = otherBleedingText;
             }
-            allData['bleeding-point'] = {
-                ...bleedingData,
-                timestamp: new Date().toISOString()
-            };
+            allData['bleeding-point'] = bleedingData;
             hasValidData = true;
         }
         
@@ -1533,8 +1551,7 @@ function exportMetricsData() {
             const ratingValue = parseInt(rating);
             if (ratingValue >= 0 && ratingValue <= 10) {
                 allData['self-rating'] = {
-                    selfRating: ratingValue,
-                    timestamp: new Date().toISOString()
+                    selfRating: ratingValue
                 };
                 hasValidData = true;
             }
@@ -1559,8 +1576,7 @@ function exportMetricsData() {
         
         if (urinalysisData.length > 0) {
             allData['urinalysis-matrix'] = {
-                urinalysisMatrix: urinalysisData,
-                timestamp: new Date().toISOString()
+                urinalysisMatrix: urinalysisData
             };
             hasValidData = true;
         }
@@ -1573,7 +1589,16 @@ function exportMetricsData() {
         // 创建导出数据对象
         const exportData = {
             exportInfo: {
-                exportTime: new Date().toISOString(),
+                exportTime: new Date().toLocaleString('zh-CN', { 
+                    timeZone: 'Asia/Shanghai',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                }),
                 version: '1.0',
                 appName: '紫癜精灵',
                 dataType: 'health_metrics'
@@ -1618,6 +1643,48 @@ function exportMetricsData() {
     } catch (error) {
         console.error('导出数据失败:', error);
         showToast('导出失败，请重试');
+    }
+}
+
+// 清除所有表单数据
+function clearAllFormData() {
+    try {
+        // 清除所有输入框
+        const inputs = document.querySelectorAll('input[type="text"], input[type="number"], textarea, select');
+        inputs.forEach(input => {
+            if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+        });
+        
+        // 清除滑块值
+        const sliders = document.querySelectorAll('input[type="range"]');
+        sliders.forEach(slider => {
+            slider.value = slider.min || 0;
+            // 更新滑块显示
+            const valueDisplay = slider.parentElement.querySelector('.slider-value');
+            if (valueDisplay) {
+                valueDisplay.textContent = slider.value;
+            }
+        });
+        
+        // 清除尿液检测矩阵
+        const urinalysisItems = document.querySelectorAll('.urinalysis-item');
+        urinalysisItems.forEach(item => {
+            const select = item.querySelector('.urinalysis-select');
+            const valueInput = item.querySelector('.urinalysis-value');
+            if (select) select.value = '';
+            if (valueInput) valueInput.value = '';
+        });
+        
+        // 清除本地存储
+        localStorage.removeItem('health_metrics_data');
+        
+        console.log('所有表单数据已清除');
+    } catch (error) {
+        console.error('清除表单数据失败:', error);
     }
 }
 

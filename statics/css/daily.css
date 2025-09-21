@@ -384,7 +384,9 @@ body {
   animation: modalSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
-  margin: auto;
+  margin: 0 auto;
+  left: 0;
+  right: 0;
 }
 
 .modal-content::before {

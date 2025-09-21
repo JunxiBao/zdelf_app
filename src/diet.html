@@ -42,6 +42,12 @@
                 <button class="delete-meal-btn" onclick="deleteMeal(1)" style="display: none;">删除</button>
             </div>
         </div>
+        
+        <!-- 添加餐次按钮 -->
+        <button class="add-meal-btn" onclick="addNewMeal()">
+            <span class="add-icon">+</span>
+            <span class="add-text">添加餐次</span>
+        </button>
     </div>
 
     <!-- 底部操作区域 -->
@@ -52,12 +58,6 @@
         </button>
     </div>
 
-    <!-- 右下角加号按钮 -->
-    <div class="add-button-container">
-        <button class="add-meal-btn" onclick="addNewMeal()">
-            <span class="add-icon">+</span>
-        </button>
-    </div>
 
     <!-- 自定义删除确认弹窗 -->
     <div id="delete-modal" class="delete-modal">
