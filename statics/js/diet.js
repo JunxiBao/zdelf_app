@@ -24,6 +24,17 @@ let pendingDeleteMealId = null; // 待删除的餐次ID
 
 // 页面初始化
 function initDietPage() {
+    // 检查是否需要强制清除缓存（用于解决浏览器缓存问题）
+    const forceClear = new URLSearchParams(window.location.search).get('clear');
+    if (forceClear === 'true') {
+        clearAllDietData();
+        // 移除URL参数
+        const url = new URL(window.location);
+        url.searchParams.delete('clear');
+        window.history.replaceState({}, '', url);
+        return;
+    }
+    
     // 从本地存储加载已保存的数据
     loadDietData();
 
@@ -289,8 +300,11 @@ async function saveAllMeals() {
             await uploadDietToServer(exportData);
             showToast(`成功保存 ${validMealsCount} 餐食物记录并上传云端！`);
             
-            // 清除表单数据
+            // 清除表单数据和本地存储
             clearAllDietData();
+            
+            // 强制清除全局数据变量
+            dietData = {};
             
             // 跳转到daily页面
             setTimeout(() => {
@@ -651,10 +665,22 @@ function clearAllDietData() {
                     if (foodTextarea) foodTextarea.value = '';
                 }
             });
+            
+            // 隐藏第一个餐次的删除按钮
+            const firstDeleteBtn = dietContainer.querySelector('.delete-meal-btn');
+            if (firstDeleteBtn) {
+                firstDeleteBtn.style.display = 'none';
+            }
         }
+        
+        // 重置餐次计数器
+        mealCounter = 1;
         
         // 清除本地存储
         localStorage.removeItem('health_diet_data');
+        
+        // 强制清除全局数据变量
+        dietData = {};
         
         console.log('所有饮食记录表单数据已清除');
     } catch (error) {

@@ -22,6 +22,17 @@ let metricsData = {};
 
 // 页面初始化
 function initMetricsPage() {
+    // 检查是否需要强制清除缓存（用于解决浏览器缓存问题）
+    const forceClear = new URLSearchParams(window.location.search).get('clear');
+    if (forceClear === 'true') {
+        clearAllFormData();
+        // 移除URL参数
+        const url = new URL(window.location);
+        url.searchParams.delete('clear');
+        window.history.replaceState({}, '', url);
+        return;
+    }
+    
     // 从本地存储加载已保存的数据
     loadMetricsData();
 
@@ -271,8 +282,11 @@ function saveAllMetrics() {
                     console.log('指标上传成功:', resJson);
                     showToast('已保存并上传云端');
                     
-                    // 清除表单数据
+                    // 清除表单数据和本地存储
                     clearAllFormData();
+                    
+                    // 强制清除全局数据变量
+                    metricsData = {};
                     
                     // 跳转到daily页面
                     setTimeout(() => {
@@ -1650,7 +1664,7 @@ function exportMetricsData() {
 function clearAllFormData() {
     try {
         // 清除所有输入框
-        const inputs = document.querySelectorAll('input[type="text"], input[type="number"], textarea, select');
+        const inputs = document.querySelectorAll('input[type="text"], input[type="number"], input[type="time"], textarea, select');
         inputs.forEach(input => {
             if (input.type === 'checkbox' || input.type === 'radio') {
                 input.checked = false;
@@ -1668,6 +1682,13 @@ function clearAllFormData() {
             if (valueDisplay) {
                 valueDisplay.textContent = slider.value;
             }
+            // 更新自我评分滑块显示
+            const ratingValue = document.getElementById('rating-value');
+            if (ratingValue) {
+                ratingValue.textContent = slider.value;
+            }
+            // 更新滑块填充效果
+            updateSliderFill(parseInt(slider.value));
         });
         
         // 清除尿液检测矩阵
@@ -1679,8 +1700,70 @@ function clearAllFormData() {
             if (valueInput) valueInput.value = '';
         });
         
+        // 重置尿液检测矩阵到初始状态（只保留一个空项目）
+        const container = document.getElementById('urinalysis-matrix-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="urinalysis-item">
+                    <div class="item-header">
+                        <select class="urinalysis-select" data-index="0">
+                            <option value="">请选择检测项目</option>
+                            <option value="ph" data-unit="" data-reference="5.0-8.0">pH</option>
+                            <option value="color" data-unit="" data-reference="颜色">颜色</option>
+                            <option value="nitrite" data-unit="" data-reference="阴性">亚硝酸盐</option>
+                            <option value="glucose" data-unit="" data-reference="阴性">葡萄糖</option>
+                            <option value="specific-gravity" data-unit="" data-reference="1.005-1.030">比重</option>
+                            <option value="occult-blood" data-unit="" data-reference="阴性">隐血</option>
+                            <option value="protein" data-unit="" data-reference="阴性">蛋白质</option>
+                            <option value="bilirubin" data-unit="" data-reference="阴性">胆红素</option>
+                            <option value="leukocyte-esterase" data-unit="" data-reference="阴性">白细胞酯酶</option>
+                            <option value="rbc-count" data-unit="/μl" data-reference="0-17.0">红细胞（定量）</option>
+                            <option value="wbc-count" data-unit="/μl" data-reference="0-28.0">白细胞（定量）</option>
+                            <option value="hyaline-casts" data-unit="/μl" data-reference="0-1">透明管型</option>
+                            <option value="conductivity" data-unit="mS/cm" data-reference="5-32">电导率</option>
+                            <option value="crystals" data-unit="/μl" data-reference="">结晶</option>
+                            <option value="osmolality" data-unit="mOsm/kgH2O" data-reference="40-1400">渗透压</option>
+                            <option value="mucus" data-unit="/μl" data-reference="0-46">粘液丝</option>
+                            <option value="squamous-epithelial" data-unit="/μl" data-reference="0-28">鳞状上皮细胞</option>
+                            <option value="nonsquamous-epithelial" data-unit="/μl" data-reference="0-6">非鳞状上皮细胞</option>
+                            <option value="wbc-clumps" data-unit="/μl" data-reference="0-2.0">白细胞团</option>
+                            <option value="urine-creatinine" data-unit="g/L" data-reference="0.1-2.0">尿肌酐</option>
+                            <option value="up-cr" data-unit="mg/gCr" data-reference="0-30">尿白蛋白/尿肌酐</option>
+                            <option value="vitamin-c" data-unit="" data-reference="阴性">维生素C</option>
+                            <option value="urine-rbc" data-unit="/μl" data-reference="0.0-30.7">尿红细胞计数</option>
+                            <option value="urine-wbc" data-unit="/μl" data-reference="0.0-39.0">尿白细胞计数</option>
+                            <option value="urine-epithelial" data-unit="/μl" data-reference="0.0-45.6">尿上皮细胞计数</option>
+                        </select>
+                        <button type="button" class="remove-btn" onclick="removeUrinalysisItem(this)" style="display: none;" onmousedown="try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}">×</button>
+                    </div>
+                    <div class="item-input">
+                        <input type="text" class="urinalysis-value" placeholder="请输入数值" data-index="0">
+                        <div class="unit-reference">
+                            <span class="unit-display">单位</span>
+                            <span class="reference-display">参考值</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            // 重新初始化尿液检测矩阵
+            initUrinalysisMatrix();
+        }
+        
+        // 重置出血点选择
+        const bleedingSelect = document.getElementById('bleeding-point-select');
+        const otherInput = document.getElementById('other-bleeding-input');
+        if (bleedingSelect) bleedingSelect.value = '';
+        if (otherInput) {
+            otherInput.style.display = 'none';
+            const otherTextInput = document.getElementById('other-bleeding-text');
+            if (otherTextInput) otherTextInput.value = '';
+        }
+        
         // 清除本地存储
         localStorage.removeItem('health_metrics_data');
+        
+        // 强制清除全局数据变量
+        metricsData = {};
         
         console.log('所有表单数据已清除');
     } catch (error) {
