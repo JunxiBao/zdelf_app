@@ -162,15 +162,63 @@ def delete_account():
         conn = _get_conn()
         cursor = conn.cursor()
         try:
+            # 先获取用户的手机号，用于删除短信验证码记录
+            phone_number = None
+            if user_id:
+                cursor.execute("SELECT phone_number FROM users WHERE user_id=%s", (user_id,))
+            else:
+                cursor.execute("SELECT phone_number FROM users WHERE username=%s", (username,))
+            
+            user_record = cursor.fetchone()
+            if not user_record:
+                conn.rollback()
+                return jsonify({"success": False, "message": "未找到对应的账号"}), 404
+            
+            phone_number = user_record[0]
+            
+            # 定义需要删除用户数据的表列表
+            tables_to_clean = [
+                "metrics_files",  # 健康指标数据
+                "diet_files",     # 饮食记录数据
+                "case_files",     # 病例记录数据
+            ]
+            
+            # 删除用户在各个数据表中的记录
+            deleted_counts = {}
+            for table in tables_to_clean:
+                try:
+                    if user_id:
+                        cursor.execute(f"DELETE FROM {table} WHERE user_id=%s", (user_id,))
+                    else:
+                        cursor.execute(f"DELETE FROM {table} WHERE username=%s", (username,))
+                    deleted_counts[table] = cursor.rowcount
+                    logger.info("/delete_account deleted from %s: %d records", table, cursor.rowcount)
+                except Exception as e:
+                    logger.warning("/delete_account failed to delete from %s: %s", table, str(e))
+                    # 继续删除其他表，不因某个表删除失败而中断
+            
+            # 删除短信验证码记录（如果有手机号）
+            if phone_number:
+                try:
+                    cursor.execute("DELETE FROM sms_codes WHERE phone=%s", (phone_number,))
+                    deleted_counts["sms_codes"] = cursor.rowcount
+                    logger.info("/delete_account deleted from sms_codes: %d records", cursor.rowcount)
+                except Exception as e:
+                    logger.warning("/delete_account failed to delete from sms_codes: %s", str(e))
+            
+            # 最后删除用户主记录
             if user_id:
                 cursor.execute("DELETE FROM users WHERE user_id=%s", (user_id,))
             else:
                 cursor.execute("DELETE FROM users WHERE username=%s", (username,))
+            
             if cursor.rowcount == 0:
                 conn.rollback()
                 return jsonify({"success": False, "message": "未找到对应的账号"}), 404
+            
             conn.commit()
-            logger.info("/delete_account success username=%s user_id=%s", username, user_id)
+            logger.info("/delete_account success username=%s user_id=%s deleted_counts=%s", 
+                       username, user_id, deleted_counts)
         finally:
             try:
                 cursor.close()
@@ -181,7 +229,11 @@ def delete_account():
             except Exception:
                 pass
 
-        return jsonify({"success": True, "message": "账号已注销"})
+        return jsonify({
+            "success": True, 
+            "message": "账号已注销，所有相关数据已删除",
+            "deleted_counts": deleted_counts
+        })
 
     except mysql_errors.Error as e:
         if getattr(e, 'errno', None) in (3024, 1205, 1213):

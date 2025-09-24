@@ -229,6 +229,88 @@ body {
   box-shadow: 0 6px 20px rgba(98, 0, 234, 0.2);
 }
 
+/* 跳转引导提示 */
+.redirect-hint {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 25px;
+  padding: 12px 20px;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+  animation: hintPulse 2s ease-in-out infinite;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  opacity: 1;
+}
+
+.hint-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+  font-weight: 600;
+}
+
+.hint-icon {
+  font-size: 1.2em;
+  animation: hintBounce 1.5s ease-in-out infinite;
+}
+
+.hint-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.hint-title {
+  font-size: 0.9em;
+  font-weight: 700;
+}
+
+.hint-subtitle {
+  font-size: 0.8em;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.hint-arrow {
+  font-size: 1.1em;
+  animation: hintSlide 1.5s ease-in-out infinite;
+}
+
+@keyframes hintPulse {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.05);
+    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.4);
+  }
+}
+
+@keyframes hintBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes hintSlide {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
 /* 空状态 */
 .empty-state {
   text-align: center;
@@ -238,6 +320,26 @@ body {
   border: 2px dashed #e0e0e0;
   border-radius: 16px;
   margin: 20px 0;
+}
+
+.empty-hint {
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  font-size: 0.9em;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hint-dot {
+  font-size: 1.1em;
+  animation: hintBounce 2s ease-in-out infinite;
 }
 
 .empty-state .icon {
@@ -873,10 +975,47 @@ body {
   .restriction-footer {
     border-color: #404040;
   }
+
+  .redirect-hint {
+    background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .empty-hint {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: rgba(102, 126, 234, 0.3);
+    color: #a5b4fc;
+  }
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+  .redirect-hint {
+    top: 15px;
+    padding: 10px 16px;
+    border-radius: 20px;
+  }
+
+  .hint-content {
+    gap: 10px;
+  }
+
+  .hint-title {
+    font-size: 0.85em;
+  }
+
+  .hint-subtitle {
+    font-size: 0.75em;
+  }
+
+  .hint-icon {
+    font-size: 1.1em;
+  }
+
+  .hint-arrow {
+    font-size: 1em;
+  }
+
   .reminders-container {
     padding: 0 15px;
     padding-bottom: 120px; /* 增加底部间距，避免与导航栏重叠 */
@@ -971,6 +1110,38 @@ body {
 }
 
 @media (max-width: 480px) {
+  .redirect-hint {
+    top: 10px;
+    padding: 8px 14px;
+    border-radius: 18px;
+  }
+
+  .hint-content {
+    gap: 8px;
+  }
+
+  .hint-title {
+    font-size: 0.8em;
+  }
+
+  .hint-subtitle {
+    font-size: 0.7em;
+  }
+
+  .hint-icon {
+    font-size: 1em;
+  }
+
+  .hint-arrow {
+    font-size: 0.9em;
+  }
+
+  .empty-hint {
+    padding: 10px 12px;
+    font-size: 0.85em;
+    margin-top: 16px;
+  }
+
   .reminders-container {
     padding: 0 10px;
     padding-bottom: 130px; /* 进一步增加底部间距 */

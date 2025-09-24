@@ -70,62 +70,125 @@ function displayGreeting(username, root = dailyRoot) {
 }
 
 /**
- * getUsername — Read username for the current userId and render greeting.
- * 读取当前 userId 对应的用户名并渲染问候语。
- *
- * Behavior / 行为：
- * - When userId is missing/invalid, render as "访客".
- *   当 userId 缺失或无效时，显示“访客”。
- * - Otherwise POST to backend and use data.data[0].username if present.
- *   否则请求后端，用返回的用户名（若存在）。
+ * showLoadingState — 显示统一的加载状态
+ * 在屏幕中央显示加载动画
  */
-function getUsername() {
-  const userId = localStorage.getItem('userId');
-  console.log('🧪 获取到的 userId:', userId);
-
-  if (!userId || userId === 'undefined' || userId === 'null') {
-    console.warn('⚠️ 未获取到有效 userId，显示访客');
-    displayGreeting('访客', dailyRoot);
-    return;
+function showLoadingState() {
+  const loadingHtml = `
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">正在加载您的数据...</div>
+    </div>
+  `;
+  
+  // 在页面容器中添加加载状态
+  const pageContainer = dailyRoot.querySelector('.page-container');
+  if (pageContainer) {
+    pageContainer.insertAdjacentHTML('beforeend', loadingHtml);
   }
+}
 
-  // 在发起新的请求前中止旧的
-  abortInFlight();
-  fetchController = new AbortController();
+/**
+ * hideLoadingState — 隐藏加载状态
+ */
+function hideLoadingState() {
+  const loadingContainer = dailyRoot.querySelector('.loading-container');
+  if (loadingContainer) {
+    loadingContainer.style.opacity = '0';
+    setTimeout(() => {
+      loadingContainer.remove();
+    }, 300);
+  }
+}
 
-  console.log('🌐 测试网络连接...');
-  fetch(__API_BASE__ + '/readdata', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ table_name: 'users', user_id: userId }),
-    signal: fetchController.signal,
-  })
-    .then((response) => {
-      console.log('📡 收到响应，状态码:', response.status);
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      return response.json();
-    })
-    .then((data) => {
-      console.log('📦 返回数据：', data);
-      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-        const username = data.data[0].username || '访客';
-        displayGreeting(username, dailyRoot);
-      } else {
-        displayGreeting('访客', dailyRoot);
-      }
-    })
-    .catch((error) => {
-      if (error && error.name === 'AbortError') {
-        console.warn('⏹️ 请求已取消');
-      } else {
-        console.error('❌ 获取用户信息失败:', error);
-        displayGreeting('访客', dailyRoot);
-      }
-    })
-    .finally(() => {
-      // 清理 controller 引用
-      fetchController = null;
+// 缓存用户名，避免重复请求
+let cachedUsername = null;
+let usernameLoadPromise = null;
+
+/**
+ * loadUsername — 异步加载用户名并渲染问候语
+ * 返回Promise以便与其他加载任务并行执行
+ */
+function loadUsername() {
+  return new Promise((resolve) => {
+    // 如果已经有缓存的用户名，直接使用
+    if (cachedUsername !== null) {
+      console.log('📦 使用缓存的用户名:', cachedUsername);
+      displayGreeting(cachedUsername, dailyRoot);
+      resolve();
+      return;
+    }
+
+    // 如果正在加载中，等待加载完成
+    if (usernameLoadPromise) {
+      console.log('⏳ 等待用户名加载完成...');
+      usernameLoadPromise.then(() => {
+        displayGreeting(cachedUsername || '访客', dailyRoot);
+        resolve();
+      });
+      return;
+    }
+
+    const userId = localStorage.getItem('userId');
+    console.log('🧪 获取到的 userId:', userId);
+
+    if (!userId || userId === 'undefined' || userId === 'null') {
+      console.warn('⚠️ 未获取到有效 userId，显示访客');
+      cachedUsername = '访客';
+      displayGreeting('访客', dailyRoot);
+      resolve();
+      return;
+    }
+
+    // 在发起新的请求前中止旧的
+    abortInFlight();
+    fetchController = new AbortController();
+
+    // 创建加载Promise
+    usernameLoadPromise = new Promise((resolveLoad) => {
+      console.log('🌐 测试网络连接...');
+      fetch(__API_BASE__ + '/readdata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table_name: 'users', user_id: userId }),
+        signal: fetchController.signal,
+      })
+        .then((response) => {
+          console.log('📡 收到响应，状态码:', response.status);
+          if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          return response.json();
+        })
+        .then((data) => {
+          console.log('📦 返回数据：', data);
+          if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+            cachedUsername = data.data[0].username || '访客';
+          } else {
+            cachedUsername = '访客';
+          }
+          resolveLoad();
+        })
+        .catch((error) => {
+          if (error && error.name === 'AbortError') {
+            console.warn('⏹️ 请求已取消');
+          } else {
+            console.error('❌ 获取用户信息失败:', error);
+          }
+          cachedUsername = '访客';
+          resolveLoad();
+        })
+        .finally(() => {
+          // 清理 controller 引用
+          fetchController = null;
+          usernameLoadPromise = null;
+        });
     });
+
+    // 等待加载完成
+    usernameLoadPromise.then(() => {
+      displayGreeting(cachedUsername, dailyRoot);
+      resolve();
+    });
+  });
 }
 
 // -----------------------------
@@ -145,82 +208,132 @@ function initDaily(shadowRoot) {
   // 启动前中止可能在途的请求
   abortInFlight();
 
-  // Render greeting / 渲染问候语
-  getUsername();
+  // 显示统一的加载状态
+  showLoadingState();
 
-  // Load and display user data cards / 加载并显示用户数据卡片
-  loadUserDataCards();
+  // 并行加载问候语和数据卡片
+  Promise.all([
+    loadUsername(),
+    loadUserDataCards()
+  ]).finally(() => {
+    // 隐藏加载状态
+    hideLoadingState();
+  });
 }
+
+// 缓存数据卡片，避免重复请求
+let cachedDataCards = null;
+let dataCardsLoadPromise = null;
 
 /**
  * loadUserDataCards — 加载并显示用户数据卡片
  * 从后端获取所有用户数据并按时间排序展示
+ * 返回Promise以便与其他加载任务并行执行
  */
 function loadUserDataCards() {
-  const userId = localStorage.getItem('userId') || 
-                 localStorage.getItem('UserID') || 
-                 sessionStorage.getItem('userId') || 
-                 sessionStorage.getItem('UserID');
-  
-  if (!userId || userId === 'undefined' || userId === 'null') {
-    console.warn('⚠️ 未获取到有效 userId，跳过数据卡片加载');
-    return;
-  }
+  return new Promise((resolve) => {
+    const userId = localStorage.getItem('userId') || 
+                   localStorage.getItem('UserID') || 
+                   sessionStorage.getItem('userId') || 
+                   sessionStorage.getItem('UserID');
+    
+    if (!userId || userId === 'undefined' || userId === 'null') {
+      console.warn('⚠️ 未获取到有效 userId，跳过数据卡片加载');
+      resolve();
+      return;
+    }
 
-  // 创建卡片容器
-  const cardsContainer = dailyRoot.querySelector('#data-cards-container');
-  if (!cardsContainer) {
-    console.warn('⚠️ 未找到卡片容器 #data-cards-container');
-    return;
-  }
+    // 创建卡片容器
+    const cardsContainer = dailyRoot.querySelector('#data-cards-container');
+    if (!cardsContainer) {
+      console.warn('⚠️ 未找到卡片容器 #data-cards-container');
+      resolve();
+      return;
+    }
 
-  // 显示加载状态
-  cardsContainer.innerHTML = `
-    <div class="loading-cards">
-      <div class="loading-spinner"></div>
-      <p>正在加载您的数据...</p>
-    </div>
-  `;
-
-  // 并行加载所有类型的数据
-  const dataTypes = ['metrics', 'diet', 'case'];
-  const promises = dataTypes.map(type => 
-    fetch(`${__API_BASE__}/getjson/${type}?user_id=${encodeURIComponent(userId)}&limit=50`)
-      .then(res => res.json())
-      .then(data => ({ type, data }))
-      .catch(err => {
-        console.warn(`加载 ${type} 数据失败:`, err);
-        return { type, data: { success: false, data: [] } };
-      })
-  );
-
-  Promise.all(promises).then(results => {
-    // 合并所有数据并按时间排序
-    const allItems = [];
-    results.forEach(({ type, data }) => {
-      if (data.success && data.data) {
-        data.data.forEach(item => {
-          allItems.push({
-            ...item,
-            dataType: type
+    // 如果正在加载中，等待加载完成
+    if (dataCardsLoadPromise) {
+      console.log('⏳ 等待数据卡片加载完成...');
+      dataCardsLoadPromise.then(() => {
+        if (cachedDataCards) {
+          renderUnifiedCards(cachedDataCards, cardsContainer).catch(err => {
+            console.error('渲染缓存卡片失败:', err);
           });
+        }
+        resolve();
+      });
+      return;
+    }
+
+    // 创建加载Promise
+    dataCardsLoadPromise = new Promise((resolveLoad) => {
+      // 并行加载所有类型的数据
+      const dataTypes = ['metrics', 'diet', 'case'];
+      const promises = dataTypes.map(type => 
+        fetch(`${__API_BASE__}/getjson/${type}?user_id=${encodeURIComponent(userId)}&limit=50`)
+          .then(res => res.json())
+          .then(data => ({ type, data }))
+          .catch(err => {
+            console.warn(`加载 ${type} 数据失败:`, err);
+            return { type, data: { success: false, data: [] } };
+          })
+      );
+
+      Promise.all(promises).then(results => {
+        // 合并所有数据并按时间排序
+        const allItems = [];
+        results.forEach(({ type, data }) => {
+          if (data.success && data.data) {
+            data.data.forEach(item => {
+              allItems.push({
+                ...item,
+                dataType: type
+              });
+            });
+          }
         });
-      }
+
+        // 按创建时间降序排序
+        allItems.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        // 缓存数据
+        cachedDataCards = allItems;
+        resolveLoad();
+      }).catch(err => {
+        console.error('加载数据失败:', err);
+        cachedDataCards = [];
+        resolveLoad();
+      });
     });
 
-    // 按创建时间降序排序
-    allItems.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    // 异步渲染卡片
-    renderUnifiedCards(allItems, cardsContainer).catch(err => {
-      console.error('渲染卡片失败:', err);
-      cardsContainer.innerHTML = `
-        <div class="no-data-message">
-          <div class="no-data-icon">⚠️</div>
-          <h3>加载失败</h3>
-          <p>请刷新页面重试</p>
-        </div>
-      `;
+    // 等待加载完成
+    dataCardsLoadPromise.then(() => {
+      if (cachedDataCards) {
+        // 异步渲染卡片
+        renderUnifiedCards(cachedDataCards, cardsContainer).catch(err => {
+          console.error('渲染卡片失败:', err);
+          cardsContainer.innerHTML = `
+            <div class="no-data-message">
+              <div class="no-data-icon">⚠️</div>
+              <h3>加载失败</h3>
+              <p>请刷新页面重试</p>
+            </div>
+          `;
+        }).finally(() => {
+          resolve();
+        });
+      } else {
+        cardsContainer.innerHTML = `
+          <div class="no-data-message">
+            <div class="no-data-icon">⚠️</div>
+            <h3>加载失败</h3>
+            <p>请刷新页面重试</p>
+          </div>
+        `;
+        resolve();
+      }
+    }).finally(() => {
+      dataCardsLoadPromise = null;
     });
   });
 }
@@ -239,14 +352,6 @@ async function renderUnifiedCards(items, container) {
     `;
     return;
   }
-
-  // 显示加载状态
-  container.innerHTML = `
-    <div class="loading-container">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">正在加载数据...</div>
-    </div>
-  `;
 
   // 异步获取每个卡片的完整数据
   const cardPromises = items.map(async (item) => {

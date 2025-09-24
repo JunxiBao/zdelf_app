@@ -164,6 +164,10 @@ function injectPageStyles(doc, shadow) {
   shadow.appendChild(fix);
 }
 
+// 缓存已加载的页面脚本，避免重复加载
+const loadedScripts = new Set();
+const pageInstances = new Map(); // 缓存页面实例
+
 /**
  * Load a subpage by index and mount it under #content using Shadow DOM.
  *
@@ -216,27 +220,65 @@ function loadPage(index) {
       ];
 
       if (scriptMap[index]) {
+        const scriptPath = scriptMap[index];
+        
+        // 检查脚本是否已经加载过
+        if (loadedScripts.has(scriptPath)) {
+          // 脚本已加载，直接调用初始化函数
+          const initName = scriptPath.split("/").pop().replace(".js", "");
+          const cap = initName.charAt(0).toUpperCase() + initName.slice(1);
+          
+          // 特殊处理 notification.js，因为它导出的是 initCase 而不是 initNotification
+          let initFn, destroyFn;
+          if (initName === 'notification') {
+            initFn = window.initNotification || window.initCase;
+            destroyFn = window.destroyNotification || window.destroyCase;
+          } else {
+            initFn = window[`init${cap}`];
+            destroyFn = window[`destroy${cap}`];
+          }
+          
+          if (typeof destroyFn === "function") currentDestroy = destroyFn;
+          if (typeof initFn === "function") {
+            console.log("📦 使用已缓存的脚本:", scriptPath);
+            initFn(currentShadowRoot);
+          }
+          return;
+        }
+
         // Remove old script tag for this page (if any)
         const oldScript = document.querySelector(
-          `script[data-page-script="${scriptMap[index]}"]`
+          `script[data-page-script="${scriptPath}"]`
         );
         if (oldScript) oldScript.remove();
 
         const script = document.createElement("script");
-        script.src = `${scriptMap[index]}?t=${Date.now()}`; // avoid cached non-execution
-        script.setAttribute("data-page-script", scriptMap[index]);
+        script.src = `${scriptPath}?t=${Date.now()}`; // avoid cached non-execution
+        script.setAttribute("data-page-script", scriptPath);
         script.onload = () => {
+          // 标记脚本已加载
+          loadedScripts.add(scriptPath);
+          
           // Call page init with the ShadowRoot so code scopes to its own DOM
-          const initName = scriptMap[index].split("/").pop().replace(".js", ""); // daily / case / ...
+          const initName = scriptPath.split("/").pop().replace(".js", ""); // daily / notification / deepseek / me
           const cap = initName.charAt(0).toUpperCase() + initName.slice(1);
-          const initFn = window[`init${cap}`];
-          const destroyFn = window[`destroy${cap}`];
+          
+          // 特殊处理 notification.js，因为它导出的是 initCase 而不是 initNotification
+          let initFn, destroyFn;
+          if (initName === 'notification') {
+            initFn = window.initNotification || window.initCase;
+            destroyFn = window.destroyNotification || window.destroyCase;
+          } else {
+            initFn = window[`init${cap}`];
+            destroyFn = window[`destroy${cap}`];
+          }
+          
           if (typeof destroyFn === "function") currentDestroy = destroyFn;
           if (typeof initFn === "function") initFn(currentShadowRoot);
         };
         document.body.appendChild(script);
 
-        console.log("📦 动态加载脚本:", scriptMap[index]);
+        console.log("📦 动态加载脚本:", scriptPath);
       }
     })
     .catch((err) => {

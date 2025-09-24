@@ -957,11 +957,27 @@
             });
           } catch (e) {}
 
-          showSuccessModal("账号已注销");
+          // 显示详细的注销成功信息
+          let successMessage = "账号已注销";
+          if (result && result.deleted_counts) {
+            const counts = result.deleted_counts;
+            const deletedItems = [];
+            
+            if (counts.metrics_files > 0) deletedItems.push(`健康指标数据 ${counts.metrics_files} 条`);
+            if (counts.diet_files > 0) deletedItems.push(`饮食记录 ${counts.diet_files} 条`);
+            if (counts.case_files > 0) deletedItems.push(`病例记录 ${counts.case_files} 条`);
+            if (counts.sms_codes > 0) deletedItems.push(`短信记录 ${counts.sms_codes} 条`);
+            
+            if (deletedItems.length > 0) {
+              successMessage += `\n\n已删除相关数据：\n${deletedItems.join('\n')}`;
+            }
+          }
+          
+          showSuccessModal(successMessage);
           // 短暂延迟后跳转到登录页
           setTimeout(() => {
             window.location.replace("src/login.html");
-          }, 800);
+          }, 1500);
         } catch (e) {
           console.warn("[me] 注销失败:", e);
           showErrorModal("网络错误或服务器异常，请稍后再试");
