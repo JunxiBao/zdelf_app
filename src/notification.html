@@ -10,8 +10,8 @@
     <title>用药提醒</title>
   </head>
   <body>
-    <!-- 跳转引导提示 -->
-    <div class="redirect-hint">
+    <!-- 跳转引导提示 - 仅在非app环境下显示 -->
+    <div class="redirect-hint" id="redirectHint" style="display: none;">
       <div class="hint-content">
         <div class="hint-icon">🌐</div>
         <div class="hint-text">
@@ -28,7 +28,7 @@
         <div class="icon">💊</div>
         <h3>还没有用药提醒</h3>
         <p>点击此方框添加您的第一个药提醒</p>
-        <div class="empty-hint">
+        <div class="empty-hint" id="emptyHint" style="display: none;">
           <span class="hint-dot">💡</span>
           <span>点击页面空白处可访问 zdelf.cn</span>
         </div>

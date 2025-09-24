@@ -238,8 +238,23 @@
    * 添加点击跳转到 zdelf.cn 的功能
    */
   function addClickToRedirectFunctionality(root) {
+    // 检查是否在app环境中，如果是则不添加跳转功能
+    if (isCapacitorApp()) {
+      console.log('📱 在app环境中，跳过添加跳转功能');
+      return;
+    }
+    
     // 获取引导提示元素
     const redirectHint = root.querySelector('.redirect-hint');
+    const emptyHint = root.querySelector('.empty-hint');
+    
+    // 在非app环境下显示跳转提示
+    if (redirectHint) {
+      redirectHint.style.display = 'block';
+    }
+    if (emptyHint) {
+      emptyHint.style.display = 'flex';
+    }
     
     // 为整个页面添加点击事件监听器
     const handlePageClick = (event) => {
