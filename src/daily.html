@@ -13,6 +13,54 @@
             <h1 id="greeting">正在加载...</h1>
         </div>
 
+        <!-- 搜索框容器 - 问候语下方 -->
+        <div class="search-container">
+            <div class="search-box">
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <input type="text" id="search-input" class="search-input" placeholder="搜索记录内容..." autocomplete="off">
+                    <button id="clear-search-btn" class="clear-search-btn hidden" title="清除搜索">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日期选择器容器 - 屏幕最右边 -->
+        <div class="date-picker-container">
+            <input type="date" id="date-picker" class="date-picker">
+            <button id="date-picker-icon" class="date-picker-icon" title="选择日期">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 2V6M16 2V6M3 10H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 14H7.01M12 14H12.01M17 14H17.01M7 18H7.01M12 18H12.01M17 18H17.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button id="clear-date-btn" class="clear-date-btn hidden" title="清除日期筛选">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- 数据类型切换器 -->
+        <div class="data-type-switcher">
+            <div class="switcher-container">
+                <button class="type-switch-btn active" data-type="metrics">
+                    <span class="switch-text">健康指标</span>
+                </button>
+                <button class="type-switch-btn" data-type="diet">
+                    <span class="switch-text">饮食记录</span>
+                </button>
+                <button class="type-switch-btn" data-type="case">
+                    <span class="switch-text">个人病例</span>
+                </button>
+            </div>
+        </div>
+
         <!-- 数据卡片容器 -->
         <div id="data-cards-container" class="data-cards-container">
             <!-- 加载状态将在这里显示 -->

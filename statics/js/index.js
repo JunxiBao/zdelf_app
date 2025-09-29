@@ -403,16 +403,9 @@ function closeModal() {
 
 // Toggle the center action modal and animate the FAB rotation
 centerBtn.addEventListener("click", () => {
-  const isOpen = modal.style.display === "flex";
-
-  if (isOpen) {
-    closeModal();
-    centerBtn.classList.remove("pulse");
-  } else {
-    openModal();
-    centerBtn.classList.add("pulse");
-  }
-  hapticImpact("Medium");
+  // 改为直接跳转到选项页面
+  try { hapticImpact("Medium"); } catch(_) {}
+  window.location.href = "src/options.html";
 });
 
 // Click outside (backdrop) closes the modal

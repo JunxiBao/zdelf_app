@@ -54,6 +54,8 @@ def get_user_files(kind):
         user_id = (request.args.get("user_id") or "").strip() or None
         username = (request.args.get("username") or "").strip() or None
         limit = request.args.get("limit", "50")
+        # 可选：按记录日期过滤（YYYY-MM-DD），以 exportInfo.recordTime 的日期为准
+        filter_date = (request.args.get("date") or "").strip() or None
         
         # 验证用户标识
         if not user_id and not username:
@@ -100,6 +102,7 @@ def get_user_files(kind):
                 rows = cur.fetchall()
                 
                 # 处理内容预览
+                filtered_rows = []
                 for row in rows:
                     if row.get('content_preview'):
                         try:
@@ -114,6 +117,25 @@ def get_user_files(kind):
                     # 移除原始的长内容字段
                     if 'content_preview' in row:
                         del row['content_preview']
+
+                    # 如指定 date，则按 preview.exportInfo.recordTime 的日期过滤
+                    if filter_date:
+                        try:
+                            exp = (row.get('preview') or {}).get('exportInfo') or {}
+                            rt = (exp.get('recordTime') or exp.get('exportTime') or '').strip()
+                            ds = None
+                            if rt:
+                                import re
+                                m = re.match(r"^(\d{4})[-/.](\d{2})[-/.](\d{2})", rt)
+                                if m:
+                                    ds = f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+                            if ds == filter_date:
+                                filtered_rows.append(row)
+                        except Exception:
+                            # 忽略解析失败
+                            pass
+                    else:
+                        filtered_rows.append(row)
                         
             finally:
                 try:
@@ -128,8 +150,8 @@ def get_user_files(kind):
 
         return jsonify({
             "success": True, 
-            "data": rows or [],
-            "count": len(rows),
+            "data": filtered_rows if filter_date is not None else (rows or []),
+            "count": len(filtered_rows) if filter_date is not None else len(rows),
             "kind": kind
         })
 

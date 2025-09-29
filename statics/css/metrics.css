@@ -63,6 +63,80 @@ body {
     padding-top: 10px;
 }
 
+/* 记录控制区域样式 */
+.record-controls {
+    max-width: 800px;
+    margin: 0 auto 24px auto;
+    padding: 0 20px;
+}
+
+.date-time-picker,
+.date-picker {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+    border: 2px solid #e0e0e0;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.08);
+    transition: all 0.3s ease;
+}
+
+.date-time-picker:hover,
+.date-picker:hover {
+    border-color: #6200ea;
+    background: linear-gradient(135deg, #faf7ff 0%, #f0f4ff 100%);
+    box-shadow: 0 6px 20px rgba(98, 0, 234, 0.12);
+    transform: translateY(-1px);
+}
+
+.picker-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.picker-label {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #6200ea;
+    text-align: center;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
+.picker-input {
+    width: 100%;
+    max-width: 200px;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 1em;
+    font-family: inherit;
+    background: #fff;
+    color: #333;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.picker-input:focus {
+    border-color: #6200ea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    background: #faf7ff;
+}
+
+.picker-input:hover {
+    border-color: #8b5cf6;
+    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.1);
+}
+
 /* 指标容器样式 */
 .metrics-container {
     max-width: 800px;
@@ -209,7 +283,15 @@ body {
     gap: 16px;
 }
 
-.urinalysis-item {
+/* 血常规检测指标矩阵样式 */
+.blood-test-matrix {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.urinalysis-item,
+.blood-test-item {
     background: #f8f9fa;
     border: 2px solid #e9ecef;
     border-radius: 12px;
@@ -237,7 +319,8 @@ body {
 }
 
 /* 删除项目动画 */
-.urinalysis-item.removing {
+.urinalysis-item.removing,
+.blood-test-item.removing {
     animation: itemSlideOut 0.4s ease-in forwards;
 }
 
@@ -304,7 +387,8 @@ body {
     margin-bottom: 12px;
 }
 
-.urinalysis-select {
+.urinalysis-select,
+.blood-test-select {
     flex: 1;
     padding: 12px 16px;
     border: 2px solid #e0e0e0;
@@ -324,7 +408,8 @@ body {
     padding-right: 40px;
 }
 
-.urinalysis-select:focus {
+.urinalysis-select:focus,
+.blood-test-select:focus {
     border-color: #6200ea;
     outline: none;
     box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
@@ -380,7 +465,8 @@ body {
     gap: 12px;
 }
 
-.urinalysis-value {
+.urinalysis-value,
+.blood-test-value {
     flex: 1;
     padding: 12px 16px;
     border: 2px solid #e0e0e0;
@@ -392,7 +478,8 @@ body {
     transition: all 0.2s ease;
 }
 
-.urinalysis-value:focus {
+.urinalysis-value:focus,
+.blood-test-value:focus {
     border-color: #6200ea;
     outline: none;
     box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
@@ -485,22 +572,27 @@ body {
 
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
-    .urinalysis-item {
-        background: #1f2937;
-        border-color: #374151;
+    .urinalysis-item,
+    .blood-test-item {
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+        border-color: #444;
     }
     
     /* 取消深色模式悬停高亮效果 */
     
     .urinalysis-select,
-    .urinalysis-value {
+    .urinalysis-value,
+    .blood-test-select,
+    .blood-test-value {
         background: #1e1e1e;
         border-color: #444;
         color: #f9fafb;
     }
     
     .urinalysis-select:focus,
-    .urinalysis-value:focus {
+    .urinalysis-value:focus,
+    .blood-test-select:focus,
+    .blood-test-value:focus {
         border-color: #a78bfa;
         box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
         background: #222;
@@ -581,7 +673,8 @@ body {
     }
     
     /* 深色模式删除项目动画 */
-    .urinalysis-item.removing {
+    .urinalysis-item.removing,
+    .blood-test-item.removing {
         animation: itemSlideOutDark 0.4s ease-in forwards;
     }
     
@@ -826,6 +919,41 @@ body {
     .global-save-btn:hover {
         background: linear-gradient(135deg, #9c66d6, #4b00b5);
     }
+
+    /* 深色模式下的日期时间选择器样式 */
+    .date-time-picker,
+    .date-picker {
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+        border-color: #444;
+    }
+
+    .date-time-picker:hover,
+    .date-picker:hover {
+        border-color: #bb86fc;
+        background: linear-gradient(135deg, #2b2b2b 0%, #3d3d3d 100%);
+        box-shadow: 0 6px 20px rgba(187, 134, 252, 0.2);
+    }
+
+    .picker-label {
+        color: #bb86fc;
+    }
+
+    .picker-input {
+        background: #1e1e1e;
+        border-color: #444;
+        color: #eee;
+    }
+
+    .picker-input:focus {
+        border-color: #bb86fc;
+        background: #2b2b2b;
+        box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.2);
+    }
+
+    .picker-input:hover {
+        border-color: #a78bfa;
+        box-shadow: 0 4px 12px rgba(187, 134, 252, 0.15);
+    }
 }
 
 /* 移动端适配 */
@@ -880,6 +1008,27 @@ body {
         padding: 14px 24px;
         font-size: 1em;
     }
+
+    /* 移动端日期时间选择器适配 */
+    .record-controls {
+        padding: 0 16px;
+    }
+
+    .date-time-picker,
+    .date-picker {
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .picker-group {
+        width: 100%;
+    }
+
+    .picker-input {
+        max-width: none;
+        width: 100%;
+    }
 }
 
 /* 动画效果 */
@@ -930,5 +1079,547 @@ body {
         animation-duration: 0.001s !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.001s !important;
+    }
+}
+
+/* 出血点容器样式 */
+.bleeding-points-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.bleeding-points-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bleeding-point-item {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.bleeding-point-item:hover {
+    border-color: #6200ea;
+    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.1);
+}
+
+.bleeding-point-item.removing {
+    animation: slideOut 0.4s ease-in forwards;
+}
+
+.bleeding-point-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.bleeding-point-header .custom-select-wrapper {
+    flex: 1;
+}
+
+.remove-bleeding-point-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.remove-bleeding-point-btn:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
+}
+
+.remove-bleeding-point-btn.removing {
+    animation: pulse 0.3s ease-in-out;
+}
+
+.add-bleeding-point-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 16px;
+    border: 2px dashed #6200ea;
+    border-radius: 12px;
+    background: rgba(98, 0, 234, 0.05);
+    color: #6200ea;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+}
+
+.add-bleeding-point-btn:hover {
+    background: rgba(98, 0, 234, 0.1);
+    border-color: #4a00b8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
+}
+
+.add-bleeding-point-btn:active {
+    transform: translateY(0) scale(0.98);
+    transition: all 0.1s ease;
+}
+
+.add-bleeding-point-btn.clicking {
+    animation: buttonClick 0.3s ease-out;
+}
+
+.add-icon {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.add-text {
+    font-size: 16px;
+}
+
+/* 图片上传区域样式 */
+.image-upload-section {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 2px solid #f3f4f6;
+}
+
+.upload-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.upload-title::before {
+    content: "📷";
+    font-size: 20px;
+}
+
+.image-upload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.image-upload-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 320px;
+    height: 140px;
+    border: 2px dashed #6200ea;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(98, 0, 234, 0.08), rgba(139, 92, 246, 0.05));
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+}
+
+.image-upload-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.image-upload-btn:hover::before {
+    left: 100%;
+}
+
+.image-upload-btn:hover {
+    background: linear-gradient(135deg, rgba(98, 0, 234, 0.15), rgba(139, 92, 246, 0.1));
+    border-color: #8b5cf6;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(98, 0, 234, 0.25);
+}
+
+.image-upload-btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(98, 0, 234, 0.2);
+    transition: all 0.1s ease;
+}
+
+.upload-icon {
+    font-size: 2.5em;
+    font-weight: 300;
+    color: #6200ea;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.image-upload-btn:hover .upload-icon {
+    transform: scale(1.1);
+    color: #8b5cf6;
+}
+
+.upload-text {
+    font-size: 1em;
+    color: #6200ea;
+    font-weight: 600;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+    transition: color 0.3s ease;
+}
+
+.image-upload-btn:hover .upload-text {
+    color: #8b5cf6;
+}
+
+.uploaded-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.uploaded-image-item {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+}
+
+.uploaded-image-item:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    border-color: #6200ea;
+}
+
+.uploaded-image-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    opacity: 0;
+}
+
+.uploaded-image-item:hover .remove-image-btn {
+    opacity: 1;
+}
+
+.remove-image-btn:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+/* 新增动画效果 */
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+        max-height: 200px;
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-100%);
+        max-height: 0;
+        padding: 0;
+        margin: 0;
+    }
+}
+
+@keyframes buttonClick {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.95);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    .bleeding-point-item {
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+        border-color: #444;
+    }
+
+    .bleeding-point-item:hover {
+        border-color: #a78bfa;
+        box-shadow: 0 4px 12px rgba(167, 139, 250, 0.2);
+    }
+
+    .upload-title {
+        color: #f9fafb;
+    }
+
+    .image-upload-btn {
+        background: linear-gradient(135deg, rgba(187, 134, 252, 0.08), rgba(139, 92, 246, 0.05));
+        border-color: #bb86fc;
+    }
+
+    .image-upload-btn:hover {
+        background: linear-gradient(135deg, rgba(187, 134, 252, 0.15), rgba(139, 92, 246, 0.1));
+        border-color: #8b5cf6;
+    }
+
+    .upload-icon,
+    .upload-text {
+        color: #bb86fc;
+    }
+
+    .image-upload-btn:hover .upload-icon,
+    .image-upload-btn:hover .upload-text {
+        color: #8b5cf6;
+    }
+
+    .uploaded-image-item {
+        background: #1f2937;
+    }
+
+    .other-text-input {
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+        border-color: #444;
+        color: #f9fafb;
+    }
+
+    .other-text-input:focus {
+        border-color: #a78bfa;
+        box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+        background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    }
+
+    .other-text-input::placeholder {
+        color: #6b7280;
+    }
+
+    .input-icon {
+        color: #a78bfa;
+    }
+
+    .add-bleeding-point-btn {
+        border-color: #a78bfa;
+        background: rgba(167, 139, 250, 0.1);
+        color: #a78bfa;
+    }
+    
+    .add-bleeding-point-btn:hover {
+        background: rgba(167, 139, 250, 0.2);
+        border-color: #8b5cf6;
+    }
+    
+    .add-bleeding-point-btn.clicking {
+        animation: buttonClickDark 0.3s ease-out;
+    }
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+    .bleeding-point-item {
+        padding: 12px;
+    }
+
+    .bleeding-point-header {
+        gap: 8px;
+    }
+
+    .add-bleeding-point-btn {
+        padding: 14px 20px;
+        font-size: 15px;
+    }
+
+    .image-upload-btn {
+        width: 100px;
+        height: 100px;
+    }
+
+    .upload-icon {
+        font-size: 1.5em;
+    }
+
+    .upload-text {
+        font-size: 0.8em;
+    }
+
+    .uploaded-image-item {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+/* 其他输入框样式 */
+.other-text-input {
+    width: 100%;
+    padding: 16px 48px 16px 16px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-sizing: border-box;
+}
+
+/* 自定义输入框样式 */
+.custom-input-wrapper {
+    margin-top: 12px;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+}
+
+.custom-blood-test-name,
+.custom-urinalysis-name {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    font-family: inherit;
+    background: #fff;
+    color: #333;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.custom-blood-test-name:focus,
+.custom-urinalysis-name:focus {
+    border-color: #6200ea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+}
+
+.custom-blood-test-name::placeholder,
+.custom-urinalysis-name::placeholder {
+    color: rgba(0, 0, 0, 0.54);
+}
+
+/* 深色模式下的自定义输入框样式 */
+@media (prefers-color-scheme: dark) {
+    .custom-blood-test-name,
+    .custom-urinalysis-name {
+        background: #1e1e1e;
+        border-color: #444;
+        color: #f9fafb;
+    }
+
+    .custom-blood-test-name:focus,
+    .custom-urinalysis-name:focus {
+        border-color: #a78bfa;
+        box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+        background: #222;
+    }
+
+    .custom-blood-test-name::placeholder,
+    .custom-urinalysis-name::placeholder {
+        color: rgba(255, 255, 255, 0.54);
+    }
+}
+
+.other-text-input:focus {
+    border-color: #6200ea;
+    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
+}
+
+.other-text-input::placeholder {
+    color: #9ca3af;
+    font-weight: 400;
+}
+
+.other-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.input-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #6200ea;
+    pointer-events: none;
+}
+
+/* JSON大小显示样式 */
+#json-size-display {
+    font-size: 0.8em;
+    color: #666;
+    text-align: center;
+    margin-top: 8px;
+    padding: 8px;
+    background: rgba(98, 0, 234, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(98, 0, 234, 0.1);
+}
+
+/* 深色模式下的JSON大小显示 */
+@media (prefers-color-scheme: dark) {
+    #json-size-display {
+        background: rgba(187, 134, 252, 0.08) !important;
+        border-color: rgba(187, 134, 252, 0.2) !important;
+        color: #ccc !important;
     }
 }

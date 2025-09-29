@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>病例记录</title>
+    <link rel="stylesheet" href="../statics/css/case_record.css">
+    <link rel="icon" href="../images/writing.png" type="image/png">
+</head>
+<body>
+    <!-- 顶部图标 -->
+    <div style="position: absolute; top: 15px; left: 15px; z-index: 10;">
+        <img src="../images/writing.png" alt="Writing" style="height: 50px" />
+    </div>
+
+    <!-- 返回按钮 -->
+    <div class="back-button-container">
+        <button class="back-btn" onclick="goBack()">
+            <span>← 返回</span>
+        </button>
+    </div>
+
+    <!-- 页面标题 -->
+    <div class="page-title">
+        病例
+    </div>
+
+    <!-- 记录日期与时间 -->
+    <div class="record-controls">
+        <div class="date-time-picker">
+            <div class="picker-group">
+                <label for="record-date-input" class="picker-label">📅 记录日期</label>
+                <input type="date" id="record-date-input" class="picker-input" />
+            </div>
+            <div class="picker-group">
+                <label for="record-time-input" class="picker-label">🕐 记录时间</label>
+                <input type="time" id="record-time-input" class="picker-input" step="1" />
+            </div>
+        </div>
+    </div>
+
+    <!-- 病例表单容器 -->
+    <div class="case-container">
+        <!-- 医院信息 -->
+        <div class="metric-card" data-type="hospital">
+            <div class="metric-icon">
+                <div class="icon-placeholder">🏥</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">医院信息</h3>
+                <p class="metric-description">记录就诊医院名称</p>
+                <div class="metric-input">
+                    <input type="text" class="form-input" id="hospital" placeholder="请输入医院名称">
+                </div>
+            </div>
+        </div>
+
+        <!-- 科室信息 -->
+        <div class="metric-card" data-type="department">
+            <div class="metric-icon">
+                <div class="icon-placeholder">🏢</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">科室信息</h3>
+                <p class="metric-description">记录就诊科室名称</p>
+                <div class="metric-input">
+                    <input type="text" class="form-input" id="department" placeholder="请输入科室名称">
+                </div>
+            </div>
+        </div>
+
+        <!-- 医生信息 -->
+        <div class="metric-card" data-type="doctor">
+            <div class="metric-icon">
+                <div class="icon-placeholder">👨‍⚕️</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">医生信息</h3>
+                <p class="metric-description">记录主治医生姓名</p>
+                <div class="metric-input">
+                    <input type="text" class="form-input" id="doctor" placeholder="请输入医生姓名">
+                </div>
+            </div>
+        </div>
+
+        <!-- 诊断信息 -->
+        <div class="metric-card" data-type="diagnosis">
+            <div class="metric-icon">
+                <div class="icon-placeholder">📋</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">诊断结果</h3>
+                <p class="metric-description">记录医生诊断结果</p>
+                <div class="metric-input">
+                    <textarea class="form-input form-textarea" id="diagnosis" placeholder="请输入诊断结果" rows="4"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 医嘱信息 -->
+        <div class="metric-card" data-type="prescription">
+            <div class="metric-icon">
+                <div class="icon-placeholder">💊</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">医嘱内容</h3>
+                <p class="metric-description">记录医生开具的医嘱</p>
+                <div class="metric-input">
+                    <textarea class="form-input form-textarea" id="prescription" placeholder="请输入医嘱内容" rows="4"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 病例单记录 -->
+        <div class="metric-card" data-type="case-images">
+            <div class="metric-icon">
+                <div class="icon-placeholder">📷</div>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-title">病例单记录</h3>
+                <p class="metric-description">上传病例单、检查报告等图片</p>
+                <div class="metric-input">
+                    <div class="image-upload-container">
+                        <div class="image-upload-btn" id="imageUploadBtn">
+                            <div class="upload-icon">+</div>
+                            <div class="upload-text">(上传图片)</div>
+                        </div>
+                        <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+                        <div class="uploaded-images" id="uploadedImages"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 保存按钮 -->
+    <div class="global-actions">
+        <button class="global-save-btn" onclick="saveCaseRecord()">
+            <span class="btn-text">保存病例记录</span>
+            <div class="loading-spinner" id="global-spinner"></div>
+        </button>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="../statics/js/camera-utils.js"></script>
+    <script src="../statics/js/case_record.js"></script>
+</body>
+</html>

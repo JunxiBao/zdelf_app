@@ -25,6 +25,16 @@
         食物记录
     </div>
 
+    <!-- 记录日期（用于整天饮食归属） -->
+    <div class="record-controls">
+        <div class="date-picker">
+            <div class="picker-group">
+                <label for="diet-record-date-input" class="picker-label">📅 记录日期</label>
+                <input type="date" id="diet-record-date-input" class="picker-input" />
+            </div>
+        </div>
+    </div>
+
     <!-- 食物记录容器 -->
     <div class="diet-container">
         <!-- 第一餐记录 -->
@@ -37,6 +47,17 @@
             </div>
             <div class="meal-content">
                 <textarea id="food-1" placeholder="记录您摄入的食物..." rows="4"></textarea>
+            </div>
+            <!-- 图片上传区域（第1餐） -->
+            <div class="image-upload-section">
+                <h4 class="upload-title">上传图片</h4>
+                <div class="image-upload-container">
+                    <div class="image-upload-btn" id="dietImageUploadBtn-1">
+                        <div class="upload-icon">+</div>
+                        <div class="upload-text">(上传图片)</div>
+                    </div>
+                    <div class="uploaded-images" id="dietUploadedImages-1"></div>
+                </div>
             </div>
             <div class="meal-actions">
                 <button class="delete-meal-btn" onclick="deleteMeal(1)" style="display: none;">删除</button>
@@ -52,9 +73,9 @@
 
     <!-- 底部操作区域 -->
     <div class="bottom-actions">
-        <button class="save-btn" onclick="saveAllMeals()">
+        <button class="global-save-btn" onclick="saveAllMeals()">
             <span class="btn-text">保存记录</span>
-            <div class="loading-spinner" id="save-spinner"></div>
+            <div class="loading-spinner" id="global-spinner"></div>
         </button>
     </div>
 
@@ -78,6 +99,7 @@
     </div>
 
     <!-- 加载脚本 -->
+    <script src="../statics/js/camera-utils.js"></script>
     <script src="../statics/js/diet.js"></script>
 </body>
 </html>
