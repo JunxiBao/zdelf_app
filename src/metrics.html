@@ -48,12 +48,36 @@
             </div>
             <div class="metric-content">
                 <h3 class="metric-title">症状</h3>
-                <p class="metric-description">记录身体不适症状</p>
+                <p class="metric-description">选择并记录紫癜症状类型</p>
+                <p class="metric-note" style="font-size: 12px; color: #666; margin: 5px 0;">💾 症状数据将同时保存为数字代码用于统计分析</p>
                 <div class="metric-input">
-                    <textarea id="symptoms-input" placeholder="描述您的症状..." rows="3"></textarea>
+                    <div id="symptoms-matrix-container" class="symptoms-matrix">
+                        <div class="symptoms-item">
+                            <div class="item-header">
+                            <select class="symptoms-select" data-index="0">
+                                <option value="skin-type">皮肤型紫癜</option>
+                                <option value="joint-type">关节型紫癜</option>
+                                <option value="abdominal-type">腹型紫癜</option>
+                                <option value="renal-type">肾型紫癜</option>
+                                <option value="other">其他</option>
+                                <option value="none" selected>无</option>
+                            </select>
+                                <button type="button" class="remove-btn" onclick="removeSymptomsItem(this)" style="display: none;" onmousedown="try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}">×</button>
+                            </div>
+                            <div class="custom-input-wrapper" style="display: none;">
+                                <input type="text" class="custom-symptoms-name" placeholder="请描述其他症状" data-index="0">
+                            </div>
+                            <div class="symptoms-detail-wrapper" style="display: none;">
+                                <input type="text" class="symptoms-detail-input" placeholder="请填写该症状的详细信息" data-index="0">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="add-btn" onclick="addSymptomsItem()" onmousedown="try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}">
+                        <span class="add-icon">＋</span>
+                        <span class="add-text">添加症状记录</span>
+                    </button>
                 </div>
             </div>
-
         </div>
 
         <!-- 体温记录 -->
@@ -140,7 +164,7 @@
                             <div class="custom-input-wrapper" style="display: none;">
                                 <input type="text" class="custom-blood-test-name" placeholder="请输入自定义项目名称" data-index="0">
                             </div>
-                            <div class="item-input">
+                            <div class="item-input" style="display: none;">
                                 <input type="text" class="blood-test-value" placeholder="请输入数值" data-index="0">
                                 <div class="unit-reference">
                                     <span class="unit-display">单位</span>
@@ -177,7 +201,7 @@
                     </div>
                     
                     <!-- 图片上传区域 -->
-                    <div class="image-upload-section">
+                    <div class="image-upload-section" style="display: none;">
                         <h4 class="upload-title">上传图片</h4>
                         <div class="image-upload-container">
                             <div class="image-upload-btn" id="bleedingImageUploadBtn">
@@ -241,7 +265,7 @@
                             <div class="custom-input-wrapper" style="display: none;">
                                 <input type="text" class="custom-urinalysis-name" placeholder="请输入自定义项目名称" data-index="0">
                             </div>
-                            <div class="item-input">
+                            <div class="item-input" style="display: none;">
                                 <input type="text" class="urinalysis-value" placeholder="请输入数值" data-index="0">
                                 <div class="unit-reference">
                                     <span class="unit-display">单位</span>

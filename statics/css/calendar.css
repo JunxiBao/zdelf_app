@@ -1,0 +1,501 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  color: #ffffff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.calendar-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部导航 */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 30px;
+  padding-top: 10px;
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-btn:hover {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%);
+  transform: translateX(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
+}
+
+.calendar-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+/* 月份年份导航 */
+.month-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+  gap: 20px;
+}
+
+.nav-btn {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn:hover {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%);
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(167, 139, 250, 0.3);
+  border-radius: 10px;
+}
+
+.month-year-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.year-text {
+  font-size: 2rem;
+  font-weight: 300;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.month-text {
+  font-size: 0.9rem;
+  color: #cccccc;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* 日历主体 */
+.calendar-main {
+  flex: 1;
+  margin-bottom: 20px;
+}
+
+/* 星期标题 */
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+
+.weekday {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #888888;
+  font-weight: 500;
+  padding: 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.weekday.weekend {
+  color: #6b93ff;
+}
+
+/* 日期网格 */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 0 4px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+}
+
+.calendar-day:hover {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.25) 0%, rgba(139, 92, 246, 0.2) 100%);
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.4);
+  border: 1px solid rgba(167, 139, 250, 0.5);
+}
+
+.calendar-day.other-month {
+  color: #555555;
+}
+
+.calendar-day.today {
+  background: rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+}
+
+.calendar-day.selected {
+  background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.calendar-day.selected:hover {
+  background: linear-gradient(135deg, #9333ea 0%, #a855f7 100%);
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.7);
+  transform: scale(1.12);
+}
+
+.calendar-day.weekend {
+  color: #6b93ff;
+}
+
+.calendar-day.weekend.other-month {
+  color: #444466;
+}
+
+/* 特殊日期标记 */
+.calendar-day.has-event::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: #a855f7;
+  border-radius: 50%;
+}
+
+/* 选中日期信息 */
+.selected-date-info {
+  margin-top: auto;
+  padding: 20px 0;
+}
+
+.selected-date-display {
+  text-align: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#selected-date-text {
+  font-size: 1rem;
+  color: #cccccc;
+  font-weight: 500;
+}
+
+/* 动画效果 */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.calendar-container {
+  animation: slideIn 0.4s ease-out;
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .calendar-container {
+    padding: 16px;
+  }
+  
+  .calendar-header {
+    margin-bottom: 24px;
+  }
+  
+  .calendar-title {
+    font-size: 1.3rem;
+  }
+  
+  .year-text {
+    font-size: 1.8rem;
+  }
+  
+  .month-text {
+    font-size: 0.8rem;
+  }
+  
+  .calendar-day {
+    font-size: 0.85rem;
+  }
+}
+
+/* 浅色模式支持 */
+@media (prefers-color-scheme: light) {
+  body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    color: #1a202c;
+  }
+  
+  .back-btn {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1a202c;
+  }
+  
+  .back-btn:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.1) 100%);
+    transform: translateX(-2px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  }
+  
+  .calendar-title {
+    color: #1a202c;
+  }
+  
+  .nav-btn {
+    color: #1a202c;
+  }
+  
+  .nav-btn:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.1) 100%);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+    border-radius: 10px;
+  }
+  
+  .year-text {
+    color: #1a202c;
+  }
+  
+  .month-text {
+    color: #64748b;
+  }
+  
+  .weekday {
+    color: #64748b;
+  }
+  
+  .weekday.weekend {
+    color: #3b82f6;
+  }
+  
+  .calendar-day {
+    color: #1a202c;
+  }
+  
+  .calendar-day:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.1) 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    transform: scale(1.08);
+  }
+  
+  .calendar-day.other-month {
+    color: #cbd5e1;
+  }
+  
+  .calendar-day.today {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.15) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+    font-weight: 600;
+  }
+
+  .calendar-day.today:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.2) 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    border-color: rgba(59, 130, 246, 0.4);
+  }
+  
+  .calendar-day.weekend {
+    color: #3b82f6;
+  }
+  
+  .calendar-day.weekend.other-month {
+    color: #cbd5e1;
+  }
+
+  .calendar-day.selected {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    transform: scale(1.1);
+  }
+
+  .calendar-day.selected:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
+    transform: scale(1.12);
+  }
+  
+  .selected-date-display {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  #selected-date-text {
+    color: #64748b;
+  }
+}
+
+/* 症状高亮样式 */
+.calendar-day.has-symptoms {
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.calendar-day.has-symptoms:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.calendar-day.has-symptoms.selected {
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* 症状指示器 */
+.symptom-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.2);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 症状颜色主题 - 浅色背景，深色文字 */
+.calendar-day[style*="background-color: #FFE4E1"] { /* 皮肤型紫癜 */
+  color: #8B0000 !important;
+}
+
+.calendar-day[style*="background-color: #E6F3FF"] { /* 关节型紫癜 */
+  color: #1E3A8A !important;
+}
+
+.calendar-day[style*="background-color: #FFF8DC"] { /* 腹型紫癜 */
+  color: #B45309 !important;
+}
+
+.calendar-day[style*="background-color: #F0F8E8"] { /* 肾型紫癜 */
+  color: #166534 !important;
+}
+
+.calendar-day[style*="background-color: #F5F0FF"] { /* 其他症状 */
+  color: #6B21A8 !important;
+}
+
+/* 症状图例 */
+.symptom-legend {
+  margin-top: 20px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.legend-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #ccc;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+/* 移动端优化 */
+@media (max-width: 480px) {
+  .calendar-day.has-symptoms {
+    font-size: 14px;
+  }
+  
+  .symptom-indicator {
+    width: 4px;
+    height: 4px;
+    bottom: 1px;
+    right: 1px;
+  }
+  
+  .symptom-legend {
+    margin-top: 16px;
+    padding: 12px;
+  }
+  
+  .legend-items {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  
+  .legend-item {
+    font-size: 11px;
+  }
+  
+  .legend-color {
+    width: 14px;
+    height: 14px;
+  }
+}

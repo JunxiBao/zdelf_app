@@ -76,20 +76,22 @@ body {
     gap: 20px;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+    background: #fff;
     border: 2px solid #e0e0e0;
     border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.08);
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
 
 .date-time-picker:hover,
 .date-picker:hover {
     border-color: #6200ea;
-    background: linear-gradient(135deg, #faf7ff 0%, #f0f4ff 100%);
-    box-shadow: 0 6px 20px rgba(98, 0, 234, 0.12);
-    transform: translateY(-1px);
+    background: #faf7ff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.15);
 }
 
 .picker-group {
@@ -111,7 +113,7 @@ body {
 }
 
 .picker-input {
-    width: 100%;
+    width: calc(100% - 16px);
     max-width: 200px;
     padding: 12px 16px;
     border: 2px solid #e0e0e0;
@@ -123,6 +125,7 @@ body {
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     text-align: center;
+    margin: 0 8px;
 }
 
 .picker-input:focus {
@@ -290,8 +293,16 @@ body {
     gap: 16px;
 }
 
+/* 症状矩阵样式 */
+.symptoms-matrix {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
 .urinalysis-item,
-.blood-test-item {
+.blood-test-item,
+.symptoms-item {
     background: #f8f9fa;
     border: 2px solid #e9ecef;
     border-radius: 12px;
@@ -320,7 +331,8 @@ body {
 
 /* 删除项目动画 */
 .urinalysis-item.removing,
-.blood-test-item.removing {
+.blood-test-item.removing,
+.symptoms-item.removing {
     animation: itemSlideOut 0.4s ease-in forwards;
 }
 
@@ -388,7 +400,8 @@ body {
 }
 
 .urinalysis-select,
-.blood-test-select {
+.blood-test-select,
+.symptoms-select {
     flex: 1;
     padding: 12px 16px;
     border: 2px solid #e0e0e0;
@@ -409,7 +422,8 @@ body {
 }
 
 .urinalysis-select:focus,
-.blood-test-select:focus {
+.blood-test-select:focus,
+.symptoms-select:focus {
     border-color: #6200ea;
     outline: none;
     box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
@@ -573,7 +587,8 @@ body {
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
     .urinalysis-item,
-    .blood-test-item {
+    .blood-test-item,
+    .symptoms-item {
         background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
         border-color: #444;
     }
@@ -583,7 +598,8 @@ body {
     .urinalysis-select,
     .urinalysis-value,
     .blood-test-select,
-    .blood-test-value {
+    .blood-test-value,
+    .symptoms-select {
         background: #1e1e1e;
         border-color: #444;
         color: #f9fafb;
@@ -592,7 +608,8 @@ body {
     .urinalysis-select:focus,
     .urinalysis-value:focus,
     .blood-test-select:focus,
-    .blood-test-value:focus {
+    .blood-test-value:focus,
+    .symptoms-select:focus {
         border-color: #a78bfa;
         box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
         background: #222;
@@ -674,7 +691,8 @@ body {
     
     /* 深色模式删除项目动画 */
     .urinalysis-item.removing,
-    .blood-test-item.removing {
+    .blood-test-item.removing,
+    .symptoms-item.removing {
         animation: itemSlideOutDark 0.4s ease-in forwards;
     }
     
@@ -954,6 +972,42 @@ body {
         border-color: #a78bfa;
         box-shadow: 0 4px 12px rgba(187, 134, 252, 0.15);
     }
+
+    /* 深色模式下的日期时间选择器样式 */
+    .date-time-picker,
+    .date-picker {
+        background: #1e1e1e !important;
+        border-color: #444 !important;
+        color: #eee !important;
+    }
+
+    .date-time-picker:hover,
+    .date-picker:hover {
+        border-color: #bb86fc !important;
+        background: #2b2b2b !important;
+        box-shadow: 0 8px 24px rgba(187, 134, 252, 0.2) !important;
+    }
+
+    .picker-label {
+        color: #bb86fc !important;
+    }
+
+    .picker-input {
+        background: #1e1e1e !important;
+        border-color: #444 !important;
+        color: #eee !important;
+    }
+
+    .picker-input:focus {
+        border-color: #bb86fc !important;
+        background: #2b2b2b !important;
+        box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.2) !important;
+    }
+
+    .picker-input:hover {
+        border-color: #a78bfa !important;
+        box-shadow: 0 4px 12px rgba(187, 134, 252, 0.15) !important;
+    }
 }
 
 /* 移动端适配 */
@@ -1018,7 +1072,7 @@ body {
     .date-picker {
         flex-direction: column;
         gap: 16px;
-        padding: 16px;
+        padding: 20px;
     }
 
     .picker-group {
@@ -1027,7 +1081,8 @@ body {
 
     .picker-input {
         max-width: none;
-        width: 100%;
+        width: calc(100% - 16px);
+        margin: 0 8px;
     }
 }
 
@@ -1523,14 +1578,17 @@ body {
 }
 
 /* 自定义输入框样式 */
-.custom-input-wrapper {
+.custom-input-wrapper,
+.symptoms-detail-wrapper {
     margin-top: 12px;
     margin-bottom: 16px;
     transition: all 0.3s ease;
 }
 
 .custom-blood-test-name,
-.custom-urinalysis-name {
+.custom-urinalysis-name,
+.custom-symptoms-name,
+.symptoms-detail-input {
     width: 100%;
     padding: 12px 16px;
     border: 2px solid #e0e0e0;
@@ -1544,35 +1602,45 @@ body {
 }
 
 .custom-blood-test-name:focus,
-.custom-urinalysis-name:focus {
+.custom-urinalysis-name:focus,
+.custom-symptoms-name:focus,
+.symptoms-detail-input:focus {
     border-color: #6200ea;
     outline: none;
     box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
 }
 
 .custom-blood-test-name::placeholder,
-.custom-urinalysis-name::placeholder {
+.custom-urinalysis-name::placeholder,
+.custom-symptoms-name::placeholder,
+.symptoms-detail-input::placeholder {
     color: rgba(0, 0, 0, 0.54);
 }
 
 /* 深色模式下的自定义输入框样式 */
 @media (prefers-color-scheme: dark) {
     .custom-blood-test-name,
-    .custom-urinalysis-name {
+    .custom-urinalysis-name,
+    .custom-symptoms-name,
+    .symptoms-detail-input {
         background: #1e1e1e;
         border-color: #444;
         color: #f9fafb;
     }
 
     .custom-blood-test-name:focus,
-    .custom-urinalysis-name:focus {
+    .custom-urinalysis-name:focus,
+    .custom-symptoms-name:focus,
+    .symptoms-detail-input:focus {
         border-color: #a78bfa;
         box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
         background: #222;
     }
 
     .custom-blood-test-name::placeholder,
-    .custom-urinalysis-name::placeholder {
+    .custom-urinalysis-name::placeholder,
+    .custom-symptoms-name::placeholder,
+    .symptoms-detail-input::placeholder {
         color: rgba(255, 255, 255, 0.54);
     }
 }

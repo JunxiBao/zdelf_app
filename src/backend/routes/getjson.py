@@ -25,6 +25,7 @@ KIND_TO_TABLE = {
     "metrics": "metrics_files",
     "diet": "diet_files", 
     "case": "case_files",
+    "symptoms": "symptom_files",
 }
 
 def _get_conn():
@@ -39,6 +40,93 @@ def _get_conn():
 def _parse_kind(kind: str) -> Optional[str]:
     kind = (kind or "").strip().lower()
     return kind if kind in KIND_TO_TABLE else None
+
+@getjson_blueprint.route("/getjson/symptoms/monthly/<user_id>/<year>/<month>", methods=["GET", "OPTIONS"])
+def get_monthly_symptoms(user_id, year, month):
+    """获取用户指定月份的症状数据，用于日历高亮显示"""
+    if request.method == "OPTIONS":
+        return "", 200
+        
+    try:
+        # 参数验证
+        try:
+            year = int(year)
+            month = int(month)
+            if not (1 <= month <= 12):
+                return jsonify({"success": False, "message": "月份必须在1-12之间"}), 400
+        except ValueError:
+            return jsonify({"success": False, "message": "年份和月份必须是数字"}), 400
+            
+        user_id = user_id.strip()
+        if not user_id:
+            return jsonify({"success": False, "message": "用户ID不能为空"}), 400
+            
+        # 计算查询的日期范围
+        from datetime import datetime, timedelta
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+            
+        table_name = KIND_TO_TABLE["symptoms"]
+        conn = _get_conn()
+        
+        try:
+            cur = conn.cursor(dictionary=True)
+            try:
+                # 查询指定月份的症状数据
+                sql = f"""
+                SELECT 
+                    JSON_EXTRACT(content, '$.exportInfo.recordTime') as record_time,
+                    JSON_EXTRACT(content, '$.symptomData.symptoms') as symptoms
+                FROM {table_name} 
+                WHERE user_id = %s 
+                AND DATE(JSON_UNQUOTE(JSON_EXTRACT(content, '$.exportInfo.recordTime'))) BETWEEN %s AND %s
+                ORDER BY JSON_UNQUOTE(JSON_EXTRACT(content, '$.exportInfo.recordTime'))
+                """
+                
+                cur.execute(sql, (user_id, start_date.date(), end_date.date()))
+                rows = cur.fetchall()
+                
+                # 处理数据，按日期分组
+                daily_symptoms = {}
+                for row in rows:
+                    if row['record_time'] and row['symptoms']:
+                        # 提取日期部分
+                        record_time = row['record_time'].strip('"')
+                        date_part = record_time.split(' ')[0]  # 获取 YYYY-MM-DD 部分
+                        
+                        # 解析症状数组
+                        import json
+                        try:
+                            symptoms = json.loads(row['symptoms'])
+                            if isinstance(symptoms, list):
+                                daily_symptoms[date_part] = symptoms
+                        except (json.JSONDecodeError, TypeError):
+                            continue
+                            
+                return jsonify({
+                    "success": True, 
+                    "data": daily_symptoms,
+                    "month": f"{year}-{month:02d}",
+                    "message": f"获取{year}年{month}月症状数据成功"
+                })
+                
+            finally:
+                try:
+                    cur.close()
+                except Exception:
+                    pass
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+                
+    except Exception as e:
+        logger.exception(f"/getjson/symptoms/monthly server error: {e}")
+        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
 @getjson_blueprint.route("/getjson/<kind>", methods=["GET", "OPTIONS"])
 def get_user_files(kind):

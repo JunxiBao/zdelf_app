@@ -70,33 +70,75 @@ function displayGreeting(username, root = dailyRoot) {
 }
 
 /**
- * showLoadingState — 显示统一的加载状态
- * 在屏幕中央显示加载动画
+ * formatDateDisplay — 格式化日期为中文显示
+ * @param {string} dateString - ISO date string (YYYY-MM-DD)
+ * @returns {string} - 格式化的中文日期 (YYYY年MM月DD日)
  */
-function showLoadingState() {
-  const loadingHtml = `
-    <div class="loading-container">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">正在加载您的数据...</div>
-    </div>
-  `;
+function formatDateDisplay(dateString) {
+  if (!dateString) return '今天';
   
-  // 在页面容器中添加加载状态
-  const pageContainer = dailyRoot.querySelector('.page-container');
-  if (pageContainer) {
-    pageContainer.insertAdjacentHTML('beforeend', loadingHtml);
-  }
+  const date = new Date(dateString + 'T00:00:00');
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  
+  return `${year}年${month}月${day}日`;
 }
 
 /**
- * hideLoadingState — 隐藏加载状态
+ * updateDateDisplay — 更新日期显示文本
+ * @param {string} dateString - ISO date string (YYYY-MM-DD)
  */
-function hideLoadingState() {
-  const loadingContainer = dailyRoot.querySelector('.loading-container');
-  if (loadingContainer) {
-    loadingContainer.style.opacity = '0';
+function updateDateDisplay(dateString) {
+  const dateDisplayText = dailyRoot.querySelector('#date-display');
+  if (dateDisplayText) {
+    dateDisplayText.textContent = formatDateDisplay(dateString);
+  }
+}
+
+
+/**
+ * showLocalLoadingState — 显示局部加载状态
+ * @param {HTMLElement} container - 要显示加载动画的容器
+ * @param {string} dataType - 数据类型 (metrics, diet, case)
+ * @param {string} message - 加载提示信息
+ */
+function showLocalLoadingState(container, dataType = '', message = '正在加载数据...') {
+  if (!container) return;
+  
+  const loadingMessages = {
+    'metrics': '正在加载健康指标...',
+    'diet': '正在加载饮食记录...',
+    'case': '正在加载个人病例...'
+  };
+  
+  const loadingMessage = loadingMessages[dataType] || message;
+  
+  const loadingHtml = `
+    <div class="local-loading ${dataType}">
+      <div class="local-loading-spinner"></div>
+      <div class="local-loading-text">${loadingMessage}</div>
+    </div>
+  `;
+  
+  container.innerHTML = loadingHtml;
+}
+
+/**
+ * hideLocalLoadingState — 隐藏局部加载状态
+ * @param {HTMLElement} container - 包含加载动画的容器
+ */
+function hideLocalLoadingState(container) {
+  if (!container) return;
+  
+  const localLoading = container.querySelector('.local-loading');
+  if (localLoading) {
+    localLoading.style.opacity = '0';
     setTimeout(() => {
-      loadingContainer.remove();
+      // 只移除加载动画，不清空整个容器
+      if (localLoading.parentNode) {
+        localLoading.remove();
+      }
     }, 300);
   }
 }
@@ -208,11 +250,11 @@ function initDaily(shadowRoot) {
   // 启动前中止可能在途的请求
   abortInFlight();
 
-  // 显示统一的加载状态
-  showLoadingState();
-
   // 初始化日期选择器
   initDatePicker();
+
+  // 初始化日历按钮
+  initCalendarButton();
 
   // 初始化搜索框
   initSearchBox();
@@ -220,14 +262,11 @@ function initDaily(shadowRoot) {
   // 初始化数据类型切换器
   initDataTypeSwitcher();
 
-  // 并行加载问候语和数据卡片
+  // 并行加载问候语和数据卡片（移除全局加载动画，保留局部加载）
   Promise.all([
     loadUsername(),
     loadUserDataCards()
-  ]).finally(() => {
-    // 隐藏加载状态
-    hideLoadingState();
-  });
+  ]);
 }
 
 // 缓存数据卡片，避免重复请求
@@ -331,8 +370,16 @@ function initDataTypeSwitcher() {
       
       console.log(`🔄 切换到数据类型: ${dataType}`);
       
+      // 显示局部加载动画并重新过滤渲染卡片
+      const cardsContainer = dailyRoot.querySelector('#data-cards-container');
+      if (cardsContainer) {
+        showLocalLoadingState(cardsContainer, selectedDataType, '正在切换数据类型...');
+      }
+      
       // 重新过滤并渲染卡片
-      filterAndRenderCards();
+      setTimeout(() => {
+        filterAndRenderCards();
+      }, 50); // 短暂延迟让加载动画显示
     });
   });
   
@@ -344,10 +391,11 @@ function initDataTypeSwitcher() {
  */
 function initDatePicker() {
   const datePicker = dailyRoot.querySelector('#date-picker');
-  const datePickerIcon = dailyRoot.querySelector('#date-picker-icon');
+  const datePickerDisplay = dailyRoot.querySelector('#date-picker-display');
+  const dateDisplayText = dailyRoot.querySelector('#date-display');
   const clearBtn = dailyRoot.querySelector('#clear-date-btn');
   
-  if (!datePicker || !datePickerIcon || !clearBtn) {
+  if (!datePicker || !datePickerDisplay || !dateDisplayText || !clearBtn) {
     console.warn('⚠️ 未找到日期选择器元素');
     return;
   }
@@ -358,11 +406,14 @@ function initDatePicker() {
   datePicker.value = todayString;
   selectedDate = todayString;
   
+  // 更新日期显示文本
+  updateDateDisplay(todayString);
+  
   // 隐藏清除按钮（不再显示叉叉）
   clearBtn.classList.add('hidden');
 
-  // 点击图标触发日期选择器
-  datePickerIcon.addEventListener('click', (e) => {
+  // 点击显示按钮触发日期选择器
+  datePickerDisplay.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -406,18 +457,22 @@ function initDatePicker() {
     selectedDate = e.target.value;
     console.log('📅 选择日期:', selectedDate);
     
+    // 更新日期显示文本
+    updateDateDisplay(selectedDate);
+    
     // 保持清除按钮隐藏（不再显示叉叉）
     clearBtn.classList.add('hidden');
     
     // 切换日期时，重新从后端按天拉取数据
-    showLoadingState();
+    const cardsContainer = dailyRoot.querySelector('#data-cards-container');
+    if (cardsContainer) {
+      showLocalLoadingState(cardsContainer, selectedDataType, '正在加载新日期数据...');
+    }
+    
     abortInFlight();
     loadUserDataCards()
       .then(() => {
         filterAndRenderCards();
-      })
-      .finally(() => {
-        hideLoadingState();
       });
   });
 
@@ -433,6 +488,10 @@ function initDatePicker() {
     const todayString = today.toISOString().split('T')[0];
     selectedDate = todayString;
     datePicker.value = todayString;
+    
+    // 更新日期显示文本
+    updateDateDisplay(todayString);
+    
     clearBtn.classList.add('hidden');
     console.log('🔄 重置为当前日期');
     
@@ -456,49 +515,55 @@ function filterAndRenderCards() {
     return;
   }
 
-  let filteredCards = cachedDataCards;
+  // 显示局部加载动画
+  showLocalLoadingState(cardsContainer, selectedDataType, '正在筛选数据...');
 
-  // 如果选择了日期，进行日期过滤
-  if (selectedDate) {
-    // 饮食/指标/病例均基于其内容内的记录日期过滤：
-    // - 饮食：在 renderDietTimeline 内按每餐的 date/timestamp 过滤
-    // - 指标/病例：在 updateTimelineDetails 内按 exportInfo.recordDate 过滤
-    // 因此此处不再按 created_at 预过滤，避免漏掉“补录”的数据
-  }
+  // 使用 setTimeout 来模拟异步操作，让加载动画有时间显示
+  setTimeout(() => {
+    let filteredCards = cachedDataCards;
 
-  // 如果有搜索关键字，进行搜索过滤
-  if (searchKeyword) {
-    filteredCards = filteredCards.filter(item => {
-      return searchInCardData(item, searchKeyword);
+    // 如果选择了日期，进行日期过滤
+    if (selectedDate) {
+      // 饮食/指标/病例均基于其内容内的记录日期过滤：
+      // - 饮食：在 renderDietTimeline 内按每餐的 date/timestamp 过滤
+      // - 指标/病例：在 updateTimelineDetails 内按 exportInfo.recordDate 过滤
+      // 因此此处不再按 created_at 预过滤，避免漏掉"补录"的数据
+    }
+
+    // 如果有搜索关键字，进行搜索过滤
+    if (searchKeyword) {
+      filteredCards = filteredCards.filter(item => {
+        return searchInCardData(item, searchKeyword);
+      });
+      
+      console.log(`🔍 按关键字 "${searchKeyword}" 过滤，从 ${cachedDataCards.length} 条记录中筛选出 ${filteredCards.length} 条`);
+    }
+
+    // 按数据类型过滤
+    if (selectedDataType) {
+      filteredCards = filteredCards.filter(item => {
+        return item.dataType === selectedDataType;
+      });
+      
+      console.log(`🏷️ 按数据类型 "${selectedDataType}" 过滤，从 ${cachedDataCards.length} 条记录中筛选出 ${filteredCards.length} 条`);
+    }
+
+    // 渲染过滤后的卡片
+    const renderPromise = selectedDataType === 'diet'
+      ? renderDietTimeline(filteredCards, cardsContainer)
+      : renderTimelineItems(filteredCards, cardsContainer);
+
+    renderPromise.catch(err => {
+      console.error('渲染过滤后的卡片失败:', err);
+      cardsContainer.innerHTML = `
+        <div class="no-data-message">
+          <div class="no-data-icon">⚠️</div>
+          <h3>筛选失败</h3>
+          <p>请刷新页面重试</p>
+        </div>
+      `;
     });
-    
-    console.log(`🔍 按关键字 "${searchKeyword}" 过滤，从 ${cachedDataCards.length} 条记录中筛选出 ${filteredCards.length} 条`);
-  }
-
-  // 按数据类型过滤
-  if (selectedDataType) {
-    filteredCards = filteredCards.filter(item => {
-      return item.dataType === selectedDataType;
-    });
-    
-    console.log(`🏷️ 按数据类型 "${selectedDataType}" 过滤，从 ${cachedDataCards.length} 条记录中筛选出 ${filteredCards.length} 条`);
-  }
-
-  // 渲染过滤后的卡片
-  const renderPromise = selectedDataType === 'diet'
-    ? renderDietTimeline(filteredCards, cardsContainer)
-    : renderTimelineItems(filteredCards, cardsContainer);
-
-  renderPromise.catch(err => {
-    console.error('渲染过滤后的卡片失败:', err);
-    cardsContainer.innerHTML = `
-      <div class="no-data-message">
-        <div class="no-data-icon">⚠️</div>
-        <h3>筛选失败</h3>
-        <p>请刷新页面重试</p>
-      </div>
-    `;
-  });
+  }, 100); // 短暂延迟让加载动画显示
 }
 
 /**
@@ -587,13 +652,47 @@ function searchInCardContent(content, dataType, keyword) {
 }
 
 /**
+ * getSymptomTypeText — 将症状类型代码转换为中文文本
+ */
+function getSymptomTypeText(type) {
+  const typeMap = {
+    'skin-type': '皮肤型紫癜',
+    'joint-type': '关节型紫癜',
+    'abdominal-type': '腹型紫癜',
+    'renal-type': '肾型紫癜',
+    'other': '其他',
+    'none': '无'
+  };
+  // 确保所有症状都显示中文，未知类型显示为"未知症状"
+  return typeMap[type] || '未知症状';
+}
+
+/**
  * searchInMetricsContent — 在健康指标内容中搜索
  */
 function searchInMetricsContent(content, keyword) {
   const metricsData = content.metricsData || {};
   
-  // 搜索症状
-  if (metricsData.symptoms?.symptoms && metricsData.symptoms.symptoms.toLowerCase().includes(keyword)) {
+  // 搜索症状（支持新格式）
+  if (metricsData.symptoms?.items && Array.isArray(metricsData.symptoms.items)) {
+    for (const symptom of metricsData.symptoms.items) {
+      // 搜索症状类型
+      const symptomTypeText = getSymptomTypeText(symptom.type);
+      if (symptomTypeText.toLowerCase().includes(keyword)) {
+        return true;
+      }
+      // 搜索自定义描述
+      if (symptom.description && symptom.description.toLowerCase().includes(keyword)) {
+        return true;
+      }
+      // 搜索症状详细信息
+      if (symptom.detail && symptom.detail.toLowerCase().includes(keyword)) {
+        return true;
+      }
+    }
+  }
+  // 兼容旧格式
+  else if (metricsData.symptoms?.symptoms && metricsData.symptoms.symptoms.toLowerCase().includes(keyword)) {
     return true;
   }
   
@@ -712,6 +811,9 @@ function loadUserDataCards() {
       return;
     }
 
+    // 显示局部加载动画
+    showLocalLoadingState(cardsContainer, selectedDataType, '正在加载数据...');
+
     // 如果正在加载中，等待加载完成
     if (dataCardsLoadPromise) {
       console.log('⏳ 等待数据卡片加载完成...');
@@ -811,40 +913,156 @@ async function renderTimelineItems(items, container) {
     // 如果没有传入任何项目，显示无数据消息
     let message;
     
-    if (selectedDate && searchKeyword) {
-      message = `
-        <div class="no-data-message">
-          <div class="no-data-icon">🔍</div>
-          <h3>未找到匹配的记录</h3>
-          <p>在 ${selectedDate} 中没有找到包含 "${searchKeyword}" 的记录</p>
-          <p>尝试调整搜索条件或清除筛选</p>
-        </div>
-      `;
-    } else if (selectedDate) {
-      message = `
-        <div class="no-data-message">
-          <div class="no-data-icon">📅</div>
-          <h3>该日期无数据记录</h3>
-          <p>选择其他日期或清除筛选查看所有记录</p>
-        </div>
-      `;
-    } else if (searchKeyword) {
-      message = `
-        <div class="no-data-message">
-          <div class="no-data-icon">🔍</div>
-          <h3>未找到匹配的记录</h3>
-          <p>没有找到包含 "${searchKeyword}" 的记录</p>
-          <p>尝试其他关键字或清除搜索</p>
-        </div>
-      `;
+    // 根据当前选择的数据类型显示不同的无数据提示
+    if (selectedDataType === 'metrics') {
+      if (selectedDate && searchKeyword) {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">🔍</div>
+            <h3>未找到匹配的健康指标</h3>
+            <p>在 ${formatDateDisplay(selectedDate)} 中没有找到包含 "${searchKeyword}" 的健康指标记录</p>
+            <p>尝试调整搜索条件或清除筛选</p>
+          </div>
+        `;
+      } else if (selectedDate) {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">📊</div>
+            <h3>${formatDateDisplay(selectedDate)}无健康记录</h3>
+            <p>该日期暂无健康指标数据</p>
+            <p>选择其他日期或开始记录健康数据</p>
+          </div>
+        `;
+      } else if (searchKeyword) {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">🔍</div>
+            <h3>未找到匹配的健康指标</h3>
+            <p>没有找到包含 "${searchKeyword}" 的健康指标记录</p>
+            <p>尝试其他关键字或清除搜索</p>
+          </div>
+        `;
+      } else {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">📊</div>
+            <h3>暂无健康指标记录</h3>
+            <p>开始记录您的健康数据吧</p>
+          </div>
+        `;
+      }
+    } else if (selectedDataType === 'case') {
+      if (selectedDate && searchKeyword) {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">🔍</div>
+            <h3>未找到匹配的病例记录</h3>
+            <p>在 ${formatDateDisplay(selectedDate)} 中没有找到包含 "${searchKeyword}" 的病例记录</p>
+            <p>尝试调整搜索条件或清除筛选</p>
+          </div>
+        `;
+      } else if (selectedDate) {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">📋</div>
+            <h3>${formatDateDisplay(selectedDate)}无病例记录</h3>
+            <p>该日期暂无个人病例数据</p>
+            <p>选择其他日期或添加病例记录</p>
+          </div>
+        `;
+      } else if (searchKeyword) {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">🔍</div>
+            <h3>未找到匹配的病例记录</h3>
+            <p>没有找到包含 "${searchKeyword}" 的病例记录</p>
+            <p>尝试其他关键字或清除搜索</p>
+          </div>
+        `;
+      } else {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">📋</div>
+            <h3>暂无病例记录</h3>
+            <p>开始记录您的病例数据吧</p>
+          </div>
+        `;
+      }
+    } else if (selectedDataType === 'diet') {
+      if (selectedDate && searchKeyword) {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">🔍</div>
+            <h3>未找到匹配的饮食记录</h3>
+            <p>在 ${formatDateDisplay(selectedDate)} 中没有找到包含 "${searchKeyword}" 的饮食记录</p>
+            <p>尝试调整搜索条件或清除筛选</p>
+          </div>
+        `;
+      } else if (selectedDate) {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">🍽️</div>
+            <h3>${formatDateDisplay(selectedDate)}无饮食记录</h3>
+            <p>该日期暂无饮食数据</p>
+            <p>选择其他日期或添加饮食记录</p>
+          </div>
+        `;
+      } else if (searchKeyword) {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">🔍</div>
+            <h3>未找到匹配的饮食记录</h3>
+            <p>没有找到包含 "${searchKeyword}" 的饮食记录</p>
+            <p>尝试其他关键字或清除搜索</p>
+          </div>
+        `;
+      } else {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">🍽️</div>
+            <h3>暂无饮食记录</h3>
+            <p>开始记录您的饮食数据吧</p>
+          </div>
+        `;
+      }
     } else {
-      message = `
-        <div class="no-data-message">
-          <div class="no-data-icon">📝</div>
-          <h3>暂无数据记录</h3>
-          <p>开始记录您的健康数据吧</p>
-        </div>
-      `;
+      // 通用的无数据提示（用于搜索所有类型或未指定类型的情况）
+      if (selectedDate && searchKeyword) {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">🔍</div>
+            <h3>未找到匹配的记录</h3>
+            <p>在 ${formatDateDisplay(selectedDate)} 中没有找到包含 "${searchKeyword}" 的记录</p>
+            <p>尝试调整搜索条件或清除筛选</p>
+          </div>
+        `;
+      } else if (selectedDate) {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">📅</div>
+            <h3>${formatDateDisplay(selectedDate)}无数据记录</h3>
+            <p>该日期暂无任何记录</p>
+            <p>选择其他日期或开始记录数据</p>
+          </div>
+        `;
+      } else if (searchKeyword) {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">🔍</div>
+            <h3>未找到匹配的记录</h3>
+            <p>没有找到包含 "${searchKeyword}" 的记录</p>
+            <p>尝试其他关键字或清除搜索</p>
+          </div>
+        `;
+      } else {
+        message = `
+          <div class="no-data-message">
+            <div class="no-data-icon">📝</div>
+            <h3>暂无数据记录</h3>
+            <p>开始记录您的健康数据吧</p>
+          </div>
+        `;
+      }
     }
     
     container.innerHTML = message;
@@ -898,13 +1116,46 @@ async function renderTimelineItems(items, container) {
  */
 async function renderDietTimeline(items, container) {
   if (!items || items.length === 0) {
-    container.innerHTML = `
-      <div class="no-data-message">
-        <div class="no-data-icon">📝</div>
-        <h3>暂无饮食记录</h3>
-        <p>开始记录您的饮食数据吧</p>
-      </div>
-    `;
+    // 根据搜索条件和日期筛选显示不同的无数据提示
+    let message;
+    if (selectedDate && searchKeyword) {
+      message = `
+        <div class="no-data-message">
+          <div class="no-data-icon">🔍</div>
+          <h3>未找到匹配的饮食记录</h3>
+          <p>在 ${formatDateDisplay(selectedDate)} 中没有找到包含 "${searchKeyword}" 的饮食记录</p>
+          <p>尝试调整搜索条件或清除筛选</p>
+        </div>
+      `;
+    } else if (selectedDate) {
+      message = `
+        <div class="no-data-message">
+          <div class="no-data-icon">🍽️</div>
+          <h3>${formatDateDisplay(selectedDate)}无饮食记录</h3>
+          <p>该日期暂无饮食数据</p>
+          <p>选择其他日期或添加饮食记录</p>
+        </div>
+      `;
+    } else if (searchKeyword) {
+      message = `
+        <div class="no-data-message">
+          <div class="no-data-icon">🔍</div>
+          <h3>未找到匹配的饮食记录</h3>
+          <p>没有找到包含 "${searchKeyword}" 的饮食记录</p>
+          <p>尝试其他关键字或清除搜索</p>
+        </div>
+      `;
+    } else {
+      message = `
+        <div class="no-data-message">
+          <div class="no-data-icon">🍽️</div>
+          <h3>暂无饮食记录</h3>
+          <p>开始记录您的饮食数据吧</p>
+        </div>
+      `;
+    }
+    
+    container.innerHTML = message;
     return;
   }
 
@@ -957,13 +1208,46 @@ async function renderDietTimeline(items, container) {
   }
 
   if (mealEvents.length === 0) {
-    container.innerHTML = `
-      <div class="no-data-message">
-        <div class="no-data-icon">📝</div>
-        <h3>暂无饮食记录</h3>
-        <p>开始记录您的饮食数据吧</p>
-      </div>
-    `;
+    // 根据搜索条件和日期筛选显示不同的无数据提示
+    let message;
+    if (selectedDate && searchKeyword) {
+      message = `
+        <div class="no-data-message">
+          <div class="no-data-icon">🔍</div>
+          <h3>未找到匹配的饮食记录</h3>
+          <p>在 ${formatDateDisplay(selectedDate)} 中没有找到包含 "${searchKeyword}" 的饮食记录</p>
+          <p>尝试调整搜索条件或清除筛选</p>
+        </div>
+      `;
+    } else if (selectedDate) {
+      message = `
+        <div class="no-data-message">
+          <div class="no-data-icon">🍽️</div>
+          <h3>${formatDateDisplay(selectedDate)}无饮食记录</h3>
+          <p>该日期暂无饮食数据</p>
+          <p>选择其他日期或添加饮食记录</p>
+        </div>
+      `;
+    } else if (searchKeyword) {
+      message = `
+        <div class="no-data-message">
+          <div class="no-data-icon">🔍</div>
+          <h3>未找到匹配的饮食记录</h3>
+          <p>没有找到包含 "${searchKeyword}" 的饮食记录</p>
+          <p>尝试其他关键字或清除搜索</p>
+        </div>
+      `;
+    } else {
+      message = `
+        <div class="no-data-message">
+          <div class="no-data-icon">🍽️</div>
+          <h3>暂无饮食记录</h3>
+          <p>开始记录您的饮食数据吧</p>
+        </div>
+      `;
+    }
+    
+    container.innerHTML = message;
     return;
   }
 
@@ -1150,7 +1434,11 @@ async function generateTimelineItems(groupedData) {
   
   // 然后异步加载详细信息并更新内容
   setTimeout(async () => {
-    await updateTimelineDetails(groupedData);
+    try {
+      await updateTimelineDetails(groupedData);
+    } catch (error) {
+      console.error('更新时间线详情失败:', error);
+    }
   }, 100);
   
   return basicHTML;
@@ -1552,8 +1840,29 @@ function parseContentToSummary(content, dataType) {
 function parseMetricsSummary(metricsData) {
   const summaries = [];
   
-  // 症状
-  if (metricsData.symptoms?.symptoms) {
+  // 症状（支持新格式）
+  if (metricsData.symptoms?.items && Array.isArray(metricsData.symptoms.items)) {
+    const symptomTexts = metricsData.symptoms.items.map(symptom => {
+      const typeText = getSymptomTypeText(symptom.type);
+      let displayText = typeText;
+      
+      if (symptom.type === 'other' && symptom.description) {
+        displayText = `${typeText}(${symptom.description})`;
+      }
+      
+      // 如果有详细信息，添加简短提示
+      if (symptom.detail && symptom.detail.trim()) {
+        displayText += '*';  // 用星号表示有详细信息
+      }
+      
+      return displayText;
+    });
+    if (symptomTexts.length > 0) {
+      summaries.push(`症状: ${symptomTexts.join('、')}`);
+    }
+  }
+  // 兼容旧格式
+  else if (metricsData.symptoms?.symptoms) {
     summaries.push(`症状: ${metricsData.symptoms.symptoms}`);
   }
   
@@ -1709,7 +2018,8 @@ function getBleedingPointText(bleedingPoint) {
     'vomit': '呕吐物',
     'menstrual': '月经'
   };
-  return bleedingMap[bleedingPoint] || bleedingPoint;
+  // 确保所有出血点都显示中文，未知部位显示为"未知部位"
+  return bleedingMap[bleedingPoint] || '未知部位';
 }
 
 /**
@@ -1773,7 +2083,8 @@ function getUrinalysisItemText(itemName, customName = null) {
   
   // 转换为小写进行匹配
   const lowerItemName = itemName.toLowerCase();
-  return urinalysisMap[lowerItemName] || itemName;
+  // 确保所有尿常规项目都显示中文，未知项目显示为"未知检测项目"
+  return urinalysisMap[lowerItemName] || '未知检测项目';
 }
 
 /**
@@ -1814,7 +2125,8 @@ function getBloodTestItemText(item, customName = null) {
     'pct': '血小板压积',
     'p-lcr': '大型血小板比率'
   };
-  return itemMap[item] || item;
+  // 确保所有血常规项目都显示中文，未知项目显示为"未知检测项目"
+  return itemMap[item] || '未知检测项目';
 }
 
 /**
@@ -1934,8 +2246,39 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
     ? "color: #f1f5f9; font-weight: 700; font-size: 0.95rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"
     : "color: #1e293b; font-weight: 700; font-size: 0.95rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;";
 
-  // 症状
-  if (metricsData.symptoms?.symptoms) {
+  // 症状（支持新格式）
+  if (metricsData.symptoms?.items && Array.isArray(metricsData.symptoms.items)) {
+    const symptomItems = metricsData.symptoms.items.map(symptom => {
+      const typeText = getSymptomTypeText(symptom.type);
+      let symptomHtml = '';
+      
+      if (symptom.type === 'other' && symptom.description) {
+        symptomHtml = `<span style="display: inline-block; margin: 2px 6px 2px 0; padding: 4px 8px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 12px; font-size: 0.85em;">${typeText}: ${symptom.description}</span>`;
+      } else {
+        symptomHtml = `<span style="display: inline-block; margin: 2px 6px 2px 0; padding: 4px 8px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 12px; font-size: 0.85em;">${typeText}</span>`;
+      }
+      
+      // 如果有详细信息，添加到症状下方
+      if (symptom.detail && symptom.detail.trim()) {
+        symptomHtml += `<div style="margin: 6px 0 8px 0; padding: 8px 12px; background: rgba(102, 126, 234, 0.1); border-left: 3px solid #667eea; border-radius: 4px; font-size: 0.9em; color: #4a5568; line-height: 1.4;">详细信息：${symptom.detail}</div>`;
+      }
+      
+      return symptomHtml;
+    }).join('');
+    
+    if (symptomItems) {
+      html += `
+        <div style="${sectionStyle}">
+          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
+          <h5 style="${titleStyle}">▶ 症状记录</h5>
+          <div style="${textStyle}">${symptomItems}</div>
+        </div>
+      `;
+      hasContent = true;
+    }
+  }
+  // 兼容旧格式
+  else if (metricsData.symptoms?.symptoms) {
     html += `
       <div style="${sectionStyle}">
         <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
@@ -2523,6 +2866,50 @@ function destroyDaily() {
 
   dailyRoot = document;
   console.log('🧹 destroyDaily 清理完成');
+}
+
+/**
+ * initCalendarButton — 初始化日历按钮
+ */
+function initCalendarButton() {
+  const calendarBtn = dailyRoot.querySelector('#calendar-btn');
+  
+  if (!calendarBtn) {
+    console.warn('⚠️ 未找到日历按钮元素');
+    return;
+  }
+
+  // 日历按钮点击事件
+  calendarBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // 添加震动反馈
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Medium');
+    }
+    
+    // 跳转到日历页面
+    openCalendarPage();
+    
+    console.log('📅 打开日历页面');
+  });
+  
+  console.log('✅ 日历按钮初始化完成');
+}
+
+/**
+ * openCalendarPage — 打开日历页面
+ */
+function openCalendarPage() {
+  // 获取当前选中的日期
+  const currentDate = selectedDate || new Date().toISOString().split('T')[0];
+  
+  // 跳转到日历页面
+  const calendarUrl = `${window.location.origin}${window.location.pathname.replace('/index.html', '').replace('/daily.html', '')}/src/calendar.html?date=${currentDate}`;
+  
+  console.log('🔗 跳转到日历页面:', calendarUrl);
+  window.location.href = calendarUrl;
 }
 
 // -----------------------------

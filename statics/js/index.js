@@ -290,38 +290,64 @@ function loadPage(index) {
     });
 }
 
-// Lightweight ripple effect for nav icons (mousedown/touchstart)
-document.querySelectorAll(".nav-item").forEach((item) => {
-  ["mousedown", "touchstart"].forEach((evt) => {
-    item.addEventListener(evt, function (e) {
-      const targetButton = item.querySelector(".icon");
-      if (!targetButton) return;
-      const circle = document.createElement("span");
-      circle.classList.add("ripple-effect");
-      circle.style.position = "absolute";
-      circle.style.pointerEvents = "none";
-      const rect = targetButton.getBoundingClientRect();
-      const size = Math.max(rect.width, rect.height);
-      circle.style.width = circle.style.height = size + "px";
-      circle.style.left = e.clientX - rect.left - size / 2 + "px";
-      circle.style.top = e.clientY - rect.top - size / 2 + "px";
-      const existing = targetButton.querySelector(".ripple-effect");
-      if (existing) existing.remove();
-      targetButton.appendChild(circle);
-    });
+// 使用新的高性能涟漪效果系统
+document.addEventListener('DOMContentLoaded', () => {
+  // 为导航按钮添加涟漪效果
+  document.querySelectorAll(".nav-item .icon").forEach((button) => {
+    if (window.AnimationUtils) {
+      window.AnimationUtils.createRipple(button, {
+        color: 'rgba(98, 0, 234, 0.3)',
+        duration: 600
+      });
+    }
   });
+
+  // 为中心按钮添加涟漪效果
+  const centerButton = document.getElementById("centerBtn");
+  if (centerButton && window.AnimationUtils) {
+    window.AnimationUtils.createRipple(centerButton, {
+      color: 'rgba(255, 255, 255, 0.3)',
+      duration: 800,
+      centered: true
+    });
+  }
 });
 
-// Update active tab UI and trigger page load
+// 增强的tab切换动画
 function updateActive(index) {
   navItems.forEach((item, i) => {
-    item.classList.toggle("active", i === index);
+    const isActive = i === index;
+    item.classList.toggle("active", isActive);
+    
+    // 添加切换动画
+    if (isActive && window.AnimationUtils) {
+      const button = item.querySelector('.icon');
+      if (button) {
+        // 添加微妙的弹性动画
+        button.style.animation = 'none';
+        button.offsetHeight; // 强制重排
+        button.style.animation = 'pulseScale 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      }
+    }
   });
 
+  // 增强的指示器动画
   indicator.style.transform = `translateX(${index * 100}%)`;
   activeIndex = index;
 
-  loadPage(index);
+  // 页面切换动画
+  if (window.AnimationUtils && content) {
+    // 淡出当前内容
+    window.AnimationUtils.fadeOut(content, 200).then(() => {
+      loadPage(index);
+      // 内容加载后淡入
+      setTimeout(() => {
+        window.AnimationUtils.fadeIn(content, 300);
+      }, 100);
+    });
+  } else {
+    loadPage(index);
+  }
 }
 
 navItems.forEach((item, index) => {

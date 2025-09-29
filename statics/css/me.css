@@ -108,6 +108,8 @@ body {
   transform: translateY(0);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   position: relative;
+  /* 防止深色模式闪烁 */
+  color: var(--text);
 }
 
 .card:hover {
@@ -198,6 +200,8 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow-2);
   background: var(--card);
+  /* 防止深色模式闪烁 */
+  color: var(--text);
 }
 
 /* List item row */

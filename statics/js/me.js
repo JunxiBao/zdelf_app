@@ -1076,11 +1076,11 @@
       contactInfo.className = "contact-info";
       const contactText = document.createElement("p");
       contactText.textContent = "如有任何问题或建议，请通过以下方式联系我们：";
-      const emailLink = document.createElement("a");
-      emailLink.className = "contact-email";
-      emailLink.href = "mailto:junxibao@junxibao.com";
-      emailLink.textContent = "junxibao@junxibao.com";
-      contactInfo.append(contactText, emailLink);
+      const developerInfo = document.createElement("p");
+      developerInfo.innerHTML = "开发者：鲍俊希 <a class='contact-email' href='mailto:junxibao@junxibao.com'>junxibao@junxibao.com</a>";
+      const designerInfo = document.createElement("p");
+      designerInfo.innerHTML = "设计师：裘可然 <a class='contact-email' href='mailto:391257652@qq.com'>391257652@qq.com</a>";
+      contactInfo.append(contactText, developerInfo, designerInfo);
       contactSection.append(contactTitle, contactInfo);
 
       body.append(introSection, featuresSection, contactSection);

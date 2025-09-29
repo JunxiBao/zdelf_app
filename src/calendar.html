@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日历</title>
+    <link rel="stylesheet" href="../statics/css/calendar.css">
+</head>
+<body>
+    <div class="calendar-container">
+        <!-- 顶部导航 -->
+        <div class="calendar-header">
+            <button id="back-btn" class="back-btn" title="返回">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <h1 class="calendar-title">日历</h1>
+        </div>
+
+        <!-- 年份月份导航 -->
+        <div class="month-navigation">
+            <button id="prev-month" class="nav-btn" title="上一月">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div class="month-year-display">
+                <span id="current-year" class="year-text">2025</span>
+                <span id="current-month" class="month-text">January</span>
+            </div>
+            <button id="next-month" class="nav-btn" title="下一月">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- 日历主体 -->
+        <div class="calendar-main">
+            <!-- 星期标题 -->
+            <div class="weekdays">
+                <div class="weekday">一</div>
+                <div class="weekday">二</div>
+                <div class="weekday">三</div>
+                <div class="weekday">四</div>
+                <div class="weekday">五</div>
+                <div class="weekday weekend">六</div>
+                <div class="weekday weekend">日</div>
+            </div>
+
+            <!-- 日期网格 -->
+            <div id="calendar-grid" class="calendar-grid">
+                <!-- 日期将通过JavaScript动态生成 -->
+            </div>
+        </div>
+
+        <!-- 选中日期信息 -->
+        <div class="selected-date-info">
+            <div class="selected-date-display">
+                <span id="selected-date-text">选择一个日期</span>
+            </div>
+        </div>
+        
+        <!-- 症状图例 -->
+        <div class="symptom-legend">
+            <h4 style="margin-bottom: 12px; font-size: 14px; color: #666;">症状图例</h4>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #FFE4E1;"></div>
+                    <span>皮肤型紫癜</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #E6F3FF;"></div>
+                    <span>关节型紫癜</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #FFF8DC;"></div>
+                    <span>腹型紫癜</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #F0F8E8;"></div>
+                    <span>肾型紫癜</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #F5F0FF;"></div>
+                    <span>其他症状</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../statics/js/calendar.js"></script>
+</body>
+</html>

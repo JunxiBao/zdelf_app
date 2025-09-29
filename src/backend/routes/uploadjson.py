@@ -38,6 +38,7 @@ KIND_TO_TABLE = {
     "metrics": "metrics_files",
     "diet": "diet_files",
     "case": "case_files",
+    "symptoms": "symptom_files",
 }
 
 def _analyze_data_type(content: dict) -> str:
@@ -57,6 +58,8 @@ def _analyze_data_type(content: dict) -> str:
             return 'diet'
         elif data_type == 'case_record':
             return 'case'
+        elif data_type == 'symptom_tracking':
+            return 'symptoms'
         
         # 如果没有dataType字段，根据数据结构特征判断
         if 'metricsData' in content:
@@ -65,6 +68,8 @@ def _analyze_data_type(content: dict) -> str:
             return 'diet'
         elif 'caseData' in content:
             return 'case'
+        elif 'symptomData' in content:
+            return 'symptoms'
         
         # 根据数据内容特征进一步判断
         content_str = json.dumps(content, ensure_ascii=False).lower()
@@ -88,21 +93,29 @@ def _analyze_data_type(content: dict) -> str:
             '诊断', '治疗', '药物', '医生', '医院'
         ]
         
+        # 症状跟踪特征关键词
+        symptom_keywords = [
+            'symptom_tracking', 'symptomdata', 'skin-type', 'joint-type', 
+            'abdominal-type', 'renal-type', '症状跟踪', '症状代码'
+        ]
+        
         # 计算匹配度
         metrics_score = sum(1 for keyword in metrics_keywords if keyword in content_str)
         diet_score = sum(1 for keyword in diet_keywords if keyword in content_str)
         case_score = sum(1 for keyword in case_keywords if keyword in content_str)
+        symptom_score = sum(1 for keyword in symptom_keywords if keyword in content_str)
         
         # 返回得分最高的类型
-        if metrics_score > diet_score and metrics_score > case_score:
-            return 'metrics'
-        elif diet_score > case_score:
-            return 'diet'
-        elif case_score > 0:
-            return 'case'
-        else:
-            # 默认返回metrics
-            return 'metrics'
+        scores = [
+            ('metrics', metrics_score),
+            ('diet', diet_score),
+            ('case', case_score),
+            ('symptoms', symptom_score)
+        ]
+        
+        # 找到得分最高的类型
+        best_type = max(scores, key=lambda x: x[1])
+        return best_type[0] if best_type[1] > 0 else 'metrics'
             
     except Exception as e:
         logger.warning(f"分析数据类型失败: {e}")

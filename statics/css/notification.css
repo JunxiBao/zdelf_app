@@ -13,6 +13,16 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  /* 防止深色模式闪烁 */
+  color-scheme: light dark;
+}
+
+/* 立即应用深色模式样式 */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #121212 !important;
+    color: #eee !important;
+  }
 }
 
 /* 确保在Shadow DOM中也能正常工作 */
@@ -87,22 +97,57 @@ body {
 
 /* 提醒卡片 */
 .reminder-card {
-  background: #fff;
+  background: linear-gradient(145deg, #ffffff 0%, #fafbfc 100%);
   border: 2px solid #e0e0e0;
+  color: #222;
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
   overflow: hidden;
+  transform: translateZ(0); /* GPU加速 */
+  will-change: transform, box-shadow;
+  /* 防止深色模式闪烁 */
+  color-scheme: light dark;
+}
+
+/* 立即应用深色模式样式 */
+@media (prefers-color-scheme: dark) {
+  .reminder-card {
+    background: #1e1f22 !important;
+    border-color: rgba(255,255,255,0.08) !important;
+    color: #eee !important;
+  }
+}
+
+.reminder-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6200ea, #a78bfa);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .reminder-card:hover {
   border-color: #6200ea;
-  background: #faf7ff;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(98, 0, 234, 0.15);
+  background: linear-gradient(145deg, #faf7ff 0%, #f3f0ff 100%);
+  transform: translate3d(0, -4px, 0);
+  box-shadow: 0 12px 32px rgba(98, 0, 234, 0.2);
+}
+
+.reminder-card:hover::before {
+  opacity: 1;
+}
+
+.reminder-card:active {
+  transform: translate3d(0, -2px, 0);
+  transition-duration: 0.1s;
 }
 
 .reminder-header {
@@ -170,24 +215,32 @@ body {
   box-shadow: 0 4px 12px rgba(98, 0, 234, 0.3);
   position: relative;
   overflow: hidden;
+  transform: translateZ(0); /* GPU加速 */
 }
 
 .btn-primary::before {
   content: '';
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: all 0.3s ease;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
 }
 
 .btn-primary:hover::before {
-  width: 300px;
-  height: 300px;
+  left: 100%;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 0 8px 20px rgba(98, 0, 234, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.98) translateZ(0);
+  transition-duration: 0.1s;
 }
 
 .btn-danger {
@@ -320,6 +373,17 @@ body {
   border: 2px dashed #e0e0e0;
   border-radius: 16px;
   margin: 20px 0;
+  /* 防止深色模式闪烁 */
+  color-scheme: light dark;
+}
+
+/* 立即应用深色模式样式 */
+@media (prefers-color-scheme: dark) {
+  .empty-state {
+    background: #1e1f22 !important;
+    border-color: rgba(255,255,255,0.08) !important;
+    color: #bbb !important;
+  }
 }
 
 .empty-hint {
@@ -551,6 +615,13 @@ body {
   animation: modalFadeIn 0.3s ease;
 }
 
+/* 立即应用深色模式样式 */
+@media (prefers-color-scheme: dark) {
+  .modal {
+    background: rgba(0, 0, 0, 0.8) !important;
+  }
+}
+
 .modal.show {
   display: flex;
 }
@@ -568,6 +639,7 @@ body {
 
 .modal-content {
   background: #fff;
+  color: #222;
   border-radius: 20px;
   padding: 28px;
   width: 92%;
@@ -579,6 +651,18 @@ body {
   animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   margin: 20px;
+  /* 防止深色模式闪烁 */
+  color-scheme: light dark;
+}
+
+/* 立即应用深色模式样式 */
+@media (prefers-color-scheme: dark) {
+  .modal-content {
+    background: #1e1f22 !important;
+    color: #eee !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4) !important;
+    border-color: rgba(98, 0, 234, 0.2) !important;
+  }
 }
 
 @keyframes modalSlideIn {
