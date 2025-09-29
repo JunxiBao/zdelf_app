@@ -118,7 +118,8 @@ def get_user_files(kind):
                     if 'content_preview' in row:
                         del row['content_preview']
 
-                    # 如指定 date，则按 exportInfo.recordTime(缺失退回 exportTime) 的日期过滤
+                    # 如指定 date，则按 exportInfo.recordTime(缺失退回 exportTime) 的日期过滤；
+                    # 若为 diet，再进一步按每餐的 date/timestamp 进行匹配，任一餐命中即可。
                     if filter_date:
                         try:
                             exp = (row.get('preview') or {}).get('exportInfo') or {}
@@ -156,7 +157,29 @@ def get_user_files(kind):
                                             m2 = re.match(r"^(\d{4})[-/.](\d{2})[-/.](\d{2})", rt2)
                                             if m2:
                                                 ds2 = f"{m2.group(1)}-{m2.group(2)}-{m2.group(3)}"
-                                        if ds2 == filter_date:
+                                        include = (ds2 == filter_date)
+                                        # diet: 任一餐命中也包括
+                                        if not include and kind == 'diet':
+                                            try:
+                                                diet_data = content_obj.get('dietData') or {}
+                                                for meal in (diet_data.values() if isinstance(diet_data, dict) else []):
+                                                    if not isinstance(meal, dict):
+                                                        continue
+                                                    md = (meal.get('date') or '').strip()
+                                                    mt = (meal.get('timestamp') or '').strip()
+                                                    mds = None
+                                                    if md:
+                                                        mds = md
+                                                    elif mt:
+                                                        m3 = re.match(r"^(\d{4})[-/.](\d{2})[-/.](\d{2})", mt)
+                                                        if m3:
+                                                            mds = f"{m3.group(1)}-{m3.group(2)}-{m3.group(3)}"
+                                                    if mds == filter_date:
+                                                        include = True
+                                                        break
+                                            except Exception:
+                                                pass
+                                        if include:
                                             filtered_rows.append(row)
                                 except Exception:
                                     pass

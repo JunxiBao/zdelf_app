@@ -333,6 +333,21 @@ async function saveAllMeals() {
             return now.toISOString().slice(0,10);
         }
         const __dietSelectedDate = getDietSelectedDate();
+
+        // 统一为每一餐补齐 date 与 timestamp（用于日常页严格按天展示）
+        try {
+            Object.keys(allMealsData).forEach((key) => {
+                const meal = allMealsData[key] || {};
+                const timeStr = String(meal.time || '00:00:00');
+                const parts = timeStr.split(':');
+                const hm = parts.length===2
+                    ? (parts[0].padStart(2,'0')+':' + parts[1].padStart(2,'0')+':00')
+                    : (parts[0].padStart(2,'0')+':' + (parts[1]||'00').padStart(2,'0')+':' + String(parts[2]||'00').padStart(2,'0'));
+                meal.date = __dietSelectedDate;
+                meal.timestamp = __dietSelectedDate + ' ' + hm;
+                allMealsData[key] = meal;
+            });
+        } catch(_) {}
         const exportData = {
             exportInfo: {
                 exportTime: new Date().toLocaleString('zh-CN', { 
@@ -375,6 +390,7 @@ async function saveAllMeals() {
             
             // 清除表单数据和本地存储
             clearAllDietData();
+            try { localStorage.removeItem('health_record_data'); } catch(_) {}
             
             // 强制清除全局数据变量
             dietData = {};

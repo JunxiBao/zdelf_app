@@ -409,8 +409,16 @@ function initDatePicker() {
     // 保持清除按钮隐藏（不再显示叉叉）
     clearBtn.classList.add('hidden');
     
-    // 过滤并重新渲染卡片
-    filterAndRenderCards();
+    // 切换日期时，重新从后端按天拉取数据
+    showLoadingState();
+    abortInFlight();
+    loadUserDataCards()
+      .then(() => {
+        filterAndRenderCards();
+      })
+      .finally(() => {
+        hideLoadingState();
+      });
   });
 
   // 清除日期按钮事件（重置为当前日期）
