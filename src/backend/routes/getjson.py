@@ -118,7 +118,7 @@ def get_user_files(kind):
                     if 'content_preview' in row:
                         del row['content_preview']
 
-                    # 如指定 date，则按 preview.exportInfo.recordTime 的日期过滤
+                    # 如指定 date，则按 exportInfo.recordTime(缺失退回 exportTime) 的日期过滤
                     if filter_date:
                         try:
                             exp = (row.get('preview') or {}).get('exportInfo') or {}
@@ -131,6 +131,35 @@ def get_user_files(kind):
                                     ds = f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
                             if ds == filter_date:
                                 filtered_rows.append(row)
+                            else:
+                                # 预览内容不足时，回退读取完整 content 再判断
+                                try:
+                                    cur2 = conn.cursor(dictionary=True)
+                                    try:
+                                        cur2.execute(f"SELECT content FROM {table_name} WHERE id=%s LIMIT 1", (row['id'],))
+                                        full = cur2.fetchone()
+                                    finally:
+                                        try:
+                                            cur2.close()
+                                        except Exception:
+                                            pass
+                                    if full and full.get('content'):
+                                        import json, re
+                                        try:
+                                            content_obj = json.loads(full['content'])
+                                        except Exception:
+                                            content_obj = {}
+                                        exp2 = (content_obj.get('exportInfo') or {})
+                                        rt2 = (exp2.get('recordTime') or exp2.get('exportTime') or '').strip()
+                                        ds2 = None
+                                        if rt2:
+                                            m2 = re.match(r"^(\d{4})[-/.](\d{2})[-/.](\d{2})", rt2)
+                                            if m2:
+                                                ds2 = f"{m2.group(1)}-{m2.group(2)}-{m2.group(3)}"
+                                        if ds2 == filter_date:
+                                            filtered_rows.append(row)
+                                except Exception:
+                                    pass
                         except Exception:
                             # 忽略解析失败
                             pass

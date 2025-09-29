@@ -949,7 +949,13 @@ async function renderDietTimeline(items, container) {
   }
 
   if (mealEvents.length === 0) {
-    container.innerHTML = '<p>暂无饮食记录</p>';
+    container.innerHTML = `
+      <div class="no-data-message">
+        <div class="no-data-icon">📝</div>
+        <h3>暂无饮食记录</h3>
+        <p>开始记录您的饮食数据吧</p>
+      </div>
+    `;
     return;
   }
 
@@ -1196,15 +1202,13 @@ async function updateTimelineDetails(groupedData) {
             if (item.dataType === 'case') {
               const rt = exp.recordTime;
               if (!rt) { contentElement.style.display = 'none'; continue; }
-              let rtDate = '';
-              try { rtDate = new Date(rt).toISOString().split('T')[0]; } catch(_) { rtDate = ''; }
+              const rtDate = getDateYMD(rt);
               if (rtDate !== targetDateStr) { contentElement.style.display = 'none'; continue; }
             } else {
               const primary = exp.recordTime || '';
               const fallback1 = exp.exportTime || '';
               let candidate = primary || fallback1 || item.created_at || '';
-              let candidateDate = '';
-              try { candidateDate = new Date(candidate).toISOString().split('T')[0]; } catch(_) { candidateDate = ''; }
+              const candidateDate = getDateYMD(candidate);
               if (candidateDate && candidateDate !== targetDateStr) { contentElement.style.display = 'none'; continue; }
             }
           }
