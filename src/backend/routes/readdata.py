@@ -54,6 +54,13 @@ def readdata():
         conn = _get_conn()
         cursor = conn.cursor(dictionary=True)
         try:
+            # 检查avatar_url字段是否存在，如果不存在则添加
+            cursor.execute("SHOW COLUMNS FROM users LIKE 'avatar_url'")
+            if not cursor.fetchone():
+                logger.info("/readdata adding avatar_url column to users table")
+                cursor.execute("ALTER TABLE users ADD COLUMN avatar_url VARCHAR(500) NULL")
+                conn.commit()
+            
             query = f"SELECT * FROM {table_name}"
             params = []
             if user_id:

@@ -322,55 +322,6 @@
     }
   }
   
-  // 压缩图片到目标尺寸
-  async function compressImage(imageData) {
-    return new Promise((resolve, reject) => {
-      console.log("[me] 开始压缩图片");
-      const img = new Image();
-      
-      img.onload = function() {
-        console.log("[me] 图片加载完成，原始尺寸:", img.width, "x", img.height);
-        
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        // 设置目标尺寸
-        const targetSize = 200;
-        canvas.width = targetSize;
-        canvas.height = targetSize;
-        
-        // 先绘制图片
-        ctx.drawImage(img, 0, 0, targetSize, targetSize);
-        
-        // 创建圆形蒙版
-        const maskCanvas = document.createElement('canvas');
-        const maskCtx = maskCanvas.getContext('2d');
-        maskCanvas.width = targetSize;
-        maskCanvas.height = targetSize;
-        
-        // 绘制圆形蒙版
-        maskCtx.beginPath();
-        maskCtx.arc(targetSize/2, targetSize/2, targetSize/2, 0, Math.PI * 2);
-        maskCtx.fill();
-        
-        // 应用蒙版
-        ctx.globalCompositeOperation = 'destination-in';
-        ctx.drawImage(maskCanvas, 0, 0);
-        
-        // 转换为base64
-        const compressedData = canvas.toDataURL('image/png', 0.9);
-        console.log("[me] 图片压缩完成，压缩后大小:", compressedData.length);
-        resolve(compressedData);
-      };
-      
-      img.onerror = function() {
-        console.error("[me] 图片加载失败");
-        reject(new Error("图片加载失败"));
-      };
-      
-      img.src = imageData;
-    });
-  }
 
   /**
    * Initialize the "Me" page UI.
@@ -632,14 +583,13 @@
     }
 
     // Fill profile name/age/phone/initials in the UI (will hydrate from DB)
-    // 直接使用document查询，避免Shadow DOM问题
-    const nameEl = document.querySelector("#displayName");
-    const ageEl = document.querySelector("#displayAge");
-    const phoneEl = document.querySelector("#displayPhone");
-    const initialsEl = document.querySelector("#avatarInitials");
-    const avatarImageEl = document.querySelector("#avatarImage");
+    const nameEl = root.querySelector("#displayName");
+    const ageEl = root.querySelector("#displayAge");
+    const phoneEl = root.querySelector("#displayPhone");
+    const initialsEl = root.querySelector("#avatarInitials");
+    const avatarImageEl = root.querySelector("#avatarImage");
     
-    // 使用直接查询的元素
+    // 使用root查询的元素
     const finalAvatarImageEl = avatarImageEl;
     const finalInitialsEl = initialsEl;
     
@@ -681,7 +631,7 @@
     }
 
     // Try to load from backend using stored UserID
-    const appRoot = document.querySelector("main.app");
+    const appRoot = root.querySelector("main.app");
     const tableName =
       appRoot && appRoot.dataset && appRoot.dataset.table
         ? appRoot.dataset.table
@@ -755,7 +705,16 @@
               : "无";
           const phone = pick(rec, ["phone", "mobile", "phone_number"], "无");
           const avatar_url = pick(rec, ["avatar_url", "avatar", "profile_picture"], null);
+          console.log("[me] 从数据库获取的头像URL:", avatar_url);
           user = { name: username, age, phone, avatar_url };
+          
+          // 确保头像URL是完整的URL
+          if (user.avatar_url && !user.avatar_url.startsWith('http')) {
+            user.avatar_url = apiBase + user.avatar_url;
+            console.log("[me] 完整头像URL:", user.avatar_url);
+          }
+          
+          console.log("[me] 最终用户数据:", user);
           // 后端当前会返回明文密码，这里仅用于“新密码不能与原密码相同”的前端校验，不做任何回显
           currentPassword =
             typeof rec.password === "string" ? rec.password : null;
@@ -865,7 +824,7 @@
     }
 
     // 绑定 ripple
-    document.querySelectorAll(".rippleable").forEach((el) => {
+    root.querySelectorAll(".rippleable").forEach((el) => {
       const clickHandler = (e) => addRipple(e);
       const keyHandler = (ev) => {
         if (ev.key === "Enter" || ev.key === " ") {
@@ -1199,8 +1158,8 @@
       });
     }
 
-    // 绑定“编辑资料”按钮
-    const editBtn = document.querySelector("#editProfileBtn");
+    // 绑定"编辑资料"按钮
+    const editBtn = root.querySelector("#editProfileBtn");
     if (editBtn) {
       const editHandler = () => openEditDialog();
       const h = () => { triggerVibration('Medium'); };
@@ -1213,7 +1172,7 @@
 
 
     // 退出登录
-    const logoutBtn = document.querySelector("#logoutBtn");
+    const logoutBtn = root.querySelector("#logoutBtn");
     if (logoutBtn) {
       const logoutHandler = async () => {
         triggerVibration('Medium');
@@ -1235,7 +1194,7 @@
     }
 
     // 注销账号（不可恢复）
-    const deleteBtn = document.querySelector("#deleteAccountBtn");
+    const deleteBtn = root.querySelector("#deleteAccountBtn");
     if (deleteBtn) {
       const deleteHandler = async () => {
         triggerVibration('Medium');
@@ -1789,7 +1748,7 @@
     }
 
     // 列表项点击
-    document.querySelectorAll("[data-action]").forEach((el) => {
+    root.querySelectorAll("[data-action]").forEach((el) => {
       const actionHandler = () => {
         if (el.dataset.action === "help") {
           showHelpModal();
@@ -1806,8 +1765,8 @@
     });
 
     // 头像上传功能
-    const avatarUploadBtn = document.querySelector("#avatarUploadBtn");
-    const avatarFileInput = document.querySelector("#avatarFileInput");
+    const avatarUploadBtn = root.querySelector("#avatarUploadBtn");
+    const avatarFileInput = root.querySelector("#avatarFileInput");
     
     console.log("[me] 头像上传按钮:", avatarUploadBtn);
     console.log("[me] 文件输入:", avatarFileInput);
@@ -1918,14 +1877,15 @@
       const cancelText = isDarkMode ? "#f9fafb" : "#333";
       const confirmBg = isDarkMode ? "#a78bfa" : "#1a73e8";
       
-      // 简化的模态框内容
+      // 裁剪模态框内容
       dialog.innerHTML = `
-        <div style="padding: 20px; text-align: center; background: ${contentBackground}; min-height: 300px;">
+        <div style="padding: 20px; text-align: center; background: ${contentBackground}; min-height: 400px;">
           <h3 style="margin: 0 0 16px 0; color: ${titleColor}; font-size: 18px; font-weight: 600;">头像裁剪</h3>
-          <div style="width: 200px; height: 200px; margin: 0 auto 16px; border-radius: 50%; overflow: hidden; border: 3px solid ${borderColor}; box-shadow: 0 4px 12px rgba(0,0,0,${isDarkMode ? '0.3' : '0.15'});">
-            <img src="${imageData}" style="width: 100%; height: 100%; object-fit: cover;" alt="头像预览" onerror="console.log('图片加载失败')">
+          <div style="position: relative; width: 300px; height: 300px; margin: 0 auto 16px; border: 2px solid ${borderColor}; border-radius: 8px; overflow: hidden; background: #f0f0f0;">
+            <img id="cropImage" src="${imageData}" style="width: 100%; height: 100%; object-fit: contain; cursor: move;" alt="裁剪图片">
+            <div id="cropOverlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; border: 3px solid ${borderColor}; border-radius: 50%; background: transparent; cursor: move; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);"></div>
           </div>
-          <p style="margin: 0 0 20px 0; color: ${textColor}; font-size: 14px;">圆形头像预览</p>
+          <p style="margin: 0 0 20px 0; color: ${textColor}; font-size: 14px;">拖拽调整位置，滚轮/捏合缩放，圆形区域为最终头像</p>
           <div style="display: flex; gap: 12px; justify-content: center;">
             <button id="cancelCrop" style="padding: 10px 20px; border: 1px solid ${cancelBorder}; background: ${cancelBg}; color: ${cancelText}; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s;">取消</button>
             <button id="confirmCrop" style="padding: 10px 20px; border: none; background: ${confirmBg}; color: white; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s;">确认</button>
@@ -1937,6 +1897,113 @@
       document.body.appendChild(mask);
       
       console.log("[me] 模态框已添加到DOM");
+      
+      // 添加拖拽和缩放功能
+      const cropImage = dialog.querySelector("#cropImage");
+      const cropOverlay = dialog.querySelector("#cropOverlay");
+      
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let currentX = 0;
+      let currentY = 0;
+      let currentScale = 1;
+      let minScale = 0.5;
+      let maxScale = 3;
+      
+      // 更新图片变换
+      function updateTransform() {
+        cropImage.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
+      }
+      
+      // 鼠标拖拽事件
+      cropImage.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX - currentX;
+        startY = e.clientY - currentY;
+        cropImage.style.cursor = 'grabbing';
+      });
+      
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        currentX = e.clientX - startX;
+        currentY = e.clientY - startY;
+        updateTransform();
+      });
+      
+      document.addEventListener('mouseup', () => {
+        if (isDragging) {
+          isDragging = false;
+          cropImage.style.cursor = 'move';
+        }
+      });
+      
+      // 鼠标滚轮缩放
+      cropImage.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        currentScale = Math.max(minScale, Math.min(maxScale, currentScale + delta));
+        updateTransform();
+      });
+      
+      // 触摸事件支持（拖拽）
+      cropImage.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          isDragging = true;
+          const touch = e.touches[0];
+          startX = touch.clientX - currentX;
+          startY = touch.clientY - currentY;
+        }
+      });
+      
+      document.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1 && isDragging) {
+          e.preventDefault();
+          const touch = e.touches[0];
+          currentX = touch.clientX - startX;
+          currentY = touch.clientY - startY;
+          updateTransform();
+        }
+      });
+      
+      document.addEventListener('touchend', () => {
+        if (isDragging) {
+          isDragging = false;
+        }
+      });
+      
+      // 双指捏合缩放
+      let lastDistance = 0;
+      cropImage.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+          const touch1 = e.touches[0];
+          const touch2 = e.touches[1];
+          lastDistance = Math.sqrt(
+            Math.pow(touch2.clientX - touch1.clientX, 2) + 
+            Math.pow(touch2.clientY - touch1.clientY, 2)
+          );
+        }
+      });
+      
+      cropImage.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          const touch1 = e.touches[0];
+          const touch2 = e.touches[1];
+          const distance = Math.sqrt(
+            Math.pow(touch2.clientX - touch1.clientX, 2) + 
+            Math.pow(touch2.clientY - touch1.clientY, 2)
+          );
+          
+          if (lastDistance > 0) {
+            const scaleChange = distance / lastDistance;
+            currentScale = Math.max(minScale, Math.min(maxScale, currentScale * scaleChange));
+            updateTransform();
+          }
+          lastDistance = distance;
+        }
+      });
       
       // 立即显示，不使用动画
       setTimeout(() => {
@@ -2001,7 +2068,53 @@
       });
       
       confirmBtn.addEventListener("click", () => {
-        uploadAvatar(imageData, userId, username);
+        // 获取裁剪区域和图片容器的位置
+        const cropRect = cropOverlay.getBoundingClientRect();
+        const containerRect = cropImage.parentElement.getBoundingClientRect();
+        
+        // 计算裁剪区域相对于容器的位置
+        const cropCenterX = cropRect.left + cropRect.width / 2 - containerRect.left;
+        const cropCenterY = cropRect.top + cropRect.height / 2 - containerRect.top;
+        const cropRadius = cropRect.width / 2;
+        
+        // 计算相对于图片实际尺寸的裁剪参数
+        const imageNaturalWidth = cropImage.naturalWidth;
+        const imageNaturalHeight = cropImage.naturalHeight;
+        
+        // 计算图片在容器中的实际显示尺寸（考虑缩放）
+        const containerWidth = containerRect.width;
+        const containerHeight = containerRect.height;
+        
+        // 计算图片的显示尺寸（保持宽高比）
+        let displayWidth, displayHeight;
+        if (imageNaturalWidth / imageNaturalHeight > containerWidth / containerHeight) {
+          // 图片更宽，以容器宽度为准
+          displayWidth = containerWidth;
+          displayHeight = containerWidth * imageNaturalHeight / imageNaturalWidth;
+        } else {
+          // 图片更高，以容器高度为准
+          displayHeight = containerHeight;
+          displayWidth = containerHeight * imageNaturalWidth / imageNaturalHeight;
+        }
+        
+        // 计算图片在容器中的偏移（居中显示）
+        const imageOffsetX = (containerWidth - displayWidth) / 2;
+        const imageOffsetY = (containerHeight - displayHeight) / 2;
+        
+        // 计算裁剪区域相对于图片的位置（考虑缩放和偏移）
+        const relativeX = (cropCenterX - imageOffsetX) / displayWidth;
+        const relativeY = (cropCenterY - imageOffsetY) / displayHeight;
+        const relativeSize = cropRadius / (displayWidth / 2);
+        
+        // 确保裁剪参数在有效范围内
+        const cropX = Math.max(0, Math.min(1, relativeX));
+        const cropY = Math.max(0, Math.min(1, relativeY));
+        const cropSize = Math.max(0.1, Math.min(1, relativeSize));
+        
+        console.log("[me] 裁剪参数:", { cropX, cropY, cropSize, currentScale });
+        
+        // 使用新的裁剪逻辑
+        cropAndUploadAvatar(imageData, cropX, cropY, cropSize, userId, username);
         close();
       }, { once: true });
       
@@ -2018,6 +2131,73 @@
         document.removeEventListener("keydown", escHandler);
         if (mask.parentNode) mask.remove();
       });
+    }
+    
+    // 裁剪并上传头像
+    async function cropAndUploadAvatar(imageData, cropX, cropY, cropSize, userId, username) {
+      try {
+        console.log("[me] 开始裁剪头像，参数:", { cropX, cropY, cropSize });
+        
+        // 创建图片对象
+        const img = new Image();
+        img.onload = async function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // 设置画布尺寸
+          const targetSize = 200;
+          canvas.width = targetSize;
+          canvas.height = targetSize;
+          
+          // 计算裁剪区域（圆形裁剪）
+          const sourceSize = cropSize * Math.min(img.width, img.height);
+          const sourceX = (cropX * img.width) - sourceSize / 2;
+          const sourceY = (cropY * img.height) - sourceSize / 2;
+          
+          // 确保裁剪区域在图片范围内
+          const clampedSourceX = Math.max(0, Math.min(img.width - sourceSize, sourceX));
+          const clampedSourceY = Math.max(0, Math.min(img.height - sourceSize, sourceY));
+          const clampedSourceSize = Math.min(sourceSize, img.width - clampedSourceX, img.height - clampedSourceY);
+          
+          // 绘制裁剪后的图片
+          ctx.drawImage(
+            img,
+            clampedSourceX, clampedSourceY, clampedSourceSize, clampedSourceSize,
+            0, 0, targetSize, targetSize
+          );
+          
+          // 应用圆形蒙版
+          const maskCanvas = document.createElement('canvas');
+          const maskCtx = maskCanvas.getContext('2d');
+          maskCanvas.width = targetSize;
+          maskCanvas.height = targetSize;
+          
+          maskCtx.beginPath();
+          maskCtx.arc(targetSize/2, targetSize/2, targetSize/2, 0, Math.PI * 2);
+          maskCtx.fill();
+          
+          ctx.globalCompositeOperation = 'destination-in';
+          ctx.drawImage(maskCanvas, 0, 0);
+          
+          // 转换为base64
+          const croppedData = canvas.toDataURL('image/png', 0.9);
+          console.log("[me] 裁剪完成，数据大小:", croppedData.length);
+          
+          // 上传裁剪后的图片
+          await uploadAvatar(croppedData, userId, username);
+        };
+        
+        img.onerror = function() {
+          console.error("[me] 图片加载失败");
+          showErrorModal("图片处理失败");
+        };
+        
+        img.src = imageData;
+        
+      } catch (error) {
+        console.error("[me] 裁剪头像失败:", error);
+        showErrorModal("头像裁剪失败，请稍后再试");
+      }
     }
     
     // 上传头像到服务器

@@ -149,6 +149,18 @@ def upload_avatar():
                 logger.info("/upload_avatar adding avatar_url column to users table")
                 cursor.execute("ALTER TABLE users ADD COLUMN avatar_url VARCHAR(500) NULL")
             
+            # 获取用户当前的头像URL（如果存在）
+            old_avatar_url = None
+            if user_id:
+                cursor.execute("SELECT avatar_url FROM users WHERE user_id=%s", (user_id,))
+            else:
+                cursor.execute("SELECT avatar_url FROM users WHERE username=%s", (username,))
+            
+            user_data = cursor.fetchone()
+            if user_data and user_data[0]:
+                old_avatar_url = user_data[0]
+                logger.info("/upload_avatar found old avatar: %s", old_avatar_url)
+            
             # 更新用户的头像URL
             if user_id:
                 cursor.execute("UPDATE users SET avatar_url=%s WHERE user_id=%s", (avatar_url, user_id))
@@ -157,6 +169,21 @@ def upload_avatar():
             
             conn.commit()
             logger.info("/upload_avatar success user_id=%s username=%s avatar_url=%s", user_id, username, avatar_url)
+            
+            # 删除旧的头像文件（如果存在）
+            if old_avatar_url:
+                try:
+                    # 从URL中提取文件名
+                    old_filename = old_avatar_url.split('/')[-1]
+                    old_filepath = os.path.join(AVATAR_UPLOAD_FOLDER, old_filename)
+                    
+                    if os.path.exists(old_filepath):
+                        os.remove(old_filepath)
+                        logger.info("/upload_avatar deleted old avatar file: %s", old_filename)
+                    else:
+                        logger.warning("/upload_avatar old avatar file not found: %s", old_filepath)
+                except Exception as e:
+                    logger.warning("/upload_avatar failed to delete old avatar: %s", str(e))
             
         except mysql_errors.Error as e:
             conn.rollback()
@@ -241,4 +268,65 @@ def get_avatar(user_id):
         return jsonify({
             'success': False,
             'message': f'获取头像失败: {str(e)}'
+        }), 500
+
+@avatar_blueprint.route('/cleanup_avatars', methods=['POST'])
+def cleanup_avatars():
+    """清理孤立的头像文件（管理员功能）"""
+    try:
+        # 获取数据库中所有有效的头像URL
+        conn = _get_conn()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT avatar_url FROM users WHERE avatar_url IS NOT NULL AND avatar_url != ''")
+            valid_avatars = set()
+            for row in cursor.fetchall():
+                if row[0]:
+                    filename = row[0].split('/')[-1]
+                    valid_avatars.add(filename)
+            
+            # 获取文件系统中的所有头像文件
+            if os.path.exists(AVATAR_UPLOAD_FOLDER):
+                all_files = os.listdir(AVATAR_UPLOAD_FOLDER)
+                orphaned_files = []
+                
+                for filename in all_files:
+                    if filename.startswith('avatar_') and filename not in valid_avatars:
+                        orphaned_files.append(filename)
+                
+                # 删除孤立文件
+                deleted_count = 0
+                for filename in orphaned_files:
+                    try:
+                        filepath = os.path.join(AVATAR_UPLOAD_FOLDER, filename)
+                        os.remove(filepath)
+                        deleted_count += 1
+                        logger.info("Cleaned up orphaned avatar: %s", filename)
+                    except Exception as e:
+                        logger.warning("Failed to delete orphaned avatar %s: %s", filename, str(e))
+                
+                return jsonify({
+                    'success': True,
+                    'message': f'清理完成，删除了 {deleted_count} 个孤立文件',
+                    'data': {
+                        'deleted_count': deleted_count,
+                        'orphaned_files': orphaned_files
+                    }
+                }), 200
+            else:
+                return jsonify({
+                    'success': True,
+                    'message': '头像目录不存在',
+                    'data': {'deleted_count': 0}
+                }), 200
+                
+        finally:
+            cursor.close()
+            conn.close()
+            
+    except Exception as e:
+        logger.exception("/cleanup_avatars error: %s", e)
+        return jsonify({
+            'success': False,
+            'message': '清理头像文件失败'
         }), 500
