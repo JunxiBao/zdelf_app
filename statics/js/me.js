@@ -1881,9 +1881,9 @@
       dialog.innerHTML = `
         <div style="padding: 20px; text-align: center; background: ${contentBackground}; min-height: 400px;">
           <h3 style="margin: 0 0 16px 0; color: ${titleColor}; font-size: 18px; font-weight: 600;">头像裁剪</h3>
-          <div style="position: relative; width: 300px; height: 300px; margin: 0 auto 16px; border: 2px solid ${borderColor}; border-radius: 8px; overflow: hidden; background: #f0f0f0;">
-            <img id="cropImage" src="${imageData}" style="width: 100%; height: 100%; object-fit: contain; cursor: move;" alt="裁剪图片">
-            <div id="cropOverlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; border: 3px solid ${borderColor}; border-radius: 50%; background: transparent; cursor: move; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);"></div>
+          <div id="cropContainer" style="position: relative; width: 300px; height: 300px; margin: 0 auto 16px; border: 2px solid ${borderColor}; border-radius: 8px; overflow: hidden; background: #f0f0f0; touch-action: none;">
+            <img id="cropImage" src="${imageData}" style="width: 100%; height: 100%; object-fit: contain; cursor: move; user-select: none; pointer-events: none;" alt="裁剪图片">
+            <div id="cropOverlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; border: 3px solid ${borderColor}; border-radius: 50%; background: transparent; cursor: move; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); pointer-events: none;"></div>
           </div>
           <p style="margin: 0 0 20px 0; color: ${textColor}; font-size: 14px;">拖拽调整位置，滚轮/捏合缩放，圆形区域为最终头像</p>
           <div style="display: flex; gap: 12px; justify-content: center;">
@@ -1899,6 +1899,7 @@
       console.log("[me] 模态框已添加到DOM");
       
       // 添加拖拽和缩放功能
+      const cropContainer = dialog.querySelector("#cropContainer");
       const cropImage = dialog.querySelector("#cropImage");
       const cropOverlay = dialog.querySelector("#cropOverlay");
       
@@ -1910,18 +1911,19 @@
       let currentScale = 1;
       let minScale = 0.5;
       let maxScale = 3;
+      let lastDistance = 0;
       
       // 更新图片变换
       function updateTransform() {
         cropImage.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
       }
       
-      // 鼠标拖拽事件
-      cropImage.addEventListener('mousedown', (e) => {
+      // 鼠标拖拽事件（在容器上）
+      cropContainer.addEventListener('mousedown', (e) => {
         isDragging = true;
         startX = e.clientX - currentX;
         startY = e.clientY - currentY;
-        cropImage.style.cursor = 'grabbing';
+        cropContainer.style.cursor = 'grabbing';
       });
       
       document.addEventListener('mousemove', (e) => {
@@ -1935,48 +1937,28 @@
       document.addEventListener('mouseup', () => {
         if (isDragging) {
           isDragging = false;
-          cropImage.style.cursor = 'move';
+          cropContainer.style.cursor = 'move';
         }
       });
       
-      // 鼠标滚轮缩放
-      cropImage.addEventListener('wheel', (e) => {
+      // 鼠标滚轮缩放（在容器上）
+      cropContainer.addEventListener('wheel', (e) => {
         e.preventDefault();
         const delta = e.deltaY > 0 ? -0.1 : 0.1;
         currentScale = Math.max(minScale, Math.min(maxScale, currentScale + delta));
         updateTransform();
       });
       
-      // 触摸事件支持（拖拽）
-      cropImage.addEventListener('touchstart', (e) => {
+      // 触摸事件支持（在容器上）
+      cropContainer.addEventListener('touchstart', (e) => {
+        e.preventDefault();
         if (e.touches.length === 1) {
           isDragging = true;
           const touch = e.touches[0];
           startX = touch.clientX - currentX;
           startY = touch.clientY - currentY;
-        }
-      });
-      
-      document.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 1 && isDragging) {
-          e.preventDefault();
-          const touch = e.touches[0];
-          currentX = touch.clientX - startX;
-          currentY = touch.clientY - startY;
-          updateTransform();
-        }
-      });
-      
-      document.addEventListener('touchend', () => {
-        if (isDragging) {
+        } else if (e.touches.length === 2) {
           isDragging = false;
-        }
-      });
-      
-      // 双指捏合缩放
-      let lastDistance = 0;
-      cropImage.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
           const touch1 = e.touches[0];
           const touch2 = e.touches[1];
           lastDistance = Math.sqrt(
@@ -1986,9 +1968,15 @@
         }
       });
       
-      cropImage.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 2) {
-          e.preventDefault();
+      cropContainer.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (e.touches.length === 1 && isDragging) {
+          const touch = e.touches[0];
+          currentX = touch.clientX - startX;
+          currentY = touch.clientY - startY;
+          updateTransform();
+        } else if (e.touches.length === 2) {
+          isDragging = false;
           const touch1 = e.touches[0];
           const touch2 = e.touches[1];
           const distance = Math.sqrt(
@@ -2002,6 +1990,12 @@
             updateTransform();
           }
           lastDistance = distance;
+        }
+      });
+      
+      cropContainer.addEventListener('touchend', (e) => {
+        if (e.touches.length === 0) {
+          isDragging = false;
         }
       });
       
@@ -2068,53 +2062,77 @@
       });
       
       confirmBtn.addEventListener("click", () => {
-        // 获取裁剪区域和图片容器的位置
+        // 获取裁剪区域和容器的位置
         const cropRect = cropOverlay.getBoundingClientRect();
-        const containerRect = cropImage.parentElement.getBoundingClientRect();
+        const containerRect = cropContainer.getBoundingClientRect();
         
-        // 计算裁剪区域相对于容器的位置
+        // 计算裁剪区域相对于容器的中心位置
         const cropCenterX = cropRect.left + cropRect.width / 2 - containerRect.left;
         const cropCenterY = cropRect.top + cropRect.height / 2 - containerRect.top;
         const cropRadius = cropRect.width / 2;
         
-        // 计算相对于图片实际尺寸的裁剪参数
+        // 获取图片的原始尺寸
         const imageNaturalWidth = cropImage.naturalWidth;
         const imageNaturalHeight = cropImage.naturalHeight;
         
-        // 计算图片在容器中的实际显示尺寸（考虑缩放）
+        // 计算图片在容器中的实际显示尺寸（object-fit: contain）
         const containerWidth = containerRect.width;
         const containerHeight = containerRect.height;
         
-        // 计算图片的显示尺寸（保持宽高比）
-        let displayWidth, displayHeight;
+        let displayWidth, displayHeight, imageOffsetX, imageOffsetY;
+        
+        // 计算图片的显示尺寸（保持宽高比，居中显示）
         if (imageNaturalWidth / imageNaturalHeight > containerWidth / containerHeight) {
           // 图片更宽，以容器宽度为准
           displayWidth = containerWidth;
           displayHeight = containerWidth * imageNaturalHeight / imageNaturalWidth;
+          imageOffsetX = 0;
+          imageOffsetY = (containerHeight - displayHeight) / 2;
         } else {
           // 图片更高，以容器高度为准
           displayHeight = containerHeight;
           displayWidth = containerHeight * imageNaturalWidth / imageNaturalHeight;
+          imageOffsetX = (containerWidth - displayWidth) / 2;
+          imageOffsetY = 0;
         }
         
-        // 计算图片在容器中的偏移（居中显示）
-        const imageOffsetX = (containerWidth - displayWidth) / 2;
-        const imageOffsetY = (containerHeight - displayHeight) / 2;
+        // 关键修复：考虑用户的拖拽和缩放操作
+        // 1. 计算图片在容器中的实际位置（考虑拖拽偏移）
+        const imageCenterX = containerWidth / 2 + currentX;
+        const imageCenterY = containerHeight / 2 + currentY;
         
-        // 计算裁剪区域相对于图片的位置（考虑缩放和偏移）
-        const relativeX = (cropCenterX - imageOffsetX) / displayWidth;
-        const relativeY = (cropCenterY - imageOffsetY) / displayHeight;
-        const relativeSize = cropRadius / (displayWidth / 2);
+        // 2. 计算裁剪区域相对于图片中心的位置
+        const relativeToImageX = (cropCenterX - imageCenterX) / (displayWidth * currentScale);
+        const relativeToImageY = (cropCenterY - imageCenterY) / (displayHeight * currentScale);
+        
+        // 3. 转换为相对于原始图片的坐标（0-1）
+        const cropX = 0.5 + relativeToImageX;
+        const cropY = 0.5 + relativeToImageY;
+        
+        // 4. 计算裁剪大小（考虑缩放）
+        const cropSize = cropRadius / (displayWidth * currentScale / 2);
         
         // 确保裁剪参数在有效范围内
-        const cropX = Math.max(0, Math.min(1, relativeX));
-        const cropY = Math.max(0, Math.min(1, relativeY));
-        const cropSize = Math.max(0.1, Math.min(1, relativeSize));
+        const finalCropX = Math.max(0, Math.min(1, cropX));
+        const finalCropY = Math.max(0, Math.min(1, cropY));
+        const finalCropSize = Math.max(0.1, Math.min(1, cropSize));
         
-        console.log("[me] 裁剪参数:", { cropX, cropY, cropSize, currentScale });
+        console.log("[me] 修复后的裁剪参数计算:", { 
+          // 原始数据
+          cropCenterX, cropCenterY, cropRadius,
+          imageOffsetX, imageOffsetY, displayWidth, displayHeight,
+          // 用户操作
+          currentScale, currentX, currentY,
+          // 计算过程
+          imageCenterX, imageCenterY,
+          relativeToImageX, relativeToImageY,
+          // 最终结果
+          cropX, cropY, cropSize,
+          finalCropX, finalCropY, finalCropSize
+        });
         
         // 使用新的裁剪逻辑
-        cropAndUploadAvatar(imageData, cropX, cropY, cropSize, userId, username);
+        cropAndUploadAvatar(imageData, finalCropX, finalCropY, finalCropSize, userId, username);
         close();
       }, { once: true });
       
@@ -2149,15 +2167,32 @@
           canvas.width = targetSize;
           canvas.height = targetSize;
           
-          // 计算裁剪区域（圆形裁剪）
-          const sourceSize = cropSize * Math.min(img.width, img.height);
-          const sourceX = (cropX * img.width) - sourceSize / 2;
-          const sourceY = (cropY * img.height) - sourceSize / 2;
+          // 重新计算裁剪区域，确保与预览一致
+          // 获取原始图片尺寸
+          const imgWidth = img.width;
+          const imgHeight = img.height;
+          
+          // 计算裁剪区域的实际像素坐标
+          // cropX, cropY 是相对于图片的坐标（0-1），表示裁剪中心点
+          // cropSize 是相对于图片尺寸的比例（0-1），表示裁剪区域大小
+          
+          const sourceSize = cropSize * Math.min(imgWidth, imgHeight);
+          const sourceX = (cropX * imgWidth) - sourceSize / 2;
+          const sourceY = (cropY * imgHeight) - sourceSize / 2;
+          
+          console.log("[me] 原始裁剪参数:", { cropX, cropY, cropSize });
+          console.log("[me] 图片尺寸:", { imgWidth, imgHeight });
+          console.log("[me] 计算裁剪区域:", { sourceX, sourceY, sourceSize });
           
           // 确保裁剪区域在图片范围内
-          const clampedSourceX = Math.max(0, Math.min(img.width - sourceSize, sourceX));
-          const clampedSourceY = Math.max(0, Math.min(img.height - sourceSize, sourceY));
-          const clampedSourceSize = Math.min(sourceSize, img.width - clampedSourceX, img.height - clampedSourceY);
+          const clampedSourceX = Math.max(0, Math.min(imgWidth - sourceSize, sourceX));
+          const clampedSourceY = Math.max(0, Math.min(imgHeight - sourceSize, sourceY));
+          const clampedSourceSize = Math.min(sourceSize, imgWidth - clampedSourceX, imgHeight - clampedSourceY);
+          
+          console.log("[me] 边界检查后:", { clampedSourceX, clampedSourceY, clampedSourceSize });
+          
+          // 先清空画布
+          ctx.clearRect(0, 0, targetSize, targetSize);
           
           // 绘制裁剪后的图片
           ctx.drawImage(
@@ -2172,10 +2207,12 @@
           maskCanvas.width = targetSize;
           maskCanvas.height = targetSize;
           
+          // 创建圆形蒙版
           maskCtx.beginPath();
           maskCtx.arc(targetSize/2, targetSize/2, targetSize/2, 0, Math.PI * 2);
           maskCtx.fill();
           
+          // 应用蒙版
           ctx.globalCompositeOperation = 'destination-in';
           ctx.drawImage(maskCanvas, 0, 0);
           
