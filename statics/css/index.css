@@ -59,14 +59,32 @@ html {
   background: inherit;
 }
 
+/* 安全区处理 - 确保状态栏区域与应用背景色一致 */
+html {
+  background: var(--color-surface);
+  /* 为状态栏区域设置背景色 */
+  padding-top: env(safe-area-inset-top);
+  background-color: var(--color-surface);
+}
+
+body {
+  background: var(--color-surface);
+  /* 确保状态栏区域有正确的背景色 */
+  background-color: var(--color-surface);
+}
+
 /* --- iOS shell layout adjustments --- */
 html,
 body {
   height: 100%;
   overflow: hidden;
+  /* 确保状态栏区域背景色一致 */
+  background: var(--color-surface);
 }
 body {
   overscroll-behavior: none;
+  /* 为状态栏区域设置背景色 */
+  background-color: var(--color-surface);
 }
 .content {
   position: fixed;
@@ -77,6 +95,8 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* smooth iOS momentum */
   contain: content;
+  /* 确保内容区域背景色一致 */
+  background: var(--color-surface);
 }
 /* Fixed nav stays pinned and respects safe area */
 .nav-container {
@@ -507,6 +527,8 @@ body {
   #content {
     background: #18181c !important;
     color: #e5e5e5;
+    /* 确保暗色模式下状态栏区域背景色一致 */
+    background-color: #18181c !important;
   }
 
   .nav-container {

@@ -920,8 +920,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">🔍</div>
             <h3>未找到匹配的健康指标</h3>
-            <p>在 ${formatDateDisplay(selectedDate)} 中没有找到包含 "${searchKeyword}" 的健康指标记录</p>
-            <p>尝试调整搜索条件或清除筛选</p>
           </div>
         `;
       } else if (selectedDate) {
@@ -929,8 +927,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">📊</div>
             <h3>${formatDateDisplay(selectedDate)}无健康记录</h3>
-            <p>该日期暂无健康指标数据</p>
-            <p>选择其他日期或开始记录健康数据</p>
           </div>
         `;
       } else if (searchKeyword) {
@@ -938,8 +934,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">🔍</div>
             <h3>未找到匹配的健康指标</h3>
-            <p>没有找到包含 "${searchKeyword}" 的健康指标记录</p>
-            <p>尝试其他关键字或清除搜索</p>
           </div>
         `;
       } else {
@@ -947,7 +941,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">📊</div>
             <h3>暂无健康指标记录</h3>
-            <p>开始记录您的健康数据吧</p>
           </div>
         `;
       }
@@ -957,8 +950,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">🔍</div>
             <h3>未找到匹配的病例记录</h3>
-            <p>在 ${formatDateDisplay(selectedDate)} 中没有找到包含 "${searchKeyword}" 的病例记录</p>
-            <p>尝试调整搜索条件或清除筛选</p>
           </div>
         `;
       } else if (selectedDate) {
@@ -966,8 +957,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">📋</div>
             <h3>${formatDateDisplay(selectedDate)}无病例记录</h3>
-            <p>该日期暂无个人病例数据</p>
-            <p>选择其他日期或添加病例记录</p>
           </div>
         `;
       } else if (searchKeyword) {
@@ -975,8 +964,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">🔍</div>
             <h3>未找到匹配的病例记录</h3>
-            <p>没有找到包含 "${searchKeyword}" 的病例记录</p>
-            <p>尝试其他关键字或清除搜索</p>
           </div>
         `;
       } else {
@@ -984,7 +971,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">📋</div>
             <h3>暂无病例记录</h3>
-            <p>开始记录您的病例数据吧</p>
           </div>
         `;
       }
@@ -994,8 +980,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">🔍</div>
             <h3>未找到匹配的饮食记录</h3>
-            <p>在 ${formatDateDisplay(selectedDate)} 中没有找到包含 "${searchKeyword}" 的饮食记录</p>
-            <p>尝试调整搜索条件或清除筛选</p>
           </div>
         `;
       } else if (selectedDate) {
@@ -1003,8 +987,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">🍽️</div>
             <h3>${formatDateDisplay(selectedDate)}无饮食记录</h3>
-            <p>该日期暂无饮食数据</p>
-            <p>选择其他日期或添加饮食记录</p>
           </div>
         `;
       } else if (searchKeyword) {
@@ -1012,8 +994,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">🔍</div>
             <h3>未找到匹配的饮食记录</h3>
-            <p>没有找到包含 "${searchKeyword}" 的饮食记录</p>
-            <p>尝试其他关键字或清除搜索</p>
           </div>
         `;
       } else {
@@ -1021,7 +1001,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">🍽️</div>
             <h3>暂无饮食记录</h3>
-            <p>开始记录您的饮食数据吧</p>
           </div>
         `;
       }
@@ -1032,8 +1011,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">🔍</div>
             <h3>未找到匹配的记录</h3>
-            <p>在 ${formatDateDisplay(selectedDate)} 中没有找到包含 "${searchKeyword}" 的记录</p>
-            <p>尝试调整搜索条件或清除筛选</p>
           </div>
         `;
       } else if (selectedDate) {
@@ -1041,8 +1018,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">📅</div>
             <h3>${formatDateDisplay(selectedDate)}无数据记录</h3>
-            <p>该日期暂无任何记录</p>
-            <p>选择其他日期或开始记录数据</p>
           </div>
         `;
       } else if (searchKeyword) {
@@ -1050,8 +1025,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">🔍</div>
             <h3>未找到匹配的记录</h3>
-            <p>没有找到包含 "${searchKeyword}" 的记录</p>
-            <p>尝试其他关键字或清除搜索</p>
           </div>
         `;
       } else {
@@ -1059,7 +1032,6 @@ async function renderTimelineItems(items, container) {
           <div class="no-data-message">
             <div class="no-data-icon">📝</div>
             <h3>暂无数据记录</h3>
-            <p>开始记录您的健康数据吧</p>
           </div>
         `;
       }
@@ -1123,8 +1095,6 @@ async function renderDietTimeline(items, container) {
         <div class="no-data-message">
           <div class="no-data-icon">🔍</div>
           <h3>未找到匹配的饮食记录</h3>
-          <p>在 ${formatDateDisplay(selectedDate)} 中没有找到包含 "${searchKeyword}" 的饮食记录</p>
-          <p>尝试调整搜索条件或清除筛选</p>
         </div>
       `;
     } else if (selectedDate) {
@@ -1132,8 +1102,6 @@ async function renderDietTimeline(items, container) {
         <div class="no-data-message">
           <div class="no-data-icon">🍽️</div>
           <h3>${formatDateDisplay(selectedDate)}无饮食记录</h3>
-          <p>该日期暂无饮食数据</p>
-          <p>选择其他日期或添加饮食记录</p>
         </div>
       `;
     } else if (searchKeyword) {
@@ -1141,8 +1109,6 @@ async function renderDietTimeline(items, container) {
         <div class="no-data-message">
           <div class="no-data-icon">🔍</div>
           <h3>未找到匹配的饮食记录</h3>
-          <p>没有找到包含 "${searchKeyword}" 的饮食记录</p>
-          <p>尝试其他关键字或清除搜索</p>
         </div>
       `;
     } else {
@@ -1150,7 +1116,6 @@ async function renderDietTimeline(items, container) {
         <div class="no-data-message">
           <div class="no-data-icon">🍽️</div>
           <h3>暂无饮食记录</h3>
-          <p>开始记录您的饮食数据吧</p>
         </div>
       `;
     }
@@ -1215,8 +1180,6 @@ async function renderDietTimeline(items, container) {
         <div class="no-data-message">
           <div class="no-data-icon">🔍</div>
           <h3>未找到匹配的饮食记录</h3>
-          <p>在 ${formatDateDisplay(selectedDate)} 中没有找到包含 "${searchKeyword}" 的饮食记录</p>
-          <p>尝试调整搜索条件或清除筛选</p>
         </div>
       `;
     } else if (selectedDate) {
@@ -1224,8 +1187,6 @@ async function renderDietTimeline(items, container) {
         <div class="no-data-message">
           <div class="no-data-icon">🍽️</div>
           <h3>${formatDateDisplay(selectedDate)}无饮食记录</h3>
-          <p>该日期暂无饮食数据</p>
-          <p>选择其他日期或添加饮食记录</p>
         </div>
       `;
     } else if (searchKeyword) {
@@ -1233,8 +1194,6 @@ async function renderDietTimeline(items, container) {
         <div class="no-data-message">
           <div class="no-data-icon">🔍</div>
           <h3>未找到匹配的饮食记录</h3>
-          <p>没有找到包含 "${searchKeyword}" 的饮食记录</p>
-          <p>尝试其他关键字或清除搜索</p>
         </div>
       `;
     } else {
@@ -1242,7 +1201,6 @@ async function renderDietTimeline(items, container) {
         <div class="no-data-message">
           <div class="no-data-icon">🍽️</div>
           <h3>暂无饮食记录</h3>
-          <p>开始记录您的饮食数据吧</p>
         </div>
       `;
     }

@@ -7,6 +7,18 @@
     <link rel="stylesheet" href="../statics/css/calendar.css">
 </head>
 <body>
+    <!-- 加载动画覆盖层 -->
+    <div id="calendar-loading-overlay" class="calendar-loading-overlay">
+        <div class="calendar-loading-container">
+            <div class="calendar-loading-spinner">
+                <div class="calendar-spinner-ring"></div>
+                <div class="calendar-spinner-ring"></div>
+                <div class="calendar-spinner-ring"></div>
+            </div>
+            <div class="calendar-loading-text">正在加载日历数据...</div>
+        </div>
+    </div>
+
     <div class="calendar-container">
         <!-- 顶部导航 -->
         <div class="calendar-header">
@@ -16,6 +28,24 @@
                 </svg>
             </button>
             <h1 class="calendar-title">日历</h1>
+            <button id="color-settings-btn" class="color-settings-btn" title="自定义症状颜色" aria-label="打开颜色设置面板">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 调色盘主体 -->
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <!-- 调色盘中心 -->
+                    <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.3"/>
+                    <!-- 彩色圆点 - 优化为在浅色和深色模式下都清晰可见 -->
+                    <circle cx="8" cy="8" r="2" fill="#dc2626"/>
+                    <circle cx="16" cy="8" r="2" fill="#059669"/>
+                    <circle cx="8" cy="16" r="2" fill="#2563eb"/>
+                    <circle cx="16" cy="16" r="2" fill="#ca8a04"/>
+                    <!-- 调色盘手柄 -->
+                    <path d="M12 2L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M12 18L12 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M2 12L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M18 12L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
         </div>
 
         <!-- 年份月份导航 -->
@@ -67,29 +97,73 @@
             <h4 style="margin-bottom: 12px; font-size: 14px; color: #666;">症状图例</h4>
             <div class="legend-items">
                 <div class="legend-item">
-                    <div class="legend-color" style="background-color: #FFE4E1;"></div>
+                    <div class="legend-color" style="background-color: #FEE2E2;"></div>
                     <span>皮肤型紫癜</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background-color: #E6F3FF;"></div>
+                    <div class="legend-color" style="background-color: #DBEAFE;"></div>
                     <span>关节型紫癜</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background-color: #FFF8DC;"></div>
+                    <div class="legend-color" style="background-color: #FEF3C7;"></div>
                     <span>腹型紫癜</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background-color: #F0F8E8;"></div>
+                    <div class="legend-color" style="background-color: #D1FAE5;"></div>
                     <span>肾型紫癜</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background-color: #F5F0FF;"></div>
+                    <div class="legend-color" style="background-color: #E0E7FF;"></div>
                     <span>其他症状</span>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- 颜色设置弹窗 -->
+    <div id="color-settings-modal" class="color-modal" style="display: none;">
+        <div class="color-modal-content">
+            <div class="color-modal-header">
+                <h3>自定义症状颜色</h3>
+                <button id="close-color-modal" class="close-btn">&times;</button>
+            </div>
+            <div class="color-modal-body">
+                <div class="color-setting-item">
+                    <span class="symptom-name">皮肤型紫癜</span>
+                    <input type="color" id="color-skin-type" class="color-picker" data-symptom="1" value="#FEE2E2">
+                    <button class="reset-color-btn" data-symptom="1">重置</button>
+                </div>
+                <div class="color-setting-item">
+                    <span class="symptom-name">关节型紫癜</span>
+                    <input type="color" id="color-joint-type" class="color-picker" data-symptom="2" value="#DBEAFE">
+                    <button class="reset-color-btn" data-symptom="2">重置</button>
+                </div>
+                <div class="color-setting-item">
+                    <span class="symptom-name">腹型紫癜</span>
+                    <input type="color" id="color-abdominal-type" class="color-picker" data-symptom="3" value="#FEF3C7">
+                    <button class="reset-color-btn" data-symptom="3">重置</button>
+                </div>
+                <div class="color-setting-item">
+                    <span class="symptom-name">肾型紫癜</span>
+                    <input type="color" id="color-renal-type" class="color-picker" data-symptom="4" value="#D1FAE5">
+                    <button class="reset-color-btn" data-symptom="4">重置</button>
+                </div>
+                <div class="color-setting-item">
+                    <span class="symptom-name">其他症状</span>
+                    <input type="color" id="color-other" class="color-picker" data-symptom="5" value="#E0E7FF">
+                    <button class="reset-color-btn" data-symptom="5">重置</button>
+                </div>
+            </div>
+            <div class="color-modal-footer">
+                <button id="reset-all-colors" class="reset-all-btn">恢复默认</button>
+                <button id="save-colors" class="save-colors-btn">保存设置</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../statics/js/animation-utils.js"></script>
+    <script src="../statics/js/animation-performance.js"></script>
+    <script src="../statics/js/status-bar.js"></script>
     <script src="../statics/js/calendar.js"></script>
 </body>
 </html>

@@ -181,6 +181,7 @@ def delete_account():
                 "metrics_files",  # 健康指标数据
                 "diet_files",     # 饮食记录数据
                 "case_files",     # 病例记录数据
+                "symptom_files",  # 症状跟踪数据
             ]
             
             # 删除用户在各个数据表中的记录

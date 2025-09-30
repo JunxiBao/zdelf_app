@@ -1128,37 +1128,25 @@ body {
   box-shadow: 0 4px 12px rgba(98, 0, 234, 0.3);
 }
 
-/* 无数据提示 */
+/* 无数据提示 - 直接显示在背景上 */
 .no-data-message {
   text-align: center;
-  padding: 60px 20px;
+  padding: 40px 20px;
   color: #666;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-radius: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  background: transparent;
+  border: none;
+  box-shadow: none;
   margin: 20px 0;
   position: relative;
-  overflow: hidden;
 }
 
-.no-data-message::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #6200ea, #a78bfa);
-  opacity: 0.7;
-}
+/* 移除装饰性元素 */
 
 .no-data-icon {
-  font-size: 4rem;
-  margin-bottom: 20px;
-  opacity: 0.8;
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.6;
   display: block;
-  transition: all 0.3s ease;
 }
 
 /* 不同类型的图标样式 */
@@ -1175,25 +1163,18 @@ body {
 }
 
 .no-data-message h3 {
-  margin: 0 0 12px 0;
-  font-size: 1.5rem;
-  color: #333;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.no-data-message p {
   margin: 0 0 8px 0;
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: #666;
-  line-height: 1.5;
   font-weight: 500;
 }
 
-.no-data-message p:last-child {
-  margin-bottom: 0;
+.no-data-message p {
+  margin: 0;
   font-size: 0.9rem;
-  opacity: 0.8;
+  color: #999;
+  line-height: 1.4;
+  font-weight: 400;
 }
 
 /* 卡片图标 */
@@ -1805,21 +1786,17 @@ body {
   }
 
   .no-data-message {
-    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-    border-color: rgba(167, 139, 250, 0.2);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  }
-
-  .no-data-message::before {
-    background: linear-gradient(90deg, #a78bfa, #c4b5fd);
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
 
   .no-data-message h3 {
-    color: #f9fafb;
+    color: #d1d5db;
   }
 
   .no-data-message p {
-    color: #d1d5db;
+    color: #9ca3af;
   }
 
   .detail-section {

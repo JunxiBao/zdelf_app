@@ -554,11 +554,19 @@ function saveAllMetrics() {
                 });
                 const resJson = await resp.json();
                 
-                // 如果有症状数据，同时保存症状数字代码到症状表
+                // 如果有症状数据，同时保存症状数字代码到症状表（包括"无症状"）
+                console.log('🔍 检查症状数据:', { allData_symptoms: allData.symptoms });
                 if (allData.symptoms && allData.symptoms.items && allData.symptoms.items.length > 0) {
-                    console.log('正在保存症状跟踪数据...');
+                    console.log('✅ 发现症状数据，正在保存症状跟踪数据...');
+                    console.log('📊 症状详情:', allData.symptoms);
                     await saveSymptomData(allData.symptoms, selectedDate, currentHms, identity);
-                    console.log('症状跟踪数据保存完成');
+                    console.log('✅ 症状跟踪数据保存完成');
+                } else {
+                    // 即使没有症状数据，也保存"无症状"状态
+                    console.log('⚠️ 未发现症状数据，保存无症状状态');
+                    const noSymptomsData = { items: [{ type: 'none' }] };
+                    await saveSymptomData(noSymptomsData, selectedDate, currentHms, identity);
+                    console.log('✅ 无症状状态保存完成');
                 }
                 
                 if (!resp.ok || !resJson.success) {

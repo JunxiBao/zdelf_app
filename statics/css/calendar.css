@@ -10,6 +10,9 @@ body {
   color: #ffffff;
   min-height: 100vh;
   overflow-x: hidden;
+  /* 确保状态栏区域背景色一致 */
+  padding-top: env(safe-area-inset-top);
+  background-color: #1a1a1a;
 }
 
 .calendar-container {
@@ -28,6 +31,7 @@ body {
   gap: 16px;
   margin-bottom: 30px;
   padding-top: 10px;
+  justify-content: space-between;
 }
 
 .back-btn {
@@ -54,6 +58,250 @@ body {
   font-weight: 600;
   color: #ffffff;
   margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+/* 颜色设置按钮 - 深度美化版本 */
+.color-settings-btn {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 14px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(167, 139, 250, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.color-settings-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
+}
+
+.color-settings-btn:hover {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.25) 0%, rgba(139, 92, 246, 0.2) 100%);
+  border-color: rgba(167, 139, 250, 0.4);
+  transform: translateX(2px) scale(1.08);
+  box-shadow: 
+    0 8px 24px rgba(167, 139, 250, 0.4),
+    0 4px 12px rgba(139, 92, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.color-settings-btn:hover::before {
+  left: 100%;
+}
+
+.color-settings-btn:active {
+  transform: translateX(1px) scale(1.02);
+  box-shadow: 
+    0 4px 12px rgba(167, 139, 250, 0.3),
+    inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 按钮图标增强 */
+.color-settings-btn svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: all 0.3s ease;
+}
+
+.color-settings-btn:hover svg {
+  filter: drop-shadow(0 4px 8px rgba(167, 139, 250, 0.4));
+  transform: scale(1.05);
+}
+
+/* 焦点状态和可访问性增强 */
+.color-settings-btn:focus {
+  outline: none;
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(167, 139, 250, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 0 3px rgba(167, 139, 250, 0.3);
+}
+
+.color-settings-btn:focus-visible {
+  outline: 2px solid rgba(167, 139, 250, 0.6);
+  outline-offset: 2px;
+}
+
+/* 按钮加载状态 */
+.color-settings-btn.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.color-settings-btn.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: buttonSpin 1s linear infinite;
+}
+
+@keyframes buttonSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 按钮脉冲效果 */
+.color-settings-btn.pulse {
+  animation: buttonPulse 2s infinite;
+}
+
+@keyframes buttonPulse {
+  0%, 100% {
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.1),
+      0 2px 8px rgba(167, 139, 250, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 6px 20px rgba(167, 139, 250, 0.3),
+      0 4px 12px rgba(139, 92, 246, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* 移除自定义工具提示样式，使用浏览器默认的title提示 */
+
+/* =========================================================
+   日历页面加载动画 - 与软件风格保持一致
+========================================================= */
+.calendar-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.calendar-loading-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.calendar-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.calendar-loading-spinner {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.calendar-spinner-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  animation: calendarSpin 1.5s linear infinite;
+}
+
+.calendar-spinner-ring:nth-child(1) {
+  border-top-color: #a855f7;
+  animation-delay: 0s;
+}
+
+.calendar-spinner-ring:nth-child(2) {
+  border-right-color: #8b5cf6;
+  animation-delay: 0.2s;
+  width: 80%;
+  height: 80%;
+  top: 10%;
+  left: 10%;
+}
+
+.calendar-spinner-ring:nth-child(3) {
+  border-bottom-color: #c084fc;
+  animation-delay: 0.4s;
+  width: 60%;
+  height: 60%;
+  top: 20%;
+  left: 20%;
+}
+
+@keyframes calendarSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.calendar-loading-text {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  opacity: 0.9;
+  animation: calendarLoadingPulse 2s ease-in-out infinite;
+}
+
+@keyframes calendarLoadingPulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* 浅色模式下的加载动画 */
+@media (prefers-color-scheme: light) {
+  .calendar-loading-overlay {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  }
+  
+  .calendar-loading-text {
+    color: #1a202c;
+  }
+  
+  .calendar-spinner-ring:nth-child(1) {
+    border-top-color: #3b82f6;
+  }
+  
+  .calendar-spinner-ring:nth-child(2) {
+    border-right-color: #2563eb;
+  }
+  
+  .calendar-spinner-ring:nth-child(3) {
+    border-bottom-color: #1d4ed8;
+  }
 }
 
 /* 月份年份导航 */
@@ -232,8 +480,28 @@ body {
   font-weight: 500;
 }
 
-/* 动画效果 */
-@keyframes slideIn {
+/* =========================================================
+   日历页面美化动画 - 与软件风格保持一致
+========================================================= */
+
+/* 页面进入动画 */
+@keyframes calendarSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.calendar-container {
+  animation: calendarSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 日历网格进入动画 */
+@keyframes calendarGridSlideIn {
   from {
     opacity: 0;
     transform: translateY(20px);
@@ -244,8 +512,249 @@ body {
   }
 }
 
-.calendar-container {
-  animation: slideIn 0.4s ease-out;
+.calendar-grid {
+  animation: calendarGridSlideIn 0.8s ease-out 0.2s both;
+}
+
+/* 日期元素进入动画 */
+@keyframes calendarDayFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.calendar-day {
+  animation: calendarDayFadeIn 0.3s ease-out;
+  animation-fill-mode: both;
+}
+
+/* 日期元素错开进入动画 */
+.calendar-day:nth-child(1) { animation-delay: 0.1s; }
+.calendar-day:nth-child(2) { animation-delay: 0.15s; }
+.calendar-day:nth-child(3) { animation-delay: 0.2s; }
+.calendar-day:nth-child(4) { animation-delay: 0.25s; }
+.calendar-day:nth-child(5) { animation-delay: 0.3s; }
+.calendar-day:nth-child(6) { animation-delay: 0.35s; }
+.calendar-day:nth-child(7) { animation-delay: 0.4s; }
+.calendar-day:nth-child(8) { animation-delay: 0.45s; }
+.calendar-day:nth-child(9) { animation-delay: 0.5s; }
+.calendar-day:nth-child(10) { animation-delay: 0.55s; }
+.calendar-day:nth-child(11) { animation-delay: 0.6s; }
+.calendar-day:nth-child(12) { animation-delay: 0.65s; }
+.calendar-day:nth-child(13) { animation-delay: 0.7s; }
+.calendar-day:nth-child(14) { animation-delay: 0.75s; }
+.calendar-day:nth-child(15) { animation-delay: 0.8s; }
+.calendar-day:nth-child(16) { animation-delay: 0.85s; }
+.calendar-day:nth-child(17) { animation-delay: 0.9s; }
+.calendar-day:nth-child(18) { animation-delay: 0.95s; }
+.calendar-day:nth-child(19) { animation-delay: 1s; }
+.calendar-day:nth-child(20) { animation-delay: 1.05s; }
+.calendar-day:nth-child(21) { animation-delay: 1.1s; }
+.calendar-day:nth-child(22) { animation-delay: 1.15s; }
+.calendar-day:nth-child(23) { animation-delay: 1.2s; }
+.calendar-day:nth-child(24) { animation-delay: 1.25s; }
+.calendar-day:nth-child(25) { animation-delay: 1.3s; }
+.calendar-day:nth-child(26) { animation-delay: 1.35s; }
+.calendar-day:nth-child(27) { animation-delay: 1.4s; }
+.calendar-day:nth-child(28) { animation-delay: 1.45s; }
+.calendar-day:nth-child(29) { animation-delay: 1.5s; }
+.calendar-day:nth-child(30) { animation-delay: 1.55s; }
+.calendar-day:nth-child(31) { animation-delay: 1.6s; }
+.calendar-day:nth-child(32) { animation-delay: 1.65s; }
+.calendar-day:nth-child(33) { animation-delay: 1.7s; }
+.calendar-day:nth-child(34) { animation-delay: 1.75s; }
+.calendar-day:nth-child(35) { animation-delay: 1.8s; }
+.calendar-day:nth-child(36) { animation-delay: 1.85s; }
+.calendar-day:nth-child(37) { animation-delay: 1.9s; }
+.calendar-day:nth-child(38) { animation-delay: 1.95s; }
+.calendar-day:nth-child(39) { animation-delay: 2s; }
+.calendar-day:nth-child(40) { animation-delay: 2.05s; }
+.calendar-day:nth-child(41) { animation-delay: 2.1s; }
+.calendar-day:nth-child(42) { animation-delay: 2.15s; }
+
+/* 月份切换动画 */
+@keyframes calendarMonthSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+}
+
+@keyframes calendarMonthSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.calendar-month-transition-out {
+  animation: calendarMonthSlideOut 0.3s ease-in;
+}
+
+.calendar-month-transition-in {
+  animation: calendarMonthSlideIn 0.3s ease-out;
+}
+
+/* 症状图例进入动画 */
+@keyframes calendarLegendSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.symptom-legend {
+  animation: calendarLegendSlideUp 0.8s ease-out 0.4s both;
+}
+
+/* 按钮增强动画 */
+.calendar-header .back-btn,
+.calendar-header .color-settings-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0);
+}
+
+.calendar-header .back-btn:hover,
+.calendar-header .color-settings-btn:hover {
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.calendar-header .back-btn:active,
+.calendar-header .color-settings-btn:active {
+  transform: translateY(0) translateZ(0);
+  transition-duration: 0.1s;
+}
+
+/* 导航按钮动画 */
+.nav-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0);
+}
+
+.nav-btn:hover {
+  transform: scale(1.1) translateZ(0);
+}
+
+.nav-btn:active {
+  transform: scale(0.95) translateZ(0);
+  transition-duration: 0.1s;
+}
+
+/* 日期选择动画增强 */
+.calendar-day {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0);
+}
+
+.calendar-day:hover {
+  transform: scale(1.08) translateZ(0);
+}
+
+.calendar-day:active {
+  transform: scale(0.98) translateZ(0);
+  transition-duration: 0.1s;
+}
+
+/* 选中日期特殊动画 */
+.calendar-day.selected {
+  animation: calendarSelectedPulse 0.6s ease-out;
+}
+
+@keyframes calendarSelectedPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1.1);
+  }
+}
+
+/* 症状指示器动画 */
+.symptom-indicator {
+  animation: calendarSymptomIndicator 0.5s ease-out;
+}
+
+@keyframes calendarSymptomIndicator {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 响应式动画优化 */
+@media (max-width: 768px) {
+  .calendar-container {
+    animation-duration: 0.4s;
+  }
+  
+  .calendar-grid {
+    animation-duration: 0.6s;
+  }
+  
+  .calendar-day {
+    animation-duration: 0.2s;
+  }
+  
+  /* 减少移动端动画延迟 */
+  .calendar-day:nth-child(n) {
+    animation-delay: calc(var(--child-index, 0) * 0.05s);
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-container {
+    animation-duration: 0.3s;
+  }
+  
+  .calendar-grid {
+    animation-duration: 0.4s;
+  }
+  
+  .calendar-day {
+    animation-duration: 0.15s;
+  }
+}
+
+/* 可访问性支持 */
+@media (prefers-reduced-motion: reduce) {
+  .calendar-container,
+  .calendar-grid,
+  .calendar-day,
+  .symptom-legend {
+    animation: none !important;
+  }
+  
+  .calendar-header .back-btn,
+  .calendar-header .color-settings-btn,
+  .nav-btn,
+  .calendar-day {
+    transition: none !important;
+  }
 }
 
 /* 响应式设计 */
@@ -273,6 +782,24 @@ body {
   .calendar-day {
     font-size: 0.85rem;
   }
+  
+  /* 移动端颜色设置按钮优化 */
+  .color-settings-btn {
+    padding: 12px;
+    border-radius: 14px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .color-settings-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* 移动端触摸优化 */
+  .color-settings-btn:active {
+    transform: translateX(1px) scale(0.98);
+  }
 }
 
 /* 浅色模式支持 */
@@ -280,6 +807,8 @@ body {
   body {
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     color: #1a202c;
+    /* 确保浅色模式下状态栏区域背景色一致 */
+    background-color: #f8fafc;
   }
   
   .back-btn {
@@ -296,6 +825,78 @@ body {
   .calendar-title {
     color: #1a202c;
   }
+  
+  /* 浅色模式下的颜色设置按钮 - 深度优化 */
+  .color-settings-btn {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.04) 100%);
+    border: 2px solid rgba(0, 0, 0, 0.15);
+    color: #1a202c;
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.08),
+      0 2px 8px rgba(59, 130, 246, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+  
+  .color-settings-btn:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.12) 100%);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #1e40af;
+    box-shadow: 
+      0 8px 24px rgba(59, 130, 246, 0.25),
+      0 4px 12px rgba(37, 99, 235, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+  
+  .color-settings-btn:active {
+    box-shadow: 
+      0 4px 12px rgba(59, 130, 246, 0.2),
+      inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .color-settings-btn svg {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  }
+  
+  .color-settings-btn:hover svg {
+    filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.3));
+    transform: scale(1.05);
+  }
+  
+  /* 浅色模式下的焦点状态 */
+  .color-settings-btn:focus {
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.08),
+      0 2px 8px rgba(59, 130, 246, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+  
+  .color-settings-btn:focus-visible {
+    outline: 2px solid rgba(59, 130, 246, 0.6);
+    outline-offset: 2px;
+  }
+  
+  /* 浅色模式下的脉冲效果 */
+  .color-settings-btn.pulse {
+    animation: buttonPulseLight 2s infinite;
+  }
+  
+  @keyframes buttonPulseLight {
+    0%, 100% {
+      box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.08),
+        0 2px 8px rgba(59, 130, 246, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+    50% {
+      box-shadow: 
+        0 6px 20px rgba(59, 130, 246, 0.2),
+        0 4px 12px rgba(37, 99, 235, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+  }
+  
+  /* 浅色模式下也移除自定义工具提示 */
   
   .nav-btn {
     color: #1a202c;
@@ -467,6 +1068,124 @@ body {
   flex-shrink: 0;
 }
 
+/* 浅色模式优化 */
+@media (prefers-color-scheme: light) {
+  .color-setting-item {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.02)) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .color-setting-item:hover {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.04)) !important;
+    border-color: rgba(167, 139, 250, 0.4) !important;
+  }
+  
+  .symptom-name {
+    color: #1a1a1a !important;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8) !important;
+  }
+  
+  .color-picker {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.05)) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  }
+  
+  .color-picker:hover {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.08)) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  }
+  
+  .color-picker::-webkit-color-swatch-wrapper {
+    border: 3px solid rgba(0, 0, 0, 0.3) !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+  }
+  
+  .reset-color-btn {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1)) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    color: #dc2626 !important;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15) !important;
+  }
+  
+  .reset-color-btn:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(220, 38, 38, 0.2)) !important;
+    color: #b91c1c !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25) !important;
+  }
+  
+  .color-modal-content {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .color-modal-header h3 {
+    color: #1a1a1a !important;
+  }
+  
+  .close-btn {
+    color: #64748b !important;
+  }
+  
+  .close-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+    color: #1a1a1a !important;
+  }
+  
+  /* 浅色模式下的弹窗背景和边框 */
+  .color-modal {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+  
+  .color-modal-content {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .color-modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .color-modal-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .reset-all-btn {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: #dc2626 !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  }
+  
+  .reset-all-btn:hover {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #b91c1c !important;
+  }
+  
+  .save-colors-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    color: #ffffff !important;
+  }
+  
+  .save-colors-btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+  }
+  
+  /* 浅色模式下的症状图例 */
+  .symptom-legend {
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .legend-item {
+    color: #374151;
+  }
+  
+  .legend-color {
+    border: 1px solid rgba(0, 0, 0, 0.2);
+  }
+}
+
 /* 移动端优化 */
 @media (max-width: 480px) {
   .calendar-day.has-symptoms {
@@ -497,5 +1216,280 @@ body {
   .legend-color {
     width: 14px;
     height: 14px;
+  }
+}
+
+/* 颜色设置弹窗 */
+.color-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.color-modal-content {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  border-radius: 16px;
+  padding: 0;
+  max-width: 400px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.color-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.color-modal-header h3 {
+  color: #ffffff;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.color-modal-body {
+  padding: 20px 24px;
+}
+
+.color-setting-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.color-setting-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.3), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.color-setting-item:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+  border-color: rgba(167, 139, 250, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.color-setting-item:hover::before {
+  opacity: 1;
+}
+
+.color-setting-item:last-child {
+  margin-bottom: 0;
+}
+
+.symptom-name {
+  flex: 1;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+}
+
+.color-picker {
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+  padding: 4px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.color-picker:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+}
+
+.color-picker:active {
+  transform: scale(0.95);
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Firefox 颜色选择器样式 */
+.color-picker::-moz-color-swatch {
+  border: none;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 颜色预览效果 */
+.color-picker::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.2) 70%, transparent 100%);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.color-picker:hover::after {
+  opacity: 1;
+}
+
+.reset-color-btn {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.15));
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+}
+
+.reset-color-btn:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.25));
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.reset-color-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
+}
+
+.color-modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.reset-all-btn, .save-colors-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reset-all-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.reset-all-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ffffff;
+}
+
+.save-colors-btn {
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  color: #ffffff;
+}
+
+.save-colors-btn:hover {
+  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
+}
+
+/* 移动端优化 */
+@media (max-width: 480px) {
+  .color-modal-content {
+    width: 95%;
+    margin: 10px;
+  }
+  
+  .color-modal-header, .color-modal-body, .color-modal-footer {
+    padding: 16px 20px;
+  }
+  
+  .color-setting-item {
+    padding: 10px;
+    gap: 8px;
+  }
+  
+  .color-picker {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .symptom-name {
+    font-size: 13px;
   }
 }

@@ -50,15 +50,18 @@
     // 症状数据缓存
     let monthlySymptomData = {};
     
-    // 症状类型到颜色的映射
-    const SYMPTOM_COLORS = {
+    // 默认症状类型到颜色的映射 - 优化为在浅色和深色模式下都清晰可见
+    const DEFAULT_SYMPTOM_COLORS = {
         0: null,                    // 无症状 - 不高亮
-        1: '#FFE4E1',              // 皮肤型紫癜 - 浅红色
-        2: '#E6F3FF',              // 关节型紫癜 - 浅蓝色  
-        3: '#FFF8DC',              // 腹型紫癜 - 浅黄色
-        4: '#F0F8E8',              // 肾型紫癜 - 浅绿色
-        5: '#F5F0FF'               // 其他症状 - 浅紫色
+        1: '#FEE2E2',              // 皮肤型紫癜 - 深红色背景
+        2: '#DBEAFE',              // 关节型紫癜 - 深蓝色背景  
+        3: '#FEF3C7',              // 腹型紫癜 - 深黄色背景
+        4: '#D1FAE5',              // 肾型紫癜 - 深绿色背景
+        5: '#E0E7FF'               // 其他症状 - 深紫色背景
     };
+    
+    // 当前使用的症状颜色（可自定义）
+    let SYMPTOM_COLORS = { ...DEFAULT_SYMPTOM_COLORS };
     
     // 症状类型名称
     const SYMPTOM_NAMES = {
@@ -72,12 +75,117 @@
 
     // DOM 元素
     let yearElement, monthElement, calendarGrid, selectedDateText;
-    let prevMonthBtn, nextMonthBtn, backBtn;
+    let prevMonthBtn, nextMonthBtn, backBtn, colorSettingsBtn;
+    
+    /**
+     * 加载用户自定义颜色配置
+     */
+    function loadCustomColors() {
+        try {
+            const savedColors = localStorage.getItem('calendar_symptom_colors');
+            if (savedColors) {
+                const customColors = JSON.parse(savedColors);
+                SYMPTOM_COLORS = { ...DEFAULT_SYMPTOM_COLORS, ...customColors };
+                console.log('✅ 加载用户自定义颜色:', SYMPTOM_COLORS);
+                return true;
+            }
+        } catch (e) {
+            console.warn('加载自定义颜色失败:', e);
+        }
+        return false;
+    }
+    
+    /**
+     * 保存用户自定义颜色配置
+     */
+    function saveCustomColors() {
+        try {
+            const customColors = {};
+            for (let key in SYMPTOM_COLORS) {
+                if (SYMPTOM_COLORS[key] !== DEFAULT_SYMPTOM_COLORS[key]) {
+                    customColors[key] = SYMPTOM_COLORS[key];
+                }
+            }
+            localStorage.setItem('calendar_symptom_colors', JSON.stringify(customColors));
+            console.log('✅ 保存自定义颜色配置:', customColors);
+            return true;
+        } catch (e) {
+            console.error('保存自定义颜色失败:', e);
+            return false;
+        }
+    }
+    
+    /**
+     * 重置所有颜色到默认值
+     */
+    function resetAllColors() {
+        SYMPTOM_COLORS = { ...DEFAULT_SYMPTOM_COLORS };
+        try {
+            localStorage.removeItem('calendar_symptom_colors');
+            console.log('✅ 重置所有颜色到默认值');
+            return true;
+        } catch (e) {
+            console.error('重置颜色失败:', e);
+            return false;
+        }
+    }
+    
+    /**
+     * 更新症状图例的颜色显示
+     */
+    function updateSymptomLegend() {
+        const legendItems = document.querySelectorAll('.legend-color');
+        const symptomCodes = [1, 2, 3, 4, 5]; // 对应图例中的症状顺序
+        
+        legendItems.forEach((item, index) => {
+            if (index < symptomCodes.length) {
+                const symptomCode = symptomCodes[index];
+                const color = SYMPTOM_COLORS[symptomCode];
+                if (color) {
+                    item.style.backgroundColor = color;
+                }
+            }
+        });
+    }
 
+    /**
+     * 显示加载动画
+     */
+    function showLoadingAnimation(customText = '正在加载日历数据...') {
+        const loadingOverlay = document.getElementById('calendar-loading-overlay');
+        const loadingText = document.querySelector('.calendar-loading-text');
+        
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.classList.remove('hidden');
+            
+            // 更新加载文本
+            if (loadingText) {
+                loadingText.textContent = customText;
+            }
+        }
+    }
+    
+    /**
+     * 隐藏加载动画
+     */
+    function hideLoadingAnimation() {
+        const loadingOverlay = document.getElementById('calendar-loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.classList.add('hidden');
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+            }, 500);
+        }
+    }
+    
     /**
      * 初始化日历
      */
     function initCalendar() {
+        // 显示加载动画
+        showLoadingAnimation();
+        
         // 获取DOM元素
         yearElement = document.getElementById('current-year');
         monthElement = document.getElementById('current-month');
@@ -86,6 +194,7 @@
         prevMonthBtn = document.getElementById('prev-month');
         nextMonthBtn = document.getElementById('next-month');
         backBtn = document.getElementById('back-btn');
+        colorSettingsBtn = document.getElementById('color-settings-btn');
 
         if (!yearElement || !monthElement || !calendarGrid || !selectedDateText) {
             console.error('❌ 日历页面DOM元素未找到');
@@ -114,48 +223,362 @@
             });
         }
 
+        if (colorSettingsBtn) {
+            colorSettingsBtn.addEventListener('click', () => {
+                addHapticFeedback('Light');
+                openColorSettingsModal();
+            });
+            
+            // 添加键盘导航支持
+            colorSettingsBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    addHapticFeedback('Light');
+                    openColorSettingsModal();
+                }
+            });
+            
+        }
+
+        // 加载用户自定义颜色
+        loadCustomColors();
+        
+        // 初始化颜色设置弹窗
+        initColorSettingsModal();
+        
         // 初始化显示
         updateCalendarDisplay();
         
+        // 更新症状图例颜色
+        updateSymptomLegend();
+        
         console.log('✅ 日历初始化完成');
+    }
+    
+    /**
+     * 初始化颜色设置弹窗
+     */
+    function initColorSettingsModal() {
+        const modal = document.getElementById('color-settings-modal');
+        const closeBtn = document.getElementById('close-color-modal');
+        const saveBtn = document.getElementById('save-colors');
+        const resetAllBtn = document.getElementById('reset-all-colors');
+        
+        if (!modal) return;
+        
+        // 关闭弹窗事件
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                addHapticFeedback('Light');
+                closeColorSettingsModal();
+            });
+        }
+        
+        // 点击背景关闭弹窗
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                addHapticFeedback('Light');
+                closeColorSettingsModal();
+            }
+        });
+        
+        // 保存颜色设置
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                addHapticFeedback('Medium');
+                saveColorSettings();
+            });
+        }
+        
+        // 重置所有颜色
+        if (resetAllBtn) {
+            resetAllBtn.addEventListener('click', () => {
+                addHapticFeedback('Medium');
+                resetAllColorSettings();
+            });
+        }
+        
+        // 初始化颜色选择器
+        initColorPickers();
+    }
+    
+    /**
+     * 初始化颜色选择器
+     */
+    function initColorPickers() {
+        const colorPickers = document.querySelectorAll('.color-picker');
+        const resetButtons = document.querySelectorAll('.reset-color-btn');
+        
+        // 设置初始颜色值
+        colorPickers.forEach(picker => {
+            const symptomCode = picker.dataset.symptom;
+            const currentColor = SYMPTOM_COLORS[symptomCode];
+            if (currentColor) {
+                picker.value = currentColor;
+            }
+            
+            // 颜色变化事件
+            picker.addEventListener('change', (e) => {
+                addHapticFeedback('Light');
+                const newColor = e.target.value;
+                SYMPTOM_COLORS[symptomCode] = newColor;
+                console.log(`🎨 症状${symptomCode}颜色更新为: ${newColor}`);
+            });
+        });
+        
+        // 重置单个颜色按钮
+        resetButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                addHapticFeedback('Light');
+                const symptomCode = btn.dataset.symptom;
+                const defaultColor = DEFAULT_SYMPTOM_COLORS[symptomCode];
+                
+                SYMPTOM_COLORS[symptomCode] = defaultColor;
+                
+                // 更新颜色选择器显示
+                const picker = document.querySelector(`[data-symptom="${symptomCode}"]`);
+                if (picker && defaultColor) {
+                    picker.value = defaultColor;
+                }
+                
+                console.log(`🔄 症状${symptomCode}颜色重置为默认: ${defaultColor}`);
+            });
+        });
+    }
+    
+    /**
+     * 打开颜色设置弹窗
+     */
+    function openColorSettingsModal() {
+        const modal = document.getElementById('color-settings-modal');
+        if (modal) {
+            // 更新颜色选择器的当前值
+            const colorPickers = document.querySelectorAll('.color-picker');
+            colorPickers.forEach(picker => {
+                const symptomCode = picker.dataset.symptom;
+                const currentColor = SYMPTOM_COLORS[symptomCode];
+                if (currentColor) {
+                    picker.value = currentColor;
+                }
+            });
+            
+            modal.style.display = 'flex';
+            console.log('🎨 打开颜色设置弹窗');
+        }
+    }
+    
+    /**
+     * 关闭颜色设置弹窗
+     */
+    function closeColorSettingsModal() {
+        const modal = document.getElementById('color-settings-modal');
+        if (modal) {
+            modal.style.display = 'none';
+            console.log('❌ 关闭颜色设置弹窗');
+        }
+    }
+    
+    /**
+     * 保存颜色设置
+     */
+    function saveColorSettings() {
+        if (saveCustomColors()) {
+            // 更新日历显示
+            updateCalendarDisplay();
+            // 更新症状图例
+            updateSymptomLegend();
+            // 关闭弹窗
+            closeColorSettingsModal();
+            
+            // 显示成功提示
+            showColorToast('颜色设置已保存！', 'success');
+        } else {
+            showColorToast('保存失败，请重试', 'error');
+        }
+    }
+    
+    /**
+     * 重置所有颜色设置
+     */
+    function resetAllColorSettings() {
+        if (resetAllColors()) {
+            // 更新颜色选择器显示
+            const colorPickers = document.querySelectorAll('.color-picker');
+            colorPickers.forEach(picker => {
+                const symptomCode = picker.dataset.symptom;
+                const defaultColor = DEFAULT_SYMPTOM_COLORS[symptomCode];
+                if (defaultColor) {
+                    picker.value = defaultColor;
+                }
+            });
+            
+            // 更新日历显示
+            updateCalendarDisplay();
+            // 更新症状图例
+            updateSymptomLegend();
+            
+            // 显示成功提示
+            showColorToast('已恢复默认颜色！', 'success');
+        } else {
+            showColorToast('重置失败，请重试', 'error');
+        }
+    }
+    
+    /**
+     * 显示颜色设置提示
+     */
+    function showColorToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = 'color-toast';
+        toast.textContent = message;
+        
+        // 设置样式
+        toast.style.cssText = `
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: ${type === 'success' ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            animation: colorToastSlideIn 0.3s ease;
+        `;
+        
+        // 添加动画样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes colorToastSlideIn {
+                from { opacity: 0; transform: translate(-50%, -20px); }
+                to { opacity: 1; transform: translate(-50%, 0); }
+            }
+            @keyframes colorToastSlideOut {
+                from { opacity: 1; transform: translate(-50%, 0); }
+                to { opacity: 0; transform: translate(-50%, -20px); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        document.body.appendChild(toast);
+        
+        // 3秒后移除
+        setTimeout(() => {
+            toast.style.animation = 'colorToastSlideOut 0.3s ease';
+            setTimeout(() => {
+                document.body.removeChild(toast);
+                document.head.removeChild(style);
+            }, 300);
+        }, 3000);
     }
 
     /**
      * 导航到上/下个月
      */
     function navigateMonth(direction) {
-        currentMonth += direction;
+        // 显示加载动画，使用月份切换专用文本
+        const directionText = direction > 0 ? '下个月' : '上个月';
+        showLoadingAnimation(`正在切换到${directionText}...`);
         
-        if (currentMonth > 11) {
-            currentMonth = 0;
-            currentYear++;
-        } else if (currentMonth < 0) {
-            currentMonth = 11;
-            currentYear--;
+        // 添加月份切换动画
+        if (calendarGrid) {
+            calendarGrid.classList.add('calendar-month-transition-out');
         }
         
-        updateCalendarDisplay();
+        setTimeout(() => {
+            currentMonth += direction;
+            
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            
+            updateCalendarDisplay();
+            
+            // 添加进入动画
+            if (calendarGrid) {
+                calendarGrid.classList.remove('calendar-month-transition-out');
+                calendarGrid.classList.add('calendar-month-transition-in');
+                
+                setTimeout(() => {
+                    calendarGrid.classList.remove('calendar-month-transition-in');
+                }, 300);
+            }
+        }, 150);
     }
 
     /**
-     * 获取用户身份信息
+     * 获取用户身份信息 - 与其他页面保持一致的逻辑
      */
     async function getUserIdentity() {
-        try {
-            // 从localStorage获取用户信息
-            const cachedUserData = localStorage.getItem('user_data');
-            if (cachedUserData) {
-                const userData = JSON.parse(cachedUserData);
-                return {
-                    user_id: userData.user_id || '',
-                    username: userData.username || ''
-                };
-            }
-            return { user_id: '', username: '' };
-        } catch (e) {
-            console.warn('获取用户身份失败:', e);
-            return { user_id: '', username: '' };
+        // 1) 本地 user_profile
+        let cached = null;
+        try { cached = JSON.parse(localStorage.getItem('user_profile') || 'null'); } catch(_) { cached = null; }
+
+        let user_id = '';
+        let username = '';
+
+        if (cached) {
+            user_id = (cached.user_id || cached.id || '').toString();
         }
+
+        // 2) 与 me.js 保持一致：优先从 localStorage/sessionStorage 读取 userId/UserID
+        try {
+            const storedId =
+              localStorage.getItem('userId') ||
+              sessionStorage.getItem('userId') ||
+              localStorage.getItem('UserID') ||
+              sessionStorage.getItem('UserID');
+
+            if (storedId) {
+                user_id = String(storedId);
+            }
+        } catch(_) {}
+
+        // 3) 仅当存在 user_id 时，通过 /readdata 使用 user_id 查询 username
+        if (user_id) {
+            try {
+                var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
+                if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
+
+                const body = { table_name: 'users', user_id: String(user_id) };
+                const res = await fetch(API_BASE + '/readdata', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const json = await res.json();
+                if (res.ok && json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+                    const rec = json.data[0] || {};
+                    username = (rec.username || '').toString();
+
+                    // 回写本地
+                    try {
+                        const merged = Object.assign({}, cached || {}, { user_id, username });
+                        localStorage.setItem('user_profile', JSON.stringify(merged));
+                        if (username) localStorage.setItem('username', username);
+                    } catch(_) {}
+
+                    console.log(`✅ 日历页面获取用户身份: user_id=${user_id}, username=${username}`);
+                    return { user_id, username };
+                }
+            } catch (e) {
+                console.warn('getUserIdentity 通过 user_id 调用 /readdata 失败:', e);
+            }
+            // 查询失败时，至少返回 user_id，username 留空
+            console.log(`⚠️ 日历页面获取用户身份(仅ID): user_id=${user_id}`);
+            return { user_id, username: '' };
+        }
+
+        // 兜底为空
+        console.warn('⚠️ 日历页面未找到用户身份信息');
+        return { user_id: '', username: '' };
     }
     
     /**
@@ -179,20 +602,28 @@
             var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
             if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
             
-            const response = await fetch(`${API_BASE}/getjson/symptoms/monthly/${identity.user_id}/${year}/${month + 1}`, {
+            const apiUrl = `${API_BASE}/getjson/symptoms/monthly/${identity.user_id}/${year}/${month + 1}`;
+            console.log(`🔍 请求症状数据API: ${apiUrl}`);
+            
+            const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
                 }
             });
             
+            console.log(`📡 API响应状态: ${response.status} ${response.statusText}`);
             const result = await response.json();
+            console.log(`📊 API响应数据:`, result);
+            
             if (result.success && result.data) {
                 monthlySymptomData[monthKey] = result.data;
-                console.log(`✅ 加载${year}年${month + 1}月症状数据:`, result.data);
+                const dataCount = Object.keys(result.data).length;
+                console.log(`✅ 成功加载${year}年${month + 1}月症状数据，共${dataCount}条记录:`, result.data);
                 return result.data;
             } else {
-                console.warn('加载症状数据失败:', result.message);
+                console.warn(`❌ 加载症状数据失败: ${result.message || '未知错误'}`);
+                console.warn('完整响应:', result);
                 return {};
             }
         } catch (e) {
@@ -212,7 +643,13 @@
         
         // 如果有多个症状，优先显示数字较大的（更严重的）
         const maxSymptom = Math.max(...symptoms.filter(s => s > 0));
-        return SYMPTOM_COLORS[maxSymptom] || null;
+        const color = SYMPTOM_COLORS[maxSymptom] || null;
+        
+        if (color) {
+            console.log(`🎨 日期${dateStr}症状颜色: 症状${symptoms} -> 最高级别${maxSymptom} -> 颜色${color}`);
+        }
+        
+        return color;
     }
     
     /**
@@ -240,11 +677,19 @@
         yearElement.textContent = currentYear;
         monthElement.textContent = monthNames[currentMonth];
 
+        console.log(`📅 更新日历显示: ${currentYear}年${currentMonth + 1}月`);
+
         // 加载症状数据
         const symptomData = await loadMonthlySymptomData(currentYear, currentMonth);
+        console.log(`🔍 获得症状数据:`, symptomData);
 
         // 生成日历网格
         generateCalendarGrid(symptomData);
+        
+        // 隐藏加载动画
+        hideLoadingAnimation();
+        
+        console.log(`✅ 日历网格生成完成`);
     }
 
     /**
@@ -381,6 +826,11 @@
         // 添加选中状态
         dayElement.classList.add('selected');
         
+        // 添加选中动画效果
+        dayElement.style.animation = 'none';
+        dayElement.offsetHeight; // 触发重排
+        dayElement.style.animation = 'calendarSelectedPulse 0.6s ease-out';
+        
         // 添加选中振动反馈
         addHapticFeedback('Medium');
 
@@ -495,11 +945,50 @@
     }
 
     /**
+     * 测试症状数据API（调试用）
+     */
+    async function testSymptomAPI() {
+        console.log('🧪 开始测试症状API...');
+        const identity = await getUserIdentity();
+        console.log('👤 用户身份:', identity);
+        
+        if (!identity.user_id) {
+            console.warn('❌ 无法测试API：用户未登录');
+            return;
+        }
+        
+        const testYear = new Date().getFullYear();
+        const testMonth = new Date().getMonth() + 1;
+        
+        try {
+            var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
+            if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
+            
+            const testUrl = `${API_BASE}/getjson/symptoms/monthly/${identity.user_id}/${testYear}/${testMonth}`;
+            console.log(`🔗 测试URL: ${testUrl}`);
+            
+            const response = await fetch(testUrl);
+            console.log(`📡 响应状态: ${response.status}`);
+            
+            const result = await response.json();
+            console.log(`📊 API测试结果:`, result);
+            
+        } catch (e) {
+            console.error('❌ API测试失败:', e);
+        }
+    }
+    
+    /**
      * 页面加载完成后初始化
      */
     document.addEventListener('DOMContentLoaded', () => {
         initCalendar();
         initKeyboardNavigation();
+        
+        // 调试：测试症状API
+        setTimeout(() => {
+            testSymptomAPI();
+        }, 1000);
         
         // 检查URL参数中是否有指定日期
         const urlParams = new URLSearchParams(window.location.search);
