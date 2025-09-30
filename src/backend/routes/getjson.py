@@ -144,6 +144,8 @@ def get_user_files(kind):
         limit = request.args.get("limit", "50")
         # 可选：按记录日期过滤（YYYY-MM-DD），以 exportInfo.recordTime 的日期为准
         filter_date = (request.args.get("date") or "").strip() or None
+        # 可选：按开始日期过滤（YYYY-MM-DD），限制数据的时间范围
+        start_date = (request.args.get("start_date") or "").strip() or None
         
         # 验证用户标识
         if not user_id and not username:
@@ -164,26 +166,26 @@ def get_user_files(kind):
             cur = conn.cursor(dictionary=True)
             try:
                 # 构建查询语句
-                if user_id:
-                    query = f"""
-                        SELECT id, user_id, username, file_name, created_at, 
-                               SUBSTRING(content, 1, 200) as content_preview
-                        FROM {table_name} 
-                        WHERE user_id = %s 
-                        ORDER BY created_at DESC 
-                        LIMIT %s
-                    """
-                    params = (user_id, limit)
-                else:
-                    query = f"""
-                        SELECT id, user_id, username, file_name, created_at,
-                               SUBSTRING(content, 1, 200) as content_preview
-                        FROM {table_name} 
-                        WHERE username = %s 
-                        ORDER BY created_at DESC 
-                        LIMIT %s
-                    """
-                    params = (username, limit)
+                base_where = "user_id = %s" if user_id else "username = %s"
+                base_param = user_id if user_id else username
+                
+                # 添加时间范围过滤
+                time_filter = ""
+                params = [base_param]
+                
+                if start_date:
+                    time_filter = " AND created_at >= %s"
+                    params.append(f"{start_date} 00:00:00")
+                
+                query = f"""
+                    SELECT id, user_id, username, file_name, created_at, 
+                           SUBSTRING(content, 1, 200) as content_preview
+                    FROM {table_name} 
+                    WHERE {base_where}{time_filter}
+                    ORDER BY created_at DESC 
+                    LIMIT %s
+                """
+                params.append(limit)
                 
                 logger.info("/getjson/%s executing query=%s params=%s", kind, query, params)
                 cur.execute(query, params)

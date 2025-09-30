@@ -297,7 +297,8 @@ function initSearchBox() {
   // 初始隐藏清除按钮
   clearBtn.classList.add('hidden');
 
-  // 搜索输入事件
+  // 搜索输入事件（添加防抖机制）
+  let searchTimeout = null;
   searchInput.addEventListener('input', (e) => {
     searchKeyword = e.target.value.trim();
     console.log('🔍 搜索关键字:', searchKeyword);
@@ -309,8 +310,15 @@ function initSearchBox() {
       clearBtn.classList.add('hidden');
     }
     
-    // 过滤并重新渲染卡片
-    filterAndRenderCards();
+    // 清除之前的定时器
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // 防抖：延迟300ms执行搜索
+    searchTimeout = setTimeout(() => {
+      filterAndRenderCards();
+    }, 300);
   });
 
   // 清除搜索按钮事件
@@ -537,6 +545,13 @@ function filterAndRenderCards() {
       });
       
       console.log(`🔍 按关键字 "${searchKeyword}" 过滤，从 ${cachedDataCards.length} 条记录中筛选出 ${filteredCards.length} 条`);
+      
+      // 显示搜索结果统计
+      if (searchKeyword && filteredCards.length > 0) {
+        console.log(`✅ 搜索完成：找到 ${filteredCards.length} 条匹配记录`);
+      } else if (searchKeyword && filteredCards.length === 0) {
+        console.log(`❌ 搜索完成：未找到匹配记录`);
+      }
     }
 
     // 按数据类型过滤
@@ -582,6 +597,11 @@ function searchInCardData(item, keyword) {
     return true;
   }
   
+  // 搜索用户名
+  if (item.username && item.username.toLowerCase().includes(lowerKeyword)) {
+    return true;
+  }
+  
   // 搜索创建时间
   if (item.created_at && item.created_at.toLowerCase().includes(lowerKeyword)) {
     return true;
@@ -589,6 +609,11 @@ function searchInCardData(item, keyword) {
   
   // 搜索数据类型
   if (item.dataType && item.dataType.toLowerCase().includes(lowerKeyword)) {
+    return true;
+  }
+  
+  // 搜索ID（支持精确匹配）
+  if (item.id && item.id.toString().includes(lowerKeyword)) {
     return true;
   }
   
@@ -768,9 +793,36 @@ function searchInMetricsContent(content, keyword) {
 function searchInDietContent(content, keyword) {
   const dietData = content.dietData || {};
   
-  for (const meal of Object.values(dietData)) {
+  // 搜索所有餐次
+  for (const [mealType, meal] of Object.entries(dietData)) {
+    if (!meal || typeof meal !== 'object') continue;
+    
+    // 搜索餐次类型
+    if (mealType.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索时间
     if (meal.time && meal.time.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索食物
     if (meal.food && meal.food.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索食物描述
+    if (meal.description && meal.description.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索食物数量
+    if (meal.quantity && meal.quantity.toString().toLowerCase().includes(keyword)) return true;
+    
+    // 搜索食物单位
+    if (meal.unit && meal.unit.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索备注
+    if (meal.notes && meal.notes.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索时间戳
+    if (meal.timestamp && meal.timestamp.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索日期
+    if (meal.date && meal.date.toLowerCase().includes(keyword)) return true;
   }
   
   return false;
@@ -780,14 +832,79 @@ function searchInDietContent(content, keyword) {
  * searchInCaseContent — 在病例记录内容中搜索
  */
 function searchInCaseContent(content, keyword) {
-  // 这里可以根据实际的病例数据结构来实现
+  // 搜索病例基本信息
+  if (content.caseInfo) {
+    const caseInfo = content.caseInfo;
+    
+    // 搜索病例标题
+    if (caseInfo.title && caseInfo.title.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索病例描述
+    if (caseInfo.description && caseInfo.description.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索诊断
+    if (caseInfo.diagnosis && caseInfo.diagnosis.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索症状
+    if (caseInfo.symptoms && caseInfo.symptoms.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索治疗方案
+    if (caseInfo.treatment && caseInfo.treatment.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索医生信息
+    if (caseInfo.doctor && caseInfo.doctor.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索医院信息
+    if (caseInfo.hospital && caseInfo.hospital.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索科室
+    if (caseInfo.department && caseInfo.department.toLowerCase().includes(keyword)) return true;
+    
+    // 搜索备注
+    if (caseInfo.notes && caseInfo.notes.toLowerCase().includes(keyword)) return true;
+  }
+  
+  // 搜索检查结果
+  if (content.examinationResults) {
+    const results = content.examinationResults;
+    for (const [key, value] of Object.entries(results)) {
+      if (key.toLowerCase().includes(keyword)) return true;
+      if (value && value.toString().toLowerCase().includes(keyword)) return true;
+    }
+  }
+  
+  // 搜索药物信息
+  if (content.medications) {
+    const medications = content.medications;
+    if (Array.isArray(medications)) {
+      for (const med of medications) {
+        if (med.name && med.name.toLowerCase().includes(keyword)) return true;
+        if (med.dosage && med.dosage.toLowerCase().includes(keyword)) return true;
+        if (med.frequency && med.frequency.toLowerCase().includes(keyword)) return true;
+        if (med.notes && med.notes.toLowerCase().includes(keyword)) return true;
+      }
+    }
+  }
+  
+  // 搜索时间信息
+  if (content.recordTime && content.recordTime.toLowerCase().includes(keyword)) return true;
+  if (content.visitDate && content.visitDate.toLowerCase().includes(keyword)) return true;
+  
+  // 搜索exportInfo
+  if (content.exportInfo) {
+    const exportInfo = content.exportInfo;
+    if (exportInfo.recordTime && exportInfo.recordTime.toLowerCase().includes(keyword)) return true;
+    if (exportInfo.exportTime && exportInfo.exportTime.toLowerCase().includes(keyword)) return true;
+  }
+  
+  // 最后进行全文搜索
   const contentStr = JSON.stringify(content).toLowerCase();
   return contentStr.includes(keyword);
 }
 
 /**
  * loadUserDataCards — 加载并显示用户数据卡片
- * 从后端获取所有用户数据并按时间排序展示
+ * 从后端获取三个月内的用户数据并按时间排序展示
  * 返回Promise以便与其他加载任务并行执行
  */
 function loadUserDataCards() {
@@ -830,11 +947,17 @@ function loadUserDataCards() {
 
     // 创建加载Promise
     dataCardsLoadPromise = new Promise((resolveLoad) => {
-      // 并行加载所有类型的数据（带所选日期筛选，后端做初筛）
+      // 计算三个月前的时间范围
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      const threeMonthsAgoStr = threeMonthsAgo.toISOString().split('T')[0];
+      
+      // 并行加载所有类型的数据（限制三个月内，带所选日期筛选，后端做初筛）
       const dataTypes = ['metrics', 'diet', 'case'];
       const dateParam = selectedDate ? `&date=${encodeURIComponent(getDateYMD(String(selectedDate)))}` : '';
+      const timeRangeParam = `&start_date=${encodeURIComponent(threeMonthsAgoStr)}`;
       const promises = dataTypes.map(type => 
-        fetch(`${__API_BASE__}/getjson/${type}?user_id=${encodeURIComponent(userId)}&limit=50${dateParam}`)
+        fetch(`${__API_BASE__}/getjson/${type}?user_id=${encodeURIComponent(userId)}&limit=200${dateParam}${timeRangeParam}`)
           .then(res => res.json())
           .then(data => ({ type, data }))
           .catch(err => {
