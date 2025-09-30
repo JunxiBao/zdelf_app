@@ -105,42 +105,35 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // 绑定表单输入事件，实时更新JSON大小
-    const formInputs = ['hospital', 'department', 'doctor', 'diagnosis', 'prescription'];
-    formInputs.forEach(inputId => {
-        const input = document.getElementById(inputId);
-        if (input) {
-            input.addEventListener('input', updateJsonSizeDisplay);
-        }
-    });
     
     // 处理图片数据URL（新的统一处理函数）
-    function handleImageDataUrl(dataUrl) {
+    async function handleImageDataUrl(dataUrl) {
         // 显示压缩进度
         showCompressionProgress('图片处理中...');
         
-        // 将DataURL转换为File对象进行压缩
-        dataURLToFile(dataUrl, 'image.jpg').then(file => {
-            compressImage(file, (compressedDataUrl) => {
-                hideCompressionProgress();
-                
-                // 添加新图片到容器（不清空现有图片）
-                addImageToContainer(compressedDataUrl, file.name);
-                
-                // 显示压缩成功信息
-                const originalSizeKB = (file.size / 1024).toFixed(1);
-                const compressedSizeKB = ((compressedDataUrl.length * 0.75) / 1024).toFixed(1);
-                const compressionRatio = ((1 - compressedDataUrl.length * 0.75 / file.size) * 100).toFixed(1);
-                
-                showMessage(`图片压缩成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`, 'success');
-            }, (error) => {
-                hideCompressionProgress();
-                showMessage(`图片压缩失败: ${error}`, 'error');
-            }, 500); // 限制为500KB
-        }).catch(error => {
+        try {
+            // 将DataURL转换为File对象进行压缩
+            const file = await dataURLToFile(dataUrl, 'image.jpg');
+            const compressedDataUrl = await compressImagePromise(file, 500);
+            
+            // 上传图片到服务器
+            const imageUrl = await uploadCaseImageToServer(compressedDataUrl, 'case');
+            
+            hideCompressionProgress();
+            
+            // 添加新图片到容器（使用服务器返回的URL）
+            addImageToContainer(imageUrl, file.name);
+            
+            // 显示上传成功信息
+            const originalSizeKB = (file.size / 1024).toFixed(1);
+            const compressedSizeKB = ((compressedDataUrl.length * 0.75) / 1024).toFixed(1);
+            const compressionRatio = ((1 - compressedDataUrl.length * 0.75 / file.size) * 100).toFixed(1);
+            
+            showMessage(`图片上传成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`, 'success');
+        } catch (error) {
             hideCompressionProgress();
             showMessage(`图片处理失败: ${error.message}`, 'error');
-        });
+        }
     }
 
     // 处理图片上传（保留用于兼容性）
@@ -200,6 +193,62 @@ document.addEventListener('DOMContentLoaded', function() {
                 reject(error);
             }
         });
+    }
+
+    // 压缩图片的Promise版本
+    function compressImagePromise(file, maxSizeKB = 500) {
+        return new Promise((resolve, reject) => {
+            compressImage(file, resolve, reject, maxSizeKB);
+        });
+    }
+
+    // 上传病例图片到服务器
+    async function uploadCaseImageToServer(imageData, imageType) {
+        try {
+            // 获取用户身份信息
+            const identity = await resolveUserIdentity();
+            const user_id = identity.user_id || '';
+            const username = identity.username || '';
+
+            if (!user_id) {
+                throw new Error('无法获取用户ID');
+            }
+
+            // 构建请求数据
+            const payload = {
+                user_id: user_id,
+                username: username,
+                image_data: imageData,
+                image_type: imageType
+            };
+
+            // 获取API基础URL
+            var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
+            if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
+
+            // 发送上传请求
+            const response = await fetch(API_BASE + '/upload_image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message || '图片上传失败');
+            }
+
+            // 返回完整的图片URL
+            const imageUrl = result.data.image_url;
+            return imageUrl.startsWith('http') ? imageUrl : API_BASE + imageUrl;
+        } catch (error) {
+            console.error('上传病例图片失败:', error);
+            throw error;
+        }
     }
     
     // 显示压缩进度
@@ -354,7 +403,6 @@ document.addEventListener('DOMContentLoaded', function() {
         removeBtn.innerHTML = '×';
         removeBtn.onclick = function() {
             imageItem.remove();
-            updateJsonSizeDisplay(); // 更新JSON大小显示
         };
         
         imageItem.appendChild(img);
@@ -370,94 +418,9 @@ document.addEventListener('DOMContentLoaded', function() {
             imageItem.style.transform = 'scale(1)';
         }, 10);
         
-        // 添加图片后更新JSON大小显示
-        updateJsonSizeDisplay();
     }
 });
 
-// 更新JSON大小显示
-function updateJsonSizeDisplay() {
-    // 收集当前数据
-    const hospital = document.getElementById('hospital').value.trim();
-    const department = document.getElementById('department').value.trim();
-    const doctor = document.getElementById('doctor').value.trim();
-    const diagnosis = document.getElementById('diagnosis').value.trim();
-    const prescription = document.getElementById('prescription').value.trim();
-    
-    // 收集图片数据
-    const images = [];
-    const imageItems = document.querySelectorAll('.uploaded-image-item img');
-    imageItems.forEach(img => {
-        images.push(img.src);
-    });
-    
-    // 构建测试数据
-    const testCaseData = {
-        hospital: hospital,
-        department: department,
-        doctor: doctor,
-        diagnosis: diagnosis,
-        prescription: prescription,
-        images: images,
-        timestamp: new Date().toISOString(),
-        id: 'test'
-    };
-    
-    const testPayload = {
-        exportInfo: {
-            exportTime: new Date().toLocaleString('zh-CN'),
-            version: '1.0',
-            appName: '紫癜精灵',
-            dataType: 'case_record'
-        },
-        caseData: testCaseData
-    };
-    
-    // 计算JSON大小
-    const jsonString = JSON.stringify({ user_id: 'test', username: 'test', payload: testPayload });
-    const jsonSizeKB = (new Blob([jsonString]).size / 1024).toFixed(1);
-    const maxJsonSizeKB = 5120; // 5MB限制
-    
-    // 更新显示
-    let sizeDisplay = document.getElementById('json-size-display');
-    if (!sizeDisplay) {
-        sizeDisplay = document.createElement('div');
-        sizeDisplay.id = 'json-size-display';
-        sizeDisplay.style.cssText = `
-            font-size: 0.8em;
-            color: #666;
-            text-align: center;
-            margin-top: 8px;
-            padding: 8px;
-            background: rgba(98, 0, 234, 0.05);
-            border-radius: 8px;
-            border: 1px solid rgba(98, 0, 234, 0.1);
-        `;
-        
-        // 插入到上传容器后面
-        const uploadContainer = document.querySelector('.image-upload-container');
-        uploadContainer.parentNode.insertBefore(sizeDisplay, uploadContainer.nextSibling);
-    }
-    
-    // 检查是否有图片上传
-    const hasImages = images.length > 0;
-    
-    if (!hasImages) {
-        // 没有图片时隐藏大小显示
-        sizeDisplay.style.display = 'none';
-        return;
-    }
-    
-    // 有图片时显示大小
-    sizeDisplay.style.display = 'block';
-    const isOverLimit = jsonSizeKB > maxJsonSizeKB;
-    sizeDisplay.innerHTML = `
-        <div style="color: ${isOverLimit ? '#e74c3c' : '#27ae60'}; font-weight: 600;">
-            当前数据大小: ${jsonSizeKB}KB / ${maxJsonSizeKB}KB
-        </div>
-        ${isOverLimit ? '<div style="color: #e74c3c; margin-top: 4px;">⚠️ 数据过大，请删除一些图片或减少文本内容</div>' : ''}
-    `;
-}
 
 // 保存病例记录
 function saveCaseRecord() {
@@ -551,20 +514,6 @@ function saveCaseRecord() {
             const user_id = identity.user_id || '';
             const username = identity.username || '';
 
-            // 检查JSON文件大小
-            const jsonString = JSON.stringify({ user_id, username, payload });
-            const jsonSizeKB = (new Blob([jsonString]).size / 1024).toFixed(1);
-            const maxJsonSizeKB = 5120; // 5MB限制
-            
-            console.log(`JSON文件大小: ${jsonSizeKB}KB`);
-            
-            if (jsonSizeKB > maxJsonSizeKB) {
-                // 恢复按钮状态
-                hideSaveLoading(saveState, '保存病例记录');
-                
-                showMessage(`数据过大 (${jsonSizeKB}KB > ${maxJsonSizeKB}KB)！请删除一些图片或减少文本内容`, 'error');
-                return;
-            }
 
             var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
             if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);

@@ -107,11 +107,6 @@ function initMetricsPage() {
     // 初始化出血点图片上传功能
     initBleedingImageUpload();
     
-    // 初始化JSON大小显示功能
-    initJsonSizeDisplay();
-    
-    // 初始显示JSON大小
-    updateJsonSizeDisplay();
 
     // 初始化自我评分滑块功能
     initSelfRatingSlider();
@@ -543,20 +538,6 @@ function saveAllMetrics() {
                 const user_id = identity.user_id || '';
                 const username = identity.username || '';
 
-                // 检查JSON文件大小
-                const jsonString = JSON.stringify({ user_id, username, payload });
-                const jsonSizeKB = (new Blob([jsonString]).size / 1024).toFixed(1);
-                const maxJsonSizeKB = 5120; // 5MB限制
-                
-                console.log(`JSON文件大小: ${jsonSizeKB}KB`);
-                
-                if (jsonSizeKB > maxJsonSizeKB) {
-                    // 恢复按钮状态
-                    hideSaveLoading(saveState, '保存所有指标');
-                    
-                    showMessage(`数据过大 (${jsonSizeKB}KB > ${maxJsonSizeKB}KB)！请删除一些图片或减少文本内容`, 'error');
-                    return;
-                }
 
                 var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
                 if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
@@ -1113,32 +1094,33 @@ function initBleedingImageUpload() {
 }
 
 // 处理出血点图片数据URL（新的统一处理函数）
-function handleBleedingImageDataUrl(dataUrl) {
+async function handleBleedingImageDataUrl(dataUrl) {
     // 显示压缩进度
     showBleedingCompressionProgress('图片处理中...');
     
-    // 将DataURL转换为File对象进行压缩
-    dataURLToFile(dataUrl, 'bleeding-image.jpg').then(file => {
-        compressImage(file, (compressedDataUrl) => {
-            hideBleedingCompressionProgress();
-            
-            // 添加新图片到容器
-            addBleedingImageToContainer(compressedDataUrl, file.name);
-            
-            // 显示压缩成功信息
-            const originalSizeKB = (file.size / 1024).toFixed(1);
-            const compressedSizeKB = ((compressedDataUrl.length * 0.75) / 1024).toFixed(1);
-            const compressionRatio = ((1 - compressedDataUrl.length * 0.75 / file.size) * 100).toFixed(1);
-            
-            showMessage(`图片压缩成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`, 'success');
-        }, (error) => {
-            hideBleedingCompressionProgress();
-            showMessage(`图片压缩失败: ${error}`, 'error');
-        }, 500); // 限制为500KB
-    }).catch(error => {
+    try {
+        // 将DataURL转换为File对象进行压缩
+        const file = await dataURLToFile(dataUrl, 'bleeding-image.jpg');
+        const compressedDataUrl = await compressImagePromise(file, 500); // 限制为500KB
+        
+        // 上传图片到服务器
+        const imageUrl = await uploadImageToServer(compressedDataUrl, 'bleeding');
+        
+        hideBleedingCompressionProgress();
+        
+        // 添加新图片到容器（使用服务器返回的URL）
+        addBleedingImageToContainer(imageUrl, file.name);
+        
+        // 显示上传成功信息
+        const originalSizeKB = (file.size / 1024).toFixed(1);
+        const compressedSizeKB = ((compressedDataUrl.length * 0.75) / 1024).toFixed(1);
+        const compressionRatio = ((1 - compressedDataUrl.length * 0.75 / file.size) * 100).toFixed(1);
+        
+        showMessage(`图片上传成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`, 'success');
+    } catch (error) {
         hideBleedingCompressionProgress();
         showMessage(`图片处理失败: ${error.message}`, 'error');
-    });
+    }
 }
 
 // 将DataURL转换为File对象
@@ -1161,45 +1143,160 @@ function dataURLToFile(dataUrl, filename) {
     });
 }
 
+// 压缩图片的Promise版本
+function compressImagePromise(file, maxSizeKB = 500) {
+    return new Promise((resolve, reject) => {
+        compressImage(file, resolve, reject, maxSizeKB);
+    });
+}
+
+// 上传图片到服务器
+async function uploadImageToServer(imageData, imageType) {
+    try {
+        // 获取用户身份信息
+        const identity = await resolveUserIdentity();
+        const user_id = identity.user_id || '';
+        const username = identity.username || '';
+
+        if (!user_id) {
+            throw new Error('无法获取用户ID');
+        }
+
+        // 构建请求数据
+        const payload = {
+            user_id: user_id,
+            username: username,
+            image_data: imageData,
+            image_type: imageType
+        };
+
+        // 获取API基础URL
+        var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
+        if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
+
+        // 发送上传请求
+        const response = await fetch(API_BASE + '/upload_image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.message || '图片上传失败');
+        }
+
+        // 返回完整的图片URL
+        const imageUrl = result.data.image_url;
+        return imageUrl.startsWith('http') ? imageUrl : API_BASE + imageUrl;
+    } catch (error) {
+        console.error('上传图片失败:', error);
+        throw error;
+    }
+}
+
+// 解析用户身份：本地缓存优先，不足则通过 /readdata 查询
+async function resolveUserIdentity() {
+    // 1) 本地 user_profile
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem('user_profile') || 'null'); } catch(_) { cached = null; }
+
+    let user_id = '';
+    let username = '';
+
+    if (cached) {
+        user_id = (cached.user_id || cached.id || '').toString();
+    }
+
+    // 2) 与 me.js 保持一致：优先从 localStorage/sessionStorage 读取 userId/UserID
+    try {
+        const storedId =
+          localStorage.getItem('userId') ||
+          sessionStorage.getItem('userId') ||
+          localStorage.getItem('UserID') ||
+          sessionStorage.getItem('UserID') || '';
+        if (storedId) {
+            user_id = storedId.toString();
+        }
+    } catch(_) {}
+
+    // 3) 如果 user_id 存在，通过 /readdata 获取 username
+    if (user_id) {
+        try {
+            var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
+            if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
+            
+            const resp = await fetch(API_BASE + '/readdata', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id })
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.success && data.data && data.data.username) {
+                    username = data.data.username;
+                } else {
+                    console.warn('[metrics] /readdata 返回数据格式异常:', data);
+                }
+            } else {
+                console.warn('[metrics] /readdata 请求失败:', resp.status, resp.statusText);
+            }
+        } catch (e) {
+            console.warn('[metrics] 通过 user_id 调用 /readdata 失败:', e);
+        }
+        return { user_id, username: '' };
+    }
+
+    return { user_id: '', username: '' };
+}
+
 // 处理出血点图片上传
-function handleBleedingImageUpload(files) {
-    Array.from(files).forEach(file => {
+async function handleBleedingImageUpload(files) {
+    for (const file of Array.from(files)) {
         // 检查文件类型
         if (!file.type.startsWith('image/')) {
             showMessage('请选择图片文件', 'error');
-            return;
+            continue;
         }
         
         // 检查文件大小（原始文件不超过10MB）
         const maxOriginalSizeMB = 10;
         if (file.size > maxOriginalSizeMB * 1024 * 1024) {
             showMessage(`图片文件过大，请选择小于${maxOriginalSizeMB}MB的图片`, 'error');
-            return;
+            continue;
         }
         
         // 显示压缩进度
         showBleedingCompressionProgress(file.name);
         
-        compressImage(file, (compressedDataUrl) => {
+        try {
+            // 压缩图片
+            const compressedDataUrl = await compressImagePromise(file, 500);
+            
+            // 上传图片到服务器
+            const imageUrl = await uploadImageToServer(compressedDataUrl, 'bleeding');
+            
             hideBleedingCompressionProgress();
             
-            // 添加新图片到容器
-            addBleedingImageToContainer(compressedDataUrl, file.name);
+            // 添加新图片到容器（使用服务器返回的URL）
+            addBleedingImageToContainer(imageUrl, file.name);
             
-            // 显示压缩成功信息
+            // 显示上传成功信息
             const originalSizeKB = (file.size / 1024).toFixed(1);
             const compressedSizeKB = ((compressedDataUrl.length * 0.75) / 1024).toFixed(1);
             const compressionRatio = ((1 - compressedDataUrl.length * 0.75 / file.size) * 100).toFixed(1);
             
-            showMessage(`图片 ${file.name} 压缩成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`, 'success');
+            showMessage(`图片 ${file.name} 上传成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`, 'success');
             
-            // 更新JSON大小显示
-            updateJsonSizeDisplay();
-        }, (error) => {
+        } catch (error) {
             hideBleedingCompressionProgress();
-            showMessage(`图片 ${file.name} 压缩失败: ${error}`, 'error');
-        }, 500); // 限制为500KB
-    });
+            showMessage(`图片 ${file.name} 处理失败: ${error.message}`, 'error');
+        }
+    }
 }
 
 // 显示出血点图片压缩进度
@@ -1255,8 +1352,6 @@ function addBleedingImageToContainer(imageSrc, fileName) {
         try {
             window.__hapticImpact__ && window.__hapticImpact__('Medium');
         } catch(_) {}
-        // 更新JSON大小显示
-        updateJsonSizeDisplay();
     };
     
     imageItem.appendChild(img);
@@ -2006,68 +2101,6 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// 解析用户身份：本地缓存优先，不足则通过 /readdata 查询
-async function resolveUserIdentity() {
-    // 1) 本地 user_profile
-    let cached = null;
-    try { cached = JSON.parse(localStorage.getItem('user_profile') || 'null'); } catch(_) { cached = null; }
-
-    let user_id = '';
-    let username = '';
-
-    if (cached) {
-        user_id = (cached.user_id || cached.id || '').toString();
-        // 忽略缓存中的 username，统一通过 user_id 查询服务端获取
-    }
-
-    // 2) 与 me.js 保持一致：优先从 localStorage/sessionStorage 读取 userId/UserID
-    try {
-        const storedId =
-          localStorage.getItem('userId') ||
-          sessionStorage.getItem('userId') ||
-          localStorage.getItem('UserID') ||
-          sessionStorage.getItem('UserID') || '';
-        if (storedId) {
-            user_id = String(storedId);
-        }
-    } catch(_) {}
-
-    // 3) 仅当存在 user_id 时，通过 /readdata 使用 user_id 查询 username
-    if (user_id) {
-        try {
-            var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
-            if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
-
-            const body = { table_name: 'users', user_id: String(user_id) };
-            const res = await fetch(API_BASE + '/readdata', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            const json = await res.json();
-            if (res.ok && json && json.success && Array.isArray(json.data) && json.data.length > 0) {
-                const rec = json.data[0] || {};
-                username = (rec.username || '').toString();
-
-                // 回写本地（不覆盖现有 userId 键，仅更新 user_profile 和 username）
-                try {
-                    const merged = Object.assign({}, cached || {}, { user_id, username });
-                    localStorage.setItem('user_profile', JSON.stringify(merged));
-                    if (username) localStorage.setItem('username', username);
-                } catch(_) {}
-
-                return { user_id, username };
-            }
-        } catch (e) {
-            console.warn('resolveUserIdentity 通过 user_id 调用 /readdata 失败:', e);
-        }
-        // 查询失败时，至少返回 user_id，username 留空
-        return { user_id, username: '' };
-    }
-
-    // 兜底为空
-    return { user_id: '', username: '' };
-}
 
 // 尿液检测指标矩阵相关函数
 let urinalysisItemIndex = 0;
@@ -3210,203 +3243,7 @@ function clearAllFormData() {
     }
 }
 
-// 初始化JSON大小显示功能
-function initJsonSizeDisplay() {
-    // 绑定表单输入事件，实时更新JSON大小
-    const formInputs = ['symptoms-input', 'temperature-input', 'proteinuria-input', 'wbc-input', 'rbc-input', 'hb-input', 'plt-input'];
-    formInputs.forEach(inputId => {
-        const input = document.getElementById(inputId);
-        if (input) {
-            input.addEventListener('input', updateJsonSizeDisplay);
-        }
-    });
-    
-    // 为出血点选择器添加事件监听
-    document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('bleeding-point-select') || e.target.classList.contains('other-bleeding-text')) {
-            updateJsonSizeDisplay();
-        }
-    });
-    
-    // 为血常规检测矩阵添加事件监听
-    document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('blood-test-select') || e.target.classList.contains('blood-test-value')) {
-            updateJsonSizeDisplay();
-        }
-    });
-    
-    // 为尿液检测矩阵添加事件监听
-    document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('urinalysis-select') || e.target.classList.contains('urinalysis-value')) {
-            updateJsonSizeDisplay();
-        }
-    });
-    
-    // 为自我评分滑块添加事件监听
-    const ratingSlider = document.getElementById('self-rating-slider');
-    if (ratingSlider) {
-        ratingSlider.addEventListener('input', updateJsonSizeDisplay);
-    }
-}
 
-// 更新JSON大小显示
-function updateJsonSizeDisplay() {
-    // 收集当前数据
-    // 症状数据（新格式）
-    const symptomsItems = document.querySelectorAll('.symptoms-item');
-    const symptomsData = [];
-    symptomsItems.forEach(item => {
-        const select = item.querySelector('.symptoms-select');
-        const symptomType = select ? select.value : '';
-        if (symptomType) {
-            const symptomEntry = { type: symptomType };
-            if (symptomType === 'other') {
-                const customInput = item.querySelector('.custom-symptoms-name');
-                if (customInput && customInput.value.trim()) {
-                    symptomEntry.description = customInput.value.trim();
-                }
-            }
-            // 获取症状详细信息
-            if (symptomType !== 'none') {
-                const detailInput = item.querySelector('.symptoms-detail-input');
-                if (detailInput && detailInput.value.trim()) {
-                    symptomEntry.detail = detailInput.value.trim();
-                }
-            }
-            symptomsData.push(symptomEntry);
-        }
-    });
-    const temperature = document.getElementById('temperature-input')?.value || '';
-    const proteinuria = document.getElementById('proteinuria-input')?.value || '';
-    const wbc = document.getElementById('wbc-input')?.value || '';
-    const rbc = document.getElementById('rbc-input')?.value || '';
-    const hb = document.getElementById('hb-input')?.value || '';
-    const plt = document.getElementById('plt-input')?.value || '';
-    
-    // 收集出血点数据
-    const bleedingPoints = [];
-    const bleedingPointItems = document.querySelectorAll('.bleeding-point-item');
-    bleedingPointItems.forEach(item => {
-        const select = item.querySelector('.bleeding-point-select');
-        const otherInput = item.querySelector('.other-bleeding-text');
-        
-        if (select && select.value) {
-            const bleedingData = { bleedingPoint: select.value };
-            if (select.value === 'other' && otherInput && otherInput.value.trim()) {
-                bleedingData.otherDescription = otherInput.value.trim();
-            }
-            bleedingPoints.push(bleedingData);
-        }
-    });
-    
-    // 收集血常规检测矩阵数据
-    const bloodTestData = [];
-    const bloodTestItems = document.querySelectorAll('.blood-test-item');
-    bloodTestItems.forEach((item, index) => {
-        const select = item.querySelector('.blood-test-select');
-        const valueInput = item.querySelector('.blood-test-value');
-        
-        if (select && select.value && valueInput && valueInput.value.trim()) {
-            bloodTestData.push({
-                item: select.value,
-                value: valueInput.value.trim(),
-                index: index
-            });
-        }
-    });
-    
-    // 收集尿液检测矩阵数据
-    const urinalysisData = [];
-    const urinalysisItems = document.querySelectorAll('.urinalysis-item');
-    urinalysisItems.forEach((item, index) => {
-        const select = item.querySelector('.urinalysis-select');
-        const valueInput = item.querySelector('.urinalysis-value');
-        
-        if (select && select.value && valueInput && valueInput.value.trim()) {
-            urinalysisData.push({
-                item: select.value,
-                value: valueInput.value.trim(),
-                index: index
-            });
-        }
-    });
-    
-    // 收集图片数据
-    const bleedingImages = [];
-    const imageItems = document.querySelectorAll('#bleedingUploadedImages .uploaded-image-item img');
-    imageItems.forEach(img => {
-        bleedingImages.push(img.src);
-    });
-    
-    // 收集自我评分数据
-    const selfRating = document.getElementById('self-rating-slider')?.value || '';
-    
-    // 构建测试数据
-    const testMetricsData = {
-        symptoms: symptomsData.length > 0 ? { items: symptomsData } : null,
-        temperature: temperature && !isNaN(parseFloat(temperature)) ? { temperature: parseFloat(temperature) } : null,
-        proteinuria: proteinuria && !isNaN(parseFloat(proteinuria)) ? { proteinuria24h: parseFloat(proteinuria) } : null,
-        'blood-test': (() => {
-            const bloodData = {};
-            if (wbc && !isNaN(parseFloat(wbc))) bloodData.wbc = parseFloat(wbc);
-            if (rbc && !isNaN(parseFloat(rbc))) bloodData.rbc = parseFloat(rbc);
-            if (hb && !isNaN(parseInt(hb))) bloodData.hb = parseInt(hb);
-            if (plt && !isNaN(parseInt(plt))) bloodData.plt = parseInt(plt);
-            return Object.keys(bloodData).length > 0 ? bloodData : null;
-        })(),
-        'bleeding-point': bleedingPoints.length > 0 || bleedingImages.length > 0 ? { bleedingPoints, bleedingImages } : null,
-        'blood-test-matrix': bloodTestData.length > 0 ? { bloodTestMatrix: bloodTestData } : null,
-        'urinalysis-matrix': urinalysisData.length > 0 ? { urinalysisMatrix: urinalysisData } : null,
-        'self-rating': selfRating && !isNaN(parseInt(selfRating)) ? { selfRating: parseInt(selfRating) } : null,
-        timestamp: new Date().toISOString(),
-        id: 'test'
-    };
-    
-    // 过滤掉null值
-    Object.keys(testMetricsData).forEach(key => {
-        if (testMetricsData[key] === null) {
-            delete testMetricsData[key];
-        }
-    });
-    
-    const testPayload = {
-        exportInfo: {
-            exportTime: new Date().toLocaleString('zh-CN'),
-            version: '1.0',
-            appName: '紫癜精灵',
-            dataType: 'health_metrics'
-        },
-        metricsData: testMetricsData
-    };
-    
-    // 计算JSON大小
-    const jsonString = JSON.stringify({ user_id: 'test', username: 'test', payload: testPayload });
-    const jsonSizeKB = (new Blob([jsonString]).size / 1024).toFixed(1);
-    const maxJsonSizeKB = 5120; // 5MB限制
-    
-    // 更新显示
-    const sizeDisplay = document.getElementById('json-size-display');
-    if (!sizeDisplay) return;
-    
-    // 检查是否有图片上传
-    const hasImages = bleedingImages.length > 0;
-    
-    if (!hasImages) {
-        // 没有图片时隐藏大小显示
-        sizeDisplay.style.display = 'none';
-        return;
-    }
-    
-    // 有图片时显示大小
-    sizeDisplay.style.display = 'block';
-    const isOverLimit = jsonSizeKB > maxJsonSizeKB;
-    sizeDisplay.innerHTML = `
-        <div style="color: ${isOverLimit ? '#e74c3c' : '#27ae60'}; font-weight: 600;">
-            当前数据大小: ${jsonSizeKB}KB / ${maxJsonSizeKB}KB
-        </div>
-        ${isOverLimit ? '<div style="color: #e74c3c; margin-top: 4px;">⚠️ 数据过大，请删除一些图片或减少文本内容</div>' : ''}
-    `;
-}
 
 // 图片压缩函数（从病历页面复制）
 function compressImage(file, callback, errorCallback, maxSizeKB = 500) {

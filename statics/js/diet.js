@@ -466,20 +466,29 @@ function initDietImageUploadForMeal(mealId) {
     });
 }
 
-function handleDietImageDataUrl(mealId, dataUrl) {
+async function handleDietImageDataUrl(mealId, dataUrl) {
     showDietCompressionProgress('图片处理中...');
-    dataURLToFile(dataUrl, `diet-image-${mealId}.jpg`).then(file => {
-        compressImage(file, (compressedDataUrl) => {
-            hideDietCompressionProgress();
-            addDietImageToMeal(mealId, compressedDataUrl, file.name);
-        }, (error) => {
-            hideDietCompressionProgress();
-            showToast('图片压缩失败: ' + error);
-        }, 500);
-    }).catch(err => {
+    
+    try {
+        const file = await dataURLToFile(dataUrl, `diet-image-${mealId}.jpg`);
+        const compressedDataUrl = await compressImagePromise(file, 500);
+        
+        // 上传图片到服务器
+        const imageUrl = await uploadDietImageToServer(compressedDataUrl, 'diet');
+        
         hideDietCompressionProgress();
-        showToast('图片处理失败: ' + (err?.message || err));
-    });
+        addDietImageToMeal(mealId, imageUrl, file.name);
+        
+        // 显示上传成功信息
+        const originalSizeKB = (file.size / 1024).toFixed(1);
+        const compressedSizeKB = ((compressedDataUrl.length * 0.75) / 1024).toFixed(1);
+        const compressionRatio = ((1 - compressedDataUrl.length * 0.75 / file.size) * 100).toFixed(1);
+        
+        showToast(`图片上传成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`);
+    } catch (error) {
+        hideDietCompressionProgress();
+        showToast('图片处理失败: ' + (error?.message || error));
+    }
 }
 
 // 复用 metrics 中的方法（复制轻量实现，避免依赖）
@@ -498,6 +507,62 @@ function dataURLToFile(dataUrl, filename) {
             reject(error);
         }
     });
+}
+
+// 压缩图片的Promise版本
+function compressImagePromise(file, maxSizeKB = 500) {
+    return new Promise((resolve, reject) => {
+        compressImage(file, resolve, reject, maxSizeKB);
+    });
+}
+
+// 上传饮食图片到服务器
+async function uploadDietImageToServer(imageData, imageType) {
+    try {
+        // 获取用户身份信息
+        const identity = await resolveUserIdentity();
+        const user_id = identity.user_id || '';
+        const username = identity.username || '';
+
+        if (!user_id) {
+            throw new Error('无法获取用户ID');
+        }
+
+        // 构建请求数据
+        const payload = {
+            user_id: user_id,
+            username: username,
+            image_data: imageData,
+            image_type: imageType
+        };
+
+        // 获取API基础URL
+        var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
+        if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
+
+        // 发送上传请求
+        const response = await fetch(API_BASE + '/upload_image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.message || '图片上传失败');
+        }
+
+        // 返回完整的图片URL
+        const imageUrl = result.data.image_url;
+        return imageUrl.startsWith('http') ? imageUrl : API_BASE + imageUrl;
+    } catch (error) {
+        console.error('上传饮食图片失败:', error);
+        throw error;
+    }
 }
 
 function compressImage(file, callback, errorCallback, maxSizeKB = 500) {

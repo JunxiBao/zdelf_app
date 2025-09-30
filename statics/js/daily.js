@@ -2179,12 +2179,16 @@ async function renderDietTimeline(items, container) {
               ${ev.food ? `<p style="${foodTextStyle}"><strong>食物：</strong>${ev.food}</p>` : ''}
               ${ev.images && ev.images.length ? `
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 8px;">
-                  ${ev.images.map((src, i) => `
+                  ${ev.images.map((src, i) => {
+                    // 确保图片URL是完整的URL
+                    const imageUrl = src.startsWith('http') ? src : (window.__API_BASE__ || 'https://app.zdelf.cn') + src;
+                    return `
                     <div style="position: relative;"> 
-                      <img src="${src}" alt="饮食图片 ${i+1}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 10px; cursor: pointer; border: 1px solid rgba(0,0,0,0.08);" onclick="openImageModal('${src}')" />
+                      <img src="${imageUrl}" alt="饮食图片 ${i+1}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 10px; cursor: pointer; border: 1px solid rgba(0,0,0,0.08);" onclick="openImageModal('${imageUrl}')" />
                       <div style="position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.55); color: #fff; padding: 2px 6px; border-radius: 6px; font-size: 12px;">${i+1}</div>
                     </div>
-                  `).join('')}
+                  `;
+                  }).join('')}
                 </div>
               ` : ''}
             </div>
@@ -3380,12 +3384,16 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
           <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
           <h5 style="${titleStyle}">▶ 出血点图片 (${bleeding.bleedingImages.length}张)</h5>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 8px;">
-            ${bleeding.bleedingImages.map((imageSrc, index) => `
+            ${bleeding.bleedingImages.map((imageSrc, index) => {
+              // 确保图片URL是完整的URL
+              const imageUrl = imageSrc.startsWith('http') ? imageSrc : (window.__API_BASE__ || 'https://app.zdelf.cn') + imageSrc;
+              return `
               <div style="position: relative;">
-                <img src="${imageSrc}" alt="出血点图片 ${index + 1}" style="${imageStyle}" onclick="openImageModal('${imageSrc}')" />
+                <img src="${imageUrl}" alt="出血点图片 ${index + 1}" style="${imageStyle}" onclick="openImageModal('${imageUrl}')" />
                 <div style="position: absolute; top: 8px; right: 8px; background: rgba(0, 0, 0, 0.6); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">${index + 1}</div>
               </div>
-            `).join('')}
+            `;
+            }).join('')}
           </div>
         </div>
       `;
@@ -3513,12 +3521,16 @@ function formatDietForDisplay(content, isDarkMode = false) {
           ${meal.food ? `<p style="${foodStyle}"><strong>食物:</strong> ${meal.food}</p>` : ''}
           ${Array.isArray(meal.images) && meal.images.length > 0 ? `
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 8px;">
-              ${meal.images.map((src, i) => `
+              ${meal.images.map((src, i) => {
+                // 确保图片URL是完整的URL
+                const imageUrl = src.startsWith('http') ? src : (window.__API_BASE__ || 'https://app.zdelf.cn') + src;
+                return `
                 <div style=\"position: relative;\"> 
-                  <img src=\"${src}\" alt=\"饮食图片 ${i+1}\" style=\"width: 100%; height: 140px; object-fit: cover; border-radius: 10px; cursor: pointer; border: 1px solid rgba(0,0,0,0.08);\" onclick=\"openImageModal('${src}')\" />
+                  <img src=\"${imageUrl}\" alt=\"饮食图片 ${i+1}\" style=\"width: 100%; height: 140px; object-fit: cover; border-radius: 10px; cursor: pointer; border: 1px solid rgba(0,0,0,0.08);\" onclick=\"openImageModal('${imageUrl}')\" />
                   <div style=\"position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.55); color: #fff; padding: 2px 6px; border-radius: 6px; font-size: 12px;\">${i+1}</div>
                 </div>
-              `).join('')}
+              `;
+              }).join('')}
             </div>
           ` : ''}
         </div>
@@ -3735,12 +3747,16 @@ function formatCaseForDisplay(content, isDarkMode = false) {
         <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
         <h5 style="${titleStyle}">▶ 病例单图片 (${caseData.images.length}张)</h5>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 8px;">
-          ${caseData.images.map((imageSrc, index) => `
+          ${caseData.images.map((imageSrc, index) => {
+            // 确保图片URL是完整的URL
+            const imageUrl = imageSrc.startsWith('http') ? imageSrc : (window.__API_BASE__ || 'https://app.zdelf.cn') + imageSrc;
+            return `
             <div style="position: relative;">
-              <img src="${imageSrc}" alt="病例单图片 ${index + 1}" style="${imageStyle}" onclick="openImageModal('${imageSrc}')" />
+              <img src="${imageUrl}" alt="病例单图片 ${index + 1}" style="${imageStyle}" onclick="openImageModal('${imageUrl}')" />
               <div style="position: absolute; top: 8px; right: 8px; background: rgba(0, 0, 0, 0.6); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">${index + 1}</div>
             </div>
-          `).join('')}
+          `;
+          }).join('')}
         </div>
       </div>
     `;
