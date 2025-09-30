@@ -127,5 +127,14 @@
       <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
 
     </main>
+    
+    <script>
+      // 页面加载完成后初始化
+      document.addEventListener('DOMContentLoaded', function() {
+        if (window.initMe) {
+          window.initMe(document);
+        }
+      });
+    </script>
   </body>
 </html>

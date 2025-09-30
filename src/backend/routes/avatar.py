@@ -85,8 +85,8 @@ def process_avatar_image(image_data, user_id):
         file_size = os.path.getsize(filepath)
         logger.info(f"头像文件已保存: {filename}, 大小: {file_size} bytes")
         
-        # 返回相对路径
-        return f"/statics/avatars/{filename}"
+        # 返回相对路径（修正为正确的路径）
+        return f"/src/statics/avatars/{filename}"
         
     except Exception as e:
         logger.error(f"处理头像图片失败: {str(e)}")
