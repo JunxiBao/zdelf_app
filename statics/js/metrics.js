@@ -37,8 +37,23 @@ function hideSaveLoading(saveState, originalText = null) {
       var C = window.Capacitor || {};
       return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null;
     }
+    function isVibrationEnabled(){
+      try{
+        var v = localStorage.getItem('vibration_enabled');
+        return v === null ? true : v === 'true';
+      }catch(_){ return true; }
+    }
     window.__hapticImpact__ = function(style){
-      if (!isNative) return;
+      if (!isVibrationEnabled()) return;
+      if (!isNative) {
+        try {
+          if (navigator.vibrate) {
+            var map = { Light: 10, Medium: 20, Heavy: 30 };
+            navigator.vibrate(map[style] || 10);
+          }
+        } catch(_) {}
+        return;
+      }
       var h = getHaptics();
       if (!h) return;
       try { h.impact && h.impact({ style: style }); } catch(_) {}

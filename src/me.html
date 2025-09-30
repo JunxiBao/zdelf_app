@@ -34,8 +34,12 @@
       <!-- Profile Card: shows avatar, name, email, and edit button -->
       <section class="card" aria-label="用户资料">
         <div class="profile">
-          <div class="avatar" aria-hidden="true">
+          <div class="avatar" aria-hidden="true" id="avatarContainer">
             <div class="avatar-inner" id="avatarInitials">JB</div>
+            <img id="avatarImage" class="avatar-image" style="display: none;" alt="用户头像">
+            <button class="avatar-upload-btn" id="avatarUploadBtn" aria-label="上传头像">
+              <span class="material-icons-outlined">camera_alt</span>
+            </button>
           </div>
           <div class="profile-info">
             <div class="name" id="displayName">Junxi Bao</div>
@@ -53,6 +57,20 @@
       <!-- Settings List -->
       <!-- Settings list: help -->
       <section class="list" aria-label="设置列表">
+        <!-- Vibration Feedback -->
+        <div class="li rippleable" data-action="vibration">
+          <span class="material-icons-outlined" aria-hidden="true"
+            >vibration</span
+          >
+          <div>
+            <div class="label">震动反馈</div>
+            <div class="desc">开启或关闭触觉反馈</div>
+          </div>
+          <span class="material-icons-outlined" aria-hidden="true"
+            >chevron_right</span
+          >
+        </div>
+
         <!-- Help & Feedback -->
         <div class="li rippleable" data-action="help">
           <span class="material-icons-outlined" aria-hidden="true"
@@ -61,6 +79,20 @@
           <div>
             <div class="label">帮助与反馈</div>
             <div class="desc">常见问题、联系我们</div>
+          </div>
+          <span class="material-icons-outlined" aria-hidden="true"
+            >chevron_right</span
+          >
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="li rippleable" data-action="disclaimer">
+          <span class="material-icons-outlined" aria-hidden="true"
+            >gavel</span
+          >
+          <div>
+            <div class="label">免责声明</div>
+            <div class="desc">使用条款、隐私政策</div>
           </div>
           <span class="material-icons-outlined" aria-hidden="true"
             >chevron_right</span
@@ -91,6 +123,8 @@
         </button>
       </div>
 
+      <!-- 隐藏的文件输入 -->
+      <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
 
     </main>
   </body>

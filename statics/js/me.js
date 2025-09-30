@@ -34,6 +34,7 @@
     name: "无", // 显示为用户名
     age: "无", // 显示为年龄
     phone: "无", // 显示为手机号
+    avatar_url: null, // 头像URL
   };
   // Cache password from /readdata to prefill original password
   let userPassword = "";
@@ -46,7 +47,7 @@
    */
   function addRipple(e) {
     const target = e.currentTarget;
-    try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
+    triggerVibration('Light');
     const rect = target.getBoundingClientRect();
     const ripple = document.createElement("span");
     const size = Math.max(rect.width, rect.height);
@@ -100,12 +101,189 @@
     return s;
   }
 
+  // 头像上传处理函数
+  function handleAvatarUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // 检查文件类型
+    if (!file.type.startsWith('image/')) {
+      showErrorModal('请选择图片文件');
+      return;
+    }
+    
+    // 检查文件大小 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showErrorModal('图片文件过大，请选择小于5MB的图片');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      showAvatarCropModal(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  }
+  
+  // 头像裁剪模态框
+  function showAvatarCropModal(imageData) {
+    const mask = document.createElement("div");
+    mask.className = "avatar-crop-mask";
+    
+    const dialog = document.createElement("div");
+    dialog.className = "avatar-crop-dialog";
+    
+    const header = document.createElement("div");
+    header.className = "avatar-crop-header";
+    const title = document.createElement("h3");
+    title.className = "avatar-crop-title";
+    title.textContent = "裁剪头像";
+    header.appendChild(title);
+    
+    const body = document.createElement("div");
+    body.className = "avatar-crop-body";
+    
+    const instructions = document.createElement("div");
+    instructions.className = "avatar-crop-instructions";
+    instructions.textContent = "拖拽图片调整位置，确保头像居中显示";
+    body.appendChild(instructions);
+    
+    const preview = document.createElement("div");
+    preview.className = "avatar-crop-preview";
+    const canvas = document.createElement("img");
+    canvas.className = "avatar-crop-canvas";
+    canvas.src = imageData;
+    preview.appendChild(canvas);
+    body.appendChild(preview);
+    
+    const controls = document.createElement("div");
+    controls.className = "avatar-crop-controls";
+    
+    const cancelBtn = document.createElement("button");
+    cancelBtn.className = "avatar-crop-btn avatar-crop-btn-cancel";
+    cancelBtn.textContent = "取消";
+    
+    const confirmBtn = document.createElement("button");
+    confirmBtn.className = "avatar-crop-btn avatar-crop-btn-confirm";
+    confirmBtn.textContent = "确认";
+    
+    controls.appendChild(cancelBtn);
+    controls.appendChild(confirmBtn);
+    body.appendChild(controls);
+    
+    dialog.appendChild(header);
+    dialog.appendChild(body);
+    mask.appendChild(dialog);
+    document.body.appendChild(mask);
+    
+    // 显示动画
+    requestAnimationFrame(() => {
+      mask.classList.add("show");
+      dialog.classList.add("show");
+    });
+    
+    // 关闭函数
+    const close = () => {
+      dialog.classList.remove("show");
+      mask.classList.remove("show");
+      setTimeout(() => {
+        if (mask.parentNode) mask.remove();
+      }, 300);
+    };
+    
+    // 事件处理
+    cancelBtn.addEventListener("click", close, { once: true });
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) close();
+    });
+    
+    confirmBtn.addEventListener("click", () => {
+      uploadAvatar(imageData);
+      close();
+    }, { once: true });
+    
+    // ESC键关闭
+    const escHandler = (e) => {
+      if (e.key === "Escape") {
+        document.removeEventListener("keydown", escHandler);
+        close();
+      }
+    };
+    document.addEventListener("keydown", escHandler);
+    
+    cleanupFns.push(() => {
+      document.removeEventListener("keydown", escHandler);
+      if (mask.parentNode) mask.remove();
+    });
+  }
+  
+  // 上传头像到服务器
+  async function uploadAvatar(imageData) {
+    try {
+      const payload = {
+        user_id: storedId || storedUsername,
+        avatar_data: imageData
+      };
+      
+      const response = await fetch(apiBase + "/upload_avatar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        showErrorModal(result.message || "头像上传失败");
+        return;
+      }
+      
+      // 更新本地用户数据
+      user.avatar_url = result.data.avatar_url;
+      renderUser();
+      showSuccessModal("头像上传成功");
+      
+    } catch (error) {
+      console.error("头像上传失败:", error);
+      showErrorModal("头像上传失败，请稍后再试");
+    }
+  }
+
   /**
    * Initialize the "Me" page UI.
    * @param {Document|ShadowRoot} rootEl - Scope for DOM queries.
    */
   function initMe(rootEl) {
     const root = rootEl || document; // allow manual boot for standalone use
+
+    // 震动反馈设置管理
+    function getVibrationSetting() {
+      const stored = localStorage.getItem('vibration_enabled');
+      return stored !== null ? stored === 'true' : true; // 默认开启
+    }
+
+    function setVibrationSetting(enabled) {
+      localStorage.setItem('vibration_enabled', enabled.toString());
+    }
+
+    function triggerVibration(type = 'Light') {
+      if (!getVibrationSetting()) return;
+      try {
+        if (window.__hapticImpact__) {
+          window.__hapticImpact__(type);
+        } else if (navigator.vibrate) {
+          // 降级到标准震动API
+          const patterns = {
+            'Light': [10],
+            'Medium': [20],
+            'Heavy': [30]
+          };
+          navigator.vibrate(patterns[type] || patterns['Light']);
+        }
+      } catch (e) {
+        console.debug('[vibration] 震动不可用:', e);
+      }
+    }
 
     // Toast notification helper（放最顶层，且不阻挡点击）
     const toast = (msg) => {
@@ -333,6 +511,7 @@
     const ageEl = root.querySelector("#displayAge");
     const phoneEl = root.querySelector("#displayPhone");
     const initialsEl = root.querySelector("#avatarInitials");
+    const avatarImageEl = root.querySelector("#avatarImage");
 
     function renderUser() {
       if (nameEl) nameEl.textContent = user.name || "无";
@@ -345,6 +524,18 @@
             ? "手机号：" + maskPhone(user.phone)
             : "手机号：无";
       if (initialsEl) initialsEl.textContent = initialsFrom(user.name);
+      
+      // 处理头像显示
+      if (avatarImageEl && initialsEl) {
+        if (user.avatar_url) {
+          avatarImageEl.src = user.avatar_url;
+          avatarImageEl.style.display = "block";
+          initialsEl.style.display = "none";
+        } else {
+          avatarImageEl.style.display = "none";
+          initialsEl.style.display = "grid";
+        }
+      }
     }
 
     // Try to load from backend using stored UserID
@@ -421,7 +612,8 @@
               ? rec.age
               : "无";
           const phone = pick(rec, ["phone", "mobile", "phone_number"], "无");
-          user = { name: username, age, phone };
+          const avatar_url = pick(rec, ["avatar_url", "avatar", "profile_picture"], null);
+          user = { name: username, age, phone, avatar_url };
           // 后端当前会返回明文密码，这里仅用于“新密码不能与原密码相同”的前端校验，不做任何回显
           currentPassword =
             typeof rec.password === "string" ? rec.password : null;
@@ -869,7 +1061,7 @@
     const editBtn = root.querySelector("#editProfileBtn");
     if (editBtn) {
       const editHandler = () => openEditDialog();
-      const h = () => { try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {} };
+      const h = () => { triggerVibration('Medium'); };
       editBtn.addEventListener("click", editHandler);
       editBtn.addEventListener("click", h);
       cleanupFns.push(() => editBtn.removeEventListener("click", editHandler));
@@ -882,7 +1074,7 @@
     const logoutBtn = root.querySelector("#logoutBtn");
     if (logoutBtn) {
       const logoutHandler = async () => {
-        try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {}
+        triggerVibration('Medium');
         const ok = await confirmDialog("确定要退出登录吗？");
         if (!ok) return;
         try {
@@ -904,7 +1096,7 @@
     const deleteBtn = root.querySelector("#deleteAccountBtn");
     if (deleteBtn) {
       const deleteHandler = async () => {
-        try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {}
+        triggerVibration('Medium');
         // 双重确认，防止误触
         const ok1 = await confirmDialog("此操作将永久删除您的账号与相关数据，且不可恢复。是否继续？");
         if (!ok1) return;
@@ -1127,11 +1319,342 @@
       });
     }
 
+    // 免责声明弹窗样式
+    function ensureDisclaimerStyles() {
+      if (document.getElementById("disclaimer-modal-style")) return;
+      const s = document.createElement("style");
+      s.id = "disclaimer-modal-style";
+      s.textContent = `
+      .disclaimer-mask{position:fixed;inset:0;background:color-mix(in srgb, var(--text,#000) 20%, transparent);backdrop-filter:saturate(120%) blur(2px);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s ease;z-index:10000}
+      .disclaimer-mask.show{opacity:1}
+      .disclaimer-dialog{width:min(92vw,500px);background:var(--card,#fff);color:var(--text,#111);border-radius:16px;box-shadow:var(--shadow-3,0 10px 30px rgba(0,0,0,.15));transform:translateY(12px) scale(.98);opacity:0;transition:transform .2s ease,opacity .2s ease;border:1px solid var(--border,rgba(0,0,0,.06))}
+      .disclaimer-dialog.show{transform:translateY(0) scale(1);opacity:1}
+      .disclaimer-header{padding:20px 24px 16px;font-weight:700;font-size:18px;text-align:center;border-bottom:1px solid var(--divider,rgba(0,0,0,.1))}
+      .disclaimer-body{padding:20px 24px;line-height:1.6;max-height:60vh;overflow-y:auto}
+      .disclaimer-section{margin-bottom:20px}
+      .disclaimer-section:last-child{margin-bottom:0}
+      .disclaimer-section h3{font-size:16px;font-weight:600;margin:0 0 12px 0;color:var(--text,#111)}
+      .disclaimer-section p{margin:0 0 8px 0;color:var(--text-secondary,#666)}
+      .disclaimer-section p:last-child{margin-bottom:0}
+      .disclaimer-section ul{margin:8px 0;padding-left:20px}
+      .disclaimer-section li{margin:4px 0;color:var(--text-secondary,#666)}
+      .contact-info{background:linear-gradient(135deg,rgba(126,63,242,0.08),transparent);padding:16px;border-radius:12px;border:1px solid rgba(126,63,242,0.2)}
+      .contact-email{color:var(--brand,#1a73e8);font-weight:600;text-decoration:none;word-break:break-all}
+      .contact-email:hover{text-decoration:underline}
+      .disclaimer-footer{display:flex;justify-content:center;padding:0 24px 20px}
+      .disclaimer-btn{appearance:none;border:0;padding:12px 24px;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;background:var(--brand,#1a73e8);color:#fff;transition:all 0.2s ease}
+      .disclaimer-btn:hover{background:var(--brand-700,#1558b3);transform:translateY(-1px)}
+      @media (prefers-color-scheme: dark){
+        .disclaimer-mask{background:color-mix(in srgb,#000 50%, transparent)}
+        .disclaimer-dialog{background:var(--card,#1e1f22);color:var(--text,#e6e6e6);border-color:var(--border,rgba(255,255,255,.08))}
+        .disclaimer-section h3{color:var(--text,#e6e6e6)}
+        .disclaimer-section p{color:var(--text-secondary,#9aa3af)}
+        .disclaimer-section li{color:var(--text-secondary,#9aa3af)}
+        .contact-info{background:linear-gradient(135deg,rgba(126,63,242,0.15),transparent);border-color:rgba(126,63,242,0.3)}
+        .contact-email{color:var(--brand,#8ab4f8)}
+      }
+      `;
+      document.head.appendChild(s);
+      cleanupFns.push(() => {
+        if (s.parentNode) s.remove();
+      });
+    }
+
+    function showDisclaimerModal() {
+      ensureDisclaimerStyles();
+      const mask = document.createElement("div");
+      mask.className = "disclaimer-mask";
+
+      const dialog = document.createElement("div");
+      dialog.className = "disclaimer-dialog";
+
+      const header = document.createElement("div");
+      header.className = "disclaimer-header";
+      header.textContent = "免责声明";
+
+      const body = document.createElement("div");
+      body.className = "disclaimer-body";
+
+      // 使用条款
+      const termsSection = document.createElement("div");
+      termsSection.className = "disclaimer-section";
+      const termsTitle = document.createElement("h3");
+      termsTitle.textContent = "使用条款";
+      const termsText = document.createElement("p");
+      termsText.innerHTML = "使用本应用即表示您同意以下条款：";
+      const termsList = document.createElement("ul");
+      termsList.innerHTML = `
+        <li>本应用仅供健康管理参考，不能替代专业医疗建议</li>
+        <li>用户应自行承担使用本应用的风险</li>
+        <li>禁止将本应用用于任何非法用途</li>
+        <li>我们保留随时修改服务条款的权利</li>
+      `;
+      termsSection.append(termsTitle, termsText, termsList);
+
+      // 隐私政策
+      const privacySection = document.createElement("div");
+      privacySection.className = "disclaimer-section";
+      const privacyTitle = document.createElement("h3");
+      privacyTitle.textContent = "隐私政策";
+      const privacyText = document.createElement("p");
+      privacyText.innerHTML = "我们重视您的隐私，承诺：";
+      const privacyList = document.createElement("ul");
+      privacyList.innerHTML = `
+        <li>严格保护您的个人健康数据</li>
+        <li>不会向第三方泄露您的个人信息</li>
+        <li>仅在必要时收集和使用数据以提供服务</li>
+        <li>您有权随时删除您的账户和数据</li>
+      `;
+      privacySection.append(privacyTitle, privacyText, privacyList);
+
+      // 免责声明
+      const disclaimerSection = document.createElement("div");
+      disclaimerSection.className = "disclaimer-section";
+      const disclaimerTitle = document.createElement("h3");
+      disclaimerTitle.textContent = "免责声明";
+      const disclaimerText = document.createElement("p");
+      disclaimerText.innerHTML = "重要提醒：";
+      const disclaimerList = document.createElement("ul");
+      disclaimerList.innerHTML = `
+        <li>本应用提供的信息仅供参考，不构成医疗建议</li>
+        <li>如有健康问题，请及时咨询专业医生</li>
+        <li>我们不对因使用本应用而产生的任何后果负责</li>
+        <li>用户应理性对待应用中的健康建议</li>
+      `;
+      disclaimerSection.append(disclaimerTitle, disclaimerText, disclaimerList);
+
+      // 联系方式
+      const contactSection = document.createElement("div");
+      contactSection.className = "disclaimer-section";
+      const contactTitle = document.createElement("h3");
+      contactTitle.textContent = "联系我们";
+      const contactInfo = document.createElement("div");
+      contactInfo.className = "contact-info";
+      const contactText = document.createElement("p");
+      contactText.textContent = "如有疑问，请联系：";
+      const developerInfo = document.createElement("p");
+      developerInfo.innerHTML = "开发者：鲍俊希 <a class='contact-email' href='mailto:junxibao@junxibao.com'>junxibao@junxibao.com</a>";
+      const designerInfo = document.createElement("p");
+      designerInfo.innerHTML = "设计师：裘可然 <a class='contact-email' href='mailto:391257652@qq.com'>391257652@qq.com</a>";
+      contactInfo.append(contactText, developerInfo, designerInfo);
+      contactSection.append(contactTitle, contactInfo);
+
+      body.append(termsSection, privacySection, disclaimerSection, contactSection);
+
+      const footer = document.createElement("div");
+      footer.className = "disclaimer-footer";
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "disclaimer-btn";
+      closeBtn.textContent = "我已阅读并同意";
+      footer.append(closeBtn);
+
+      dialog.append(header, body, footer);
+      mask.appendChild(dialog);
+      document.body.appendChild(mask);
+
+      requestAnimationFrame(() => {
+        mask.classList.add("show");
+        dialog.classList.add("show");
+      });
+
+      const close = () => {
+        dialog.classList.remove("show");
+        mask.classList.remove("show");
+        const onEnd = () => {
+          mask.removeEventListener("transitionend", onEnd);
+          if (mask.parentNode) mask.remove();
+        };
+        mask.addEventListener("transitionend", onEnd);
+      };
+
+      closeBtn.addEventListener("click", close, { once: true });
+      mask.addEventListener("click", (e) => {
+        if (e.target === mask) close();
+      });
+      document.addEventListener("keydown", function escHandler(ev) {
+        if (ev.key === "Escape") {
+          document.removeEventListener("keydown", escHandler);
+          close();
+        }
+      });
+
+      cleanupFns.push(() => {
+        if (mask.parentNode) mask.remove();
+      });
+    }
+
+    // 震动反馈设置弹窗样式
+    function ensureVibrationStyles() {
+      if (document.getElementById("vibration-modal-style")) return;
+      const s = document.createElement("style");
+      s.id = "vibration-modal-style";
+      s.textContent = `
+      .vibration-mask{position:fixed;inset:0;background:color-mix(in srgb, var(--text,#000) 20%, transparent);backdrop-filter:saturate(120%) blur(2px);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s ease;z-index:10000}
+      .vibration-mask.show{opacity:1}
+      .vibration-dialog{width:min(92vw,400px);background:var(--card,#fff);color:var(--text,#111);border-radius:16px;box-shadow:var(--shadow-3,0 10px 30px rgba(0,0,0,.15));transform:translateY(12px) scale(.98);opacity:0;transition:transform .2s ease,opacity .2s ease;border:1px solid var(--border,rgba(0,0,0,.06))}
+      .vibration-dialog.show{transform:translateY(0) scale(1);opacity:1}
+      .vibration-header{padding:20px 24px 16px;font-weight:700;font-size:18px;text-align:center;border-bottom:1px solid var(--divider,rgba(0,0,0,.1))}
+      .vibration-body{padding:20px 24px;line-height:1.6}
+      .vibration-section{margin-bottom:20px}
+      .vibration-section:last-child{margin-bottom:0}
+      .vibration-section h3{font-size:16px;font-weight:600;margin:0 0 12px 0;color:var(--text,#111)}
+      .vibration-section p{margin:0 0 8px 0;color:var(--text-secondary,#666)}
+      .vibration-section p:last-child{margin-bottom:0}
+      .vibration-toggle{display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--surface,rgba(0,0,0,.04));border-radius:12px;border:1px solid var(--border,rgba(0,0,0,.1))}
+      .vibration-toggle-info{flex:1}
+      .vibration-toggle-label{font-size:16px;font-weight:500;color:var(--text,#111);margin:0 0 4px 0}
+      .vibration-toggle-desc{font-size:14px;color:var(--text-secondary,#666);margin:0}
+      .vibration-switch{position:relative;width:52px;height:32px;background:var(--border,rgba(0,0,0,.2));border-radius:16px;cursor:pointer;transition:all 0.3s ease;border:none;outline:none}
+      .vibration-switch.active{background:var(--brand,#1a73e8)}
+      .vibration-switch::before{content:'';position:absolute;top:2px;left:2px;width:28px;height:28px;background:#fff;border-radius:50%;transition:all 0.3s ease;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+      .vibration-switch.active::before{transform:translateX(20px)}
+      .vibration-footer{display:flex;justify-content:center;padding:0 24px 20px}
+      .vibration-btn{appearance:none;border:0;padding:12px 24px;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;background:var(--brand,#1a73e8);color:#fff;transition:all 0.2s ease}
+      .vibration-btn:hover{background:var(--brand-700,#1558b3);transform:translateY(-1px)}
+      @media (prefers-color-scheme: dark){
+        .vibration-mask{background:color-mix(in srgb,#000 50%, transparent)}
+        .vibration-dialog{background:var(--card,#1e1f22);color:var(--text,#e6e6e6);border-color:var(--border,rgba(255,255,255,.08))}
+        .vibration-section h3{color:var(--text,#e6e6e6)}
+        .vibration-section p{color:var(--text-secondary,#9aa3af)}
+        .vibration-toggle{background:var(--surface,rgba(255,255,255,.08));border-color:var(--border,rgba(255,255,255,.12))}
+        .vibration-toggle-label{color:var(--text,#e6e6e6)}
+        .vibration-toggle-desc{color:var(--text-secondary,#9aa3af)}
+        .vibration-switch{background:rgba(255,255,255,.2)}
+        .vibration-switch::before{background:#fff}
+      }
+      `;
+      document.head.appendChild(s);
+      cleanupFns.push(() => {
+        if (s.parentNode) s.remove();
+      });
+    }
+
+    function showVibrationModal() {
+      ensureVibrationStyles();
+      const mask = document.createElement("div");
+      mask.className = "vibration-mask";
+
+      const dialog = document.createElement("div");
+      dialog.className = "vibration-dialog";
+
+      const header = document.createElement("div");
+      header.className = "vibration-header";
+      header.textContent = "震动反馈设置";
+
+      const body = document.createElement("div");
+      body.className = "vibration-body";
+
+      // 震动设置说明
+      const infoSection = document.createElement("div");
+      infoSection.className = "vibration-section";
+      const infoTitle = document.createElement("h3");
+      infoTitle.textContent = "触觉反馈";
+      const infoText = document.createElement("p");
+      infoText.textContent = "开启震动反馈可以在点击按钮、完成操作时提供触觉反馈，提升使用体验。";
+      infoSection.append(infoTitle, infoText);
+
+      // 震动开关
+      const toggleSection = document.createElement("div");
+      toggleSection.className = "vibration-section";
+      const toggleContainer = document.createElement("div");
+      toggleContainer.className = "vibration-toggle";
+      
+      const toggleInfo = document.createElement("div");
+      toggleInfo.className = "vibration-toggle-info";
+      const toggleLabel = document.createElement("div");
+      toggleLabel.className = "vibration-toggle-label";
+      toggleLabel.textContent = "震动反馈";
+      const toggleDesc = document.createElement("div");
+      toggleDesc.className = "vibration-toggle-desc";
+      toggleDesc.textContent = "点击按钮时提供触觉反馈";
+      
+      toggleInfo.append(toggleLabel, toggleDesc);
+      
+      const toggleSwitch = document.createElement("button");
+      toggleSwitch.className = "vibration-switch";
+      toggleSwitch.setAttribute("role", "switch");
+      toggleSwitch.setAttribute("aria-label", "震动反馈开关");
+      
+      // 设置初始状态
+      const isEnabled = getVibrationSetting();
+      if (isEnabled) {
+        toggleSwitch.classList.add("active");
+        toggleSwitch.setAttribute("aria-checked", "true");
+      } else {
+        toggleSwitch.setAttribute("aria-checked", "false");
+      }
+      
+      // 切换功能
+      toggleSwitch.addEventListener("click", () => {
+        const currentState = toggleSwitch.classList.contains("active");
+        const newState = !currentState;
+        
+        toggleSwitch.classList.toggle("active", newState);
+        toggleSwitch.setAttribute("aria-checked", newState.toString());
+        setVibrationSetting(newState);
+        
+        // 提供反馈
+        if (newState) {
+          triggerVibration('Medium');
+        }
+      });
+      
+      toggleContainer.append(toggleInfo, toggleSwitch);
+      toggleSection.append(toggleContainer);
+
+      body.append(infoSection, toggleSection);
+
+      const footer = document.createElement("div");
+      footer.className = "vibration-footer";
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "vibration-btn";
+      closeBtn.textContent = "完成";
+      footer.append(closeBtn);
+
+      dialog.append(header, body, footer);
+      mask.appendChild(dialog);
+      document.body.appendChild(mask);
+
+      requestAnimationFrame(() => {
+        mask.classList.add("show");
+        dialog.classList.add("show");
+      });
+
+      const close = () => {
+        dialog.classList.remove("show");
+        mask.classList.remove("show");
+        const onEnd = () => {
+          mask.removeEventListener("transitionend", onEnd);
+          if (mask.parentNode) mask.remove();
+        };
+        mask.addEventListener("transitionend", onEnd);
+      };
+
+      closeBtn.addEventListener("click", close, { once: true });
+      mask.addEventListener("click", (e) => {
+        if (e.target === mask) close();
+      });
+      document.addEventListener("keydown", function escHandler(ev) {
+        if (ev.key === "Escape") {
+          document.removeEventListener("keydown", escHandler);
+          close();
+        }
+      });
+
+      cleanupFns.push(() => {
+        if (mask.parentNode) mask.remove();
+      });
+    }
+
     // 列表项点击
     root.querySelectorAll("[data-action]").forEach((el) => {
       const actionHandler = () => {
         if (el.dataset.action === "help") {
           showHelpModal();
+        } else if (el.dataset.action === "disclaimer") {
+          showDisclaimerModal();
+        } else if (el.dataset.action === "vibration") {
+          showVibrationModal();
         } else {
           toast("打开：" + el.dataset.action);
         }
@@ -1139,6 +1662,23 @@
       el.addEventListener("click", actionHandler);
       cleanupFns.push(() => el.removeEventListener("click", actionHandler));
     });
+
+    // 头像上传功能
+    const avatarUploadBtn = root.querySelector("#avatarUploadBtn");
+    const avatarFileInput = root.querySelector("#avatarFileInput");
+    
+    if (avatarUploadBtn && avatarFileInput) {
+      const uploadHandler = () => {
+        triggerVibration('Light');
+        avatarFileInput.click();
+      };
+      
+      avatarUploadBtn.addEventListener("click", uploadHandler);
+      cleanupFns.push(() => avatarUploadBtn.removeEventListener("click", uploadHandler));
+      
+      avatarFileInput.addEventListener("change", handleAvatarUpload);
+      cleanupFns.push(() => avatarFileInput.removeEventListener("change", handleAvatarUpload));
+    }
   }
 
   /**

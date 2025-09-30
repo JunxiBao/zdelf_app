@@ -13,7 +13,14 @@
             var C = window.Capacitor || {};
             return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null;
         }
+        function isVibrationEnabled(){
+            try{
+                var v = localStorage.getItem('vibration_enabled');
+                return v === null ? true : v === 'true';
+            }catch(_){ return true; }
+        }
         window.__hapticImpact__ = function(style){
+            if (!isVibrationEnabled()) return;
             if (!isNative) {
                 // 在非原生环境中，尝试使用Web Vibration API作为fallback
                 if (navigator.vibrate) {

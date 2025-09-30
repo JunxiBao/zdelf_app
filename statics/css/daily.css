@@ -13,6 +13,7 @@ body {
 .page-container {
   min-height: 100vh;
   position: relative;
+  padding-top: 20px; /* 为固定元素预留空间 */
 }
 
 .greeting-container {
@@ -21,6 +22,7 @@ body {
   left: 20px;
   z-index: 1000;
   text-align: left;
+  max-width: calc(100vw - 120px); /* 避免与右侧日历按钮重叠 */
 }
 
 #greeting {
@@ -42,6 +44,7 @@ body {
   z-index: 1000;
   width: calc(100% - 40px);
   max-width: 600px;
+  transition: all 0.3s ease; /* 添加平滑过渡 */
 }
 
 .search-box {
@@ -182,6 +185,8 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  max-width: calc(100vw - 120px); /* 避免与右侧日历按钮重叠 */
+  flex-wrap: wrap; /* 允许换行 */
 }
 
 /* 日期选择器输入框 - 隐藏但保持功能 */
@@ -512,6 +517,7 @@ body {
   z-index: 1000;
   width: calc(100% - 40px);
   max-width: 600px;
+  transition: all 0.3s ease; /* 添加平滑过渡 */
 }
 
 .switcher-container {
@@ -610,10 +616,11 @@ body {
   bottom: auto;
   overflow-y: visible;
   z-index: 100;
-  margin-top: 275px;
+  margin-top: 320px; /* 增加顶部间距，为固定元素留出更多空间 */
   margin-bottom: 100px;
-  min-height: calc(100vh - 415px);
+  min-height: calc(100vh - 460px); /* 相应调整最小高度 */
   padding: 0 20px;
+  transition: all 0.3s ease; /* 添加平滑过渡 */
 }
 
 /* 时间线容器 */
@@ -621,6 +628,7 @@ body {
   position: relative;
   padding-left: 40px;
   padding-top: 30px;
+  padding-bottom: 20px; /* 添加底部间距 */
 }
 
 /* 时间线主线 */
@@ -638,12 +646,13 @@ body {
 /* 增强的时间线项目 */
 .timeline-item {
   position: relative;
-  margin-bottom: 24px;
+  margin-bottom: 32px; /* 增加项目间距 */
   padding-left: 20px;
   transform: translateZ(0); /* GPU加速 */
   opacity: 0;
   transform: translateY(20px);
   animation: timelineItemFadeIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transition: all 0.3s ease; /* 添加悬停过渡 */
 }
 
 .timeline-item:nth-child(1) { animation-delay: 0.1s; }
@@ -684,20 +693,24 @@ body {
   box-shadow: 0 4px 16px rgba(98, 0, 234, 0.5), 0 0 0 6px rgba(98, 0, 234, 0.15);
 }
 
-/* 时间标签 */
+/* 时间标签 - 优化显示完整记录时间 */
 .timeline-time {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #6200ea;
-  margin-bottom: 10px;
+  margin-bottom: 12px; /* 增加底部间距 */
   background: linear-gradient(135deg, rgba(98, 0, 234, 0.08) 0%, rgba(124, 58, 237, 0.12) 100%);
-  padding: 5px 12px;
-  border-radius: 14px;
+  padding: 8px 16px; /* 增加内边距 */
+  border-radius: 16px; /* 增加圆角 */
   display: inline-block;
   border: 1px solid rgba(98, 0, 234, 0.15);
-  box-shadow: 0 1px 6px rgba(98, 0, 234, 0.08);
-  letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(98, 0, 234, 0.1); /* 增强阴影 */
+  letter-spacing: 0.2px;
   transition: all 0.3s ease;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .timeline-time:hover {
@@ -706,17 +719,63 @@ body {
   box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
 }
 
+/* 搜索结果头部 */
+.search-results-header {
+  margin-bottom: 24px; /* 增加底部间距 */
+  padding: 0 20px;
+  animation: fadeInUp 0.5s ease-out; /* 添加动画 */
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-results-count {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* 增加间距 */
+  background: linear-gradient(135deg, rgba(98, 0, 234, 0.1) 0%, rgba(124, 58, 237, 0.15) 100%);
+  border: 1px solid rgba(98, 0, 234, 0.2);
+  border-radius: 16px; /* 增加圆角 */
+  padding: 12px 20px; /* 增加内边距 */
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6200ea;
+  box-shadow: 0 3px 12px rgba(98, 0, 234, 0.15); /* 增强阴影 */
+  transition: all 0.3s ease;
+}
+
+.search-results-count:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(98, 0, 234, 0.2);
+}
+
+.search-icon {
+  font-size: 1rem;
+}
+
+.results-text {
+  letter-spacing: 0.3px;
+}
+
 /* 时间线内容卡片 */
 .timeline-content {
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   border-radius: 16px;
-  padding: 16px;
+  padding: 20px; /* 增加内边距 */
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
   border: 1px solid rgba(0, 0, 0, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 12px; /* 增加底部间距 */
 }
 
 .timeline-content::before {
@@ -749,15 +808,17 @@ body {
 /* 内容类型标签 */
 .content-type-badge {
   display: inline-block;
-  padding: 6px 14px;
-  border-radius: 14px;
+  padding: 8px 16px; /* 增加内边距 */
+  border-radius: 16px; /* 增加圆角 */
   font-size: 0.75rem;
   font-weight: 700;
-  margin-bottom: 14px;
+  margin-bottom: 16px; /* 增加底部间距 */
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15); /* 增强阴影 */
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .content-type-badge.metrics {
@@ -776,8 +837,24 @@ body {
 }
 
 .content-type-badge:hover {
-  transform: translateY(-1px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* 添加内容类型标签的光泽效果 */
+.content-type-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.content-type-badge:hover::before {
+  left: 100%;
 }
 
 /* 内容摘要 */
@@ -786,7 +863,8 @@ body {
   line-height: 1.6;
   font-size: 0.95rem;
   font-weight: 500;
-  margin-top: 4px;
+  margin-top: 8px; /* 增加顶部间距 */
+  padding: 12px 0; /* 添加内边距 */
 }
 
 /* 深色模式时间线样式 */
@@ -844,6 +922,61 @@ body {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* 搜索加载动画 */
+.search-loading {
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin: 16px 0;
+  transition: all 0.3s ease;
+}
+
+.search-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(98, 0, 234, 0.1);
+  border-top: 3px solid #6200ea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(98, 0, 234, 0.2);
+}
+
+.search-loading-text {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  opacity: 0.8;
+  letter-spacing: -0.01em;
+}
+
+/* 深色模式搜索加载样式 */
+@media (prefers-color-scheme: dark) {
+  .search-loading {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .search-loading-spinner {
+    border: 3px solid rgba(167, 139, 250, 0.1);
+    border-top: 3px solid #a78bfa;
+    box-shadow: 0 2px 12px rgba(167, 139, 250, 0.3);
+  }
+  
+  .search-loading-text {
+    color: #d1d5db;
+  }
 }
 
 /* 局部加载动画 */
@@ -994,6 +1127,26 @@ body {
 }
 
 /* 移除旧的卡片网格样式，使用时间线布局 */
+
+/* 布局优化：添加更好的视觉层次 */
+.timeline-item:hover {
+  transform: translateX(4px); /* 悬停时轻微右移 */
+}
+
+.timeline-item:hover .timeline-content {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+/* 优化时间线节点的视觉效果 */
+.timeline-node {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.timeline-item:hover .timeline-node {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 4px 16px rgba(98, 0, 234, 0.4), 0 0 0 6px rgba(98, 0, 234, 0.1);
+}
 
 /* 统一卡片样式 */
 .unified-card {
@@ -1902,13 +2055,19 @@ body {
 }
 
 @media (max-width: 768px) {
+  .page-container {
+    padding-top: 10px; /* 移动端减少顶部间距 */
+  }
+
   .greeting-container {
     top: 90px;
     left: 15px;
+    max-width: calc(100vw - 100px); /* 移动端调整最大宽度 */
   }
 
   #greeting {
     font-size: 1.4rem;
+    line-height: 1.3; /* 优化行高 */
   }
 
   .search-container {
@@ -1949,6 +2108,8 @@ body {
     top: 140px;
     left: 15px;
     gap: 10px;
+    max-width: calc(100vw - 100px); /* 移动端调整最大宽度 */
+    flex-wrap: wrap; /* 确保移动端可以换行 */
   }
 
   .date-picker-display {
@@ -2016,6 +2177,7 @@ body {
   .data-type-switcher {
     top: 230px;
     width: calc(100% - 20px);
+    max-width: none; /* 移动端移除最大宽度限制 */
   }
 
   .data-cards-container {
@@ -2024,9 +2186,9 @@ body {
     transform: translateX(-50%);
     width: calc(100% - 20px);
     bottom: auto;
-    margin-top: 240px;
+    margin-top: 260px; /* 移动端调整顶部间距 */
     margin-bottom: 80px;
-    min-height: calc(100vh - 340px);
+    min-height: calc(100vh - 360px); /* 相应调整最小高度 */
     grid-template-columns: 1fr;
     gap: 16px;
     padding: 16px;
@@ -2054,6 +2216,34 @@ body {
 
   .item-preview {
     max-width: 100%;
+  }
+
+  /* 移动端时间线优化 */
+  .timeline-container {
+    padding-left: 30px; /* 减少左侧间距 */
+    padding-top: 20px;
+  }
+
+  .timeline-line {
+    left: 15px; /* 调整时间线位置 */
+  }
+
+  .timeline-node {
+    left: -15px; /* 调整节点位置 */
+  }
+
+  .timeline-item {
+    padding-left: 15px; /* 减少左侧间距 */
+    margin-bottom: 24px; /* 减少项目间距 */
+  }
+
+  .timeline-content {
+    padding: 16px; /* 减少内边距 */
+  }
+
+  .timeline-time {
+    padding: 6px 12px; /* 减少内边距 */
+    font-size: 0.7rem; /* 减小字体 */
   }
 }
 

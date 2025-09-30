@@ -188,6 +188,7 @@ def get_user_files(kind):
                 params.append(limit)
                 
                 logger.info("/getjson/%s executing query=%s params=%s", kind, query, params)
+                logger.info("/getjson/%s start_date=%s", kind, start_date)
                 cur.execute(query, params)
                 rows = cur.fetchall()
                 

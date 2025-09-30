@@ -26,8 +26,26 @@ function getHaptics() {
   const C = window.Capacitor || {};
   return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null;
 }
+function isVibrationEnabled() {
+  try {
+    const v = localStorage.getItem('vibration_enabled');
+    return v === null ? true : v === 'true';
+  } catch (_) {
+    return true;
+  }
+}
 function hapticImpact(style) {
-  if (!isNative) return;
+  if (!isVibrationEnabled()) return;
+  if (!isNative) {
+    // Web fallback when running in browser
+    try {
+      if (navigator.vibrate) {
+        const map = { Light: 10, Medium: 20, Heavy: 30 };
+        navigator.vibrate(map[style] || 10);
+      }
+    } catch (_) {}
+    return;
+  }
   const h = getHaptics();
   if (!h) return;
   try {
