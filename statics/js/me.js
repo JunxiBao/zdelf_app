@@ -103,8 +103,14 @@
 
   // 头像上传处理函数
   function handleAvatarUpload(event) {
+    console.log("[me] 文件选择事件触发");
     const file = event.target.files[0];
-    if (!file) return;
+    if (!file) {
+      console.log("[me] 没有选择文件");
+      return;
+    }
+    
+    console.log("[me] 选择的文件:", file.name, file.size, file.type);
     
     // 检查文件类型
     if (!file.type.startsWith('image/')) {
@@ -112,14 +118,15 @@
       return;
     }
     
-    // 检查文件大小 (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showErrorModal('图片文件过大，请选择小于5MB的图片');
+    // 检查文件大小 (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      showErrorModal('图片文件过大，请选择小于2MB的图片');
       return;
     }
     
     const reader = new FileReader();
     reader.onload = function(e) {
+      console.log("[me] 文件读取完成，显示裁剪界面");
       showAvatarCropModal(e.target.result);
     };
     reader.readAsDataURL(file);
@@ -127,71 +134,85 @@
   
   // 头像裁剪模态框
   function showAvatarCropModal(imageData) {
+    console.log("[me] 显示头像裁剪模态框，图片数据长度:", imageData ? imageData.length : 0);
+    
+    // 先移除可能存在的旧模态框
+    const existingMask = document.querySelector('.avatar-crop-mask');
+    if (existingMask) {
+      existingMask.remove();
+    }
+    
     const mask = document.createElement("div");
     mask.className = "avatar-crop-mask";
+    mask.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      opacity: 1;
+    `;
     
     const dialog = document.createElement("div");
     dialog.className = "avatar-crop-dialog";
+    dialog.style.cssText = `
+      width: 90vw;
+      max-width: 400px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      position: relative;
+      z-index: 100000;
+      opacity: 1;
+      transform: scale(1);
+    `;
     
-    const header = document.createElement("div");
-    header.className = "avatar-crop-header";
-    const title = document.createElement("h3");
-    title.className = "avatar-crop-title";
-    title.textContent = "裁剪头像";
-    header.appendChild(title);
+    // 简化的模态框内容
+    dialog.innerHTML = `
+      <div style="padding: 20px; text-align: center; background: white; min-height: 300px;">
+        <h3 style="margin: 0 0 16px 0; color: #333; font-size: 18px; font-weight: 600;">头像裁剪</h3>
+        <div style="width: 200px; height: 200px; margin: 0 auto 16px; border-radius: 50%; overflow: hidden; border: 3px solid #1a73e8; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+          <img src="${imageData}" style="width: 100%; height: 100%; object-fit: cover;" alt="头像预览" onerror="console.log('图片加载失败')">
+        </div>
+        <p style="margin: 0 0 20px 0; color: #666; font-size: 14px;">圆形头像预览</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <button id="cancelCrop" style="padding: 10px 20px; border: 1px solid #ddd; background: #f5f5f5; border-radius: 8px; cursor: pointer; font-size: 14px;">取消</button>
+          <button id="confirmCrop" style="padding: 10px 20px; border: none; background: #1a73e8; color: white; border-radius: 8px; cursor: pointer; font-size: 14px;">确认</button>
+        </div>
+      </div>
+    `;
     
-    const body = document.createElement("div");
-    body.className = "avatar-crop-body";
-    
-    const instructions = document.createElement("div");
-    instructions.className = "avatar-crop-instructions";
-    instructions.textContent = "拖拽图片调整位置，确保头像居中显示";
-    body.appendChild(instructions);
-    
-    const preview = document.createElement("div");
-    preview.className = "avatar-crop-preview";
-    const canvas = document.createElement("img");
-    canvas.className = "avatar-crop-canvas";
-    canvas.src = imageData;
-    preview.appendChild(canvas);
-    body.appendChild(preview);
-    
-    const controls = document.createElement("div");
-    controls.className = "avatar-crop-controls";
-    
-    const cancelBtn = document.createElement("button");
-    cancelBtn.className = "avatar-crop-btn avatar-crop-btn-cancel";
-    cancelBtn.textContent = "取消";
-    
-    const confirmBtn = document.createElement("button");
-    confirmBtn.className = "avatar-crop-btn avatar-crop-btn-confirm";
-    confirmBtn.textContent = "确认";
-    
-    controls.appendChild(cancelBtn);
-    controls.appendChild(confirmBtn);
-    body.appendChild(controls);
-    
-    dialog.appendChild(header);
-    dialog.appendChild(body);
     mask.appendChild(dialog);
     document.body.appendChild(mask);
     
-    // 显示动画
-    requestAnimationFrame(() => {
-      mask.classList.add("show");
-      dialog.classList.add("show");
-    });
+    console.log("[me] 模态框已添加到DOM");
+    
+    // 立即显示，不使用动画
+    setTimeout(() => {
+      console.log("[me] 模态框应该可见了");
+      console.log("[me] 模态框位置:", mask.getBoundingClientRect());
+      console.log("[me] 模态框样式:", mask.style.cssText);
+      // 强制显示
+      mask.style.display = 'flex';
+      mask.style.opacity = '1';
+      mask.style.visibility = 'visible';
+    }, 100);
     
     // 关闭函数
     const close = () => {
-      dialog.classList.remove("show");
-      mask.classList.remove("show");
-      setTimeout(() => {
-        if (mask.parentNode) mask.remove();
-      }, 300);
+      if (mask.parentNode) mask.remove();
     };
     
     // 事件处理
+    const cancelBtn = dialog.querySelector("#cancelCrop");
+    const confirmBtn = dialog.querySelector("#confirmCrop");
+    
     cancelBtn.addEventListener("click", close, { once: true });
     mask.addEventListener("click", (e) => {
       if (e.target === mask) close();
@@ -220,9 +241,12 @@
   // 上传头像到服务器
   async function uploadAvatar(imageData) {
     try {
+      // 前端压缩处理
+      const compressedData = await compressImage(imageData);
+      
       const payload = {
         user_id: storedId || storedUsername,
-        avatar_data: imageData
+        avatar_data: compressedData
       };
       
       const response = await fetch(apiBase + "/upload_avatar", {
@@ -247,6 +271,45 @@
       console.error("头像上传失败:", error);
       showErrorModal("头像上传失败，请稍后再试");
     }
+  }
+  
+  // 压缩图片到目标尺寸
+  async function compressImage(imageData) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 设置目标尺寸
+        const targetSize = 200;
+        canvas.width = targetSize;
+        canvas.height = targetSize;
+        
+        // 先绘制图片
+        ctx.drawImage(img, 0, 0, targetSize, targetSize);
+        
+        // 创建圆形蒙版
+        const maskCanvas = document.createElement('canvas');
+        const maskCtx = maskCanvas.getContext('2d');
+        maskCanvas.width = targetSize;
+        maskCanvas.height = targetSize;
+        
+        // 绘制圆形蒙版
+        maskCtx.beginPath();
+        maskCtx.arc(targetSize/2, targetSize/2, targetSize/2, 0, Math.PI * 2);
+        maskCtx.fill();
+        
+        // 应用蒙版
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.drawImage(maskCanvas, 0, 0);
+        
+        // 转换为base64
+        const compressedData = canvas.toDataURL('image/png', 0.9);
+        resolve(compressedData);
+      };
+      img.src = imageData;
+    });
   }
 
   /**
@@ -1667,17 +1730,27 @@
     const avatarUploadBtn = root.querySelector("#avatarUploadBtn");
     const avatarFileInput = root.querySelector("#avatarFileInput");
     
+    console.log("[me] 头像上传按钮:", avatarUploadBtn);
+    console.log("[me] 文件输入:", avatarFileInput);
+    
     if (avatarUploadBtn && avatarFileInput) {
-      const uploadHandler = () => {
+      const uploadHandler = (e) => {
+        console.log("[me] 头像上传按钮被点击");
+        e.preventDefault();
+        e.stopPropagation();
         triggerVibration('Light');
+        // 直接触发文件选择，使用原有的头像裁剪功能
         avatarFileInput.click();
       };
       
       avatarUploadBtn.addEventListener("click", uploadHandler);
       cleanupFns.push(() => avatarUploadBtn.removeEventListener("click", uploadHandler));
       
+      // 保留原有的文件选择功能作为备用
       avatarFileInput.addEventListener("change", handleAvatarUpload);
       cleanupFns.push(() => avatarFileInput.removeEventListener("change", handleAvatarUpload));
+    } else {
+      console.warn("[me] 头像上传按钮或文件输入未找到");
     }
   }
 

@@ -144,6 +144,7 @@ body {
   position: relative;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: visible;
 }
 
 .avatar:hover {
@@ -163,6 +164,7 @@ body {
   font-size: 28px;
   position: relative;
   overflow: hidden;
+  pointer-events: none;
 }
 
 .avatar-image {
@@ -173,6 +175,7 @@ body {
   position: absolute;
   top: 0;
   left: 0;
+  pointer-events: none;
 }
 
 .avatar-upload-btn {
@@ -191,7 +194,8 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: var(--shadow-1);
-  z-index: 2;
+  z-index: 10;
+  pointer-events: auto;
 }
 
 .avatar-upload-btn:hover {

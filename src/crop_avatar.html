@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!--
+  crop_avatar.html — Avatar cropping page
+  
+  Responsibilities:
+  - Allow users to select and crop images into circular avatars
+  - Provide intuitive cropping interface with drag and zoom
+  - Generate circular preview and allow saving
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <title>头像裁剪</title>
+    <link rel="stylesheet" href="../statics/css/crop_avatar.css" />
+  </head>
+  <body>
+    <!-- Main application container -->
+    <main class="app" aria-label="头像裁剪">
+      <!-- Top bar with title and back button -->
+      <header class="topbar">
+        <button class="back-btn" id="backBtn" aria-label="返回">
+          <span class="material-icons-outlined">arrow_back</span>
+        </button>
+        <div class="title">头像裁剪</div>
+        <div class="spacer"></div>
+      </header>
+
+      <!-- File selection area -->
+      <section class="file-section" id="fileSection">
+        <div class="file-drop-zone" id="fileDropZone">
+          <div class="drop-icon">
+            <span class="material-icons-outlined">cloud_upload</span>
+          </div>
+          <h3>选择图片</h3>
+          <p>拖拽图片到此处或点击选择文件</p>
+          <button class="select-btn" id="selectFileBtn">选择文件</button>
+          <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        </div>
+        
+        <div class="file-info" id="fileInfo" style="display: none;">
+          <div class="file-preview">
+            <img id="filePreview" alt="选择的图片">
+          </div>
+          <div class="file-details">
+            <h4 id="fileName"></h4>
+            <p id="fileSize"></p>
+            <button class="change-btn" id="changeFileBtn">更换图片</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cropping area -->
+      <section class="crop-section" id="cropSection" style="display: none;">
+        <div class="crop-container">
+          <div class="crop-canvas-container">
+            <canvas id="cropCanvas"></canvas>
+            <div class="crop-overlay">
+              <div class="crop-circle" id="cropCircle"></div>
+            </div>
+          </div>
+          
+          <div class="crop-controls">
+            <div class="zoom-control">
+              <label>缩放</label>
+              <input type="range" id="zoomSlider" min="0.5" max="3" step="0.1" value="1">
+              <span id="zoomValue">100%</span>
+            </div>
+            
+            <div class="crop-buttons">
+              <button class="crop-btn crop-btn-secondary" id="resetBtn">重置</button>
+              <button class="crop-btn crop-btn-primary" id="cropBtn">裁剪</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Result preview -->
+      <section class="result-section" id="resultSection" style="display: none;">
+        <div class="result-preview">
+          <h3>裁剪结果</h3>
+          <div class="preview-avatar">
+            <img id="resultImage" alt="裁剪后的头像">
+          </div>
+          <p class="preview-text">圆形头像预览</p>
+        </div>
+        
+        <div class="result-actions">
+          <button class="action-btn action-btn-secondary" id="editAgainBtn">重新编辑</button>
+          <button class="action-btn action-btn-primary" id="saveBtn">保存头像</button>
+        </div>
+      </section>
+
+      <!-- Instructions -->
+      <section class="instructions">
+        <h4>使用说明</h4>
+        <ul>
+          <li>支持 JPG、PNG、GIF、WebP 格式的图片</li>
+          <li>图片大小不超过 2MB，建议分辨率 512x512 以内</li>
+          <li>拖拽图片调整位置，使用滑块调整大小</li>
+          <li>圆形区域内的内容将作为最终头像</li>
+        </ul>
+      </section>
+    </main>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+      <div class="loading-spinner"></div>
+      <p>处理中...</p>
+    </div>
+
+    <!-- Toast notifications -->
+    <div class="toast" id="toast" style="display: none;"></div>
+
+    <script src="../statics/js/crop_avatar.js"></script>
+  </body>
+</html>
