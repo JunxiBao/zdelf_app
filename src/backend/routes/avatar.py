@@ -34,7 +34,7 @@ AVATAR_UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '../../statics/av
 if not os.path.exists(AVATAR_UPLOAD_FOLDER):
     os.makedirs(AVATAR_UPLOAD_FOLDER, exist_ok=True)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB (减少文件大小限制)
+MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB (保持压缩处理)
 MAX_IMAGE_SIZE = (512, 512)  # 最大分辨率 512x512
 AVATAR_SIZE = (200, 200)  # 最终头像尺寸 200x200
 

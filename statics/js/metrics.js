@@ -91,7 +91,10 @@ function initMetricsPage() {
         const timeInput = document.getElementById('record-time-input');
         const now = new Date();
         if (dateInput && !dateInput.value) {
-            dateInput.value = now.toISOString().slice(0,10);
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            dateInput.value = `${year}-${month}-${day}`;
         }
         if (timeInput && !timeInput.value) {
             const hh = String(now.getHours()).padStart(2, '0');
@@ -496,7 +499,10 @@ function saveAllMetrics() {
                     var val = (el && el.value) ? el.value : '';
                     if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
                     var now = new Date();
-                    return now.toISOString().slice(0,10);
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
                 }
                 function getSelectedHms() {
                     var el = document.getElementById('record-time-input');

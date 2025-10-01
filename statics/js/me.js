@@ -807,8 +807,14 @@
           resolve(result);
         };
 
-        cancelBtn.addEventListener("click", () => close(false), { once: true });
-        okBtn.addEventListener("click", () => close(true), { once: true });
+        cancelBtn.addEventListener("click", () => {
+          triggerVibration('Light');
+          close(false);
+        }, { once: true });
+        okBtn.addEventListener("click", () => {
+          triggerVibration('Medium');
+          close(true);
+        }, { once: true });
         mask.addEventListener("click", (e) => {
           if (e.target === mask) close(false);
         });
@@ -1043,12 +1049,16 @@
         mask.addEventListener("transitionend", onEnd);
       };
 
-      btnCancel.addEventListener("click", close, { once: true });
+      btnCancel.addEventListener("click", () => {
+        triggerVibration('Light');
+        close();
+      }, { once: true });
       mask.addEventListener("click", (e) => {
         if (e.target === mask) close();
       });
 
       btnSave.addEventListener("click", async () => {
+        triggerVibration('Medium');
         const ageVal = iAge.value.trim();
         const newPwdVal = iPwd.value.trim();
 
@@ -1404,7 +1414,10 @@
         mask.addEventListener("transitionend", onEnd);
       };
 
-      closeBtn.addEventListener("click", close, { once: true });
+      closeBtn.addEventListener("click", () => {
+        triggerVibration('Light');
+        close();
+      }, { once: true });
       mask.addEventListener("click", (e) => {
         if (e.target === mask) close();
       });
@@ -1568,7 +1581,10 @@
         mask.addEventListener("transitionend", onEnd);
       };
 
-      closeBtn.addEventListener("click", close, { once: true });
+      closeBtn.addEventListener("click", () => {
+        triggerVibration('Light');
+        close();
+      }, { once: true });
       mask.addEventListener("click", (e) => {
         if (e.target === mask) close();
       });
@@ -1731,7 +1747,10 @@
         mask.addEventListener("transitionend", onEnd);
       };
 
-      closeBtn.addEventListener("click", close, { once: true });
+      closeBtn.addEventListener("click", () => {
+        triggerVibration('Light');
+        close();
+      }, { once: true });
       mask.addEventListener("click", (e) => {
         if (e.target === mask) close();
       });
@@ -1750,6 +1769,9 @@
     // 列表项点击
     root.querySelectorAll("[data-action]").forEach((el) => {
       const actionHandler = () => {
+        // 添加震动反馈
+        triggerVibration('Light');
+        
         if (el.dataset.action === "help") {
           showHelpModal();
         } else if (el.dataset.action === "disclaimer") {
@@ -1792,9 +1814,9 @@
         return;
       }
       
-      // 检查文件大小 (2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        showErrorModal('图片文件过大，请选择小于2MB的图片');
+      // 检查文件大小 (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        showErrorModal('图片文件过大，请选择小于10MB的图片');
         return;
       }
       
@@ -2056,12 +2078,16 @@
         });
       }
       
-      cancelBtn.addEventListener("click", close, { once: true });
+      cancelBtn.addEventListener("click", () => {
+        triggerVibration('Light');
+        close();
+      }, { once: true });
       mask.addEventListener("click", (e) => {
         if (e.target === mask) close();
       });
       
       confirmBtn.addEventListener("click", () => {
+        triggerVibration('Medium');
         // 获取裁剪区域和容器的位置
         const cropRect = cropOverlay.getBoundingClientRect();
         const containerRect = cropContainer.getBoundingClientRect();

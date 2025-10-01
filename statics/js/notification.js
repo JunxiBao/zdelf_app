@@ -356,7 +356,7 @@
    * @param {Document|ShadowRoot} rootEl - Scope for DOM queries.
    */
   async function initCase(rootEl) {
-    console.log('🚀 initCase 开始执行', new Date().toISOString());
+    console.log('🚀 initCase 开始执行', new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}));
     const root = rootEl || document;
     currentRoot = root; // 存储当前的root引用
     isActiveReminderView = true;
@@ -547,7 +547,7 @@
         reminders[rIdx].dailyTimeEnabled = {};
       }
       reminders[rIdx].dailyTimeEnabled[time] = !!chk.checked;
-      reminders[rIdx].updatedAt = new Date().toISOString();
+      reminders[rIdx].updatedAt = new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'});
       saveReminders();
       hapticFeedback('Light');
       // 重新设置调度
@@ -725,7 +725,10 @@
 
     // 设置默认值
       const now = new Date();
-      const currentDate = now.toISOString().slice(0, 10);
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const currentDate = `${year}-${month}-${day}`;
     const name = reminder ? reminder.name || '' : '';
     const startDate = reminder ? reminder.startDate || currentDate : currentDate;
     const endDate = reminder ? reminder.endDate || currentDate : currentDate;
@@ -1077,8 +1080,8 @@
       dailyCount,
       dailyTimes,
       dailyTimeEnabled,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}),
+      updatedAt: new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})
     };
 
     if (editingReminderId) {
@@ -1227,8 +1230,8 @@
       dailyCount,
       dailyTimes,
       dailyTimeEnabled,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}),
+      updatedAt: new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})
     };
 
     if (editingReminderId) {
@@ -1471,7 +1474,7 @@
    * 设置提醒定时器
    */
   async function setupReminders() {
-    console.log('⏰ setupReminders 开始执行', new Date().toISOString());
+    console.log('⏰ setupReminders 开始执行', new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}));
     // 防止重复设置提醒
     if (isSettingUpReminders) {
       console.log('⏰ setupReminders 跳过：正在设置中');
@@ -1517,20 +1520,29 @@
 
           // 仅为启用的时间点调度
           timesEnabled.forEach((t) => {
-            const baseDate = reminder.startDate || new Date().toISOString().slice(0,10);
+            const baseDate = reminder.startDate || (() => {
+              const now = new Date();
+              const year = now.getFullYear();
+              const month = String(now.getMonth() + 1).padStart(2, '0');
+              const day = String(now.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            })();
             const baseTime = new Date(`${baseDate}T${t}:00`);
             
             // 如果基础时间已过，直接跳到下一天
             let firstTime = baseTime;
-            console.log(`⏰ 计算时间: ${t}, startDate: ${reminder.startDate}, baseDate: ${baseDate}, 基础时间: ${baseTime.toISOString()}, 当前时间: ${now.toISOString()}`);
+            console.log(`⏰ 计算时间: ${t}, startDate: ${reminder.startDate}, baseDate: ${baseDate}, 基础时间: ${baseTime.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}, 当前时间: ${now.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}`);
             if (firstTime <= now) {
               // 如果今天的时间已过，跳到下一天
               const nextDay = new Date(baseTime);
               nextDay.setDate(nextDay.getDate() + 1);
-              firstTime = new Date(`${nextDay.toISOString().slice(0,10)}T${t}:00`);
-              console.log(`⏰ 时间已过，跳到下一天: ${firstTime.toISOString()}`);
+              const year = nextDay.getFullYear();
+              const month = String(nextDay.getMonth() + 1).padStart(2, '0');
+              const day = String(nextDay.getDate()).padStart(2, '0');
+              firstTime = new Date(`${year}-${month}-${day}T${t}:00`);
+              console.log(`⏰ 时间已过，跳到下一天: ${firstTime.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}`);
             } else {
-              console.log(`⏰ 时间未到，使用原时间: ${firstTime.toISOString()}`);
+              console.log(`⏰ 时间未到，使用原时间: ${firstTime.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}`);
             }
 
             // 如果超出结束日期，则跳过
@@ -1587,7 +1599,13 @@
           if (!(reminder.dailyCount > 0 && Array.isArray(reminder.dailyTimes) && reminder.dailyTimes.length > 0)) return;
           const times = [...reminder.dailyTimes].filter(Boolean).filter(t => isTimeEnabled(reminder, t)).sort();
           times.forEach((t) => {
-            const baseDate = reminder.startDate || new Date().toISOString().slice(0,10);
+            const baseDate = reminder.startDate || (() => {
+              const now = new Date();
+              const year = now.getFullYear();
+              const month = String(now.getMonth() + 1).padStart(2, '0');
+              const day = String(now.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            })();
             const baseTime = new Date(`${baseDate}T${t}:00`);
             
             // 如果基础时间已过，跳到下一天
@@ -1595,7 +1613,10 @@
             if (firstTime <= now) {
               const nextDay = new Date(baseTime);
               nextDay.setDate(nextDay.getDate() + 1);
-              firstTime = new Date(`${nextDay.toISOString().slice(0,10)}T${t}:00`);
+              const year = nextDay.getFullYear();
+              const month = String(nextDay.getMonth() + 1).padStart(2, '0');
+              const day = String(nextDay.getDate()).padStart(2, '0');
+              firstTime = new Date(`${year}-${month}-${day}T${t}:00`);
             }
             
             // 范围检查
@@ -1648,7 +1669,13 @@
 
       const times = [...reminder.dailyTimes].filter(Boolean).filter(t => isTimeEnabled(reminder, t)).sort();
       times.forEach((t) => {
-        const baseDate = reminder.startDate || new Date().toISOString().slice(0,10);
+        const baseDate = reminder.startDate || (() => {
+              const now = new Date();
+              const year = now.getFullYear();
+              const month = String(now.getMonth() + 1).padStart(2, '0');
+              const day = String(now.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            })();
         const baseTime = new Date(`${baseDate}T${t}:00`);
         
         // 如果基础时间已过，跳到下一天
@@ -1656,7 +1683,10 @@
         if (firstTime <= now) {
           const nextDay = new Date(baseTime);
           nextDay.setDate(nextDay.getDate() + 1);
-          firstTime = new Date(`${nextDay.toISOString().slice(0,10)}T${t}:00`);
+          const year = nextDay.getFullYear();
+          const month = String(nextDay.getMonth() + 1).padStart(2, '0');
+          const day = String(nextDay.getDate()).padStart(2, '0');
+          firstTime = new Date(`${year}-${month}-${day}T${t}:00`);
         }
         
         // 检查是否超出结束日期
@@ -1689,7 +1719,12 @@
     if (reminder.dailyCount > 0 && Array.isArray(reminder.dailyTimes) && reminder.dailyTimes.length > 0) {
       const times = [...reminder.dailyTimes].filter(Boolean).filter(t => isTimeEnabled(reminder, t)).sort(); // "HH:MM"
       const from = new Date(fromTime);
-      const fromDateStr = from.toISOString().slice(0,10);
+      const fromDateStr = from(() => {
+              const year = this.getFullYear();
+              const month = String(this.getMonth() + 1).padStart(2, '0');
+              const day = String(this.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            })();
       const fromHhmm = from.toTimeString().slice(0,5);
       
       // 检查今天剩余的时间
@@ -1703,7 +1738,10 @@
       // 如果今天的时间都过了，跳到下一天的第一个时间
       const nextDay = new Date(from);
       nextDay.setDate(nextDay.getDate() + 1);
-      const nextDayStr = nextDay.toISOString().slice(0,10);
+      const year = nextDay.getFullYear();
+      const month = String(nextDay.getMonth() + 1).padStart(2, '0');
+      const day = String(nextDay.getDate()).padStart(2, '0');
+      const nextDayStr = `${year}-${month}-${day}`;
       const first = times[0];
       return new Date(`${nextDayStr}T${first}:00`);
     }
@@ -1910,15 +1948,25 @@
       // 使用 dailyTimes 推进到下一次最近时间（仅考虑启用的时间）
       if (reminder.dailyCount > 0 && Array.isArray(reminder.dailyTimes) && reminder.dailyTimes.length > 0) {
         const now = new Date();
-        const next = computeNextTime(reminder, new Date(`${reminder.startDate || now.toISOString().slice(0,10)}T00:00:00`), now);
+        const next = computeNextTime(reminder, new Date(`${reminder.startDate || now(() => {
+              const year = this.getFullYear();
+              const month = String(this.getMonth() + 1).padStart(2, '0');
+              const day = String(this.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            })()}T00:00:00`), now);
         // 若 next 超过结束日期，则删除
         if (isReminderExpired(reminder, next)) {
           hardDeleteReminder(reminder.id);
           return;
         }
-        const nextDate = next.toISOString().slice(0,10);
+        const nextDate = next(() => {
+              const year = this.getFullYear();
+              const month = String(this.getMonth() + 1).padStart(2, '0');
+              const day = String(this.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            })();
         const nextTime = next.toTimeString().slice(0,5);
-        reminders[idx] = { ...reminders[idx], startDate: reminders[idx].startDate || nextDate, updatedAt: new Date().toISOString() };
+        reminders[idx] = { ...reminders[idx], startDate: reminders[idx].startDate || nextDate, updatedAt: new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}) };
         // 不再单独存 time 字段
         saveReminders();
         if (currentRoot) { renderReminders(currentRoot); updateEditingModalIfOpen(currentRoot, reminders[idx]); }
@@ -1954,7 +2002,12 @@
           nextAt = nextToday;
         } else {
           // 如果今天没有剩余时间，跳到下一天
-          const baseDate = (reminder.startDate || now.toISOString().slice(0,10));
+          const baseDate = (reminder.startDate || now(() => {
+              const year = this.getFullYear();
+              const month = String(this.getMonth() + 1).padStart(2, '0');
+              const day = String(this.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            })());
           // 选择下一个启用的第一个时间
           const enabledTimes = [...reminder.dailyTimes].filter(Boolean).filter(t => isTimeEnabled(reminder, t)).sort();
           const firstEnabled = enabledTimes[0] || reminder.dailyTimes[0] || '00:00';
@@ -1963,7 +2016,10 @@
             // 如果基础时间已过，跳到下一天
             const nextDay = new Date(baseTime);
             nextDay.setDate(nextDay.getDate() + 1);
-            nextAt = new Date(`${nextDay.toISOString().slice(0,10)}T${firstEnabled}:00`);
+            const year = nextDay.getFullYear();
+            const month = String(nextDay.getMonth() + 1).padStart(2, '0');
+            const day = String(nextDay.getDate()).padStart(2, '0');
+            nextAt = new Date(`${year}-${month}-${day}T${firstEnabled}:00`);
           } else {
             nextAt = baseTime;
           }
@@ -2200,7 +2256,12 @@
     if (!(reminder && reminder.dailyCount > 0 && Array.isArray(reminder.dailyTimes) && reminder.dailyTimes.length > 0)) return null;
     const times = [...reminder.dailyTimes].filter(Boolean).filter(t => isTimeEnabled(reminder, t)).sort();
     const from = fromDate ? new Date(fromDate) : new Date();
-    const dateStr = from.toISOString().slice(0,10);
+    const dateStr = from(() => {
+              const year = this.getFullYear();
+              const month = String(this.getMonth() + 1).padStart(2, '0');
+              const day = String(this.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            })();
     const hhmm = from.toTimeString().slice(0,5);
     for (let i = 0; i < times.length; i++) {
       const t = times[i];

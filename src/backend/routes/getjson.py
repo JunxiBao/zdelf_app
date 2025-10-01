@@ -89,7 +89,7 @@ def get_monthly_symptoms(user_id, year, month):
                 cur.execute(sql, (user_id, start_date.date(), end_date.date()))
                 rows = cur.fetchall()
                 
-                # 处理数据，按日期分组
+                # 处理数据，按日期分组，支持同一天多个症状记录
                 daily_symptoms = {}
                 for row in rows:
                     if row['record_time'] and row['symptoms']:
@@ -102,7 +102,21 @@ def get_monthly_symptoms(user_id, year, month):
                         try:
                             symptoms = json.loads(row['symptoms'])
                             if isinstance(symptoms, list):
-                                daily_symptoms[date_part] = symptoms
+                                # 如果该日期已有症状记录，合并症状数组
+                                if date_part in daily_symptoms:
+                                    # 合并症状，去重但保持顺序
+                                    existing_symptoms = daily_symptoms[date_part]
+                                    combined_symptoms = existing_symptoms + symptoms
+                                    # 去重但保持顺序（后面的症状优先级更高）
+                                    seen = set()
+                                    unique_symptoms = []
+                                    for symptom in combined_symptoms:
+                                        if symptom not in seen:
+                                            seen.add(symptom)
+                                            unique_symptoms.append(symptom)
+                                    daily_symptoms[date_part] = unique_symptoms
+                                else:
+                                    daily_symptoms[date_part] = symptoms
                         except (json.JSONDecodeError, TypeError):
                             continue
                             

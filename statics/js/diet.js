@@ -84,7 +84,11 @@ function initDietPage() {
     try {
         const dInput = document.getElementById('diet-record-date-input');
         if (dInput && !dInput.value) {
-            dInput.value = new Date().toISOString().slice(0,10);
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            dInput.value = `${year}-${month}-${day}`;
         }
     } catch(_) {}
 
@@ -345,7 +349,10 @@ async function saveAllMeals() {
                 if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
             } catch(_) {}
             var now = new Date();
-            return now.toISOString().slice(0,10);
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
         const __dietSelectedDate = getDietSelectedDate();
 
@@ -471,6 +478,15 @@ async function handleDietImageDataUrl(mealId, dataUrl) {
     
     try {
         const file = await dataURLToFile(dataUrl, `diet-image-${mealId}.jpg`);
+        
+        // 检查文件大小（原始文件不超过10MB）
+        const maxOriginalSizeMB = 10;
+        if (file.size > maxOriginalSizeMB * 1024 * 1024) {
+            hideDietCompressionProgress();
+            showToast(`图片文件过大，请选择小于${maxOriginalSizeMB}MB的图片`);
+            return;
+        }
+        
         const compressedDataUrl = await compressImagePromise(file, 500);
         
         // 上传图片到服务器

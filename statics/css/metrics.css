@@ -1671,23 +1671,3 @@ body {
     pointer-events: none;
 }
 
-/* JSON大小显示样式 */
-#json-size-display {
-    font-size: 0.8em;
-    color: #666;
-    text-align: center;
-    margin-top: 8px;
-    padding: 8px;
-    background: rgba(98, 0, 234, 0.05);
-    border-radius: 8px;
-    border: 1px solid rgba(98, 0, 234, 0.1);
-}
-
-/* 深色模式下的JSON大小显示 */
-@media (prefers-color-scheme: dark) {
-    #json-size-display {
-        background: rgba(187, 134, 252, 0.08) !important;
-        border-color: rgba(187, 134, 252, 0.2) !important;
-        color: #ccc !important;
-    }
-}

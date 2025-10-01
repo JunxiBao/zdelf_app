@@ -1016,6 +1016,40 @@ body {
   z-index: 1;
 }
 
+/* 多症状指示器容器 */
+.multi-symptom-indicators {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  max-width: 20px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 多症状指示器中的单个指示器 */
+.multi-symptom-indicators .symptom-indicator {
+  position: static;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.2);
+  flex-shrink: 0;
+}
+
+/* 更多症状指示器 */
+.symptom-indicator.more {
+  background-color: #999 !important;
+  color: white;
+  font-size: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0,0,0,0.2);
+}
+
 /* 症状颜色主题 - 浅色背景，深色文字 */
 .calendar-day[style*="background-color: #FFE4E1"] { /* 皮肤型紫癜 */
   color: #8B0000 !important;

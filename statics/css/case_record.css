@@ -603,11 +603,6 @@ body {
         color: #ccc;
     }
 
-    #json-size-display {
-        background: rgba(187, 134, 252, 0.08) !important;
-        border-color: rgba(187, 134, 252, 0.2) !important;
-        color: #ccc !important;
-    }
 
     .global-save-btn {
         background: linear-gradient(135deg, #bb86fc, #6200ea);

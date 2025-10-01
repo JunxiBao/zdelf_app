@@ -627,6 +627,13 @@
                 monthlySymptomData[monthKey] = result.data;
                 const dataCount = Object.keys(result.data).length;
                 console.log(`✅ 成功加载${year}年${month + 1}月症状数据，共${dataCount}条记录:`, result.data);
+                
+                // 详细显示每个日期的症状数据
+                Object.keys(result.data).forEach(date => {
+                    const symptoms = result.data[date];
+                    console.log(`📅 ${date}: 症状数据 =`, symptoms);
+                });
+                
                 return result.data;
             } else {
                 console.warn(`❌ 加载症状数据失败: ${result.message || '未知错误'}`);
@@ -640,23 +647,50 @@
     }
     
     /**
-     * 获取日期的症状颜色
+     * 获取日期的症状信息（支持多症状）
      */
-    function getDateSymptomColor(dateStr, symptomData) {
+    function getDateSymptomInfo(dateStr, symptomData) {
         const symptoms = symptomData[dateStr];
         if (!symptoms || !Array.isArray(symptoms) || symptoms.length === 0) {
-            return null;
+            return {
+                primaryColor: null,
+                allSymptoms: [],
+                hasSymptoms: false
+            };
         }
         
-        // 如果有多个症状，优先显示数字较大的（更严重的）
-        const maxSymptom = Math.max(...symptoms.filter(s => s > 0));
-        const color = SYMPTOM_COLORS[maxSymptom] || null;
-        
-        if (color) {
-            console.log(`🎨 日期${dateStr}症状颜色: 症状${symptoms} -> 最高级别${maxSymptom} -> 颜色${color}`);
+        // 过滤掉无症状(0)的症状，获取所有有效症状
+        const validSymptoms = symptoms.filter(s => s > 0);
+        if (validSymptoms.length === 0) {
+            return {
+                primaryColor: null,
+                allSymptoms: [],
+                hasSymptoms: false
+            };
         }
         
-        return color;
+        // 获取所有症状的颜色
+        const symptomColors = validSymptoms.map(s => SYMPTOM_COLORS[s]).filter(c => c);
+        
+        // 主要颜色：选择最高级别的症状颜色
+        const maxSymptom = Math.max(...validSymptoms);
+        const primaryColor = SYMPTOM_COLORS[maxSymptom] || null;
+        
+        console.log(`🎨 日期${dateStr}症状信息: 原始症状${symptoms} -> 有效症状${validSymptoms} -> 主要颜色${primaryColor}`);
+        console.log(`🔍 症状详情:`, {
+            dateStr,
+            originalSymptoms: symptoms,
+            validSymptoms,
+            symptomColors,
+            primaryColor
+        });
+        
+        return {
+            primaryColor: primaryColor,
+            allSymptoms: validSymptoms,
+            hasSymptoms: true,
+            symptomColors: symptomColors
+        };
     }
     
     /**
@@ -673,7 +707,10 @@
             return '无症状';
         }
         
-        return uniqueSymptoms.map(s => SYMPTOM_NAMES[s] || '未知症状').join('、');
+        // 按症状严重程度排序（数字越大越严重）
+        const sortedSymptoms = uniqueSymptoms.sort((a, b) => b - a);
+        
+        return sortedSymptoms.map(s => SYMPTOM_NAMES[s] || '未知症状').join('、');
     }
 
     /**
@@ -784,29 +821,89 @@
 
         // 应用症状高亮
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-        const symptomColor = getDateSymptomColor(dateStr, symptomData);
+        const symptomInfo = getDateSymptomInfo(dateStr, symptomData);
         const symptomDescription = getDateSymptomDescription(dateStr, symptomData);
         
-        if (symptomColor) {
-            dayElement.style.backgroundColor = symptomColor;
+        if (symptomInfo.hasSymptoms) {
+            // 设置主要背景色
+            if (symptomInfo.primaryColor) {
+                dayElement.style.backgroundColor = symptomInfo.primaryColor;
+            }
             dayElement.classList.add('has-symptoms');
             dayElement.setAttribute('title', `${year}年${month + 1}月${dayNum}日: ${symptomDescription}`);
             
-            // 添加症状指示器
-            const indicator = document.createElement('div');
-            indicator.className = 'symptom-indicator';
-            indicator.style.cssText = `
-                position: absolute;
-                bottom: 2px;
-                right: 2px;
-                width: 6px;
-                height: 6px;
-                border-radius: 50%;
-                background-color: ${symptomColor};
-                border: 1px solid rgba(0,0,0,0.2);
-            `;
+            // 添加多症状指示器
             dayElement.style.position = 'relative';
-            dayElement.appendChild(indicator);
+            
+            // 如果有多个症状，显示多个指示器
+            if (symptomInfo.allSymptoms.length > 1) {
+                // 创建多症状指示器容器
+                const indicatorsContainer = document.createElement('div');
+                indicatorsContainer.className = 'multi-symptom-indicators';
+                indicatorsContainer.style.cssText = `
+                    position: absolute;
+                    bottom: 2px;
+                    right: 2px;
+                    display: flex;
+                    gap: 2px;
+                    flex-wrap: wrap;
+                    max-width: 20px;
+                `;
+                
+                // 为每个症状创建指示器
+                symptomInfo.allSymptoms.slice(0, 4).forEach((symptom, index) => { // 最多显示4个
+                    const indicator = document.createElement('div');
+                    indicator.className = 'symptom-indicator';
+                    const color = SYMPTOM_COLORS[symptom];
+                    indicator.style.cssText = `
+                        width: 4px;
+                        height: 4px;
+                        border-radius: 50%;
+                        background-color: ${color || '#666'};
+                        border: 1px solid rgba(0,0,0,0.2);
+                        flex-shrink: 0;
+                    `;
+                    indicatorsContainer.appendChild(indicator);
+                });
+                
+                // 如果症状超过4个，添加省略号
+                if (symptomInfo.allSymptoms.length > 4) {
+                    const moreIndicator = document.createElement('div');
+                    moreIndicator.className = 'symptom-indicator more';
+                    moreIndicator.textContent = '+';
+                    moreIndicator.style.cssText = `
+                        width: 4px;
+                        height: 4px;
+                        border-radius: 50%;
+                        background-color: #999;
+                        color: white;
+                        font-size: 3px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border: 1px solid rgba(0,0,0,0.2);
+                        flex-shrink: 0;
+                    `;
+                    indicatorsContainer.appendChild(moreIndicator);
+                }
+                
+                dayElement.appendChild(indicatorsContainer);
+            } else {
+                // 单个症状，显示传统指示器
+                const indicator = document.createElement('div');
+                indicator.className = 'symptom-indicator';
+                indicator.style.cssText = `
+                    position: absolute;
+                    bottom: 2px;
+                    right: 2px;
+                    width: 6px;
+                    height: 6px;
+                    border-radius: 50%;
+                    background-color: ${symptomInfo.primaryColor};
+                    border: 1px solid rgba(0,0,0,0.2);
+                `;
+                dayElement.appendChild(indicator);
+            }
         } else if (!isOtherMonth) {
             dayElement.setAttribute('title', `${year}年${month + 1}月${dayNum}日: 无症状记录`);
         }
@@ -878,15 +975,37 @@
             const day = selectedDate.getDate();
             const dateStr = `${year}年${month}月${day}日`;
             
-            if (symptomDescription && symptomDescription !== '无症状记录') {
+            if (symptomDescription && symptomDescription !== '无症状记录' && symptomDescription !== '无症状') {
+                // 解析症状描述，为每个症状添加颜色标识
+                const symptoms = symptomDescription.split('、');
+                const symptomHtml = symptoms.map(symptom => {
+                    // 根据症状名称获取对应的颜色
+                    let color = '#666';
+                    if (symptom.includes('皮肤型紫癜')) color = '#FEE2E2';
+                    else if (symptom.includes('关节型紫癜')) color = '#DBEAFE';
+                    else if (symptom.includes('腹型紫癜')) color = '#FEF3C7';
+                    else if (symptom.includes('肾型紫癜')) color = '#D1FAE5';
+                    else if (symptom.includes('其他症状')) color = '#E0E7FF';
+                    
+                    return `<span style="display: inline-block; margin: 2px 4px 2px 0; padding: 2px 6px; background-color: ${color}; color: #333; border-radius: 8px; font-size: 11px; font-weight: 500;">${symptom}</span>`;
+                }).join('');
+                
                 selectedDateText.innerHTML = `
-                    <div style="font-weight: bold; margin-bottom: 4px;">${dateStr}</div>
-                    <div style="font-size: 12px; color: #666; line-height: 1.4;">
-                        症状：${symptomDescription}
+                    <div style="font-weight: bold; margin-bottom: 8px; color: #333;">${dateStr}</div>
+                    <div style="font-size: 12px; color: #666; line-height: 1.4; margin-bottom: 4px;">
+                        症状记录：
+                    </div>
+                    <div style="line-height: 1.6;">
+                        ${symptomHtml}
                     </div>
                 `;
             } else {
-                selectedDateText.textContent = dateStr;
+                selectedDateText.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 4px; color: #333;">${dateStr}</div>
+                    <div style="font-size: 12px; color: #999; line-height: 1.4;">
+                        无症状记录
+                    </div>
+                `;
             }
         } else {
             selectedDateText.textContent = '选择一个日期';
@@ -900,9 +1019,15 @@
         // 如果有选中的日期，可以传递给父页面
         if (selectedDate && window.opener) {
             // 通知父页面选中的日期
+            // 使用本地时区格式化日期
+            const year = selectedDate.getFullYear();
+            const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+            const day = String(selectedDate.getDate()).padStart(2, '0');
+            const dateString = `${year}-${month}-${day}`;
+            
             window.opener.postMessage({
                 type: 'dateSelected',
-                date: selectedDate.toISOString().split('T')[0]
+                date: dateString
             }, '*');
         }
         

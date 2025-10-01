@@ -535,9 +535,12 @@ function initDatePicker() {
     return;
   }
 
-  // 设置默认日期为当前日期
+  // 设置默认日期为当前日期（使用本地时区）
   const today = new Date();
-  const todayString = today.toISOString().split('T')[0];
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const todayString = `${year}-${month}-${day}`;
   datePicker.value = todayString;
   selectedDate = todayString;
   
@@ -628,9 +631,12 @@ function initDatePicker() {
       window.__hapticImpact__('Light');
     }
     
-    // 重置为当前日期
+    // 重置为当前日期（使用本地时区）
     const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayString = `${year}-${month}-${day}`;
     selectedDate = todayString;
     datePicker.value = todayString;
     
@@ -843,7 +849,51 @@ function searchInCardContent(content, dataType, keyword) {
     return true;
   }
   
+  // 最后尝试：模糊搜索
+  if (fuzzySearchInContent(content, lowerKeyword)) {
+    console.log(`✅ ${dataType} 模糊搜索找到匹配: "${lowerKeyword}"`);
+    return true;
+  }
+  
   console.log(`❌ ${dataType} 搜索未找到匹配: "${lowerKeyword}"`);
+  return false;
+}
+
+/**
+ * fuzzySearchInContent — 模糊搜索内容
+ * @param {Object} content - 内容对象
+ * @param {string} keyword - 搜索关键字
+ * @returns {boolean} - 是否匹配
+ */
+function fuzzySearchInContent(content, keyword) {
+  // 将内容转换为字符串进行模糊匹配
+  const contentStr = JSON.stringify(content).toLowerCase();
+  
+  // 简单的模糊匹配：检查关键字中的字符是否都存在于内容中
+  const keywordChars = keyword.split('').filter(char => char.trim());
+  const allCharsExist = keywordChars.every(char => contentStr.includes(char));
+  
+  if (allCharsExist && keywordChars.length > 0) {
+    console.log(`🔍 模糊搜索匹配: "${keyword}"`);
+    return true;
+  }
+  
+  // 同义词匹配
+  const synonyms = {
+    '紫癜': ['紫癜', '紫癜病', '血小板减少性紫癜', '过敏性紫癜'],
+    '出血': ['出血', '流血', '出血点', '瘀斑'],
+    '症状': ['症状', '表现', '体征', '不适'],
+    '治疗': ['治疗', '医治', '疗法', '用药'],
+    '检查': ['检查', '检验', '检测', '化验']
+  };
+  
+  for (const [key, values] of Object.entries(synonyms)) {
+    if (values.some(synonym => synonym.includes(keyword) || keyword.includes(synonym))) {
+      console.log(`🔍 同义词匹配: "${keyword}" -> "${key}"`);
+      return true;
+    }
+  }
+  
   return false;
 }
 
@@ -854,10 +904,10 @@ function searchInCardContent(content, dataType, keyword) {
  */
 function isValidSearchKeyword(keyword) {
   // 单字符关键字无效
-  if (keyword.length < 2) return false;
+  if (keyword.length < 1) return false;
   
-  // 纯数字且小于3位无效
-  if (/^\d+$/.test(keyword) && keyword.length < 3) return false;
+  // 纯数字且小于2位无效（放宽限制）
+  if (/^\d+$/.test(keyword) && keyword.length < 2) return false;
   
   // 过于通用的词汇无效
   const genericWords = [
@@ -1275,13 +1325,18 @@ function searchInCaseContentOptimized(content, keyword) {
     const caseInfo = content.caseInfo;
     console.log(`🏥 病例信息:`, caseInfo);
     
-    // 按重要性排序搜索
+    // 按重要性排序搜索 - 扩展更多字段
     const importantFields = [
       { field: 'title', label: '标题' },
       { field: 'diagnosis', label: '诊断' },
       { field: 'symptoms', label: '症状' },
       { field: 'treatment', label: '治疗方案' },
-      { field: 'description', label: '描述' }
+      { field: 'description', label: '描述' },
+      { field: 'hospital', label: '医院' },
+      { field: 'department', label: '科室' },
+      { field: 'doctor', label: '医生' },
+      { field: 'prescription', label: '医嘱' },
+      { field: 'notes', label: '备注' }
     ];
     
     for (const { field, label } of importantFields) {
@@ -1363,6 +1418,25 @@ function searchInCaseContentOptimized(content, keyword) {
   
   if (searchInNestedContent(content, keyword)) {
     console.log(`✅ 嵌套内容搜索匹配: "${keyword}"`);
+    return true;
+  }
+  
+  // 新增：通用深度搜索，确保不遗漏任何内容
+  const deepSearchInContent = (obj, searchTerm) => {
+    if (typeof obj === 'string') {
+      return obj.toLowerCase().includes(searchTerm);
+    }
+    if (Array.isArray(obj)) {
+      return obj.some(item => deepSearchInContent(item, searchTerm));
+    }
+    if (typeof obj === 'object' && obj !== null) {
+      return Object.values(obj).some(value => deepSearchInContent(value, searchTerm));
+    }
+    return false;
+  };
+  
+  if (deepSearchInContent(content, keyword)) {
+    console.log(`✅ 深度搜索匹配: "${keyword}"`);
     return true;
   }
   
@@ -1645,10 +1719,13 @@ function loadUserDataCardsForSearch() {
       }
     }
 
-    // 计算三个月前的时间范围
+    // 计算三个月前的时间范围（使用本地时区）
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-    const threeMonthsAgoStr = threeMonthsAgo.toISOString().split('T')[0];
+    const year = threeMonthsAgo.getFullYear();
+    const month = String(threeMonthsAgo.getMonth() + 1).padStart(2, '0');
+    const day = String(threeMonthsAgo.getDate()).padStart(2, '0');
+    const threeMonthsAgoStr = `${year}-${month}-${day}`;
     
     console.log(`🔍 搜索专用：加载三个月内数据，起始日期: ${threeMonthsAgoStr}`);
     
@@ -1769,10 +1846,13 @@ function loadUserDataCards() {
 
     // 创建加载Promise
     dataCardsLoadPromise = new Promise((resolveLoad) => {
-      // 计算三个月前的时间范围
+      // 计算三个月前的时间范围（使用本地时区）
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-      const threeMonthsAgoStr = threeMonthsAgo.toISOString().split('T')[0];
+      const year = threeMonthsAgo.getFullYear();
+      const month = String(threeMonthsAgo.getMonth() + 1).padStart(2, '0');
+      const day = String(threeMonthsAgo.getDate()).padStart(2, '0');
+      const threeMonthsAgoStr = `${year}-${month}-${day}`;
       
       console.log(`📅 加载三个月内数据，起始日期: ${threeMonthsAgoStr}`);
       
@@ -3862,8 +3942,14 @@ function initCalendarButton() {
  * openCalendarPage — 打开日历页面
  */
 function openCalendarPage() {
-  // 获取当前选中的日期
-  const currentDate = selectedDate || new Date().toISOString().split('T')[0];
+  // 获取当前选中的日期（使用本地时区）
+  const currentDate = selectedDate || (() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  })();
   
   // 跳转到日历页面
   const calendarUrl = `${window.location.origin}${window.location.pathname.replace('/index.html', '').replace('/daily.html', '')}/src/calendar.html?date=${currentDate}`;
