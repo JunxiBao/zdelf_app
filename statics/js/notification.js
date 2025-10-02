@@ -61,6 +61,8 @@
   let handledNotificationIds = new Set(); // 已处理的本地通知ID，避免重复推进
   let isActiveReminderView = false; // 是否在提醒页面处于激活状态（由 init/destroy 控制）
   let allowedFireAt = new Map(); // 允许触发的时间窗口：reminderId -> epoch ms（今天最近一次）
+  let scheduledNotificationIds = new Set(); // 已调度的通知ID，防止重复调度
+  let notificationCooldown = new Map(); // 通知冷却期管理
 
   // 依据提醒ID生成稳定的数字通知ID，避免重复调度
   function stableIdFromString(str) {
@@ -109,7 +111,7 @@
             cancelIds.push({ id: stableIdFromString(reminderId + '|' + t) });
           });
         }
-        try { await LocalNotifications.cancel({ notifications: cancelIds }); } catch (_) {}
+        try { await LocalNotifications.cancel({ notifications: cancelIds }); } catch (_) { }
       }
       // 移除数据、保存并刷新
       reminders = reminders.filter(r => r.id !== reminderId);
@@ -125,7 +127,7 @@
 
   // 震动反馈函数
   function hapticFeedback(style = 'Light') {
-    try { window.__hapticImpact__ && window.__hapticImpact__(style); } catch(_) {}
+    try { window.__hapticImpact__ && window.__hapticImpact__(style); } catch (_) { }
   }
 
   // 判断某个具体时间点是否启用（向后兼容：未设置映射时默认启用）
@@ -193,22 +195,22 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ table_name: 'users', user_id: userId }),
     })
-    .then((response) => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      return response.json();
-    })
-    .then((data) => {
-      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-        const username = data.data[0].username || '访客';
-        callback(username);
-      } else {
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        return response.json();
+      })
+      .then((data) => {
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          const username = data.data[0].username || '访客';
+          callback(username);
+        } else {
+          callback('访客');
+        }
+      })
+      .catch((error) => {
+        console.error('❌ 获取用户信息失败:', error);
         callback('访客');
-      }
-    })
-    .catch((error) => {
-      console.error('❌ 获取用户信息失败:', error);
-      callback('访客');
-    });
+      });
   }
 
   /**
@@ -243,11 +245,11 @@
       console.log('📱 在app环境中，跳过添加跳转功能');
       return;
     }
-    
+
     // 获取引导提示元素
     const redirectHint = root.querySelector('.redirect-hint');
     const emptyHint = root.querySelector('.empty-hint');
-    
+
     // 在非app环境下显示跳转提示
     if (redirectHint) {
       redirectHint.style.display = 'block';
@@ -255,28 +257,28 @@
     if (emptyHint) {
       emptyHint.style.display = 'flex';
     }
-    
+
     // 为整个页面添加点击事件监听器
     const handlePageClick = (event) => {
       // 检查是否点击了按钮、输入框或其他交互元素
       const interactiveElements = ['button', 'input', 'select', 'textarea', 'a'];
       const clickedElement = event.target;
-      
+
       // 如果点击的是交互元素，不执行跳转
       if (interactiveElements.includes(clickedElement.tagName.toLowerCase())) {
         return;
       }
-      
+
       // 如果点击的是交互元素的父元素，也不执行跳转
       const isInsideInteractive = clickedElement.closest('button, input, select, textarea, a, .btn, .modal, .confirm-modal');
       if (isInsideInteractive) {
         return;
       }
-      
+
       // 执行跳转到 zdelf.cn
       console.log('🔄 点击页面，跳转到 zdelf.cn');
       hapticFeedback('Light');
-      
+
       // 隐藏引导提示
       if (redirectHint) {
         redirectHint.style.opacity = '0';
@@ -285,19 +287,19 @@
           redirectHint.style.display = 'none';
         }, 300);
       }
-      
+
       // 在新标签页中打开 zdelf.cn
       window.open('https://zdelf.cn', '_blank');
     };
-    
+
     // 添加点击事件监听器
     root.addEventListener('click', handlePageClick);
-    
+
     // 记录清理函数
     cleanupFns.push(() => {
       root.removeEventListener('click', handlePageClick);
     });
-    
+
     console.log('✅ 已添加点击跳转到 zdelf.cn 的功能');
   }
 
@@ -356,7 +358,7 @@
    * @param {Document|ShadowRoot} rootEl - Scope for DOM queries.
    */
   async function initCase(rootEl) {
-    console.log('🚀 initCase 开始执行', new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}));
+    console.log('🚀 initCase 开始执行', new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }));
     const root = rootEl || document;
     currentRoot = root; // 存储当前的root引用
     isActiveReminderView = true;
@@ -383,10 +385,10 @@
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     const today = `${year}-${month}-${day}`;
-    
+
     const startDateInput = root.getElementById('startDate');
     const endDateInput = root.getElementById('endDate');
-    
+
     if (startDateInput) {
       startDateInput.min = today;
       startDateInput.value = today; // 设置默认值为今天
@@ -547,7 +549,7 @@
         reminders[rIdx].dailyTimeEnabled = {};
       }
       reminders[rIdx].dailyTimeEnabled[time] = !!chk.checked;
-      reminders[rIdx].updatedAt = new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'});
+      reminders[rIdx].updatedAt = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
       saveReminders();
       hapticFeedback('Light');
       // 重新设置调度
@@ -594,10 +596,10 @@
   function openModal(root, reminderId = null) {
     // 检测深色模式
     const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
+
     // 创建弹窗 - 完全使用内联样式
     const modal = document.createElement('div');
-    
+
     // 弹窗容器样式
     modal.style.cssText = `
       position: fixed !important;
@@ -616,20 +618,20 @@
       margin: 0 !important;
       overflow: hidden !important;
     `;
-    
+
     // 根据深色模式选择样式
-    const backdropStyle = isDarkMode 
+    const backdropStyle = isDarkMode
       ? "background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(12px);"
       : "background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(12px);";
-      
+
     const modalContentStyle = isDarkMode
       ? "background: linear-gradient(145deg, #1f2937 0%, #111827 100%); border-radius: 28px; box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1); max-width: 90vw; max-height: calc(100vh - 120px); width: 100%; max-width: 700px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); margin: 0 auto; transform: translateZ(0);"
       : "background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%); border-radius: 28px; box-shadow: 0 32px 64px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6); max-width: 90vw; max-height: calc(100vh - 120px); width: 100%; max-width: 700px; overflow: hidden; border: none; margin: 0 auto; transform: translateZ(0);";
-      
+
     const headerStyle = isDarkMode
       ? "display: flex; justify-content: space-between; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(135deg, #374151 0%, #1f2937 100%); color: #f9fafb; border-radius: 28px 28px 0 0;"
       : "display: flex; justify-content: space-between; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(0, 0, 0, 0.06); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 28px 28px 0 0;";
-      
+
     const closeBtnStyle = isDarkMode
       ? "background: rgba(255, 255, 255, 0.1); border: none; font-size: 1.6rem; color: #d1d5db; cursor: pointer; padding: 12px; border-radius: 16px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;"
       : "background: rgba(255, 255, 255, 0.2); border: none; font-size: 1.6rem; color: white; cursor: pointer; padding: 12px; border-radius: 16px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;";
@@ -646,18 +648,18 @@
 
     modal.innerHTML = '<div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; ' + backdropStyle + '"></div>' +
       '<div style="position: relative; ' + modalContentStyle + '">' +
-        '<div style="' + headerStyle + '">' +
-          '<h3 style="margin: 0; font-size: 1.5rem; font-weight: 700;">' + titleText + '</h3>' +
-          '<button style="' + closeBtnStyle + '">&times;</button>' +
-        '</div>' +
-        '<div style="padding: 32px; max-height: calc(100vh - 240px); overflow-y: auto;">' +
-          createReminderFormHTML(reminder, isDarkMode) +
-        '</div>' +
+      '<div style="' + headerStyle + '">' +
+      '<h3 style="margin: 0; font-size: 1.5rem; font-weight: 700;">' + titleText + '</h3>' +
+      '<button style="' + closeBtnStyle + '">&times;</button>' +
+      '</div>' +
+      '<div style="padding: 32px; max-height: calc(100vh - 240px); overflow-y: auto;">' +
+      createReminderFormHTML(reminder, isDarkMode) +
+      '</div>' +
       '</div>';
 
     // 将弹窗添加到主文档，而不是 Shadow DOM，以便正确控制滚动
     document.body.appendChild(modal);
-    
+
     // 禁用页面滚动
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
@@ -665,19 +667,19 @@
     // 绑定关闭事件
     const closeBtn = modal.querySelector('button');
     const backdrop = modal.querySelector('div[style*="backdrop-filter"]');
-    
+
     const closeModal = () => {
       // 恢复页面滚动
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
       modal.remove();
     };
-    
+
     closeBtn.addEventListener('click', () => {
       hapticFeedback('Light');
       closeModal();
     });
-    
+
     backdrop.addEventListener('click', () => {
       hapticFeedback('Light');
       closeModal();
@@ -694,27 +696,27 @@
     const formGroupStyle = isDarkMode
       ? "margin-bottom: 24px;"
       : "margin-bottom: 24px;";
-      
+
     const labelStyle = isDarkMode
       ? "display: block; margin-bottom: 8px; color: #e2e8f0; font-weight: 600; font-size: 0.95rem;"
       : "display: block; margin-bottom: 8px; color: #374151; font-weight: 600; font-size: 0.95rem;";
-      
+
     const inputStyle = isDarkMode
       ? "width: 100%; padding: 12px 16px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; background: linear-gradient(135deg, #334155 0%, #1e293b 100%); color: #f1f5f9; font-size: 0.95rem; box-sizing: border-box; transition: all 0.2s ease; display: block; -webkit-appearance: none; appearance: none;"
       : "width: 100%; padding: 12px 16px; border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); color: #1e293b; font-size: 0.95rem; box-sizing: border-box; transition: all 0.2s ease; display: block; -webkit-appearance: none; appearance: none;";
-      
+
     const textareaStyle = isDarkMode
       ? "width: 100%; padding: 12px 16px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; background: linear-gradient(135deg, #334155 0%, #1e293b 100%); color: #f1f5f9; font-size: 0.95rem; box-sizing: border-box; min-height: 80px; resize: vertical; transition: all 0.2s ease; display: block;"
       : "width: 100%; padding: 12px 16px; border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); color: #1e293b; font-size: 0.95rem; box-sizing: border-box; min-height: 80px; resize: vertical; transition: all 0.2s ease; display: block;";
-      
+
     const buttonStyle = isDarkMode
       ? "padding: 12px 24px; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; margin-right: 12px;"
       : "padding: 12px 24px; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; margin-right: 12px;";
-      
+
     const primaryButtonStyle = isDarkMode
       ? buttonStyle + ' background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);'
       : buttonStyle + ' background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);';
-      
+
     const secondaryButtonStyle = isDarkMode
       ? buttonStyle + ' background: rgba(255, 255, 255, 0.1); color: #d1d5db; border: 1px solid rgba(255, 255, 255, 0.2);'
       : buttonStyle + ' background: rgba(0, 0, 0, 0.05); color: #64748b; border: 1px solid rgba(0, 0, 0, 0.1);';
@@ -724,11 +726,11 @@
       : "display: flex; justify-content: flex-end; align-items: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(0, 0, 0, 0.1);";
 
     // 设置默认值
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const currentDate = `${year}-${month}-${day}`;
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const currentDate = `${year}-${month}-${day}`;
     const name = reminder ? reminder.name || '' : '';
     const startDate = reminder ? reminder.startDate || currentDate : currentDate;
     const endDate = reminder ? reminder.endDate || currentDate : currentDate;
@@ -753,7 +755,7 @@
       { value: 'monthly', text: '每月' },
       { value: 'yearly', text: '每年' }
     ];
-    
+
     repeatOptions.forEach(option => {
       const selected = repeatInterval === option.value ? ' selected' : '';
       repeatOptionsHtml += '<option value="' + option.value + '"' + selected + '>' + option.text + '</option>';
@@ -761,52 +763,52 @@
 
     return '<form id="reminderForm">' +
       '<div style="' + formGroupStyle + '">' +
-        '<label style="' + labelStyle + '" for="medicationName">药品名称 *</label>' +
-        '<input type="text" id="medicationName" placeholder="请输入药品名称" value="' + name + '" required style="' + inputStyle + '">' +
+      '<label style="' + labelStyle + '" for="medicationName">药品名称 *</label>' +
+      '<input type="text" id="medicationName" placeholder="请输入药品名称" value="' + name + '" required style="' + inputStyle + '">' +
       '</div>' +
       '<div style="' + formGroupStyle + '">' +
-        '<label style="' + labelStyle + '" for="startDate">开始日期 *</label>' +
-        '<input type="date" id="startDate" value="' + startDate + '" required style="' + inputStyle + '">' +
+      '<label style="' + labelStyle + '" for="startDate">开始日期 *</label>' +
+      '<input type="date" id="startDate" value="' + startDate + '" required style="' + inputStyle + '">' +
       '</div>' +
       '<div style="' + formGroupStyle + '">' +
-        '<label style="' + labelStyle + '" for="endDate">结束日期 *</label>' +
-        '<input type="date" id="endDate" value="' + endDate + '" required style="' + inputStyle + '">' +
+      '<label style="' + labelStyle + '" for="endDate">结束日期 *</label>' +
+      '<input type="date" id="endDate" value="' + endDate + '" required style="' + inputStyle + '">' +
       '</div>' +
       '<div style="' + formGroupStyle + '">' +
-        '<label style="' + labelStyle + '" for="dailyCount">每日提醒次数 *</label>' +
-        '<select id="dailyCount" required style="' + inputStyle + '">' +
-          '<option value="" disabled' + (!dailyCount ? ' selected' : '') + '>请选择次数（1-20）</option>' +
-          optionsHtml +
-        '</select>' +
+      '<label style="' + labelStyle + '" for="dailyCount">每日提醒次数 *</label>' +
+      '<select id="dailyCount" required style="' + inputStyle + '">' +
+      '<option value="" disabled' + (!dailyCount ? ' selected' : '') + '>请选择次数（1-20）</option>' +
+      optionsHtml +
+      '</select>' +
       '</div>' +
       '<div id="dailyTimesGroup" style="' + formGroupStyle + ' display: ' + (dailyCount > 0 ? 'block' : 'none') + ';">' +
-        '<label style="' + labelStyle + '">每天提醒时间 *</label>' +
-        '<div id="dailyTimesList"></div>' +
-        '<button type="button" id="addDailyTimeBtn" style="' + secondaryButtonStyle + '">新增提醒时间</button>' +
+      '<label style="' + labelStyle + '">每天提醒时间 *</label>' +
+      '<div id="dailyTimesList"></div>' +
+      '<button type="button" id="addDailyTimeBtn" style="' + secondaryButtonStyle + '">新增提醒时间</button>' +
       '</div>' +
       '<div style="' + formGroupStyle + '">' +
-        '<label style="' + labelStyle + '" for="dosage">剂量</label>' +
-        '<input type="text" id="dosage" placeholder="例如：1片、2ml" value="' + dosage + '" style="' + inputStyle + '">' +
+      '<label style="' + labelStyle + '" for="dosage">剂量</label>' +
+      '<input type="text" id="dosage" placeholder="例如：1片、2ml" value="' + dosage + '" style="' + inputStyle + '">' +
       '</div>' +
       '<div style="' + formGroupStyle + '">' +
-        '<label style="' + labelStyle + '" for="repeatInterval">循环频率</label>' +
-        '<select id="repeatInterval" style="' + inputStyle + '">' +
-          repeatOptionsHtml +
-        '</select>' +
+      '<label style="' + labelStyle + '" for="repeatInterval">循环频率</label>' +
+      '<select id="repeatInterval" style="' + inputStyle + '">' +
+      repeatOptionsHtml +
+      '</select>' +
       '</div>' +
       '<div id="repeatCustomGroup" style="' + formGroupStyle + ' display: ' + (repeatInterval !== 'none' ? 'block' : 'none') + ';">' +
-        '<label style="' + labelStyle + '" id="repeatCustomLabel" for="repeatCustomValue">自定义间隔</label>' +
-        '<input type="number" min="1" step="1" id="repeatCustomValue" placeholder="例如：2" value="' + repeatCustomValue + '" style="' + inputStyle + '">' +
+      '<label style="' + labelStyle + '" id="repeatCustomLabel" for="repeatCustomValue">自定义间隔</label>' +
+      '<input type="number" min="1" step="1" id="repeatCustomValue" placeholder="例如：2" value="' + repeatCustomValue + '" style="' + inputStyle + '">' +
       '</div>' +
       '<div style="' + formGroupStyle + '">' +
-        '<label style="' + labelStyle + '" for="notes">备注</label>' +
-        '<textarea id="notes" placeholder="其他注意事项..." style="' + textareaStyle + '">' + notes + '</textarea>' +
+      '<label style="' + labelStyle + '" for="notes">备注</label>' +
+      '<textarea id="notes" placeholder="其他注意事项..." style="' + textareaStyle + '">' + notes + '</textarea>' +
       '</div>' +
       '<div style="' + actionsStyle + '">' +
-        '<button type="button" id="cancelBtn" style="' + secondaryButtonStyle + '">取消</button>' +
-        '<button type="submit" id="saveBtn" style="' + primaryButtonStyle + '">保存</button>' +
+      '<button type="button" id="cancelBtn" style="' + secondaryButtonStyle + '">取消</button>' +
+      '<button type="submit" id="saveBtn" style="' + primaryButtonStyle + '">保存</button>' +
       '</div>' +
-    '</form>';
+      '</form>';
   }
 
   /**
@@ -913,7 +915,7 @@
     if (!dailyList) return;
 
     const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
+
     const rowStyle = "display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;";
     const cellStyle = "display: flex; gap: 6px;";
     const inputStyle = isDarkMode
@@ -928,7 +930,7 @@
     for (let i = 0; i < count; i += 2) {
       const row = document.createElement('div');
       row.style.cssText = rowStyle;
-      
+
       // 左格
       const leftCell = document.createElement('div');
       leftCell.style.cssText = cellStyle;
@@ -936,7 +938,7 @@
       leftCell.innerHTML = '<input type="time" style="' + inputStyle + '" value="' + leftValue + '">' +
         '<button type="button" data-remove-input style="' + removeBtnStyle + '">删除</button>';
       row.appendChild(leftCell);
-      
+
       // 右格（如果存在）
       if (i + 1 < count) {
         const rightCell = document.createElement('div');
@@ -949,7 +951,7 @@
         const placeholder = document.createElement('div');
         row.appendChild(placeholder);
       }
-      
+
       dailyList.appendChild(row);
     }
 
@@ -1001,19 +1003,19 @@
       alert('请填写药品名称与开始日期');
       return;
     }
-    
+
     // 检查开始日期不能是过去的日期
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     const today = `${year}-${month}-${day}`;
-    
+
     if (startDate < today) {
       alert('开始日期不能是过去的日期');
       return;
     }
-    
+
     if (!endDate) {
       alert('请填写结束日期');
       return;
@@ -1022,7 +1024,7 @@
       alert('结束日期必须大于或等于开始日期');
       return;
     }
-    
+
     if (endDate < today) {
       alert('结束日期不能是过去的日期');
       return;
@@ -1080,8 +1082,8 @@
       dailyCount,
       dailyTimes,
       dailyTimeEnabled,
-      createdAt: new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}),
-      updatedAt: new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})
+      createdAt: new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }),
+      updatedAt: new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
     };
 
     if (editingReminderId) {
@@ -1132,19 +1134,19 @@
       alert('请填写药品名称与开始日期');
       return;
     }
-    
+
     // 检查开始日期不能是过去的日期（使用本地时间）
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     const today = `${year}-${month}-${day}`;
-    
+
     if (startDate < today) {
       alert('开始日期不能是过去的日期');
       return;
     }
-    
+
     if (!endDate) {
       alert('请填写结束日期');
       if (endDateEl && typeof endDateEl.scrollIntoView === 'function') endDateEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1157,7 +1159,7 @@
       if (endDateEl && typeof endDateEl.focus === 'function') endDateEl.focus();
       return;
     }
-    
+
     // 检查结束日期不能是过去的日期
     if (endDate && endDate < today) {
       alert('结束日期不能是过去的日期');
@@ -1230,8 +1232,8 @@
       dailyCount,
       dailyTimes,
       dailyTimeEnabled,
-      createdAt: new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}),
-      updatedAt: new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})
+      createdAt: new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }),
+      updatedAt: new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
     };
 
     if (editingReminderId) {
@@ -1282,10 +1284,10 @@
   function showDeleteModal(root) {
     // 检测深色模式
     const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
+
     // 创建弹窗 - 完全使用内联样式
     const modal = document.createElement('div');
-    
+
     // 弹窗容器样式
     modal.style.cssText = `
       position: fixed !important;
@@ -1304,63 +1306,63 @@
       margin: 0 !important;
       overflow: hidden !important;
     `;
-    
+
     // 根据深色模式选择样式
-    const backdropStyle = isDarkMode 
+    const backdropStyle = isDarkMode
       ? "background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(12px);"
       : "background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(12px);";
-      
+
     const modalContentStyle = isDarkMode
       ? "background: linear-gradient(145deg, #1f2937 0%, #111827 100%); border-radius: 28px; box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1); max-width: 90vw; max-height: calc(100vh - 120px); width: 100%; max-width: 500px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); margin: 0 auto; transform: translateZ(0);"
       : "background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%); border-radius: 28px; box-shadow: 0 32px 64px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6); max-width: 90vw; max-height: calc(100vh - 120px); width: 100%; max-width: 500px; overflow: hidden; border: none; margin: 0 auto; transform: translateZ(0);";
-      
+
     const headerStyle = isDarkMode
       ? "display: flex; justify-content: center; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(135deg, #374151 0%, #1f2937 100%); color: #f9fafb; border-radius: 28px 28px 0 0;"
       : "display: flex; justify-content: center; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(0, 0, 0, 0.06); background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border-radius: 28px 28px 0 0;";
-      
+
     const warningIconStyle = isDarkMode
       ? "font-size: 3rem; margin-bottom: 16px; color: #fca5a5;"
       : "font-size: 3rem; margin-bottom: 16px; color: #fef2f2;";
-      
+
     const warningTextStyle = isDarkMode
       ? "color: #f1f5f9; font-size: 1.1rem; font-weight: 600; margin: 0 0 8px 0; text-align: center;"
       : "color: #1e293b; font-size: 1.1rem; font-weight: 600; margin: 0 0 8px 0; text-align: center;";
-      
+
     const warningDetailStyle = isDarkMode
       ? "color: #cbd5e1; font-size: 0.9rem; margin: 0; text-align: center; line-height: 1.5;"
       : "color: #64748b; font-size: 0.9rem; margin: 0; text-align: center; line-height: 1.5;";
-      
+
     const buttonStyle = isDarkMode
       ? "padding: 12px 24px; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; margin: 0 8px;"
       : "padding: 12px 24px; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; margin: 0 8px;";
-      
+
     const cancelButtonStyle = isDarkMode
       ? buttonStyle + ' background: rgba(255, 255, 255, 0.1); color: #d1d5db; border: 1px solid rgba(255, 255, 255, 0.2);'
       : buttonStyle + ' background: rgba(0, 0, 0, 0.05); color: #64748b; border: 1px solid rgba(0, 0, 0, 0.1);';
-      
+
     const confirmButtonStyle = isDarkMode
       ? buttonStyle + ' background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);'
       : buttonStyle + ' background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);';
 
     modal.innerHTML = '<div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; ' + backdropStyle + '"></div>' +
       '<div style="position: relative; ' + modalContentStyle + '">' +
-        '<div style="' + headerStyle + '">' +
-          '<h3 style="margin: 0; font-size: 1.5rem; font-weight: 700;">确认删除</h3>' +
-        '</div>' +
-        '<div style="padding: 32px; text-align: center;">' +
-          '<div style="' + warningIconStyle + '">⚠️</div>' +
-          '<p style="' + warningTextStyle + '">确定要删除这个用药提醒吗？</p>' +
-          '<p style="' + warningDetailStyle + '">此操作无法撤销，相关的定时提醒也将被取消。</p>' +
-        '</div>' +
-        '<div style="display: flex; justify-content: center; align-items: center; padding: 0 32px 32px; gap: 16px;">' +
-          '<button id="deleteCancelBtn" style="' + cancelButtonStyle + '">取消</button>' +
-          '<button id="deleteConfirmBtn" style="' + confirmButtonStyle + '">确认删除</button>' +
-        '</div>' +
+      '<div style="' + headerStyle + '">' +
+      '<h3 style="margin: 0; font-size: 1.5rem; font-weight: 700;">确认删除</h3>' +
+      '</div>' +
+      '<div style="padding: 32px; text-align: center;">' +
+      '<div style="' + warningIconStyle + '">⚠️</div>' +
+      '<p style="' + warningTextStyle + '">确定要删除这个用药提醒吗？</p>' +
+      '<p style="' + warningDetailStyle + '">此操作无法撤销，相关的定时提醒也将被取消。</p>' +
+      '</div>' +
+      '<div style="display: flex; justify-content: center; align-items: center; padding: 0 32px 32px; gap: 16px;">' +
+      '<button id="deleteCancelBtn" style="' + cancelButtonStyle + '">取消</button>' +
+      '<button id="deleteConfirmBtn" style="' + confirmButtonStyle + '">确认删除</button>' +
+      '</div>' +
       '</div>';
 
     // 将弹窗添加到主文档
     document.body.appendChild(modal);
-    
+
     // 禁用页面滚动
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
@@ -1369,25 +1371,25 @@
     const cancelBtn = modal.querySelector('#deleteCancelBtn');
     const confirmBtn = modal.querySelector('#deleteConfirmBtn');
     const backdrop = modal.querySelector('div[style*="backdrop-filter"]');
-    
+
     const closeModal = () => {
       // 恢复页面滚动
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
       modal.remove();
     };
-    
+
     cancelBtn.addEventListener('click', () => {
       hapticFeedback('Light');
       closeModal();
     });
-    
+
     confirmBtn.addEventListener('click', () => {
       hapticFeedback('Medium');
       confirmDelete(root);
       closeModal();
     });
-    
+
     backdrop.addEventListener('click', () => {
       hapticFeedback('Light');
       closeModal();
@@ -1433,7 +1435,7 @@
             cancelIds.push({ id: stableIdFromString(reminderId + '|' + t) });
           });
         }
-        try { await LocalNotifications.cancel({ notifications: cancelIds }); } catch (_) {}
+        try { await LocalNotifications.cancel({ notifications: cancelIds }); } catch (_) { }
         console.log('🔔 已取消Capacitor通知:', reminderId);
       }
 
@@ -1474,7 +1476,7 @@
    * 设置提醒定时器
    */
   async function setupReminders() {
-    console.log('⏰ setupReminders 开始执行', new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}));
+    console.log('⏰ setupReminders 开始执行', new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }));
     // 防止重复设置提醒
     if (isSettingUpReminders) {
       console.log('⏰ setupReminders 跳过：正在设置中');
@@ -1490,18 +1492,24 @@
       uiAdvanceTimeouts.forEach(timeout => clearTimeout(timeout));
       uiAdvanceTimeouts.clear();
       allowedFireAt.clear(); // 清除允许触发窗口
+      scheduledNotificationIds.clear(); // 清除已调度的通知ID
 
       if (LocalNotifications) {
+        // 先取消所有现有通知，防止重复
+        try {
+          await LocalNotifications.cancel({ notifications: [{ id: 0 }] }); // 取消所有通知
+          console.log('🧹 已取消所有现有通知');
+        } catch (error) {
+          console.warn('⚠️ 取消现有通知失败:', error);
+        }
+
         // 使用Capacitor本地通知调度（逐条调度）
         const notifications = [];
         const cancelList = [];
 
         // 统一用户名
         let username = '访客';
-        try { username = await getUsernameAsync(); } catch(_) {}
-
-        // 使用Set来避免重复的通知ID
-        const scheduledNotificationIds = new Set();
+        try { username = await getUsernameAsync(); } catch (_) { }
 
         reminders.forEach(reminder => {
           // 必须有 dailyTimes
@@ -1509,7 +1517,7 @@
 
           const timesAll = [...reminder.dailyTimes].filter(Boolean).sort();
           const timesEnabled = timesAll.filter(t => isTimeEnabled(reminder, t));
-          const now = new Date();
+          const now = new Date(); // 使用本地时间
           let nextAtForUi = null;
 
           // 先取消所有该提醒下（所有时间点）的既有原生通知
@@ -1520,6 +1528,7 @@
 
           // 仅为启用的时间点调度
           timesEnabled.forEach((t) => {
+            // 使用本地时间计算
             const baseDate = reminder.startDate || (() => {
               const now = new Date();
               const year = now.getFullYear();
@@ -1527,11 +1536,14 @@
               const day = String(now.getDate()).padStart(2, '0');
               return `${year}-${month}-${day}`;
             })();
+
+            // 创建本地时间对象
             const baseTime = new Date(`${baseDate}T${t}:00`);
-            
+
             // 如果基础时间已过，直接跳到下一天
             let firstTime = baseTime;
-            console.log(`⏰ 计算时间: ${t}, startDate: ${reminder.startDate}, baseDate: ${baseDate}, 基础时间: ${baseTime.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}, 当前时间: ${now.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}`);
+            console.log(`⏰ 计算时间: ${t}, startDate: ${reminder.startDate}, baseDate: ${baseDate}, 基础时间: ${baseTime.toLocaleString('zh-CN')}, 当前时间: ${now.toLocaleString('zh-CN')}`);
+
             if (firstTime <= now) {
               // 如果今天的时间已过，跳到下一天
               const nextDay = new Date(baseTime);
@@ -1540,9 +1552,9 @@
               const month = String(nextDay.getMonth() + 1).padStart(2, '0');
               const day = String(nextDay.getDate()).padStart(2, '0');
               firstTime = new Date(`${year}-${month}-${day}T${t}:00`);
-              console.log(`⏰ 时间已过，跳到下一天: ${firstTime.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}`);
+              console.log(`⏰ 时间已过，跳到下一天: ${firstTime.toLocaleString('zh-CN')}`);
             } else {
-              console.log(`⏰ 时间未到，使用原时间: ${firstTime.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}`);
+              console.log(`⏰ 时间未到，使用原时间: ${firstTime.toLocaleString('zh-CN')}`);
             }
 
             // 如果超出结束日期，则跳过
@@ -1554,15 +1566,15 @@
             if (!nextAtForUi || firstTime < nextAtForUi) nextAtForUi = firstTime;
 
             const notificationId = stableIdFromString(reminder.id + '|' + t);
-            
+
             // 检查是否已经调度过这个通知ID，避免重复
             if (scheduledNotificationIds.has(notificationId)) {
               console.warn(`⏰ 跳过重复的通知ID: ${notificationId}`);
               return;
             }
-            
+
             scheduledNotificationIds.add(notificationId);
-            
+
             const schedule = { at: firstTime };
             // 不再使用 repeats/every，避免原生立即触发或时间漂移，由应用层手动重调度
 
@@ -1584,7 +1596,7 @@
         });
 
         if (cancelList.length > 0) {
-          try { await LocalNotifications.cancel({ notifications: cancelList }); } catch (_) {}
+          try { await LocalNotifications.cancel({ notifications: cancelList }); } catch (_) { }
         }
         if (notifications.length > 0) {
           try { await LocalNotifications.schedule({ notifications }); }
@@ -1607,7 +1619,7 @@
               return `${year}-${month}-${day}`;
             })();
             const baseTime = new Date(`${baseDate}T${t}:00`);
-            
+
             // 如果基础时间已过，跳到下一天
             let firstTime = baseTime;
             if (firstTime <= now) {
@@ -1618,13 +1630,13 @@
               const day = String(nextDay.getDate()).padStart(2, '0');
               firstTime = new Date(`${year}-${month}-${day}T${t}:00`);
             }
-            
+
             // 范围检查
             if (reminder.endDate) {
               const end = new Date(`${reminder.endDate}T23:59:59`);
               if (firstTime > end) return;
             }
-            
+
             const delay = firstTime - now;
             // 只有时间在未来才设置定时器
             if (delay > 0) {
@@ -1670,14 +1682,14 @@
       const times = [...reminder.dailyTimes].filter(Boolean).filter(t => isTimeEnabled(reminder, t)).sort();
       times.forEach((t) => {
         const baseDate = reminder.startDate || (() => {
-              const now = new Date();
-              const year = now.getFullYear();
-              const month = String(now.getMonth() + 1).padStart(2, '0');
-              const day = String(now.getDate()).padStart(2, '0');
-              return `${year}-${month}-${day}`;
-            })();
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        })();
         const baseTime = new Date(`${baseDate}T${t}:00`);
-        
+
         // 如果基础时间已过，跳到下一天
         let firstTime = baseTime;
         if (firstTime <= now) {
@@ -1688,15 +1700,15 @@
           const day = String(nextDay.getDate()).padStart(2, '0');
           firstTime = new Date(`${year}-${month}-${day}T${t}:00`);
         }
-        
+
         // 检查是否超出结束日期
         if (reminder.endDate) {
           const end = new Date(`${reminder.endDate}T23:59:59`);
           if (firstTime > end) return;
         }
-        
+
         const timeUntilReminder = firstTime - now;
-        
+
         // 只有时间在未来才设置定时器
         if (timeUntilReminder > 0) {
           const timeout = setTimeout(() => {
@@ -1719,14 +1731,14 @@
     if (reminder.dailyCount > 0 && Array.isArray(reminder.dailyTimes) && reminder.dailyTimes.length > 0) {
       const times = [...reminder.dailyTimes].filter(Boolean).filter(t => isTimeEnabled(reminder, t)).sort(); // "HH:MM"
       const from = new Date(fromTime);
-      const fromDateStr = from(() => {
-              const year = this.getFullYear();
-              const month = String(this.getMonth() + 1).padStart(2, '0');
-              const day = String(this.getDate()).padStart(2, '0');
-              return `${year}-${month}-${day}`;
-            })();
-      const fromHhmm = from.toTimeString().slice(0,5);
-      
+      const fromDateStr = (() => {
+        const year = from.getFullYear();
+        const month = String(from.getMonth() + 1).padStart(2, '0');
+        const day = String(from.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      })();
+      const fromHhmm = from.toTimeString().slice(0, 5);
+
       // 检查今天剩余的时间
       for (let i = 0; i < times.length; i++) {
         const t = times[i];
@@ -1734,7 +1746,7 @@
           return new Date(`${fromDateStr}T${t}:00`);
         }
       }
-      
+
       // 如果今天的时间都过了，跳到下一天的第一个时间
       const nextDay = new Date(from);
       nextDay.setDate(nextDay.getDate() + 1);
@@ -1824,13 +1836,20 @@
   function canSendNotification(reminderId) {
     const now = Date.now();
     const lastTime = lastNotificationTime.get(reminderId);
-    const cooldownPeriod = 5 * 60 * 1000; // 5分钟冷却期
-    
+    const cooldownPeriod = 2 * 60 * 1000; // 2分钟冷却期，减少重复发送
+
     if (lastTime && (now - lastTime) < cooldownPeriod) {
-      console.log('⏰ 通知冷却中，跳过发送:', reminderId);
+      console.log('⏰ 通知冷却中，跳过发送:', reminderId, '剩余冷却时间:', Math.ceil((cooldownPeriod - (now - lastTime)) / 1000), '秒');
       return false;
     }
-    
+
+    // 检查是否已经在处理冷却期（防止重复处理）
+    const cooldownEnd = notificationCooldown.get(reminderId);
+    if (cooldownEnd && now < cooldownEnd) {
+      console.log('⏰ 通知处理冷却中，跳过发送:', reminderId, '剩余冷却时间:', Math.ceil((cooldownEnd - now) / 1000), '秒');
+      return false;
+    }
+
     return true;
   }
 
@@ -1908,12 +1927,16 @@
         }
       }
 
-      // 记录发送时间
-      lastNotificationTime.set(reminder.id, Date.now());
+      // 记录发送时间和冷却期
+      const now = Date.now();
+      lastNotificationTime.set(reminder.id, now);
+      notificationCooldown.set(reminder.id, now + 2 * 60 * 1000); // 2分钟冷却期
       sentNotifications.add(reminder.id);
 
       // 震动反馈
       hapticFeedback('Heavy');
+
+      console.log('🔔 通知已发送:', reminder.name, '时间:', new Date().toLocaleString('zh-CN'));
 
       // 非循环：仅当“今天所有时间点都发完”才删除；否则继续等今天的下一个时间点
       if (!reminder.repeatInterval || reminder.repeatInterval === 'none') {
@@ -1948,25 +1971,25 @@
       // 使用 dailyTimes 推进到下一次最近时间（仅考虑启用的时间）
       if (reminder.dailyCount > 0 && Array.isArray(reminder.dailyTimes) && reminder.dailyTimes.length > 0) {
         const now = new Date();
-        const next = computeNextTime(reminder, new Date(`${reminder.startDate || now(() => {
-              const year = this.getFullYear();
-              const month = String(this.getMonth() + 1).padStart(2, '0');
-              const day = String(this.getDate()).padStart(2, '0');
-              return `${year}-${month}-${day}`;
-            })()}T00:00:00`), now);
+        const next = computeNextTime(reminder, new Date(`${reminder.startDate || (() => {
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        })()}T00:00:00`), now);
         // 若 next 超过结束日期，则删除
         if (isReminderExpired(reminder, next)) {
           hardDeleteReminder(reminder.id);
           return;
         }
-        const nextDate = next(() => {
-              const year = this.getFullYear();
-              const month = String(this.getMonth() + 1).padStart(2, '0');
-              const day = String(this.getDate()).padStart(2, '0');
-              return `${year}-${month}-${day}`;
-            })();
-        const nextTime = next.toTimeString().slice(0,5);
-        reminders[idx] = { ...reminders[idx], startDate: reminders[idx].startDate || nextDate, updatedAt: new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}) };
+        const nextDate = (() => {
+          const year = next.getFullYear();
+          const month = String(next.getMonth() + 1).padStart(2, '0');
+          const day = String(next.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        })();
+        const nextTime = next.toTimeString().slice(0, 5);
+        reminders[idx] = { ...reminders[idx], startDate: reminders[idx].startDate || nextDate, updatedAt: new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) };
         // 不再单独存 time 字段
         saveReminders();
         if (currentRoot) { renderReminders(currentRoot); updateEditingModalIfOpen(currentRoot, reminders[idx]); }
@@ -2002,12 +2025,12 @@
           nextAt = nextToday;
         } else {
           // 如果今天没有剩余时间，跳到下一天
-          const baseDate = (reminder.startDate || now(() => {
-              const year = this.getFullYear();
-              const month = String(this.getMonth() + 1).padStart(2, '0');
-              const day = String(this.getDate()).padStart(2, '0');
-              return `${year}-${month}-${day}`;
-            })());
+          const baseDate = (reminder.startDate || (() => {
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          })());
           // 选择下一个启用的第一个时间
           const enabledTimes = [...reminder.dailyTimes].filter(Boolean).filter(t => isTimeEnabled(reminder, t)).sort();
           const firstEnabled = enabledTimes[0] || reminder.dailyTimes[0] || '00:00';
@@ -2041,25 +2064,27 @@
 
       // 对于按多个时间点调度，按“明确定点时间”的ID来调度，以便与启用状态对齐
       const enabledTimes = [...(reminder.dailyTimes || [])].filter(Boolean).filter(t => isTimeEnabled(reminder, t)).sort();
-      const nextTimeHHMM = nextAt.toTimeString().slice(0,5);
+      const nextTimeHHMM = nextAt.toTimeString().slice(0, 5);
       const idKey = enabledTimes.includes(nextTimeHHMM) ? (reminder.id + '|' + nextTimeHHMM) : reminder.id;
       const notificationId = stableIdFromString(idKey);
       // 先取消相关ID，再按 at 调度，不使用 repeats
       const cancelIds = [{ id: stableIdFromString(reminder.id) }];
       enabledTimes.forEach(t => cancelIds.push({ id: stableIdFromString(reminder.id + '|' + t) }));
-      LocalNotifications.cancel({ notifications: cancelIds }).catch(() => {});
-      LocalNotifications.schedule({ notifications: [{
-        id: notificationId,
-        title: buildNotificationTitle(),
-        body: buildNotificationBody('您', reminder),
-        schedule: { at },
-        sound: 'default',
-        actionTypeId: 'medication_reminder',
-        extra: { reminderId: reminder.id, medicationName: reminder.name }
-      }]});
+      LocalNotifications.cancel({ notifications: cancelIds }).catch(() => { });
+      LocalNotifications.schedule({
+        notifications: [{
+          id: notificationId,
+          title: buildNotificationTitle(),
+          body: buildNotificationBody('您', reminder),
+          schedule: { at },
+          sound: 'default',
+          actionTypeId: 'medication_reminder',
+          extra: { reminderId: reminder.id, medicationName: reminder.name }
+        }]
+      });
       // 同步UI推进窗口
       scheduleUiAdvance(reminder.id, at);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   function updateEditingModalIfOpen(root, updatedReminder) {
@@ -2071,7 +2096,7 @@
       const eEl = root.getElementById('endDate');
       if (sEl) sEl.value = updatedReminder.startDate || '';
       if (eEl) eEl.value = updatedReminder.endDate || '';
-    } catch (_) {}
+    } catch (_) { }
   }
 
   function advanceReminderNextRunById(reminderId) {
@@ -2121,19 +2146,37 @@
    * Called before leaving the page to prevent leaks.
    */
   function destroyCase() {
+    console.log('🧹 开始清理资源...');
+
     // 清除所有定时器
     reminderTimeouts.forEach(timeout => clearTimeout(timeout));
     reminderTimeouts.clear();
     uiAdvanceTimeouts.forEach(timeout => clearTimeout(timeout));
     uiAdvanceTimeouts.clear();
     allowedFireAt.clear(); // 清除允许触发窗口
+    scheduledNotificationIds.clear(); // 清除已调度的通知ID
+    notificationCooldown.clear(); // 清除通知冷却期
+    handledNotificationIds.clear(); // 清除已处理的通知ID
+    sentNotifications.clear(); // 清除已发送通知记录
+    lastNotificationTime.clear(); // 清除最后通知时间
+
+    // 取消所有Capacitor通知
+    if (LocalNotifications) {
+      try {
+        LocalNotifications.cancel({ notifications: [{ id: 0 }] }); // 取消所有通知
+        console.log('🧹 已取消所有Capacitor通知');
+      } catch (error) {
+        console.warn('⚠️ 取消Capacitor通知失败:', error);
+      }
+    }
 
     // 清除当前的root引用
     currentRoot = null;
     isActiveReminderView = false;
+    isSettingUpReminders = false;
 
     // 统一执行清理函数
-    cleanupFns.forEach(fn => { try { fn(); } catch (_) {} });
+    cleanupFns.forEach(fn => { try { fn(); } catch (_) { } });
     cleanupFns = [];
 
     // 清理新增卡片事件监听器
@@ -2183,7 +2226,7 @@
         }
       }, delay);
       uiAdvanceTimeouts.set(reminderId, timeout);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   function formatRepeatText(reminder) {
@@ -2251,18 +2294,18 @@
     }
   }
 
-  // 计算“今天内”的下一次时间（仅针对 dailyTimes），若没有则返回 null
+  // 计算"今天内"的下一次时间（仅针对 dailyTimes），若没有则返回 null
   function getNextTimeToday(reminder, fromDate) {
     if (!(reminder && reminder.dailyCount > 0 && Array.isArray(reminder.dailyTimes) && reminder.dailyTimes.length > 0)) return null;
     const times = [...reminder.dailyTimes].filter(Boolean).filter(t => isTimeEnabled(reminder, t)).sort();
     const from = fromDate ? new Date(fromDate) : new Date();
-    const dateStr = from(() => {
-              const year = this.getFullYear();
-              const month = String(this.getMonth() + 1).padStart(2, '0');
-              const day = String(this.getDate()).padStart(2, '0');
-              return `${year}-${month}-${day}`;
-            })();
-    const hhmm = from.toTimeString().slice(0,5);
+    const dateStr = (() => {
+      const year = from.getFullYear();
+      const month = String(from.getMonth() + 1).padStart(2, '0');
+      const day = String(from.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    })();
+    const hhmm = from.toTimeString().slice(0, 5);
     for (let i = 0; i < times.length; i++) {
       const t = times[i];
       if (t > hhmm) return new Date(`${dateStr}T${t}:00`);
@@ -2316,44 +2359,88 @@
     try {
       // 监听通知接收事件（前台触达）
       LocalNotifications.addListener('localNotificationReceived', (notification) => {
+        console.log('🔔 收到通知:', notification);
         hapticFeedback('Heavy');
         const id = notification && notification.id;
-        if (id && handledNotificationIds.has(id)) return;
+        if (id && handledNotificationIds.has(id)) {
+          console.log('🔔 通知已处理过，跳过:', id);
+          return;
+        }
         if (id) handledNotificationIds.add(id);
+
         const rid = notification && notification.extra && notification.extra.reminderId;
-        if (!rid) return;
+        if (!rid) {
+          console.log('🔔 通知缺少reminderId，跳过');
+          return;
+        }
+
         const r = reminders.find(x => x.id === rid);
-        if (!r) return;
+        if (!r) {
+          console.log('🔔 找不到对应的提醒，跳过:', rid);
+          return;
+        }
+
+        console.log('🔔 处理通知:', r.name, '循环类型:', r.repeatInterval);
+
+        // 设置处理冷却期，防止重复处理同一个通知
+        const notificationId = notification.id || 'unknown';
+        handledNotificationIds.add(notificationId);
+
         if (!r.repeatInterval || r.repeatInterval === 'none') {
           const nextToday = getNextTimeToday(r, new Date());
           if (nextToday) {
+            console.log('🔔 设置下次提醒:', nextToday.toLocaleString('zh-CN'));
             scheduleUiAdvance(rid, nextToday);
           } else {
+            console.log('🔔 今天没有更多提醒，删除提醒');
             hardDeleteReminder(rid);
           }
         } else {
+          console.log('🔔 推进到下次循环');
           advanceReminderNextRunById(rid);
         }
       });
 
       // 监听通知点击事件（用户点开）
       LocalNotifications.addListener('localNotificationActionPerformed', (notificationAction) => {
+        console.log('🔔 用户点击通知:', notificationAction);
         const { notification } = notificationAction;
         const id = notification && notification.id;
-        if (id && handledNotificationIds.has(id)) return;
+        if (id && handledNotificationIds.has(id)) {
+          console.log('🔔 通知已处理过，跳过:', id);
+          return;
+        }
         if (id) handledNotificationIds.add(id);
-        if (!(notification.extra && notification.extra.reminderId)) return;
+
+        if (!(notification.extra && notification.extra.reminderId)) {
+          console.log('🔔 通知缺少reminderId，跳过');
+          return;
+        }
+
         const reminderId = notification.extra.reminderId;
         const r = reminders.find(x => x.id === reminderId);
-        if (!r) return;
+        if (!r) {
+          console.log('🔔 找不到对应的提醒，跳过:', reminderId);
+          return;
+        }
+
+        console.log('🔔 用户点击处理通知:', r.name);
+
+        // 设置处理冷却期，防止重复处理同一个通知
+        const notificationId = notification.id || 'unknown';
+        handledNotificationIds.add(notificationId);
+
         if (!r.repeatInterval || r.repeatInterval === 'none') {
           const nextToday = getNextTimeToday(r, new Date());
           if (nextToday) {
+            console.log('🔔 设置下次提醒:', nextToday.toLocaleString('zh-CN'));
             scheduleUiAdvance(reminderId, nextToday);
           } else {
+            console.log('🔔 今天没有更多提醒，删除提醒');
             hardDeleteReminder(reminderId);
           }
         } else {
+          console.log('🔔 推进到下次循环');
           advanceReminderNextRunById(reminderId);
           highlightReminder(reminderId);
         }

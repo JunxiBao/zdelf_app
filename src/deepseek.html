@@ -172,62 +172,161 @@
         }
       }
       
+      /* 输入行样式 */
+      .input-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+      }
+      
+      /* 数据分析按钮样式 */
+      .data-analysis-btn {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+        min-width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        color: #6c757d;
+      }
+      
+      .data-analysis-btn .material-symbols-rounded {
+        font-size: 18px;
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      }
+      
+      .data-analysis-btn:hover {
+        background: #e9ecef;
+        color: #495057;
+        transform: scale(1.05);
+      }
+      
+      .data-analysis-btn.active {
+        background: #9c27b0;
+        border-color: #9c27b0;
+        color: white;
+        box-shadow: 0 2px 8px rgba(156, 39, 176, 0.3);
+      }
+      
+      .data-analysis-btn.active:hover {
+        background: #7b1fa2;
+        border-color: #7b1fa2;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(156, 39, 176, 0.4);
+      }
+      
       /* 按钮组样式 */
       .button-group {
         display: flex;
-        gap: 8px;
+        gap: 6px;
         align-items: center;
+        justify-content: flex-end;
+      }
+      
+      /* 紧凑按钮样式 */
+      .compact-btn {
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        height: 36px;
+        padding: 0;
       }
       
       #clearBtn {
-        background: #6c757d;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 12px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: background-color 0.2s;
+        background: #f8f9fa;
+        color: #6c757d;
+        border: 1px solid #e9ecef;
       }
       
       #clearBtn:hover {
-        background: #5a6268;
+        background: #e9ecef;
+        color: #495057;
+        transform: scale(1.05);
       }
       
-      #sendBtn {
+      .send-btn {
         background: #007bff;
         color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 16px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background-color 0.2s;
+        box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
       }
       
-      #sendBtn:hover {
+      .send-btn:hover {
         background: #0056b3;
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.4);
       }
       
-      #sendBtn:disabled {
+      .send-btn:disabled {
         background: #6c757d;
         cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+      
+      /* 按钮图标样式 */
+      .compact-btn .material-symbols-rounded {
+        font-size: 18px;
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      }
+      
+      .data-analysis-btn .material-symbols-rounded {
+        font-size: 18px;
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
       }
       
       @media (prefers-color-scheme: dark) {
+        .data-analysis-btn {
+          background: #2d3748;
+          color: #a0aec0;
+          border-color: #4a5568;
+        }
+        
+        .data-analysis-btn:hover {
+          background: #4a5568;
+          color: #e2e8f0;
+        }
+        
+        .data-analysis-btn.active {
+          background: #9c27b0;
+          border-color: #9c27b0;
+          color: white;
+        }
+        
+        .data-analysis-btn.active:hover {
+          background: #7b1fa2;
+          border-color: #7b1fa2;
+        }
+        
         #clearBtn {
-          background: #495057;
+          background: #2d3748;
+          color: #a0aec0;
+          border-color: #4a5568;
         }
         
         #clearBtn:hover {
-          background: #343a40;
+          background: #4a5568;
+          color: #e2e8f0;
         }
         
-        #sendBtn {
+        .send-btn {
           background: #0d6efd;
         }
         
-        #sendBtn:hover {
+        .send-btn:hover {
           background: #0b5ed7;
         }
       }
@@ -264,14 +363,26 @@
 
       <!-- Input area 输入区 -->
       <div class="input-container">
-        <textarea
-          id="userInput"
-          placeholder="请输入您的健康问题..."
-          autocomplete="off"
-          aria-label="输入您的健康问题"
-          onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"
-          rows="1"
-        ></textarea>
+        <div class="input-row">
+          <button
+            type="button"
+            id="dataAnalysisBtn"
+            onclick="toggleDataAnalysis()"
+            aria-label="数据分析模式"
+            title="点击启用数据分析模式，AI将分析您近三个月的健康数据"
+            class="data-analysis-btn"
+          >
+            <span class="material-symbols-rounded">analytics</span>
+          </button>
+          <textarea
+            id="userInput"
+            placeholder="请输入您的健康问题..."
+            autocomplete="off"
+            aria-label="输入您的健康问题"
+            onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"
+            rows="1"
+          ></textarea>
+        </div>
         <div class="button-group">
           <button
             type="button"
@@ -279,16 +390,18 @@
             onclick="clearSession()"
             aria-label="清除会话"
             title="清除对话历史"
+            class="compact-btn"
           >
-            清除
+            <span class="material-symbols-rounded">delete_sweep</span>
           </button>
           <button
             type="button"
             id="sendBtn"
             onclick="sendMessage()"
             aria-label="发送消息"
+            class="compact-btn send-btn"
           >
-            发送
+            <span class="material-symbols-rounded">send</span>
           </button>
         </div>
     
@@ -359,6 +472,9 @@
       // 会话管理
       let currentSessionId = null;
       
+      // 数据分析模式状态
+      let dataAnalysisMode = false;
+      
       // 生成会话ID
       function generateSessionId() {
         return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -382,10 +498,69 @@
         }
       }
       
+      // 切换数据分析模式
+      function toggleDataAnalysis() {
+        dataAnalysisMode = !dataAnalysisMode;
+        const btn = document.getElementById('dataAnalysisBtn');
+        if (dataAnalysisMode) {
+          btn.classList.add('active');
+          btn.title = '数据分析模式已启用，AI将分析您近三个月的健康数据';
+        } else {
+          btn.classList.remove('active');
+          btn.title = '点击启用数据分析模式，AI将分析您近三个月的健康数据';
+        }
+      }
+      
+      // 获取用户健康数据
+      async function getUserHealthData() {
+        try {
+          // 获取API基础路径
+          const apiBase = window.__API_BASE__ || 
+                        (window.parent && window.parent.__API_BASE__) || 
+                        (window.parent && window.parent.parent && window.parent.parent.__API_BASE__) ||
+                        'https://app.zdelf.cn';
+          const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
+          
+          // 获取当前用户ID（从localStorage或其他地方）
+          const userId = localStorage.getItem('user_id') || 
+                        localStorage.getItem('userId') || 
+                        localStorage.getItem('current_user_id') || 
+                        'default_user';
+          
+          // 计算三个月前的日期
+          const threeMonthsAgo = new Date();
+          threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+          const startDate = threeMonthsAgo.toISOString().split('T')[0];
+          
+          // 并行获取三种类型的数据
+          const [metricsData, dietData, caseData] = await Promise.all([
+            fetch(`${baseUrl}/getjson/metrics?user_id=${userId}&start_date=${startDate}&limit=100`).then(r => r.json()),
+            fetch(`${baseUrl}/getjson/diet?user_id=${userId}&start_date=${startDate}&limit=100`).then(r => r.json()),
+            fetch(`${baseUrl}/getjson/case?user_id=${userId}&start_date=${startDate}&limit=100`).then(r => r.json())
+          ]);
+          
+          return {
+            metrics: metricsData.success ? metricsData.data : [],
+            diet: dietData.success ? dietData.data : [],
+            case: caseData.success ? caseData.data : []
+          };
+        } catch (error) {
+          console.error('获取用户健康数据失败:', error);
+          // 显示用户友好的错误信息
+          if (window.parent && window.parent.showToast) {
+            window.parent.showToast('获取健康数据失败，请检查网络连接', 'error');
+          }
+          return { metrics: [], diet: [], case: [] };
+        }
+      }
+      
       // 清除会话
       async function clearSession() {
         try {
-          const apiBase = window.__API_BASE__ || (window.parent && window.parent.__API_BASE__) || 'https://app.zdelf.cn';
+          const apiBase = window.__API_BASE__ || 
+                        (window.parent && window.parent.__API_BASE__) || 
+                        (window.parent && window.parent.parent && window.parent.parent.__API_BASE__) ||
+                        'https://app.zdelf.cn';
           const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
           
           const response = await fetch(`${baseUrl}/deepseek/clear_session`, {
@@ -469,16 +644,26 @@
           // 获取会话ID
           const sessionId = getSessionId();
           
+          // 构建请求数据
+          let requestData = { 
+            message: message,
+            session_id: sessionId
+          };
+          
+          // 如果启用了数据分析模式，获取用户健康数据
+          if (dataAnalysisMode) {
+            const healthData = await getUserHealthData();
+            requestData.user_data = healthData;
+            requestData.analysis_mode = true;
+          }
+          
           // 首先尝试使用流式接口
           const response = await fetch(
             `${baseUrl}/deepseek/chat_stream`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ 
-                message: message,
-                session_id: sessionId
-              }),
+              body: JSON.stringify(requestData),
             }
           );
 
@@ -511,15 +696,25 @@
           const apiBase = window.__API_BASE__ || (window.parent && window.parent.__API_BASE__) || 'https://app.zdelf.cn';
           const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
           
+          // 构建请求数据
+          let requestData = { 
+            message: message,
+            session_id: sessionId
+          };
+          
+          // 如果启用了数据分析模式，获取用户健康数据
+          if (dataAnalysisMode) {
+            const healthData = await getUserHealthData();
+            requestData.user_data = healthData;
+            requestData.analysis_mode = true;
+          }
+          
           const response = await fetch(
             `${baseUrl}/deepseek/chat`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ 
-                message: message,
-                session_id: sessionId
-              }),
+              body: JSON.stringify(requestData),
             }
           );
 

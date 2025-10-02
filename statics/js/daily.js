@@ -371,7 +371,7 @@ function initSearchBox() {
             cardsContainer.innerHTML = `
               <div class="search-loading">
                 <div class="search-loading-spinner"></div>
-                <div class="search-loading-text">正在搜索...</div>
+                <div class="search-loading-text">正在搜索记录...</div>
               </div>
             `;
           }
@@ -819,14 +819,7 @@ function searchInCardContent(content, dataType, keyword) {
   const lowerKeyword = keyword.toLowerCase();
   console.log(`🔍 在 ${dataType} 内容中搜索 "${lowerKeyword}"`);
   
-  // 关键字质量检查
-  if (!isValidSearchKeyword(lowerKeyword)) {
-    console.log(`⚠️ 关键字 "${lowerKeyword}" 质量不佳，跳过搜索`);
-    console.log(`🔍 关键字长度: ${lowerKeyword.length}, 内容: "${lowerKeyword}"`);
-    return false;
-  }
-  
-  console.log(`✅ 关键字 "${lowerKeyword}" 通过质量检查`);
+  console.log(`🔍 开始搜索关键字: "${lowerKeyword}"`);
   
   // 根据数据类型进行精确搜索
   let result = false;
@@ -849,77 +842,68 @@ function searchInCardContent(content, dataType, keyword) {
     return true;
   }
   
-  // 最后尝试：模糊搜索
-  if (fuzzySearchInContent(content, lowerKeyword)) {
-    console.log(`✅ ${dataType} 模糊搜索找到匹配: "${lowerKeyword}"`);
-    return true;
-  }
+  // 移除模糊搜索，避免误匹配
   
   console.log(`❌ ${dataType} 搜索未找到匹配: "${lowerKeyword}"`);
   return false;
 }
 
 /**
- * fuzzySearchInContent — 模糊搜索内容
- * @param {Object} content - 内容对象
- * @param {string} keyword - 搜索关键字
- * @returns {boolean} - 是否匹配
+ * filterSearchContent — 过滤搜索内容，彻底排除无关字段
+ * @param {Object} content - 原始内容对象
+ * @returns {Object} - 过滤后的内容对象
  */
-function fuzzySearchInContent(content, keyword) {
-  // 将内容转换为字符串进行模糊匹配
-  const contentStr = JSON.stringify(content).toLowerCase();
-  
-  // 简单的模糊匹配：检查关键字中的字符是否都存在于内容中
-  const keywordChars = keyword.split('').filter(char => char.trim());
-  const allCharsExist = keywordChars.every(char => contentStr.includes(char));
-  
-  if (allCharsExist && keywordChars.length > 0) {
-    console.log(`🔍 模糊搜索匹配: "${keyword}"`);
-    return true;
+function filterSearchContent(content) {
+  if (!content || typeof content !== 'object') {
+    return content;
   }
   
-  // 同义词匹配
-  const synonyms = {
-    '紫癜': ['紫癜', '紫癜病', '血小板减少性紫癜', '过敏性紫癜'],
-    '出血': ['出血', '流血', '出血点', '瘀斑'],
-    '症状': ['症状', '表现', '体征', '不适'],
-    '治疗': ['治疗', '医治', '疗法', '用药'],
-    '检查': ['检查', '检验', '检测', '化验']
+  // 递归过滤函数
+  const filterObject = (obj) => {
+    if (Array.isArray(obj)) {
+      return obj.map(item => filterObject(item));
+    }
+    
+    if (obj && typeof obj === 'object') {
+      const filtered = {};
+      for (const [key, value] of Object.entries(obj)) {
+        // 特殊处理 exportInfo 字段：完全排除，避免 appName 干扰
+        if (key === 'exportInfo') {
+          continue; // 完全跳过 exportInfo 字段
+        }
+        
+        // 排除其他无关字段
+        const excludeFields = [
+          'created_at',        // 创建时间
+          'updated_at',        // 更新时间
+          'id',                // ID字段
+          'userId',            // 用户ID
+          'user_id',           // 用户ID
+          'file_name',         // 文件名
+          'sortTime',          // 排序时间
+          'dataType'           // 数据类型
+        ];
+        
+        if (excludeFields.includes(key)) {
+          continue;
+        }
+        
+        // 递归过滤嵌套对象
+        if (value && typeof value === 'object') {
+          filtered[key] = filterObject(value);
+        } else {
+          filtered[key] = value;
+        }
+      }
+      return filtered;
+    }
+    
+    return obj;
   };
   
-  for (const [key, values] of Object.entries(synonyms)) {
-    if (values.some(synonym => synonym.includes(keyword) || keyword.includes(synonym))) {
-      console.log(`🔍 同义词匹配: "${keyword}" -> "${key}"`);
-      return true;
-    }
-  }
-  
-  return false;
+  return filterObject(content);
 }
 
-/**
- * isValidSearchKeyword — 检查搜索关键字是否有效
- * @param {string} keyword - 搜索关键字
- * @returns {boolean} - 是否有效
- */
-function isValidSearchKeyword(keyword) {
-  // 单字符关键字无效
-  if (keyword.length < 1) return false;
-  
-  // 纯数字且小于2位无效（放宽限制）
-  if (/^\d+$/.test(keyword) && keyword.length < 2) return false;
-  
-  // 过于通用的词汇无效
-  const genericWords = [
-    '的', '了', '是', '在', '有', '和', '与', '或', '但', '而', '就', '都', '很', '非常', '特别', '比较',
-    '一些', '很多', '几个', '这个', '那个', '什么', '怎么', '为什么', '因为', '所以', '但是', '然后',
-    '我', '你', '他', '她', '它', '我们', '你们', '他们', '爸', '妈', '爸爸', '妈妈'
-  ];
-  
-  if (genericWords.includes(keyword)) return false;
-  
-  return true;
-}
 
 /**
  * getSymptomTypeText — 将症状类型代码转换为中文文本
@@ -1128,6 +1112,26 @@ function searchInMetricsContentOptimized(content, keyword) {
     }
   }
   
+  // 6. 检查是否有任何实际内容（避免空记录被匹配）
+  const hasActualContent = Object.keys(metricsData).some(key => {
+    const data = metricsData[key];
+    if (typeof data === 'object' && data !== null) {
+      // 检查对象是否有非空值
+      return Object.values(data).some(value => {
+        if (typeof value === 'string') return value.trim().length > 0;
+        if (typeof value === 'number') return value !== 0;
+        if (Array.isArray(value)) return value.length > 0;
+        return value !== null && value !== undefined;
+      });
+    }
+    return false;
+  });
+  
+  if (!hasActualContent) {
+    console.log(`⚠️ 健康指标记录没有实际内容，跳过匹配`);
+    return false;
+  }
+  
   return false;
 }
 
@@ -1158,21 +1162,15 @@ function searchInDietContentOptimized(content, keyword) {
     
     // 完全匹配
     if (meal.food && meal.food.toLowerCase().includes(keyword)) {
-      console.log(`🔍 食物名称包含关键字: "${meal.food}"`);
-      // 过滤无意义的食物名称
-      if (isValidFoodName(meal.food, keyword)) {
-        console.log(`✅ 食物匹配: "${meal.food}"`);
-        return true;
-      } else {
-        console.log(`⚠️ 跳过无意义食物匹配: "${meal.food}"`);
-      }
+      console.log(`✅ 食物匹配: "${meal.food}"`);
+      return true;
     }
     
     // 增强：分词匹配
     if (searchTerms.length > 1 && meal.food) {
       const foodText = meal.food.toLowerCase();
       const allTermsMatch = searchTerms.every(term => foodText.includes(term));
-      if (allTermsMatch && isValidFoodName(meal.food, keyword)) {
+      if (allTermsMatch) {
         console.log(`✅ 食物分词匹配: "${meal.food}"`);
         return true;
       }
@@ -1189,34 +1187,6 @@ function searchInDietContentOptimized(content, keyword) {
   return false;
 }
 
-/**
- * isValidFoodName — 检查食物名称是否有效
- * @param {string} foodName - 食物名称
- * @param {string} keyword - 搜索关键字
- * @returns {boolean} - 是否有效
- */
-function isValidFoodName(foodName, keyword) {
-  // 食物名称太短无效
-  if (foodName.length < 2) return false;
-  
-  // 过滤代词和称谓
-  const pronouns = ['我', '你', '他', '她', '它', '爸', '妈', '爸爸', '妈妈', '父亲', '母亲', '老公', '老婆', '儿子', '女儿'];
-  if (pronouns.includes(foodName)) return false;
-  
-  // 过滤纯数字
-  if (/^\d+$/.test(foodName)) return false;
-  
-  // 过滤单字符
-  if (foodName.length === 1) return false;
-  
-  // 对于通用词汇，要求食物名称更长
-  const genericWords = ['的', '了', '是', '在', '有', '和', '与', '或', '但', '而', '就', '都', '很', '非常', '特别', '比较'];
-  if (genericWords.includes(keyword)) {
-    if (foodName.length < keyword.length + 3) return false;
-  }
-  
-  return true;
-}
 
 /**
  * searchInDietContent — 在饮食记录内容中搜索（保持向后兼容）
@@ -1397,6 +1367,9 @@ function searchInCaseContentOptimized(content, keyword) {
     }
   }
   
+  // 使用过滤后的内容进行深度搜索，避免 exportInfo 干扰
+  const filteredContent = filterSearchContent(content);
+  
   // 增强：搜索所有文本内容（包括嵌套对象）
   const searchInNestedContent = (obj, searchTerm) => {
     if (typeof obj === 'string') {
@@ -1416,7 +1389,7 @@ function searchInCaseContentOptimized(content, keyword) {
     return false;
   };
   
-  if (searchInNestedContent(content, keyword)) {
+  if (searchInNestedContent(filteredContent, keyword)) {
     console.log(`✅ 嵌套内容搜索匹配: "${keyword}"`);
     return true;
   }
@@ -1435,7 +1408,7 @@ function searchInCaseContentOptimized(content, keyword) {
     return false;
   };
   
-  if (deepSearchInContent(content, keyword)) {
+  if (deepSearchInContent(filteredContent, keyword)) {
     console.log(`✅ 深度搜索匹配: "${keyword}"`);
     return true;
   }
@@ -1512,8 +1485,8 @@ async function preFilterSearchData(keyword) {
   
   console.log(`🔍 开始处理 ${dataToFilter.length} 条记录进行搜索匹配`);
   
-  // 对每条记录进行详细搜索
-  for (const item of dataToFilter) {
+  // 并行处理所有记录，提高搜索速度
+  const searchPromises = dataToFilter.map(async (item) => {
     try {
       console.log(`🔍 处理记录: ${item.dataType} - ${item.id}`);
       
@@ -1531,21 +1504,31 @@ async function preFilterSearchData(keyword) {
         
         if (matches) {
           console.log(`✅ 搜索匹配: ${item.dataType} - ${item.id}`);
-          filteredCards.push({
+          return {
             ...item,
             content: content,
             detailData: detailData.data
-          });
+          };
         } else {
           console.log(`❌ 搜索不匹配: ${item.dataType} - ${item.id}`);
+          return null;
         }
       } else {
         console.warn(`❌ 获取数据失败: ${item.dataType} - ${item.id}`, detailData);
+        return null;
       }
     } catch (error) {
       console.warn(`获取 ${item.dataType} 数据失败:`, error);
+      return null;
     }
-  }
+  });
+  
+  // 等待所有搜索完成
+  const searchResults = await Promise.all(searchPromises);
+  
+  // 过滤掉 null 结果
+  const validResults = searchResults.filter(result => result !== null);
+  filteredCards.push(...validResults);
   
   console.log(`🔍 预过滤完成，从 ${dataToFilter.length} 条记录中筛选出 ${filteredCards.length} 条匹配记录`);
   return filteredCards;
@@ -1577,6 +1560,8 @@ async function renderFinalSearchResults(filteredData) {
     `;
     return;
   }
+  
+  console.log(`🎨 开始渲染 ${filteredData.length} 条搜索结果`);
   
   // 按时间分组 - 显示完整的记录时间（日期+时间）
   const groupedData = {};

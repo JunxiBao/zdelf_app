@@ -433,6 +433,15 @@ body {
   transform: scale(1.1);
 }
 
+/* 选中状态下的症状指示器显示 */
+.calendar-day.selected .multi-symptom-indicators {
+  display: flex !important;
+}
+
+.calendar-day.selected .symptom-indicator {
+  display: block !important;
+}
+
 .calendar-day.selected:hover {
   background: linear-gradient(135deg, #9333ea 0%, #a855f7 100%);
   box-shadow: 0 8px 24px rgba(168, 85, 247, 0.7);
@@ -474,10 +483,13 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-#selected-date-text {
-  font-size: 1rem;
-  color: #cccccc;
-  font-weight: 500;
+/* 深色模式下的选中日期文字 */
+@media (prefers-color-scheme: dark) {
+  #selected-date-text {
+    font-size: 1rem;
+    color: #ffffff;
+    font-weight: 500;
+  }
 }
 
 /* =========================================================
@@ -961,27 +973,30 @@ body {
   }
 
   .calendar-day.selected {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
     color: #ffffff;
     font-weight: 700;
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
     border: 2px solid rgba(255, 255, 255, 0.8);
     transform: scale(1.1);
   }
 
   .calendar-day.selected:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
+    background: linear-gradient(135deg, #9333ea 0%, #a855f7 100%);
+    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.7);
     transform: scale(1.12);
   }
   
   .selected-date-display {
-    background: rgba(0, 0, 0, 0.02);
-    border-color: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
   
   #selected-date-text {
-    color: #64748b;
+    color: #000000 !important;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
   }
 }
 
@@ -1050,25 +1065,35 @@ body {
   border: 1px solid rgba(0,0,0,0.2);
 }
 
-/* 症状颜色主题 - 浅色背景，深色文字 */
-.calendar-day[style*="background-color: #FFE4E1"] { /* 皮肤型紫癜 */
-  color: #8B0000 !important;
+/* 症状颜色主题 - 红橙黄绿蓝配色方案 */
+.calendar-day[style*="background-color: #FF4444"] { /* 皮肤型紫癜 - 红色 */
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
 }
 
-.calendar-day[style*="background-color: #E6F3FF"] { /* 关节型紫癜 */
-  color: #1E3A8A !important;
+.calendar-day[style*="background-color: #FF8800"] { /* 关节型紫癜 - 橙色 */
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
 }
 
-.calendar-day[style*="background-color: #FFF8DC"] { /* 腹型紫癜 */
-  color: #B45309 !important;
+.calendar-day[style*="background-color: #FFD700"] { /* 腹型紫癜 - 黄色 */
+  color: #1A1A1A !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8) !important;
 }
 
-.calendar-day[style*="background-color: #F0F8E8"] { /* 肾型紫癜 */
-  color: #166534 !important;
+.calendar-day[style*="background-color: #00AA44"] { /* 肾型紫癜 - 绿色 */
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
 }
 
-.calendar-day[style*="background-color: #F5F0FF"] { /* 其他症状 */
-  color: #6B21A8 !important;
+.calendar-day[style*="background-color: #4488FF"] { /* 其他症状 - 蓝色 */
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* 症状图例 */
@@ -1217,6 +1242,32 @@ body {
   
   .legend-color {
     border: 1px solid rgba(0, 0, 0, 0.2);
+  }
+  
+  /* 浅色模式下的症状颜色优化 - 红橙黄绿蓝配色 */
+  .calendar-day[style*="background-color: #FF4444"] { /* 皮肤型紫癜 - 红色 */
+    color: #FFFFFF !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+  }
+  
+  .calendar-day[style*="background-color: #FF8800"] { /* 关节型紫癜 - 橙色 */
+    color: #FFFFFF !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+  }
+  
+  .calendar-day[style*="background-color: #FFD700"] { /* 腹型紫癜 - 黄色 */
+    color: #1A1A1A !important;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9) !important;
+  }
+  
+  .calendar-day[style*="background-color: #00AA44"] { /* 肾型紫癜 - 绿色 */
+    color: #FFFFFF !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+  }
+  
+  .calendar-day[style*="background-color: #4488FF"] { /* 其他症状 - 蓝色 */
+    color: #FFFFFF !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
   }
 }
 

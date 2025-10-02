@@ -362,16 +362,76 @@ def _cleanup_old_sessions():
         del conversation_sessions[session_id]
         logger.info(f"Cleaned up old session: {session_id}")
 
+def _analyze_user_data(user_data):
+    """
+    分析用户健康数据，生成数据摘要
+    """
+    try:
+        metrics = user_data.get('metrics', [])
+        diet = user_data.get('diet', [])
+        case = user_data.get('case', [])
+        
+        summary_parts = []
+        
+        # 分析指标数据
+        if metrics:
+            summary_parts.append(f"• 健康指标记录：{len(metrics)}条")
+            # 分析最近的数据时间范围
+            try:
+                recent_metrics = sorted(metrics, key=lambda x: x.get('created_at', ''), reverse=True)[:5]
+                if recent_metrics:
+                    latest_date = recent_metrics[0].get('created_at', '')
+                    summary_parts.append(f"  最近记录时间：{latest_date}")
+            except Exception as e:
+                logger.debug(f"分析指标数据时间失败: {e}")
+                pass
+        
+        # 分析饮食数据
+        if diet:
+            summary_parts.append(f"• 饮食记录：{len(diet)}条")
+            try:
+                recent_diet = sorted(diet, key=lambda x: x.get('created_at', ''), reverse=True)[:3]
+                if recent_diet:
+                    latest_date = recent_diet[0].get('created_at', '')
+                    summary_parts.append(f"  最近记录时间：{latest_date}")
+            except Exception as e:
+                logger.debug(f"分析饮食数据时间失败: {e}")
+                pass
+        
+        # 分析病例数据
+        if case:
+            summary_parts.append(f"• 病例记录：{len(case)}条")
+            try:
+                recent_case = sorted(case, key=lambda x: x.get('created_at', ''), reverse=True)[:3]
+                if recent_case:
+                    latest_date = recent_case[0].get('created_at', '')
+                    summary_parts.append(f"  最近记录时间：{latest_date}")
+            except Exception as e:
+                logger.debug(f"分析病例数据时间失败: {e}")
+                pass
+        
+        if not summary_parts:
+            return "暂无近三个月的健康数据记录。"
+        
+        return "\n".join(summary_parts)
+        
+    except Exception as e:
+        logger.exception("分析用户数据失败: %s", e)
+        return "数据分析失败，请稍后重试。"
+
 @deepseek_blueprint.route('/chat', methods=['POST'])
 def deepseek_chat():
     """Traditional chat interface - Complete return reply"""
     if request.method == 'OPTIONS':
         return '', 200
     try:
-        user_input = (request.get_json(silent=True) or {}).get('message', '')
-        session_id = (request.get_json(silent=True) or {}).get('session_id', str(uuid.uuid4()))
+        request_data = request.get_json(silent=True) or {}
+        user_input = request_data.get('message', '')
+        session_id = request_data.get('session_id', str(uuid.uuid4()))
+        user_data = request_data.get('user_data', {})
+        analysis_mode = request_data.get('analysis_mode', False)
         
-        logger.info("/deepseek/chat request message_len=%d session_id=%s", len(user_input or ""), session_id)
+        logger.info("/deepseek/chat request message_len=%d session_id=%s analysis_mode=%s", len(user_input or ""), session_id, analysis_mode)
         if not user_input:
             logger.warning("/deepseek/chat missing message in request")
             return jsonify({'error': '缺少消息内容'}), 400
@@ -396,6 +456,21 @@ def deepseek_chat():
 8. 始终强调个人差异，建议个性化咨询
 
 请用中文回答用户的问题。"""
+        
+        # 如果启用了数据分析模式，添加用户数据到系统提示词
+        if analysis_mode and user_data:
+            data_summary = _analyze_user_data(user_data)
+            system_prompt += f"""
+
+【用户健康数据分析】
+基于用户近三个月的健康数据，以下是关键信息：
+{data_summary}
+
+请结合这些数据为用户提供个性化的健康建议。在分析数据时，请注意：
+- 识别数据中的趋势和模式
+- 指出可能的健康风险或改善点
+- 基于具体数据给出针对性建议
+- 如果数据不足或异常，请说明并建议补充数据"""
         
         # 构建消息历史
         messages = [{"role": "system", "content": system_prompt}]
@@ -467,10 +542,13 @@ def deepseek_chat_stream():
     if request.method == 'OPTIONS':
         return '', 200
     try:
-        user_input = (request.get_json(silent=True) or {}).get('message', '')
-        session_id = (request.get_json(silent=True) or {}).get('session_id', str(uuid.uuid4()))
+        request_data = request.get_json(silent=True) or {}
+        user_input = request_data.get('message', '')
+        session_id = request_data.get('session_id', str(uuid.uuid4()))
+        user_data = request_data.get('user_data', {})
+        analysis_mode = request_data.get('analysis_mode', False)
         
-        logger.info("/deepseek/chat_stream request message_len=%d session_id=%s", len(user_input or ""), session_id)
+        logger.info("/deepseek/chat_stream request message_len=%d session_id=%s analysis_mode=%s", len(user_input or ""), session_id, analysis_mode)
         if not user_input:
             logger.warning("/deepseek/chat_stream missing message in request")
             return jsonify({'error': '缺少信息'}), 400
@@ -495,6 +573,21 @@ def deepseek_chat_stream():
 8. 始终强调个人差异，建议个性化咨询
 
 请用中文回答用户的问题。"""
+        
+        # 如果启用了数据分析模式，添加用户数据到系统提示词
+        if analysis_mode and user_data:
+            data_summary = _analyze_user_data(user_data)
+            system_prompt += f"""
+
+【用户健康数据分析】
+基于用户近三个月的健康数据，以下是关键信息：
+{data_summary}
+
+请结合这些数据为用户提供个性化的健康建议。在分析数据时，请注意：
+- 识别数据中的趋势和模式
+- 指出可能的健康风险或改善点
+- 基于具体数据给出针对性建议
+- 如果数据不足或异常，请说明并建议补充数据"""
         
         # 构建消息历史
         messages = [{"role": "system", "content": system_prompt}]
