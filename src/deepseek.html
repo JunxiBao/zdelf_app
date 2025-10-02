@@ -681,7 +681,7 @@
           if (dataAnalysisMode) {
             requestData.analysis_mode = true;
             // 添加用户ID，后端会直接读取数据库
-            requestData.user_id = localStorage.getItem('user_id') || 'default_user';
+            requestData.user_id = localStorage.getItem('userId') || 'default_user';
           }
           
           // 首先尝试使用流式接口
@@ -733,7 +733,7 @@
           if (dataAnalysisMode) {
             requestData.analysis_mode = true;
             // 添加用户ID，后端会直接读取数据库
-            requestData.user_id = localStorage.getItem('user_id') || 'default_user';
+            requestData.user_id = localStorage.getItem('userId') || 'default_user';
           }
           
           const response = await fetch(
