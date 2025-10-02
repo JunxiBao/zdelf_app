@@ -576,134 +576,13 @@
         }
       }
       
-      // 获取用户三个月的数据
-      async function fetchUserData() {
-        try {
-          // 获取API基础路径
-          const apiBase = window.__API_BASE__ || (window.parent && window.parent.__API_BASE__) || 'https://app.zdelf.cn';
-          const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
-          
-          // 计算三个月前的日期
-          const threeMonthsAgo = new Date();
-          threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-          const startDate = threeMonthsAgo.toISOString().split('T')[0];
-          
-          // 获取用户信息（从localStorage或其他地方）
-          const userId = localStorage.getItem('user_id') || 'default_user';
-          const username = localStorage.getItem('username') || 'default_user';
-          
-          // 并行获取三种类型的数据
-          const [metricsResponse, dietResponse, caseResponse] = await Promise.all([
-            fetch(`${baseUrl}/getjson/metrics?user_id=${userId}&start_date=${startDate}&limit=100`),
-            fetch(`${baseUrl}/getjson/diet?user_id=${userId}&start_date=${startDate}&limit=100`),
-            fetch(`${baseUrl}/getjson/case?user_id=${userId}&start_date=${startDate}&limit=100`)
-          ]);
-          
-          const [metricsData, dietData, caseData] = await Promise.all([
-            metricsResponse.json(),
-            dietResponse.json(),
-            caseResponse.json()
-          ]);
-          
-          // 处理和分析数据
-          const processedData = processUserData(metricsData, dietData, caseData);
-          
-          // 合并数据
-          userData = {
-            metrics: processedData.metrics,
-            diet: processedData.diet,
-            case: processedData.case,
-            summary: {
-              metricsCount: processedData.metrics.length,
-              dietCount: processedData.diet.length,
-              caseCount: processedData.case.length,
-              period: `近三个月 (${startDate} 至今)`,
-              totalRecords: processedData.metrics.length + processedData.diet.length + processedData.case.length
-            }
-          };
-          
-          console.log('用户数据获取成功:', userData.summary);
-          
-          // 显示数据获取成功提示
-          if (userData.summary.totalRecords > 0) {
-            addMessage(`✅ 数据分析模式已启用！已获取您的健康数据：\n• 健康指标：${userData.summary.metricsCount}条\n• 饮食记录：${userData.summary.dietCount}条\n• 病例记录：${userData.summary.caseCount}条\n\n现在AI可以基于这些数据为您提供个性化分析。`, 'bot');
-          } else {
-            addMessage('⚠️ 未找到近三个月的健康数据。请先记录一些健康信息，然后重新启用数据分析模式。', 'bot');
-          }
-          
-        } catch (error) {
-          console.error('获取用户数据失败:', error);
-          // 显示错误提示
-          addMessage('⚠️ 数据分析模式启用失败，无法获取您的健康数据。请检查网络连接或稍后重试。', 'bot');
-        }
+      // 启用数据分析模式（后端会直接读取数据库）
+      function fetchUserData() {
+        // 显示数据分析模式启用提示
+        addMessage('✅ 数据分析模式已启用！AI将直接从数据库获取您近三个月的健康数据进行分析。', 'bot');
+        console.log('数据分析模式已启用，后端将直接读取数据库');
       }
       
-      // 处理用户数据，提取有用信息
-      function processUserData(metricsData, dietData, caseData) {
-        const processed = {
-          metrics: [],
-          diet: [],
-          case: []
-        };
-        
-        // 处理健康指标数据
-        if (metricsData.success && metricsData.data) {
-          processed.metrics = metricsData.data.map(item => {
-            const content = item.content || {};
-            return {
-              id: item.id,
-              date: content.exportInfo?.recordTime || item.created_at,
-              data: content.metricsData || {},
-              type: 'health_metrics'
-            };
-          }).filter(item => item.data && Object.keys(item.data).length > 0);
-        }
-        
-        // 处理饮食数据
-        if (dietData.success && dietData.data) {
-          processed.diet = dietData.data.map(item => {
-            const content = item.content || {};
-            const dietData = content.dietData || {};
-            
-            // 提取所有餐次信息
-            const meals = [];
-            Object.keys(dietData).forEach(mealKey => {
-              const meal = dietData[mealKey];
-              if (meal && meal.food && meal.time) {
-                meals.push({
-                  mealId: meal.mealId,
-                  time: meal.time,
-                  food: meal.food,
-                  images: meal.images || []
-                });
-              }
-            });
-            
-            return {
-              id: item.id,
-              date: content.exportInfo?.recordTime || item.created_at,
-              meals: meals,
-              totalMeals: meals.length,
-              type: 'diet_record'
-            };
-          }).filter(item => item.meals.length > 0);
-        }
-        
-        // 处理病例数据
-        if (caseData.success && caseData.data) {
-          processed.case = caseData.data.map(item => {
-            const content = item.content || {};
-            return {
-              id: item.id,
-              date: content.exportInfo?.recordTime || item.created_at,
-              data: content.caseData || {},
-              type: 'case_record'
-            };
-          }).filter(item => item.data && Object.keys(item.data).length > 0);
-        }
-        
-        return processed;
-      }
       
       // 清除会话
       async function clearSession() {
@@ -798,10 +677,11 @@
             session_id: sessionId
           };
           
-          // 如果启用了数据分析模式且有用户数据，添加数据到请求中
-          if (dataAnalysisMode && userData) {
-            requestData.user_data = userData;
+          // 如果启用了数据分析模式，添加分析模式标志
+          if (dataAnalysisMode) {
             requestData.analysis_mode = true;
+            // 添加用户ID，后端会直接读取数据库
+            requestData.user_id = localStorage.getItem('user_id') || 'default_user';
           }
           
           // 首先尝试使用流式接口
@@ -849,10 +729,11 @@
             session_id: sessionId
           };
           
-          // 如果启用了数据分析模式且有用户数据，添加数据到请求中
-          if (dataAnalysisMode && userData) {
-            requestData.user_data = userData;
+          // 如果启用了数据分析模式，添加分析模式标志
+          if (dataAnalysisMode) {
             requestData.analysis_mode = true;
+            // 添加用户ID，后端会直接读取数据库
+            requestData.user_id = localStorage.getItem('user_id') || 'default_user';
           }
           
           const response = await fetch(

@@ -18,6 +18,8 @@ import requests
 import re
 import uuid
 from datetime import datetime, timedelta
+import mysql.connector
+from mysql.connector import errors as mysql_errors
 
 # read API key from .env
 load_dotenv()
@@ -27,6 +29,22 @@ logger = logging.getLogger("app.deepseek")
 deepseek_blueprint = Blueprint('deepseek', __name__)
 API_KEY = os.getenv('DEEPSEEK_API_KEY')
 API_URL = 'https://api.deepseek.com/v1/chat/completions'
+
+# 数据库配置
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME")
+}
+
+# 支持的数据类型
+KIND_TO_TABLE = {
+    "metrics": "metrics_files",
+    "diet": "diet_files", 
+    "case": "case_files",
+    "symptoms": "symptom_files",
+}
 
 # 会话存储 - 在生产环境中应该使用Redis或数据库
 conversation_sessions = {}
@@ -133,6 +151,151 @@ MEDICAL_CITATIONS = {
         }
     ]
 }
+
+def _get_conn():
+    """
+    获取数据库连接
+    """
+    conn = mysql.connector.connect(**DB_CONFIG, connection_timeout=5, autocommit=True)
+    cur = conn.cursor()
+    try:
+        cur.execute("SET SESSION MAX_EXECUTION_TIME=15000")
+    finally:
+        cur.close()
+    return conn
+
+def _fetch_user_data(user_id, start_date):
+    """
+    直接从数据库获取用户三个月的数据
+    """
+    try:
+        conn = _get_conn()
+        cursor = conn.cursor(dictionary=True)
+        
+        try:
+            # 获取健康指标数据
+            metrics_query = """
+                SELECT id, user_id, username, file_name, content, created_at
+                FROM metrics_files 
+                WHERE user_id = %s AND created_at >= %s
+                ORDER BY created_at DESC 
+                LIMIT 100
+            """
+            cursor.execute(metrics_query, (user_id, f"{start_date} 00:00:00"))
+            metrics_data = cursor.fetchall()
+            
+            # 获取饮食数据
+            diet_query = """
+                SELECT id, user_id, username, file_name, content, created_at
+                FROM diet_files 
+                WHERE user_id = %s AND created_at >= %s
+                ORDER BY created_at DESC 
+                LIMIT 100
+            """
+            cursor.execute(diet_query, (user_id, f"{start_date} 00:00:00"))
+            diet_data = cursor.fetchall()
+            
+            # 获取病例数据
+            case_query = """
+                SELECT id, user_id, username, file_name, content, created_at
+                FROM case_files 
+                WHERE user_id = %s AND created_at >= %s
+                ORDER BY created_at DESC 
+                LIMIT 100
+            """
+            cursor.execute(case_query, (user_id, f"{start_date} 00:00:00"))
+            case_data = cursor.fetchall()
+            
+            return {
+                'metrics': metrics_data,
+                'diet': diet_data,
+                'case': case_data
+            }
+            
+        finally:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
+                
+    except mysql_errors.Error as e:
+        logger.exception("数据库查询错误: %s", e)
+        return {'metrics': [], 'diet': [], 'case': []}
+    except Exception as e:
+        logger.exception("获取用户数据错误: %s", e)
+        return {'metrics': [], 'diet': [], 'case': []}
+
+def _process_user_data(raw_data):
+    """
+    处理用户数据，提取有用信息
+    """
+    processed = {
+        'metrics': [],
+        'diet': [],
+        'case': []
+    }
+    
+    # 处理健康指标数据
+    for item in raw_data['metrics']:
+        try:
+            content = json.loads(item.get('content', '{}'))
+            if content.get('metricsData'):
+                processed['metrics'].append({
+                    'id': item['id'],
+                    'date': content.get('exportInfo', {}).get('recordTime', item['created_at']),
+                    'data': content.get('metricsData', {}),
+                    'type': 'health_metrics'
+                })
+        except (json.JSONDecodeError, TypeError):
+            continue
+    
+    # 处理饮食数据
+    for item in raw_data['diet']:
+        try:
+            content = json.loads(item.get('content', '{}'))
+            diet_data = content.get('dietData', {})
+            
+            # 提取所有餐次信息
+            meals = []
+            for meal_key, meal in diet_data.items():
+                if isinstance(meal, dict) and meal.get('food') and meal.get('time'):
+                    meals.append({
+                        'mealId': meal.get('mealId'),
+                        'time': meal.get('time'),
+                        'food': meal.get('food'),
+                        'images': meal.get('images', [])
+                    })
+            
+            if meals:
+                processed['diet'].append({
+                    'id': item['id'],
+                    'date': content.get('exportInfo', {}).get('recordTime', item['created_at']),
+                    'meals': meals,
+                    'totalMeals': len(meals),
+                    'type': 'diet_record'
+                })
+        except (json.JSONDecodeError, TypeError):
+            continue
+    
+    # 处理病例数据
+    for item in raw_data['case']:
+        try:
+            content = json.loads(item.get('content', '{}'))
+            if content.get('caseData'):
+                processed['case'].append({
+                    'id': item['id'],
+                    'date': content.get('exportInfo', {}).get('recordTime', item['created_at']),
+                    'data': content.get('caseData', {}),
+                    'type': 'case_record'
+                })
+        except (json.JSONDecodeError, TypeError):
+            continue
+    
+    return processed
 
 def _auth_headers():
     """
@@ -399,21 +562,31 @@ def deepseek_chat():
 
 请用中文回答用户的问题。"""
         
-        # 如果启用了数据分析模式，添加数据分析提示
-        if analysis_mode and user_data:
-            data_summary = user_data.get('summary', {})
-            metrics_data = user_data.get('metrics', [])
-            diet_data = user_data.get('diet', [])
-            case_data = user_data.get('case', [])
+        # 如果启用了数据分析模式，直接从数据库获取数据
+        if analysis_mode:
+            # 计算三个月前的日期
+            three_months_ago = datetime.now() - timedelta(days=90)
+            start_date = three_months_ago.strftime('%Y-%m-%d')
+            
+            # 从请求中获取用户ID，如果没有则使用默认值
+            user_id = (request.get_json(silent=True) or {}).get('user_id', 'default_user')
+            
+            # 直接从数据库获取用户数据
+            raw_data = _fetch_user_data(user_id, start_date)
+            processed_data = _process_user_data(raw_data)
+            
+            metrics_data = processed_data['metrics']
+            diet_data = processed_data['diet']
+            case_data = processed_data['case']
             
             system_prompt += f"""
 
 【数据分析模式已启用】
 用户提供了以下健康数据供分析：
-- 健康指标记录：{data_summary.get('metricsCount', 0)}条
-- 饮食记录：{data_summary.get('dietCount', 0)}条  
-- 病例记录：{data_summary.get('caseCount', 0)}条
-- 数据时间范围：{data_summary.get('period', '近三个月')}
+- 健康指标记录：{len(metrics_data)}条
+- 饮食记录：{len(diet_data)}条  
+- 病例记录：{len(case_data)}条
+- 数据时间范围：近三个月 ({start_date} 至今)
 
 【具体数据内容】"""
             
@@ -549,21 +722,31 @@ def deepseek_chat_stream():
 
 请用中文回答用户的问题。"""
         
-        # 如果启用了数据分析模式，添加数据分析提示
-        if analysis_mode and user_data:
-            data_summary = user_data.get('summary', {})
-            metrics_data = user_data.get('metrics', [])
-            diet_data = user_data.get('diet', [])
-            case_data = user_data.get('case', [])
+        # 如果启用了数据分析模式，直接从数据库获取数据
+        if analysis_mode:
+            # 计算三个月前的日期
+            three_months_ago = datetime.now() - timedelta(days=90)
+            start_date = three_months_ago.strftime('%Y-%m-%d')
+            
+            # 从请求中获取用户ID，如果没有则使用默认值
+            user_id = (request.get_json(silent=True) or {}).get('user_id', 'default_user')
+            
+            # 直接从数据库获取用户数据
+            raw_data = _fetch_user_data(user_id, start_date)
+            processed_data = _process_user_data(raw_data)
+            
+            metrics_data = processed_data['metrics']
+            diet_data = processed_data['diet']
+            case_data = processed_data['case']
             
             system_prompt += f"""
 
 【数据分析模式已启用】
 用户提供了以下健康数据供分析：
-- 健康指标记录：{data_summary.get('metricsCount', 0)}条
-- 饮食记录：{data_summary.get('dietCount', 0)}条  
-- 病例记录：{data_summary.get('caseCount', 0)}条
-- 数据时间范围：{data_summary.get('period', '近三个月')}
+- 健康指标记录：{len(metrics_data)}条
+- 饮食记录：{len(diet_data)}条  
+- 病例记录：{len(case_data)}条
+- 数据时间范围：近三个月 ({start_date} 至今)
 
 【具体数据内容】"""
             
