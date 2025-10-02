@@ -665,6 +665,7 @@
             if (window.__hapticImpact__) {
               window.__hapticImpact__('Light');
             }
+            analysisConfirmed = true;
             hideDataAnalysisModal();
           });
         }
@@ -717,6 +718,7 @@
       // 数据分析模式状态
       let dataAnalysisMode = false;
       let userData = null;
+      let analysisConfirmed = false;
       
       // 生成会话ID
       function generateSessionId() {
@@ -931,8 +933,9 @@
           };
           
           // 如果启用了数据分析模式，添加分析模式标志
-          if (dataAnalysisMode) {
+          if (dataAnalysisMode && analysisConfirmed) {
             requestData.analysis_mode = true;
+            requestData.analysis_confirmed = true;
             // 添加用户ID，后端会直接读取数据库
             requestData.user_id = localStorage.getItem('userId') || 'default_user';
           }
@@ -983,8 +986,9 @@
           };
           
           // 如果启用了数据分析模式，添加分析模式标志
-          if (dataAnalysisMode) {
+          if (dataAnalysisMode && analysisConfirmed) {
             requestData.analysis_mode = true;
+            requestData.analysis_confirmed = true;
             // 添加用户ID，后端会直接读取数据库
             requestData.user_id = localStorage.getItem('userId') || 'default_user';
           }

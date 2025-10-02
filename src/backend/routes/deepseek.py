@@ -21,6 +21,30 @@ from datetime import datetime, timedelta
 import mysql.connector
 from mysql.connector import errors as mysql_errors
 
+def _to_bool(v):
+    """Robust bool conversion for JSON fields (accepts true/false/1/0/"true"/"false")."""
+    if isinstance(v, bool):
+        return v
+    if v is None:
+        return False
+    if isinstance(v, (int, float)):
+        return v != 0
+    if isinstance(v, str):
+        return v.strip().lower() in {"1", "true", "yes", "y", "on"}
+    return False
+def _get_ymd(value: str) -> str:
+    """
+    安全提取 YYYY-MM-DD（支持 "YYYY/MM/DD", "YYYY.MM.DD", 以及带时间的字符串）
+    返回 None 表示无法解析
+    """
+    if not value:
+        return None
+    s = str(value).strip()
+    # 直接匹配多种分隔符的日期头部
+    m = re.match(r"(\d{4})[-/.](\d{2})[-/.](\d{2})", s)
+    if m:
+        return f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+    return None
 # read API key from .env
 load_dotenv()
 
@@ -268,7 +292,7 @@ def _process_user_data(raw_data):
             logger.warning(f"处理健康指标数据失败: {e}")
             continue
     
-    # 处理饮食数据
+    # 处理饮食数据（日期以餐次的 date/timestamp 为准，exportTime 仅兜底）
     for item in raw_data['diet']:
         try:
             content = json.loads(item.get('content', '{}'))
@@ -276,8 +300,13 @@ def _process_user_data(raw_data):
             
             # 提取所有餐次信息
             meals = []
+            meal_date_candidates = []
             for meal_key, meal in diet_data.items():
                 if isinstance(meal, dict) and meal.get('food') and meal.get('time'):
+                    # 收集餐次日期（优先 meal.date，其次 meal.timestamp 的日期部分）
+                    md = _get_ymd(meal.get('date')) or _get_ymd(meal.get('timestamp'))
+                    if md:
+                        meal_date_candidates.append(md)
                     meals.append({
                         'mealId': meal.get('mealId'),
                         'time': meal.get('time'),
@@ -286,9 +315,19 @@ def _process_user_data(raw_data):
                     })
             
             if meals:
+                # 以餐次日期为主，若缺失则兜底 exportInfo.recordTime，再兜底 created_at
+                exp = content.get('exportInfo', {}) or {}
+                chosen_date = None
+                if meal_date_candidates:
+                    try:
+                        chosen_date = sorted(meal_date_candidates)[0]  # 取最早的一餐日期作为该记录代表日期
+                    except Exception:
+                        chosen_date = meal_date_candidates[0]
+                if not chosen_date:
+                    chosen_date = _get_ymd(exp.get('recordTime')) or _get_ymd(exp.get('exportTime')) or _get_ymd(item.get('created_at'))
                 processed['diet'].append({
                     'id': item['id'],
-                    'date': content.get('exportInfo', {}).get('recordTime', item['created_at']),
+                    'date': chosen_date or item['created_at'],
                     'meals': meals,
                     'totalMeals': len(meals),
                     'type': 'diet_record'
@@ -549,7 +588,8 @@ def deepseek_chat():
     try:
         user_input = (request.get_json(silent=True) or {}).get('message', '')
         session_id = (request.get_json(silent=True) or {}).get('session_id', str(uuid.uuid4()))
-        analysis_mode = (request.get_json(silent=True) or {}).get('analysis_mode', False)
+        _json = (request.get_json(silent=True) or {})
+        analysis_mode = _to_bool(_json.get('analysis_mode', False)) and _to_bool(_json.get('analysis_confirmed', False))
         user_data = (request.get_json(silent=True) or {}).get('user_data', {})
         
         logger.info("/deepseek/chat request message_len=%d session_id=%s analysis_mode=%s", len(user_input or ""), session_id, analysis_mode)
@@ -564,7 +604,7 @@ def deepseek_chat():
         medical_topics = _detect_medical_topic(user_input)
         citations = _generate_citations(medical_topics)
         
-        # 构建系统提示词，包含医疗免责声明
+        # 构建系统提示词，包含医疗免责声明 与 日期使用规则
         system_prompt = """你是一个专业的健康助手。请记住以下重要原则：
 
 1. 你提供的所有健康建议仅供参考，不能替代专业医疗诊断或治疗
@@ -575,6 +615,11 @@ def deepseek_chat():
 6. 对于任何医疗建议，必须提供权威来源引用
 7. 引用必须与具体建议相关，不能是泛泛的链接
 8. 始终强调个人差异，建议个性化咨询
+
+【重要的日期规则】
+— 当涉及"饮食记录(diet)"时，务必使用用户记录内每餐的日期(字段优先级：meal.date > meal.timestamp 开头的日期)，而不是导出时间(exportTime)。
+— 如果有用户选择的特定日期(如客户端传来的 selectedDate)，分析与展示时优先以该日期为筛选与描述的基准。
+— 如记录中不存在可用餐次日期，再回退到 exportInfo.recordTime/exportTime；否则最后回退到 created_at。
 
 请用中文回答用户的问题。"""
         
@@ -715,7 +760,8 @@ def deepseek_chat_stream():
     try:
         user_input = (request.get_json(silent=True) or {}).get('message', '')
         session_id = (request.get_json(silent=True) or {}).get('session_id', str(uuid.uuid4()))
-        analysis_mode = (request.get_json(silent=True) or {}).get('analysis_mode', False)
+        _json = (request.get_json(silent=True) or {})
+        analysis_mode = _to_bool(_json.get('analysis_mode', False)) and _to_bool(_json.get('analysis_confirmed', False))
         user_data = (request.get_json(silent=True) or {}).get('user_data', {})
         
         logger.info("/deepseek/chat_stream request message_len=%d session_id=%s analysis_mode=%s", len(user_input or ""), session_id, analysis_mode)

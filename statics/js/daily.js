@@ -1566,26 +1566,54 @@ async function renderFinalSearchResults(filteredData) {
   // 按时间分组 - 显示完整的记录时间（日期+时间）
   const groupedData = {};
   for (const item of filteredData) {
-    const time = item.sortTime || item.created_at;
-    // 获取完整的记录时间，优先使用 recordTime，回退到 exportTime，最后是 created_at
-    const recordTime = item.content?.recordTime || 
-                      item.content?.exportInfo?.recordTime || 
-                      item.content?.exportInfo?.exportTime || 
-                      time;
-    
-    // 格式化显示：日期 + 时间
-    const dateTime = new Date(recordTime);
-    const dateStr = dateTime.toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit', 
-      day: '2-digit'
-    });
-    const timeStr = dateTime.toLocaleTimeString('zh-CN', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-    const fullTimeStr = `${dateStr} ${timeStr}`;
-    
+    const fallbackTime = item.sortTime || item.created_at;
+    let fullTimeStr = '';
+
+    // 针对饮食记录：使用每餐的实际日期/时间（优先匹配到的餐次），避免使用导出时间
+    if (item.dataType === 'diet' && item.content && item.content.dietData) {
+      const dietData = item.content.dietData || {};
+      const exportInfo = (item.content && item.content.exportInfo) || {};
+      const lowerKeyword = String(typeof searchKeyword !== 'undefined' ? searchKeyword : '').toLowerCase();
+
+      // 选择与关键字匹配的餐次；若无匹配则取第一餐
+      let chosenMeal = null;
+      for (const meal of Object.values(dietData)) {
+        if (!meal || typeof meal !== 'object') continue;
+        const foodText = meal.food ? String(meal.food).toLowerCase() : '';
+        if (lowerKeyword && foodText && foodText.includes(lowerKeyword)) { chosenMeal = meal; break; }
+      }
+      if (!chosenMeal) {
+        chosenMeal = Object.values(dietData).find(m => m && typeof m === 'object') || null;
+      }
+
+      let mealDateStr = '';
+      if (chosenMeal) {
+        if (chosenMeal.date && /^\d{4}-\d{2}-\d{2}$/.test(chosenMeal.date)) {
+          mealDateStr = chosenMeal.date;
+        } else if (chosenMeal.timestamp && /^\d{4}-\d{2}-\d{2}/.test(chosenMeal.timestamp)) {
+          mealDateStr = String(chosenMeal.timestamp).slice(0, 10);
+        } else if (exportInfo && (exportInfo.recordTime || exportInfo.exportTime)) {
+          mealDateStr = getDateYMD(exportInfo.recordTime || exportInfo.exportTime);
+        }
+      }
+
+      const hm = (chosenMeal && chosenMeal.time) ? String(chosenMeal.time).slice(0, 5) : '00:00';
+      const dt = mealDateStr ? new Date(`${mealDateStr}T${hm}:00`) : new Date(fallbackTime);
+      const dateStr = dt.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      const timeStr = dt.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+      fullTimeStr = `${dateStr} ${timeStr}`;
+    } else {
+      // 其他类型：维持既有逻辑
+      const recordTime = item.content?.recordTime ||
+                        item.content?.exportInfo?.recordTime ||
+                        item.content?.exportInfo?.exportTime ||
+                        fallbackTime;
+      const dateTime = new Date(recordTime);
+      const dateStr = dateTime.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      const timeStr = dateTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+      fullTimeStr = `${dateStr} ${timeStr}`;
+    }
+
     if (!groupedData[fullTimeStr]) {
       groupedData[fullTimeStr] = [];
     }
@@ -1852,7 +1880,8 @@ function loadUserDataCards() {
       console.log(`📅 处理后的日期: ${getDateYMD(String(selectedDate))}`);
       
       const promises = dataTypes.map(type => {
-        const url = `${__API_BASE__}/getjson/${type}?user_id=${encodeURIComponent(userId)}&limit=200${dateParam}${timeRangeParam}`;
+        // diet 不携带 dateParam，避免后端按导出时间初筛掉跨天补录的餐次
+        const url = `${__API_BASE__}/getjson/${type}?user_id=${encodeURIComponent(userId)}&limit=200${type === 'diet' ? '' : dateParam}${timeRangeParam}`;
         console.log(`📡 请求 ${type} 数据: ${url}`);
         return fetch(url)
           .then(res => res.json())
@@ -1886,7 +1915,7 @@ function loadUserDataCards() {
             const sortTime = exp.recordTime || exp.exportTime || it.created_at;
             
             // 如果选择了日期，检查该记录的日期是否匹配
-            if (selectedDate) {
+            if (selectedDate && it.dataType !== 'diet') {
               // 使用recordTime（用户选择的记录时间）进行过滤
               const recordTime = exp.recordTime || exp.exportTime || '';
               const recordDate = getDateYMD(recordTime);
@@ -1903,7 +1932,7 @@ function loadUserDataCards() {
             return { ...it, sortTime };
           } catch (_) {
             // API调用失败时，如果选择了日期，需要检查created_at是否匹配
-            if (selectedDate) {
+            if (selectedDate && it.dataType !== 'diet') {
               const createdDate = getDateYMD(it.created_at || '');
               const targetDate = getDateYMD(String(selectedDate));
               console.log(`🔍 API调用失败，日期匹配检查: created_at="${it.created_at}", createdDate="${createdDate}", targetDate="${targetDate}"`);
