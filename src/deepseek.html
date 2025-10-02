@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <title>个人博客</title>
+    <title>AI健康助手</title>
 
     <!-- Viewport & color scheme 视口与颜色方案 -->
     <meta
@@ -292,13 +292,20 @@
       
       /* 图标样式 - 深度美化 */
       .icon {
-        font-size: 22px;
-        line-height: 1;
+        width: 20px;
+        height: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.3s ease;
         filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+      }
+      
+      /* SVG图标样式 */
+      .icon svg {
+        width: 100%;
+        height: 100%;
+        transition: all 0.3s ease;
       }
       
       /* 高级涟漪效果 */
@@ -342,8 +349,140 @@
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
       }
       
+      /* SVG图标悬停效果 */
+      #dataAnalysisBtn:hover .icon svg,
+      #clearBtn:hover .icon svg,
+      #sendBtn:hover .icon svg {
+        transform: scale(1.1);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      }
+      
+      /* 弹窗样式 */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+        animation: fadeIn 0.3s ease;
+      }
+      
+      .modal-content {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        max-width: 400px;
+        width: 90%;
+        overflow: hidden;
+        animation: slideIn 0.3s ease;
+      }
+      
+      .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+      
+      
+      .modal-body {
+        padding: 30px 20px;
+        text-align: center;
+      }
+      
+      .modal-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        animation: bounce 0.6s ease;
+      }
+      
+      .modal-body p {
+        margin: 8px 0;
+        color: #333;
+        line-height: 1.5;
+      }
+      
+      .modal-footer {
+        padding: 20px;
+        background: #f8f9fa;
+        display: flex;
+        justify-content: center;
+      }
+      
+      .confirm-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 32px;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      }
+      
+      .confirm-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+      }
+      
+      .confirm-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+      }
+      
+      /* 动画效果 */
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      @keyframes slideIn {
+        from { 
+          opacity: 0;
+          transform: scale(0.8) translateY(-20px);
+        }
+        to { 
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+      
+      @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+      }
+      
       /* 深色模式适配 - 深度美化 */
       @media (prefers-color-scheme: dark) {
+        .modal-content {
+          background: #1a202c;
+          color: #e2e8f0;
+        }
+        
+        .modal-body p {
+          color: #e2e8f0;
+        }
+        
+        .modal-footer {
+          background: #2d3748;
+        }
         #dataAnalysisBtn {
           background: linear-gradient(145deg, #2d3748 0%, #1a202c 100%);
           color: #a0aec0;
@@ -426,6 +565,23 @@
         aria-relevant="additions"
       ></div>
 
+      <!-- 弹窗容器 -->
+      <div id="modalOverlay" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>数据分析模式</h3>
+          </div>
+          <div class="modal-body">
+            <div class="modal-icon">📊</div>
+            <p>数据分析模式已启用！</p>
+            <p>AI将直接从数据库获取您近三个月的健康数据进行分析。</p>
+          </div>
+          <div class="modal-footer">
+            <button id="confirmModal" class="confirm-btn">确定</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Input area 输入区 -->
       <div class="input-container">
         <button
@@ -435,7 +591,9 @@
           aria-label="数据分析模式"
           title="点击启用数据分析模式，AI将分析您近三个月的健康数据"
         >
-          <span class="icon">📊</span>
+          <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 3V21H21V19H5V3H3ZM7 17H9V7H7V17ZM11 17H13V11H11V17ZM15 17H17V15H15V17Z" fill="currentColor"/>
+          </svg>
         </button>
         <textarea
           id="userInput"
@@ -453,7 +611,9 @@
             aria-label="清除会话"
             title="清除对话历史"
           >
-            <span class="icon">🗑️</span>
+            <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7H6V19ZM19 4H15.5L14.5 3H9.5L8.5 4H5V6H19V4Z" fill="currentColor"/>
+            </svg>
           </button>
           <button
             type="button"
@@ -461,12 +621,16 @@
             onclick="sendMessage()"
             aria-label="发送消息"
           >
-            <span class="icon">➤</span>
+            <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" fill="currentColor"/>
+            </svg>
           </button>
         </div>
     
 
     <script>
+      // 震动反馈从父窗口传递，无需在此初始化
+
       // Wait for deferred libs 等第三方库加载完成
       window.addEventListener("DOMContentLoaded", () => {
         // marked config: soft line breaks & safer defaults
@@ -487,6 +651,24 @@
             this.style.height = Math.min(this.scrollHeight, 120) + 'px';
           });
         }
+        
+        // 检查震动反馈是否从父窗口传递
+        console.log('🔊 检查震动反馈:', typeof window.__hapticImpact__);
+
+        // 弹窗事件监听器
+        const modal = document.getElementById('modalOverlay');
+        const confirmBtn = document.getElementById('confirmModal');
+        
+        if (confirmBtn) {
+          confirmBtn.addEventListener('click', function() {
+            // 添加震动反馈
+            if (window.__hapticImpact__) {
+              window.__hapticImpact__('Light');
+            }
+            hideDataAnalysisModal();
+          });
+        }
+        
 
         // 监听所有链接点击事件，确保在默认浏览器中打开
         document.addEventListener('click', function(e) {
@@ -561,6 +743,11 @@
       
       // 切换数据分析模式
       function toggleDataAnalysis() {
+        // 添加震动反馈
+        if (window.__hapticImpact__) {
+          window.__hapticImpact__('Medium');
+        }
+        
         dataAnalysisMode = !dataAnalysisMode;
         const btn = document.getElementById('dataAnalysisBtn');
         
@@ -573,19 +760,80 @@
           btn.classList.remove('active');
           btn.title = '点击启用数据分析模式，AI将分析您近三个月的健康数据';
           userData = null;
+          // 显示禁用数据分析模式弹窗
+          showDisableDataAnalysisModal();
         }
       }
       
       // 启用数据分析模式（后端会直接读取数据库）
       function fetchUserData() {
-        // 显示数据分析模式启用提示
-        addMessage('✅ 数据分析模式已启用！AI将直接从数据库获取您近三个月的健康数据进行分析。', 'bot');
+        // 显示数据分析模式启用弹窗
+        showDataAnalysisModal();
         console.log('数据分析模式已启用，后端将直接读取数据库');
+      }
+      
+      // 显示数据分析模式弹窗
+      function showDataAnalysisModal() {
+        const modal = document.getElementById('modalOverlay');
+        modal.style.display = 'flex';
+        
+        // 添加震动反馈
+        if (window.__hapticImpact__) {
+          window.__hapticImpact__('Light');
+        }
+      }
+      
+      // 隐藏弹窗
+      function hideDataAnalysisModal() {
+        const modal = document.getElementById('modalOverlay');
+        modal.style.display = 'none';
+        
+        // 重置弹窗内容为启用状态（默认状态）
+        const modalBody = modal.querySelector('.modal-body');
+        const modalIcon = modal.querySelector('.modal-icon');
+        const modalHeader = modal.querySelector('.modal-header h3');
+        
+        modalHeader.textContent = '数据分析模式';
+        modalIcon.textContent = '📊';
+        modalBody.innerHTML = `
+          <div class="modal-icon">📊</div>
+          <p>数据分析模式已启用！</p>
+          <p>AI将直接从数据库获取您近三个月的健康数据进行分析。</p>
+        `;
+      }
+      
+      // 显示禁用数据分析模式弹窗
+      function showDisableDataAnalysisModal() {
+        const modal = document.getElementById('modalOverlay');
+        const modalBody = modal.querySelector('.modal-body');
+        const modalIcon = modal.querySelector('.modal-icon');
+        const modalHeader = modal.querySelector('.modal-header h3');
+        
+        // 更新弹窗内容
+        modalHeader.textContent = '数据分析模式已关闭';
+        modalIcon.textContent = '📊';
+        modalBody.innerHTML = `
+          <div class="modal-icon">📊</div>
+          <p>数据分析模式已关闭！</p>
+          <p>AI将不再分析您的健康数据，仅进行普通对话。</p>
+        `;
+        
+        modal.style.display = 'flex';
+        
+        // 添加震动反馈
+        if (window.__hapticImpact__) {
+          window.__hapticImpact__('Light');
+        }
       }
       
       
       // 清除会话
       async function clearSession() {
+        // 添加震动反馈
+        if (window.__hapticImpact__) {
+          window.__hapticImpact__('Light');
+        }
+        
         try {
           const apiBase = window.__API_BASE__ || (window.parent && window.parent.__API_BASE__) || 'https://app.zdelf.cn';
           const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
@@ -650,6 +898,11 @@
       }
 
       async function sendMessage() {
+        // 添加震动反馈
+        if (window.__hapticImpact__) {
+          window.__hapticImpact__('Light');
+        }
+        
         const inputEl = document.getElementById("userInput");
         const btn = document.getElementById("sendBtn");
         const message = inputEl.value.trim();

@@ -70,8 +70,11 @@ function loadDeepSeekContent(root) {
     // 将API基础路径传递给iframe
     try {
       iframe.contentWindow.__API_BASE__ = window.__API_BASE__ || 'https://app.zdelf.cn';
+      // 传递震动反馈函数到iframe
+      iframe.contentWindow.__hapticImpact__ = window.__hapticImpact__;
+      console.log('🔊 震动反馈已传递到iframe');
     } catch (e) {
-      console.warn('无法设置iframe API路径:', e);
+      console.warn('无法设置iframe API路径或震动反馈:', e);
     }
   };
   

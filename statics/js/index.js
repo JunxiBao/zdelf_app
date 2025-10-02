@@ -311,12 +311,20 @@ function loadPage(index) {
 // 使用新的高性能涟漪效果系统
 document.addEventListener('DOMContentLoaded', () => {
   // 为导航按钮添加涟漪效果
-  document.querySelectorAll(".nav-item .icon").forEach((button) => {
+  document.querySelectorAll(".nav-item .icon").forEach((button, index) => {
     if (window.AnimationUtils) {
-      window.AnimationUtils.createRipple(button, {
-        color: 'rgba(98, 0, 234, 0.3)',
-        duration: 600
-      });
+      // 为AI助手图标（索引2）使用特殊的爱心涟漪效果
+      if (index === 2) {
+        window.AnimationUtils.createHeartRipple(button, {
+          color: 'rgba(255, 105, 180, 0.15)',
+          duration: 500
+        });
+      } else {
+        window.AnimationUtils.createRipple(button, {
+          color: 'rgba(98, 0, 234, 0.12)',
+          duration: 400
+        });
+      }
     }
   });
 
