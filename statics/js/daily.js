@@ -1847,6 +1847,9 @@ function loadUserDataCards() {
       const timeRangeParam = `&start_date=${encodeURIComponent(threeMonthsAgoStr)}`;
       
       console.log(`🔗 API请求参数: ${timeRangeParam}`);
+      console.log(`📅 日期参数: ${dateParam}`);
+      console.log(`📅 选择的日期: ${selectedDate}`);
+      console.log(`📅 处理后的日期: ${getDateYMD(String(selectedDate))}`);
       
       const promises = dataTypes.map(type => {
         const url = `${__API_BASE__}/getjson/${type}?user_id=${encodeURIComponent(userId)}&limit=200${dateParam}${timeRangeParam}`;
@@ -1879,19 +1882,52 @@ function loadUserDataCards() {
           try {
             const res = await fetch(`${__API_BASE__}/getjson/${it.dataType}/${it.id}`);
             const detail = await res.json();
-            const exp = (detail && detail.data && detail.data.exportInfo) || {};
+            const exp = (detail && detail.data && detail.data.content && detail.data.content.exportInfo) || {};
             const sortTime = exp.recordTime || exp.exportTime || it.created_at;
+            
+            // 如果选择了日期，检查该记录的日期是否匹配
+            if (selectedDate) {
+              // 使用recordTime（用户选择的记录时间）进行过滤
+              const recordTime = exp.recordTime || exp.exportTime || '';
+              const recordDate = getDateYMD(recordTime);
+              const targetDate = getDateYMD(String(selectedDate));
+              console.log(`🔍 日期匹配检查: recordTime="${exp.recordTime}", exportTime="${exp.exportTime}", 使用时间="${recordTime}", recordDate="${recordDate}", targetDate="${targetDate}"`);
+              if (recordDate && targetDate && recordDate !== targetDate) {
+                console.log(`🚫 过滤掉不匹配的记录: ${recordDate} !== ${targetDate}`);
+                return null; // 返回null表示应该过滤掉
+              } else {
+                console.log(`✅ 保留匹配的记录: ${recordDate} === ${targetDate}`);
+              }
+            }
+            
             return { ...it, sortTime };
           } catch (_) {
+            // API调用失败时，如果选择了日期，需要检查created_at是否匹配
+            if (selectedDate) {
+              const createdDate = getDateYMD(it.created_at || '');
+              const targetDate = getDateYMD(String(selectedDate));
+              console.log(`🔍 API调用失败，日期匹配检查: created_at="${it.created_at}", createdDate="${createdDate}", targetDate="${targetDate}"`);
+              if (createdDate && targetDate && createdDate !== targetDate) {
+                console.log(`🚫 API调用失败，过滤掉不匹配的记录: ${createdDate} !== ${targetDate}`);
+                return null;
+              } else {
+                console.log(`✅ API调用失败，保留匹配的记录: ${createdDate} === ${targetDate}`);
+              }
+            }
             return { ...it, sortTime: it.created_at };
           }
         }));
+        
+        // 过滤掉null值（不匹配日期的记录）
+        const filteredAugmented = augmented.filter(item => item !== null);
+        console.log(`📊 日期过滤结果: 原始数据 ${augmented.length} 条，过滤后 ${filteredAugmented.length} 条`);
 
         // 按记录时间（recordTime 优先）降序排序
-        augmented.sort((a, b) => new Date(b.sortTime) - new Date(a.sortTime));
+        filteredAugmented.sort((a, b) => new Date(b.sortTime) - new Date(a.sortTime));
 
         // 缓存数据
-        cachedDataCards = augmented;
+        cachedDataCards = filteredAugmented;
+        console.log(`💾 缓存数据: ${cachedDataCards.length} 条记录`);
         resolveLoad();
       }).catch(err => {
         console.error('加载数据失败:', err);
@@ -2357,6 +2393,7 @@ function getDateYMD(value) {
   if (!value) return '';
   if (typeof value === 'string') {
     // 直接从字符串头部提取 yyyy-mm-dd 或 yyyy/mm/dd 或 yyyy.mm.dd
+    // 这个正则表达式会匹配 "2024-10-01 12:34:56" 并返回 "2024-10-01"
     const m = value.match(/^(\d{4})[-/.](\d{2})[-/.](\d{2})/);
     if (m) return `${m[1]}-${m[2]}-${m[3]}`;
   }
@@ -2495,9 +2532,12 @@ async function updateTimelineDetails(groupedData) {
               const rtDate = getDateYMD(rt);
               if (rtDate !== targetDateStr) { contentElement.style.display = 'none'; continue; }
             } else {
+              // 对于健康指标，优先使用 recordTime，如果不存在则使用 exportTime
+              // 不使用 created_at 作为回退，因为它是数据库记录时间，不是用户记录时间
               const primary = exp.recordTime || '';
               const fallback1 = exp.exportTime || '';
-              let candidate = primary || fallback1 || item.created_at || '';
+              let candidate = primary || fallback1 || '';
+              if (!candidate) { contentElement.style.display = 'none'; continue; }
               const candidateDate = getDateYMD(candidate);
               if (candidateDate && candidateDate !== targetDateStr) { contentElement.style.display = 'none'; continue; }
             }
@@ -3187,7 +3227,7 @@ function renderDetailContent(data, container) {
       </div>
       <div style="${infoItemStyle.replace('border-bottom: 1px solid rgba(255, 255, 255, 0.1);', 'border-bottom: none;').replace('border-bottom: 1px solid rgba(0, 0, 0, 0.06);', 'border-bottom: none;')}">
         <label style="${labelStyle}">● 时间:</label>
-        <span style="${valueStyle}">${formatDate(exportInfo.exportTime || data.created_at)}</span>
+        <span style="${valueStyle}">${formatDate(exportInfo.recordTime || exportInfo.exportTime || data.created_at)}</span>
       </div>
       </div>
     <div style="${contentStyle}">
