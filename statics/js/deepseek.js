@@ -51,36 +51,43 @@ function initDeepseek(shadowRoot) {
  * @param {Document|ShadowRoot} root - Scope for DOM queries / 查询作用域
  */
 function loadDeepSeekContent(root) {
-  // 直接加载DeepSeek.html内容到Shadow DOM，而不是使用iframe
-  fetch('../src/deepseek.html')
-    .then(response => response.text())
-    .then(html => {
-      // 解析HTML并提取body内容
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const bodyHTML = doc.body ? doc.body.innerHTML : html;
-      
-      // 将内容直接插入到Shadow DOM中
-      root.innerHTML = bodyHTML;
-      
-      // 设置API基础路径到Shadow DOM中
-      if (window.__API_BASE__) {
-        // 在Shadow DOM中设置全局变量
-        const script = document.createElement('script');
-        script.textContent = `window.__API_BASE__ = '${window.__API_BASE__}';`;
-        root.appendChild(script);
-      }
-      
-      console.log('✅ AI助手页面加载完成 (使用通义千问API)');
-    })
-    .catch(error => {
-      console.error('❌ AI助手页面加载失败:', error);
-      root.innerHTML = `
-        <div style="text-align: center; padding: 40px; color: #333;">
-          <h3>AI助手暂时无法访问</h3>
-          <p>请检查网络连接或稍后重试</p>
-        </div>
-      `;
-    });
+  // 创建iframe来直接加载DeepSeek.html
+  const iframe = document.createElement('iframe');
+  iframe.src = '../src/deepseek.html';
+  iframe.style.cssText = `
+    width: 100%;
+    height: calc(100vh - 80px);
+    border: none;
+    background: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1;
+  `;
+  
+  iframe.onload = () => {
+    console.log('✅ AI助手页面加载完成 (使用通义千问API)');
+    // 将API基础路径传递给iframe
+    try {
+      iframe.contentWindow.__API_BASE__ = window.__API_BASE__ || 'https://app.zdelf.cn';
+    } catch (e) {
+      console.warn('无法设置iframe API路径:', e);
+    }
+  };
+  
+  iframe.onerror = () => {
+    console.error('❌ AI助手页面加载失败');
+    root.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #333;">
+        <h3>AI助手暂时无法访问</h3>
+        <p>请检查网络连接或稍后重试</p>
+      </div>
+    `;
+  };
+
+  // 清空root内容并添加iframe
+  root.innerHTML = '';
+  root.appendChild(iframe);
 }
 
 /**

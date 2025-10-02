@@ -172,161 +172,99 @@
         }
       }
       
-      /* 输入行样式 */
-      .input-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        width: 100%;
-      }
-      
       /* 数据分析按钮样式 */
-      .data-analysis-btn {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 50%;
+      #dataAnalysisBtn {
+        background: transparent;
+        color: #6c757d;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 8px 12px;
         cursor: pointer;
         font-size: 16px;
-        transition: all 0.2s ease;
-        flex-shrink: 0;
-        min-width: 36px;
-        height: 36px;
+        transition: all 0.3s ease;
+        margin-right: 8px;
+        min-width: 40px;
+        height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0;
-        color: #6c757d;
       }
       
-      .data-analysis-btn .material-symbols-rounded {
-        font-size: 18px;
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      #dataAnalysisBtn:hover {
+        border-color: #007bff;
+        color: #007bff;
+        transform: translateY(-1px);
       }
       
-      .data-analysis-btn:hover {
-        background: #e9ecef;
-        color: #495057;
-        transform: scale(1.05);
-      }
-      
-      .data-analysis-btn.active {
-        background: #9c27b0;
-        border-color: #9c27b0;
+      #dataAnalysisBtn.active {
+        background: #8b5cf6;
+        border-color: #8b5cf6;
         color: white;
-        box-shadow: 0 2px 8px rgba(156, 39, 176, 0.3);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
       }
       
-      .data-analysis-btn.active:hover {
-        background: #7b1fa2;
-        border-color: #7b1fa2;
-        transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(156, 39, 176, 0.4);
+      #dataAnalysisBtn.active:hover {
+        background: #7c3aed;
+        border-color: #7c3aed;
+        transform: translateY(-1px);
       }
       
       /* 按钮组样式 */
       .button-group {
         display: flex;
-        gap: 6px;
+        gap: 8px;
         align-items: center;
-        justify-content: flex-end;
-      }
-      
-      /* 紧凑按钮样式 */
-      .compact-btn {
-        border: none;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 16px;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 36px;
-        height: 36px;
-        padding: 0;
       }
       
       #clearBtn {
-        background: #f8f9fa;
-        color: #6c757d;
-        border: 1px solid #e9ecef;
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.2s;
       }
       
       #clearBtn:hover {
-        background: #e9ecef;
-        color: #495057;
-        transform: scale(1.05);
+        background: #5a6268;
       }
       
-      .send-btn {
+      #sendBtn {
         background: #007bff;
         color: white;
-        box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.2s;
       }
       
-      .send-btn:hover {
+      #sendBtn:hover {
         background: #0056b3;
-        transform: scale(1.05);
-        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.4);
       }
       
-      .send-btn:disabled {
+      #sendBtn:disabled {
         background: #6c757d;
         cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-      }
-      
-      /* 按钮图标样式 */
-      .compact-btn .material-symbols-rounded {
-        font-size: 18px;
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
-      }
-      
-      .data-analysis-btn .material-symbols-rounded {
-        font-size: 18px;
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
       }
       
       @media (prefers-color-scheme: dark) {
-        .data-analysis-btn {
-          background: #2d3748;
-          color: #a0aec0;
-          border-color: #4a5568;
-        }
-        
-        .data-analysis-btn:hover {
-          background: #4a5568;
-          color: #e2e8f0;
-        }
-        
-        .data-analysis-btn.active {
-          background: #9c27b0;
-          border-color: #9c27b0;
-          color: white;
-        }
-        
-        .data-analysis-btn.active:hover {
-          background: #7b1fa2;
-          border-color: #7b1fa2;
-        }
-        
         #clearBtn {
-          background: #2d3748;
-          color: #a0aec0;
-          border-color: #4a5568;
+          background: #495057;
         }
         
         #clearBtn:hover {
-          background: #4a5568;
-          color: #e2e8f0;
+          background: #343a40;
         }
         
-        .send-btn {
+        #sendBtn {
           background: #0d6efd;
         }
         
-        .send-btn:hover {
+        #sendBtn:hover {
           background: #0b5ed7;
         }
       }
@@ -363,26 +301,23 @@
 
       <!-- Input area 输入区 -->
       <div class="input-container">
-        <div class="input-row">
-          <button
-            type="button"
-            id="dataAnalysisBtn"
-            onclick="toggleDataAnalysis()"
-            aria-label="数据分析模式"
-            title="点击启用数据分析模式，AI将分析您近三个月的健康数据"
-            class="data-analysis-btn"
-          >
-            <span class="material-symbols-rounded">analytics</span>
-          </button>
-          <textarea
-            id="userInput"
-            placeholder="请输入您的健康问题..."
-            autocomplete="off"
-            aria-label="输入您的健康问题"
-            onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"
-            rows="1"
-          ></textarea>
-        </div>
+        <button
+          type="button"
+          id="dataAnalysisBtn"
+          onclick="toggleDataAnalysis()"
+          aria-label="数据分析模式"
+          title="点击启用数据分析模式，AI将分析您近三个月的健康数据"
+        >
+          📊
+        </button>
+        <textarea
+          id="userInput"
+          placeholder="请输入您的健康问题..."
+          autocomplete="off"
+          aria-label="输入您的健康问题"
+          onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"
+          rows="1"
+        ></textarea>
         <div class="button-group">
           <button
             type="button"
@@ -390,18 +325,16 @@
             onclick="clearSession()"
             aria-label="清除会话"
             title="清除对话历史"
-            class="compact-btn"
           >
-            <span class="material-symbols-rounded">delete_sweep</span>
+            清除
           </button>
           <button
             type="button"
             id="sendBtn"
             onclick="sendMessage()"
             aria-label="发送消息"
-            class="compact-btn send-btn"
           >
-            <span class="material-symbols-rounded">send</span>
+            发送
           </button>
         </div>
     
@@ -474,6 +407,7 @@
       
       // 数据分析模式状态
       let dataAnalysisMode = false;
+      let userData = null;
       
       // 生成会话ID
       function generateSessionId() {
@@ -502,65 +436,74 @@
       function toggleDataAnalysis() {
         dataAnalysisMode = !dataAnalysisMode;
         const btn = document.getElementById('dataAnalysisBtn');
+        
         if (dataAnalysisMode) {
           btn.classList.add('active');
           btn.title = '数据分析模式已启用，AI将分析您近三个月的健康数据';
+          // 获取用户数据
+          fetchUserData();
         } else {
           btn.classList.remove('active');
           btn.title = '点击启用数据分析模式，AI将分析您近三个月的健康数据';
+          userData = null;
         }
       }
       
-      // 获取用户健康数据
-      async function getUserHealthData() {
+      // 获取用户三个月的数据
+      async function fetchUserData() {
         try {
           // 获取API基础路径
-          const apiBase = window.__API_BASE__ || 
-                        (window.parent && window.parent.__API_BASE__) || 
-                        (window.parent && window.parent.parent && window.parent.parent.__API_BASE__) ||
-                        'https://app.zdelf.cn';
+          const apiBase = window.__API_BASE__ || (window.parent && window.parent.__API_BASE__) || 'https://app.zdelf.cn';
           const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
-          
-          // 获取当前用户ID（从localStorage或其他地方）
-          const userId = localStorage.getItem('user_id') || 
-                        localStorage.getItem('userId') || 
-                        localStorage.getItem('current_user_id') || 
-                        'default_user';
           
           // 计算三个月前的日期
           const threeMonthsAgo = new Date();
           threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
           const startDate = threeMonthsAgo.toISOString().split('T')[0];
           
+          // 获取用户信息（从localStorage或其他地方）
+          const userId = localStorage.getItem('user_id') || 'default_user';
+          const username = localStorage.getItem('username') || 'default_user';
+          
           // 并行获取三种类型的数据
-          const [metricsData, dietData, caseData] = await Promise.all([
-            fetch(`${baseUrl}/getjson/metrics?user_id=${userId}&start_date=${startDate}&limit=100`).then(r => r.json()),
-            fetch(`${baseUrl}/getjson/diet?user_id=${userId}&start_date=${startDate}&limit=100`).then(r => r.json()),
-            fetch(`${baseUrl}/getjson/case?user_id=${userId}&start_date=${startDate}&limit=100`).then(r => r.json())
+          const [metricsResponse, dietResponse, caseResponse] = await Promise.all([
+            fetch(`${baseUrl}/getjson/metrics?user_id=${userId}&start_date=${startDate}&limit=100`),
+            fetch(`${baseUrl}/getjson/diet?user_id=${userId}&start_date=${startDate}&limit=100`),
+            fetch(`${baseUrl}/getjson/case?user_id=${userId}&start_date=${startDate}&limit=100`)
           ]);
           
-          return {
+          const [metricsData, dietData, caseData] = await Promise.all([
+            metricsResponse.json(),
+            dietResponse.json(),
+            caseResponse.json()
+          ]);
+          
+          // 合并数据
+          userData = {
             metrics: metricsData.success ? metricsData.data : [],
             diet: dietData.success ? dietData.data : [],
-            case: caseData.success ? caseData.data : []
+            case: caseData.success ? caseData.data : [],
+            summary: {
+              metricsCount: metricsData.success ? metricsData.data.length : 0,
+              dietCount: dietData.success ? dietData.data.length : 0,
+              caseCount: caseData.success ? caseData.data.length : 0,
+              period: `近三个月 (${startDate} 至今)`
+            }
           };
+          
+          console.log('用户数据获取成功:', userData.summary);
+          
         } catch (error) {
-          console.error('获取用户健康数据失败:', error);
-          // 显示用户友好的错误信息
-          if (window.parent && window.parent.showToast) {
-            window.parent.showToast('获取健康数据失败，请检查网络连接', 'error');
-          }
-          return { metrics: [], diet: [], case: [] };
+          console.error('获取用户数据失败:', error);
+          // 显示错误提示
+          addMessage('⚠️ 数据分析模式启用失败，无法获取您的健康数据。请检查网络连接或稍后重试。', 'bot');
         }
       }
       
       // 清除会话
       async function clearSession() {
         try {
-          const apiBase = window.__API_BASE__ || 
-                        (window.parent && window.parent.__API_BASE__) || 
-                        (window.parent && window.parent.parent && window.parent.parent.__API_BASE__) ||
-                        'https://app.zdelf.cn';
+          const apiBase = window.__API_BASE__ || (window.parent && window.parent.__API_BASE__) || 'https://app.zdelf.cn';
           const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
           
           const response = await fetch(`${baseUrl}/deepseek/clear_session`, {
@@ -645,15 +588,14 @@
           const sessionId = getSessionId();
           
           // 构建请求数据
-          let requestData = { 
+          const requestData = { 
             message: message,
             session_id: sessionId
           };
           
-          // 如果启用了数据分析模式，获取用户健康数据
-          if (dataAnalysisMode) {
-            const healthData = await getUserHealthData();
-            requestData.user_data = healthData;
+          // 如果启用了数据分析模式且有用户数据，添加数据到请求中
+          if (dataAnalysisMode && userData) {
+            requestData.user_data = userData;
             requestData.analysis_mode = true;
           }
           
@@ -697,15 +639,14 @@
           const baseUrl = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
           
           // 构建请求数据
-          let requestData = { 
+          const requestData = { 
             message: message,
             session_id: sessionId
           };
           
-          // 如果启用了数据分析模式，获取用户健康数据
-          if (dataAnalysisMode) {
-            const healthData = await getUserHealthData();
-            requestData.user_data = healthData;
+          // 如果启用了数据分析模式且有用户数据，添加数据到请求中
+          if (dataAnalysisMode && userData) {
+            requestData.user_data = userData;
             requestData.analysis_mode = true;
           }
           
