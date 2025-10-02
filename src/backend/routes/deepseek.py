@@ -173,6 +173,8 @@ def _fetch_user_data(user_id, start_date):
         cursor = conn.cursor(dictionary=True)
         
         try:
+            logger.info(f"查询用户数据: user_id={user_id}, start_date={start_date}")
+            
             # 获取健康指标数据
             metrics_query = """
                 SELECT id, user_id, username, file_name, content, created_at
@@ -183,8 +185,9 @@ def _fetch_user_data(user_id, start_date):
             """
             cursor.execute(metrics_query, (user_id, f"{start_date} 00:00:00"))
             metrics_data = cursor.fetchall()
+            logger.info(f"健康指标数据查询结果: {len(metrics_data)}条")
             
-            # 获取饮食数据
+            # 获取饮食数据 - 增加调试信息
             diet_query = """
                 SELECT id, user_id, username, file_name, content, created_at
                 FROM diet_files 
@@ -194,6 +197,21 @@ def _fetch_user_data(user_id, start_date):
             """
             cursor.execute(diet_query, (user_id, f"{start_date} 00:00:00"))
             diet_data = cursor.fetchall()
+            logger.info(f"饮食数据查询结果: {len(diet_data)}条")
+            
+            # 如果没有找到数据，尝试不限制时间范围
+            if len(diet_data) == 0:
+                logger.info("未找到近三个月饮食数据，尝试查询所有数据")
+                diet_query_all = """
+                    SELECT id, user_id, username, file_name, content, created_at
+                    FROM diet_files 
+                    WHERE user_id = %s
+                    ORDER BY created_at DESC 
+                    LIMIT 100
+                """
+                cursor.execute(diet_query_all, (user_id,))
+                diet_data = cursor.fetchall()
+                logger.info(f"所有饮食数据查询结果: {len(diet_data)}条")
             
             # 获取病例数据
             case_query = """
@@ -205,6 +223,7 @@ def _fetch_user_data(user_id, start_date):
             """
             cursor.execute(case_query, (user_id, f"{start_date} 00:00:00"))
             case_data = cursor.fetchall()
+            logger.info(f"病例数据查询结果: {len(case_data)}条")
             
             return {
                 'metrics': metrics_data,
@@ -239,6 +258,8 @@ def _process_user_data(raw_data):
         'case': []
     }
     
+    logger.info(f"开始处理数据: metrics={len(raw_data['metrics'])}, diet={len(raw_data['diet'])}, case={len(raw_data['case'])}")
+    
     # 处理健康指标数据
     for item in raw_data['metrics']:
         try:
@@ -250,18 +271,25 @@ def _process_user_data(raw_data):
                     'data': content.get('metricsData', {}),
                     'type': 'health_metrics'
                 })
-        except (json.JSONDecodeError, TypeError):
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.warning(f"处理健康指标数据失败: {e}")
             continue
     
-    # 处理饮食数据
-    for item in raw_data['diet']:
+    # 处理饮食数据 - 增加详细调试
+    logger.info(f"开始处理饮食数据，原始数据条数: {len(raw_data['diet'])}")
+    for i, item in enumerate(raw_data['diet']):
         try:
+            logger.info(f"处理第{i+1}条饮食数据: id={item.get('id')}, created_at={item.get('created_at')}")
             content = json.loads(item.get('content', '{}'))
+            logger.info(f"饮食数据内容: {content}")
+            
             diet_data = content.get('dietData', {})
+            logger.info(f"dietData字段: {diet_data}")
             
             # 提取所有餐次信息
             meals = []
             for meal_key, meal in diet_data.items():
+                logger.info(f"处理餐次: {meal_key} = {meal}")
                 if isinstance(meal, dict) and meal.get('food') and meal.get('time'):
                     meals.append({
                         'mealId': meal.get('mealId'),
@@ -269,6 +297,7 @@ def _process_user_data(raw_data):
                         'food': meal.get('food'),
                         'images': meal.get('images', [])
                     })
+                    logger.info(f"添加餐次: {meal.get('time')} - {meal.get('food')}")
             
             if meals:
                 processed['diet'].append({
@@ -278,7 +307,11 @@ def _process_user_data(raw_data):
                     'totalMeals': len(meals),
                     'type': 'diet_record'
                 })
-        except (json.JSONDecodeError, TypeError):
+                logger.info(f"成功处理饮食记录: {len(meals)}个餐次")
+            else:
+                logger.warning(f"饮食记录中没有有效餐次数据: {item}")
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.warning(f"处理饮食数据失败: {e}, 数据: {item}")
             continue
     
     # 处理病例数据
@@ -292,9 +325,11 @@ def _process_user_data(raw_data):
                     'data': content.get('caseData', {}),
                     'type': 'case_record'
                 })
-        except (json.JSONDecodeError, TypeError):
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.warning(f"处理病例数据失败: {e}")
             continue
     
+    logger.info(f"数据处理完成: metrics={len(processed['metrics'])}, diet={len(processed['diet'])}, case={len(processed['case'])}")
     return processed
 
 def _auth_headers():
@@ -588,6 +623,11 @@ def deepseek_chat():
 - 病例记录：{len(case_data)}条
 - 数据时间范围：近三个月 ({start_date} 至今)
 
+【调试信息】
+- 用户ID：{user_id}
+- 查询开始日期：{start_date}
+- 原始数据条数：metrics={len(raw_data['metrics'])}, diet={len(raw_data['diet'])}, case={len(raw_data['case'])}
+
 【具体数据内容】"""
             
             # 添加健康指标数据
@@ -747,6 +787,11 @@ def deepseek_chat_stream():
 - 饮食记录：{len(diet_data)}条  
 - 病例记录：{len(case_data)}条
 - 数据时间范围：近三个月 ({start_date} 至今)
+
+【调试信息】
+- 用户ID：{user_id}
+- 查询开始日期：{start_date}
+- 原始数据条数：metrics={len(raw_data['metrics'])}, diet={len(raw_data['diet'])}, case={len(raw_data['case'])}
 
 【具体数据内容】"""
             
