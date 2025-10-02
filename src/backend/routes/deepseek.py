@@ -402,6 +402,10 @@ def deepseek_chat():
         # 如果启用了数据分析模式，添加数据分析提示
         if analysis_mode and user_data:
             data_summary = user_data.get('summary', {})
+            metrics_data = user_data.get('metrics', [])
+            diet_data = user_data.get('diet', [])
+            case_data = user_data.get('case', [])
+            
             system_prompt += f"""
 
 【数据分析模式已启用】
@@ -411,7 +415,38 @@ def deepseek_chat():
 - 病例记录：{data_summary.get('caseCount', 0)}条
 - 数据时间范围：{data_summary.get('period', '近三个月')}
 
-请基于这些具体数据为用户提供个性化的健康分析和建议。在回答时，可以引用具体的数据记录来支持你的建议。"""
+【具体数据内容】"""
+            
+            # 添加健康指标数据
+            if metrics_data:
+                system_prompt += "\n\n健康指标数据："
+                for i, metric in enumerate(metrics_data[:5]):  # 只显示最近5条
+                    system_prompt += f"\n{i+1}. 日期：{metric.get('date', '未知')}"
+                    if metric.get('data'):
+                        for key, value in metric['data'].items():
+                            system_prompt += f"\n   {key}：{value}"
+            
+            # 添加饮食数据
+            if diet_data:
+                system_prompt += "\n\n饮食记录数据："
+                for i, diet in enumerate(diet_data[:5]):  # 只显示最近5条
+                    system_prompt += f"\n{i+1}. 日期：{diet.get('date', '未知')}"
+                    if diet.get('meals'):
+                        for meal in diet['meals']:
+                            system_prompt += f"\n   餐次：{meal.get('time', '未知时间')} - {meal.get('food', '未知食物')}"
+            
+            # 添加病例数据
+            if case_data:
+                system_prompt += "\n\n病例记录数据："
+                for i, case_record in enumerate(case_data[:5]):  # 只显示最近5条
+                    system_prompt += f"\n{i+1}. 日期：{case_record.get('date', '未知')}"
+                    if case_record.get('data'):
+                        for key, value in case_record['data'].items():
+                            system_prompt += f"\n   {key}：{value}"
+            
+            system_prompt += """
+
+请基于这些具体数据为用户提供个性化的健康分析和建议。在回答时，可以引用具体的数据记录来支持你的建议。如果用户询问具体的饮食内容、健康指标或病例信息，请从上述数据中查找并引用。"""
         
         # 构建消息历史
         messages = [{"role": "system", "content": system_prompt}]
@@ -517,6 +552,10 @@ def deepseek_chat_stream():
         # 如果启用了数据分析模式，添加数据分析提示
         if analysis_mode and user_data:
             data_summary = user_data.get('summary', {})
+            metrics_data = user_data.get('metrics', [])
+            diet_data = user_data.get('diet', [])
+            case_data = user_data.get('case', [])
+            
             system_prompt += f"""
 
 【数据分析模式已启用】
@@ -526,7 +565,38 @@ def deepseek_chat_stream():
 - 病例记录：{data_summary.get('caseCount', 0)}条
 - 数据时间范围：{data_summary.get('period', '近三个月')}
 
-请基于这些具体数据为用户提供个性化的健康分析和建议。在回答时，可以引用具体的数据记录来支持你的建议。"""
+【具体数据内容】"""
+            
+            # 添加健康指标数据
+            if metrics_data:
+                system_prompt += "\n\n健康指标数据："
+                for i, metric in enumerate(metrics_data[:5]):  # 只显示最近5条
+                    system_prompt += f"\n{i+1}. 日期：{metric.get('date', '未知')}"
+                    if metric.get('data'):
+                        for key, value in metric['data'].items():
+                            system_prompt += f"\n   {key}：{value}"
+            
+            # 添加饮食数据
+            if diet_data:
+                system_prompt += "\n\n饮食记录数据："
+                for i, diet in enumerate(diet_data[:5]):  # 只显示最近5条
+                    system_prompt += f"\n{i+1}. 日期：{diet.get('date', '未知')}"
+                    if diet.get('meals'):
+                        for meal in diet['meals']:
+                            system_prompt += f"\n   餐次：{meal.get('time', '未知时间')} - {meal.get('food', '未知食物')}"
+            
+            # 添加病例数据
+            if case_data:
+                system_prompt += "\n\n病例记录数据："
+                for i, case_record in enumerate(case_data[:5]):  # 只显示最近5条
+                    system_prompt += f"\n{i+1}. 日期：{case_record.get('date', '未知')}"
+                    if case_record.get('data'):
+                        for key, value in case_record['data'].items():
+                            system_prompt += f"\n   {key}：{value}"
+            
+            system_prompt += """
+
+请基于这些具体数据为用户提供个性化的健康分析和建议。在回答时，可以引用具体的数据记录来支持你的建议。如果用户询问具体的饮食内容、健康指标或病例信息，请从上述数据中查找并引用。"""
         
         # 构建消息历史
         messages = [{"role": "system", "content": system_prompt}]

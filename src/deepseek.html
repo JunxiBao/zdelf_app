@@ -172,41 +172,115 @@
         }
       }
       
-      /* 数据分析按钮样式 */
-      #dataAnalysisBtn {
-        background: transparent;
-        color: #6c757d;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        padding: 8px 12px;
+      /* 深度美化的完美圆形按钮 */
+      #dataAnalysisBtn, #clearBtn, #sendBtn {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        min-height: 48px;
+        max-width: 48px;
+        max-height: 48px;
+        border-radius: 50% !important;
+        border: none;
         cursor: pointer;
-        font-size: 16px;
-        transition: all 0.3s ease;
-        margin-right: 8px;
-        min-width: 40px;
-        height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        position: relative;
+        overflow: hidden;
+        font-size: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        flex-shrink: 0;
+        outline: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+      }
+      
+      /* 数据分析按钮 - 深度美化 */
+      #dataAnalysisBtn {
+        background: linear-gradient(145deg, #ffffff 0%, #f1f3f4 100%);
+        color: #5f6368;
+        margin-right: 16px;
+        border: 2px solid transparent;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.8);
       }
       
       #dataAnalysisBtn:hover {
-        border-color: #007bff;
-        color: #007bff;
-        transform: translateY(-1px);
+        background: linear-gradient(145deg, #e8f0fe 0%, #d2e3fc 100%);
+        color: #1a73e8;
+        transform: translateY(-3px) scale(1.08);
+        box-shadow: 0 8px 24px rgba(26, 115, 232, 0.25),
+                    0 4px 8px rgba(0, 0, 0, 0.1),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        border-color: rgba(26, 115, 232, 0.2);
       }
       
       #dataAnalysisBtn.active {
-        background: #8b5cf6;
-        border-color: #8b5cf6;
+        background: linear-gradient(145deg, #8b5cf6 0%, #7c3aed 100%);
         color: white;
-        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 12px 32px rgba(139, 92, 246, 0.4),
+                    0 4px 8px rgba(0, 0, 0, 0.1),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        border-color: rgba(139, 92, 246, 0.3);
       }
       
       #dataAnalysisBtn.active:hover {
-        background: #7c3aed;
-        border-color: #7c3aed;
-        transform: translateY(-1px);
+        background: linear-gradient(145deg, #7c3aed 0%, #6d28d9 100%);
+        transform: translateY(-4px) scale(1.1);
+        box-shadow: 0 16px 40px rgba(139, 92, 246, 0.5),
+                    0 8px 16px rgba(0, 0, 0, 0.15),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      }
+      
+      /* 清除按钮 - 深度美化 */
+      #clearBtn {
+        background: linear-gradient(145deg, #fafafa 0%, #f0f0f0 100%);
+        color: #5f6368;
+        margin-right: 12px;
+        border: 2px solid transparent;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      }
+      
+      #clearBtn:hover {
+        background: linear-gradient(145deg, #ffebee 0%, #ffcdd2 100%);
+        color: #d32f2f;
+        transform: translateY(-3px) scale(1.08);
+        box-shadow: 0 8px 24px rgba(211, 47, 47, 0.25),
+                    0 4px 8px rgba(0, 0, 0, 0.1),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        border-color: rgba(211, 47, 47, 0.2);
+      }
+      
+      /* 发送按钮 - 深度美化 */
+      #sendBtn {
+        background: linear-gradient(145deg, #1a73e8 0%, #1557b0 100%);
+        color: white;
+        border: 2px solid transparent;
+        box-shadow: 0 4px 16px rgba(26, 115, 232, 0.3),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      }
+      
+      #sendBtn:hover {
+        background: linear-gradient(145deg, #1557b0 0%, #0d47a1 100%);
+        transform: translateY(-3px) scale(1.08);
+        box-shadow: 0 8px 24px rgba(26, 115, 232, 0.4),
+                    0 4px 8px rgba(0, 0, 0, 0.1),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        border-color: rgba(26, 115, 232, 0.3);
+      }
+      
+      #sendBtn:disabled {
+        background: linear-gradient(145deg, #9aa0a6 0%, #80868b 100%);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-color: transparent;
       }
       
       /* 按钮组样式 */
@@ -216,56 +290,109 @@
         align-items: center;
       }
       
-      #clearBtn {
-        background: #6c757d;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 12px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: background-color 0.2s;
+      /* 图标样式 - 深度美化 */
+      .icon {
+        font-size: 22px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
       }
       
-      #clearBtn:hover {
-        background: #5a6268;
+      /* 高级涟漪效果 */
+      #dataAnalysisBtn::before,
+      #clearBtn::before,
+      #sendBtn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 70%, transparent 100%);
+        transform: translate(-50%, -50%);
+        transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        pointer-events: none;
       }
       
-      #sendBtn {
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 16px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background-color 0.2s;
+      #dataAnalysisBtn:active::before,
+      #clearBtn:active::before,
+      #sendBtn:active::before {
+        width: 120%;
+        height: 120%;
+        opacity: 0;
       }
       
-      #sendBtn:hover {
-        background: #0056b3;
+      /* 按钮按下效果 */
+      #dataAnalysisBtn:active,
+      #clearBtn:active,
+      #sendBtn:active {
+        transform: translateY(-1px) scale(0.98);
+        transition: all 0.1s ease;
       }
       
-      #sendBtn:disabled {
-        background: #6c757d;
-        cursor: not-allowed;
+      /* 图标悬停效果 */
+      #dataAnalysisBtn:hover .icon,
+      #clearBtn:hover .icon,
+      #sendBtn:hover .icon {
+        transform: scale(1.1);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
       }
       
+      /* 深色模式适配 - 深度美化 */
       @media (prefers-color-scheme: dark) {
+        #dataAnalysisBtn {
+          background: linear-gradient(145deg, #2d3748 0%, #1a202c 100%);
+          color: #a0aec0;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        #dataAnalysisBtn:hover {
+          background: linear-gradient(145deg, #2b6cb0 0%, #2c5282 100%);
+          color: #90cdf4;
+          box-shadow: 0 8px 24px rgba(43, 108, 176, 0.3),
+                      0 4px 8px rgba(0, 0, 0, 0.2),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        #dataAnalysisBtn.active {
+          background: linear-gradient(145deg, #8b5cf6 0%, #7c3aed 100%);
+          color: white;
+          box-shadow: 0 12px 32px rgba(139, 92, 246, 0.4),
+                      0 4px 8px rgba(0, 0, 0, 0.2),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
         #clearBtn {
-          background: #495057;
+          background: linear-gradient(145deg, #4a5568 0%, #2d3748 100%);
+          color: #a0aec0;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
         
         #clearBtn:hover {
-          background: #343a40;
+          background: linear-gradient(145deg, #742a2a 0%, #5a1a1a 100%);
+          color: #feb2b2;
+          box-shadow: 0 8px 24px rgba(116, 42, 42, 0.3),
+                      0 4px 8px rgba(0, 0, 0, 0.2),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
         
         #sendBtn {
-          background: #0d6efd;
+          background: linear-gradient(145deg, #3182ce 0%, #2c5282 100%);
+          box-shadow: 0 4px 16px rgba(49, 130, 206, 0.3),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
         
         #sendBtn:hover {
-          background: #0b5ed7;
+          background: linear-gradient(145deg, #2c5282 0%, #2a4365 100%);
+          box-shadow: 0 8px 24px rgba(44, 82, 130, 0.4),
+                      0 4px 8px rgba(0, 0, 0, 0.2),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
       }
       
@@ -308,7 +435,7 @@
           aria-label="数据分析模式"
           title="点击启用数据分析模式，AI将分析您近三个月的健康数据"
         >
-          📊
+          <span class="icon">📊</span>
         </button>
         <textarea
           id="userInput"
@@ -326,7 +453,7 @@
             aria-label="清除会话"
             title="清除对话历史"
           >
-            清除
+            <span class="icon">🗑️</span>
           </button>
           <button
             type="button"
@@ -334,7 +461,7 @@
             onclick="sendMessage()"
             aria-label="发送消息"
           >
-            发送
+            <span class="icon">➤</span>
           </button>
         </div>
     
@@ -478,26 +605,104 @@
             caseResponse.json()
           ]);
           
+          // 处理和分析数据
+          const processedData = processUserData(metricsData, dietData, caseData);
+          
           // 合并数据
           userData = {
-            metrics: metricsData.success ? metricsData.data : [],
-            diet: dietData.success ? dietData.data : [],
-            case: caseData.success ? caseData.data : [],
+            metrics: processedData.metrics,
+            diet: processedData.diet,
+            case: processedData.case,
             summary: {
-              metricsCount: metricsData.success ? metricsData.data.length : 0,
-              dietCount: dietData.success ? dietData.data.length : 0,
-              caseCount: caseData.success ? caseData.data.length : 0,
-              period: `近三个月 (${startDate} 至今)`
+              metricsCount: processedData.metrics.length,
+              dietCount: processedData.diet.length,
+              caseCount: processedData.case.length,
+              period: `近三个月 (${startDate} 至今)`,
+              totalRecords: processedData.metrics.length + processedData.diet.length + processedData.case.length
             }
           };
           
           console.log('用户数据获取成功:', userData.summary);
+          
+          // 显示数据获取成功提示
+          if (userData.summary.totalRecords > 0) {
+            addMessage(`✅ 数据分析模式已启用！已获取您的健康数据：\n• 健康指标：${userData.summary.metricsCount}条\n• 饮食记录：${userData.summary.dietCount}条\n• 病例记录：${userData.summary.caseCount}条\n\n现在AI可以基于这些数据为您提供个性化分析。`, 'bot');
+          } else {
+            addMessage('⚠️ 未找到近三个月的健康数据。请先记录一些健康信息，然后重新启用数据分析模式。', 'bot');
+          }
           
         } catch (error) {
           console.error('获取用户数据失败:', error);
           // 显示错误提示
           addMessage('⚠️ 数据分析模式启用失败，无法获取您的健康数据。请检查网络连接或稍后重试。', 'bot');
         }
+      }
+      
+      // 处理用户数据，提取有用信息
+      function processUserData(metricsData, dietData, caseData) {
+        const processed = {
+          metrics: [],
+          diet: [],
+          case: []
+        };
+        
+        // 处理健康指标数据
+        if (metricsData.success && metricsData.data) {
+          processed.metrics = metricsData.data.map(item => {
+            const content = item.content || {};
+            return {
+              id: item.id,
+              date: content.exportInfo?.recordTime || item.created_at,
+              data: content.metricsData || {},
+              type: 'health_metrics'
+            };
+          }).filter(item => item.data && Object.keys(item.data).length > 0);
+        }
+        
+        // 处理饮食数据
+        if (dietData.success && dietData.data) {
+          processed.diet = dietData.data.map(item => {
+            const content = item.content || {};
+            const dietData = content.dietData || {};
+            
+            // 提取所有餐次信息
+            const meals = [];
+            Object.keys(dietData).forEach(mealKey => {
+              const meal = dietData[mealKey];
+              if (meal && meal.food && meal.time) {
+                meals.push({
+                  mealId: meal.mealId,
+                  time: meal.time,
+                  food: meal.food,
+                  images: meal.images || []
+                });
+              }
+            });
+            
+            return {
+              id: item.id,
+              date: content.exportInfo?.recordTime || item.created_at,
+              meals: meals,
+              totalMeals: meals.length,
+              type: 'diet_record'
+            };
+          }).filter(item => item.meals.length > 0);
+        }
+        
+        // 处理病例数据
+        if (caseData.success && caseData.data) {
+          processed.case = caseData.data.map(item => {
+            const content = item.content || {};
+            return {
+              id: item.id,
+              date: content.exportInfo?.recordTime || item.created_at,
+              data: content.caseData || {},
+              type: 'case_record'
+            };
+          }).filter(item => item.data && Object.keys(item.data).length > 0);
+        }
+        
+        return processed;
       }
       
       // 清除会话
