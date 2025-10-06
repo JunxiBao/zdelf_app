@@ -148,9 +148,9 @@ A comprehensive health and wellness management application built with modern web
 - **Background**: Light/dark theme support
 - **Accent**: Consistent color palette throughout
 
-### Typography
-- **Font Family**: Roboto (Google Fonts)
-- **Icons**: Material Symbols Rounded
+### Typography & Icons
+- **Font Family**: System fonts preferred (no Google Fonts dependency)
+- **Icons**: Ionicons (Apple-style), China-accessible via jsDelivr
 - **Accessibility**: Proper contrast ratios and font sizing
 
 ### Components

@@ -89,8 +89,9 @@ body {
   margin-bottom: 18px;
 }
 
-.topbar .material-icons-outlined {
-  font-size: 22px;
+.topbar ion-icon {
+  width: 22px;
+  height: 22px;
 }
 
 .topbar .title {
@@ -204,8 +205,9 @@ body {
   box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
 }
 
-.avatar-upload-btn .material-icons-outlined {
-  font-size: 16px;
+.avatar-upload-btn ion-icon {
+  width: 16px;
+  height: 16px;
 }
 
 /* 头像裁剪模态框样式 */
@@ -399,8 +401,9 @@ body {
   border-top: none;
 }
 
-.li .material-icons-outlined {
-  font-size: 22px;
+.li ion-icon {
+  width: 22px;
+  height: 22px;
   color: var(--text-secondary);
 }
 

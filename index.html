@@ -24,15 +24,7 @@
       href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
     />
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <!-- Google Fonts & Material Icons -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined"
-      rel="stylesheet"
-    />
+    <!-- System fonts preferred; remove Google icon fonts to avoid CN blocking -->
 
     <script>
       // Redirect to login page if user is not authenticated
@@ -43,30 +35,12 @@
 
     <link rel="stylesheet" href="./statics/css/animations.css" />
     <link rel="stylesheet" href="./statics/css/index.css" />
-    <!-- Material Symbols Rounded (used in navigation icons) -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0"
-    />
+    <!-- Ionicons (Apple-style icons) - China-friendly via jsDelivr -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/ionicons@7.1.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://cdn.jsdelivr.net/npm/ionicons@7.1.2/dist/ionicons/ionicons.js"></script>
 
     <!-- Force icon font styles to remain consistent even if overridden by subpages -->
     <style>
-      /* Ensure Material Symbols render even if pages override font-family */
-      .material-symbols-rounded {
-        font-family: "Material Symbols Rounded" !important;
-        font-weight: normal;
-        font-style: normal;
-        font-size: 24px;
-        line-height: 1;
-        display: inline-block;
-        text-transform: none;
-        letter-spacing: normal;
-        white-space: nowrap;
-        direction: ltr;
-        -webkit-font-smoothing: antialiased;
-        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
-      }
-
       /* Ensure iconfont-based icons stay visible regardless of subpage styles */
       .iconfont {
         font-family: "iconfont" !important;
@@ -75,6 +49,8 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
+      /* Ionicons default sizing for nav */
+      ion-icon { width: 24px; height: 24px; }
     </style>
   </head>
 
@@ -93,7 +69,7 @@
           aria-label="日常"
           title="日常"
         >
-          <span class="material-symbols-rounded">edit_note</span>
+          <ion-icon ios="create-outline" md="create-sharp" aria-hidden="true"></ion-icon>
         </button>
         <div class="nav-label">日常</div>
       </div>
@@ -106,7 +82,7 @@
           aria-label="提醒"
           title="提醒"
         >
-          <span class="material-symbols-rounded">schedule</span>
+          <ion-icon ios="time-outline" md="time-sharp" aria-hidden="true"></ion-icon>
         </button>
         <div class="nav-label">提醒</div>
       </div>
@@ -119,7 +95,7 @@
           aria-label="新增"
           title="新增"
         >
-          <span class="material-symbols-rounded">add</span>
+          <ion-icon ios="add" md="add-sharp" aria-hidden="true"></ion-icon>
         </div>
       </div>
 
@@ -132,7 +108,7 @@
           aria-label="AI助手"
           title="AI助手"
         >
-          <span class="material-symbols-rounded">smart_toy</span>
+          <ion-icon ios="sparkles-outline" md="sparkles-sharp" aria-hidden="true"></ion-icon>
         </button>
         <div class="nav-label">AI助手</div>
       </div>
@@ -145,7 +121,7 @@
           aria-label="我的"
           title="我的"
         >
-          <span class="material-symbols-rounded">person</span>
+          <ion-icon ios="person-outline" md="person-sharp" aria-hidden="true"></ion-icon>
         </button>
         <div class="nav-label">我的</div>
       </div>

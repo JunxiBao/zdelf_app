@@ -126,7 +126,7 @@ let currentShadowRoot = null;
  * Behavior:
  * - Clone all inline <style> blocks from the subpage
  * - Clone <link rel="stylesheet"> except for global assets already loaded in the host
- * - Append an icon-font fix so Material Icons / Symbols and iconfont render inside the Shadow DOM
+ * - Append icon fixes so Ionicons and iconfont render inside the Shadow DOM
  */
 function injectPageStyles(doc, shadow) {
   // Copy all inline <style> tags from <head> and <body>
@@ -146,37 +146,8 @@ function injectPageStyles(doc, shadow) {
   // Icon font fix: ensure ligatures resolve inside the Shadow DOM
   const fix = document.createElement("style");
   fix.textContent = `
-    .material-icons,
-    .material-icons-outlined {
-      font-family: "Material Icons Outlined", "Material Icons" !important;
-      font-weight: normal;
-      font-style: normal;
-      font-size: 24px;
-      line-height: 1;
-      display: inline-block;
-      text-transform: none;
-      letter-spacing: normal;
-      white-space: nowrap;
-      direction: ltr;
-      -webkit-font-feature-settings: 'liga';
-      -webkit-font-smoothing: antialiased;
-    }
-    .material-symbols-rounded,
-    .material-symbols-outlined {
-      font-family: "Material Symbols Rounded", "Material Symbols Outlined" !important;
-      font-weight: normal;
-      font-style: normal;
-      font-size: 24px;
-      line-height: 1;
-      display: inline-block;
-      text-transform: none;
-      letter-spacing: normal;
-      white-space: nowrap;
-      direction: ltr;
-      -webkit-font-feature-settings: 'liga';
-      -webkit-font-smoothing: antialiased;
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
+    /* Ensure Ionicons size consistently inside Shadow DOM */
+    ion-icon { width: 24px; height: 24px; display: inline-block; }
     .iconfont { font-family: "iconfont" !important; font-style: normal; font-weight: normal; }
   `;
   shadow.appendChild(fix);
