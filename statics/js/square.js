@@ -923,6 +923,9 @@ function updateMessagesList() {
   messages.forEach((message, index) => {
     const messageElement = createMessageElement(message, index);
     messagesList.appendChild(messageElement);
+    
+    // 自动加载评论
+    loadComments(message.id);
   });
   
   // 更新消息计数
@@ -970,17 +973,17 @@ function createMessageElement(message, index) {
           ).join('')}
         </div>` : ''}
     </div>
-    <div class="message-actions">
-      <button class="comment-btn" onclick="toggleComments('${message.id}')">
-        <ion-icon ios="chatbubble-outline" md="chatbubble-sharp" aria-hidden="true"></ion-icon>
-        <span>评论</span>
-      </button>
-    </div>
-    <div class="comments-section" id="comments-${message.id}" style="display: none;">
+    <div class="comments-section" id="comments-${message.id}">
       <div class="comments-list" id="comments-list-${message.id}">
         <!-- 评论将通过JavaScript动态添加 -->
       </div>
-      <div class="comment-input-section">
+      <div class="comment-input-section" id="comment-input-section-${message.id}" style="display: none;">
+        <div class="comment-input-header">
+          <span class="comment-input-title">添加评论</span>
+          <button class="comment-close-btn" onclick="hideCommentInput('${message.id}')">
+            <ion-icon ios="close-outline" md="close-sharp" aria-hidden="true"></ion-icon>
+          </button>
+        </div>
         <div class="comment-input-container">
           <textarea 
             class="comment-input" 
@@ -992,6 +995,12 @@ function createMessageElement(message, index) {
             <ion-icon ios="send-outline" md="send-sharp" aria-hidden="true"></ion-icon>
           </button>
         </div>
+      </div>
+      <div class="add-comment-section">
+        <button class="add-comment-btn" onclick="showCommentInput('${message.id}')">
+          <ion-icon ios="add-circle-outline" md="add-circle-sharp" aria-hidden="true"></ion-icon>
+          <span>增加评论</span>
+        </button>
       </div>
     </div>
   `;
@@ -1260,17 +1269,19 @@ function compressWithQuality(canvas, mimeType, maxSizeKB, callback, quality = nu
  */
 function toggleComments(postId) {
   const commentsSection = squareRoot.getElementById(`comments-${postId}`);
-  if (!commentsSection) return;
+  const commentBtn = squareRoot.querySelector(`button[onclick="toggleComments('${postId}')"]`);
+  if (!commentsSection || !commentBtn) return;
   
   const isVisible = commentsSection.style.display !== 'none';
   
   if (isVisible) {
     // 隐藏评论区域
     commentsSection.style.display = 'none';
+    commentBtn.innerHTML = '<ion-icon ios="chatbubble-outline" md="chatbubble-sharp" aria-hidden="true"></ion-icon><span>评论</span>';
   } else {
-    // 显示评论区域并加载评论
+    // 显示评论区域
     commentsSection.style.display = 'block';
-    loadComments(postId);
+    commentBtn.innerHTML = '<ion-icon ios="chevron-up-outline" md="chevron-up-sharp" aria-hidden="true"></ion-icon><span>收起</span>';
   }
   
   // 触觉反馈
@@ -1330,11 +1341,17 @@ function renderComments(postId, comments) {
 function createCommentElement(comment) {
   const timeAgo = getTimeAgo(comment.created_at);
   
+  // 处理头像URL，确保是完整的URL
+  const apiBase = getApiBase();
+  const avatarUrl = comment.avatar_url ? 
+    (comment.avatar_url.startsWith('http') ? comment.avatar_url : (apiBase + comment.avatar_url)) : 
+    null;
+  
   return `
     <div class="comment-item">
       <div class="comment-avatar">
-        ${comment.avatar_url ? 
-          `<img src="${comment.avatar_url}" alt="${comment.username}" class="avatar-image">` :
+        ${avatarUrl ? 
+          `<img src="${avatarUrl}" alt="${comment.username}" class="avatar-image">` :
           `<div class="avatar-initials">${getInitials(comment.username)}</div>`
         }
       </div>
@@ -1347,6 +1364,64 @@ function createCommentElement(comment) {
       </div>
     </div>
   `;
+}
+
+/**
+ * 显示评论输入框
+ * @param {string} postId - 消息ID
+ */
+function showCommentInput(postId) {
+  const inputSection = squareRoot.getElementById(`comment-input-section-${postId}`);
+  const addCommentSection = squareRoot.querySelector(`button[onclick="showCommentInput('${postId}')"]`)?.parentElement;
+  
+  if (inputSection && addCommentSection) {
+    // 隐藏"增加评论"按钮
+    addCommentSection.style.display = 'none';
+    
+    // 显示输入框
+    inputSection.style.display = 'block';
+    
+    // 聚焦到输入框
+    const textarea = squareRoot.getElementById(`comment-input-${postId}`);
+    if (textarea) {
+      setTimeout(() => {
+        textarea.focus();
+      }, 100);
+    }
+    
+    // 触觉反馈
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Light');
+    }
+  }
+}
+
+/**
+ * 隐藏评论输入框
+ * @param {string} postId - 消息ID
+ */
+function hideCommentInput(postId) {
+  const inputSection = squareRoot.getElementById(`comment-input-section-${postId}`);
+  const addCommentSection = squareRoot.querySelector(`button[onclick="showCommentInput('${postId}')"]`)?.parentElement;
+  
+  if (inputSection && addCommentSection) {
+    // 隐藏输入框
+    inputSection.style.display = 'none';
+    
+    // 显示"增加评论"按钮
+    addCommentSection.style.display = 'block';
+    
+    // 清空输入框内容
+    const textarea = squareRoot.getElementById(`comment-input-${postId}`);
+    if (textarea) {
+      textarea.value = '';
+    }
+    
+    // 触觉反馈
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Light');
+    }
+  }
 }
 
 /**
@@ -1392,6 +1467,15 @@ async function submitComment(postId) {
     
     // 清空输入框
     commentInput.value = '';
+    
+    // 隐藏输入框，显示"增加评论"按钮
+    const inputSection = squareRoot.getElementById(`comment-input-section-${postId}`);
+    const addCommentSection = squareRoot.querySelector(`button[onclick="showCommentInput('${postId}')"]`)?.parentElement;
+    
+    if (inputSection && addCommentSection) {
+      inputSection.style.display = 'none';
+      addCommentSection.style.display = 'block';
+    }
     
     // 重新加载评论
     await loadComments(postId);
@@ -1447,5 +1531,7 @@ window.openImageModal = openImageModal;
 window.toggleComments = toggleComments;
 window.submitComment = submitComment;
 window.deleteComment = deleteComment;
+window.showCommentInput = showCommentInput;
+window.hideCommentInput = hideCommentInput;
 
 })();

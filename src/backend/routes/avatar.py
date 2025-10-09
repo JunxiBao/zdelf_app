@@ -74,9 +74,17 @@ def process_avatar_image(image_data, user_id):
             # 如果尺寸不对，强制调整
             image = image.resize(AVATAR_SIZE, Image.Resampling.LANCZOS)
         
-        # 保存头像文件，使用优化设置
-        filename = f"avatar_{user_id}_{uuid.uuid4().hex[:8]}.png"
+        # 保存头像文件，使用用户ID作为文件名
+        filename = f"{user_id}.png"
         filepath = os.path.join(AVATAR_UPLOAD_FOLDER, filename)
+        
+        # 如果文件已存在，先删除旧文件
+        if os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+                logger.info(f"已删除旧头像文件: {filename}")
+            except Exception as e:
+                logger.warning(f"删除旧头像文件失败: {e}")
         
         # 直接保存，前端已经完成了压缩和圆形处理
         image.save(filepath, 'PNG', optimize=True, compress_level=6)
