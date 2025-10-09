@@ -189,11 +189,12 @@ def delete_account():
             
             # 定义需要删除用户数据的表列表
             tables_to_clean = [
-                "metrics_files",  # 健康指标数据
-                "diet_files",     # 饮食记录数据
-                "case_files",     # 病例记录数据
-                "symptom_files",  # 症状跟踪数据
-                "square_posts",   # 广场帖子数据
+                "metrics_files",     # 健康指标数据
+                "diet_files",        # 饮食记录数据
+                "case_files",        # 病例记录数据
+                "symptom_files",     # 症状跟踪数据
+                "square_posts",      # 广场帖子数据
+                "square_comments",   # 广场评论数据
             ]
             
             # 删除用户在各个数据表中的记录

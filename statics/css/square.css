@@ -848,6 +848,277 @@ body {
   }
 }
 
+/* 消息操作按钮样式 */
+.message-actions {
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-top: 1px solid var(--divider);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.comment-btn {
+  background: transparent;
+  border: 1px solid var(--divider);
+  border-radius: 20px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.comment-btn:hover {
+  background: var(--brand);
+  color: white;
+  border-color: var(--brand);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(98, 0, 234, 0.3);
+}
+
+.comment-btn ion-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* 评论区域样式 */
+.comments-section {
+  border-top: 1px solid var(--divider);
+  background: rgba(0, 0, 0, 0.01);
+}
+
+.comments-list {
+  padding: 16px 24px 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.comment-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 180deg,
+    #6200ea,
+    #34a853,
+    #fbbc05,
+    #ea4335,
+    #6200ea
+  );
+  padding: 1px;
+  box-shadow: var(--shadow-1);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.comment-avatar .avatar-initials {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fff, #f3f4f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.comment-avatar .avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.comment-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.comment-author {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.comment-time {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.comment-text {
+  color: var(--text);
+  line-height: 1.5;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.no-comments {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 20px;
+  font-style: italic;
+}
+
+/* 评论输入区域样式 */
+.comment-input-section {
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--divider);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.comment-input-container {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.comment-input {
+  flex: 1;
+  min-height: 40px;
+  max-height: 120px;
+  border: 1px solid var(--divider);
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text);
+  background: var(--card);
+  resize: none;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.comment-input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+}
+
+.comment-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.comment-submit-btn {
+  width: 40px;
+  height: 40px;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(98, 0, 234, 0.3);
+  flex-shrink: 0;
+}
+
+.comment-submit-btn:hover:not(:disabled) {
+  background: var(--brand-700);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(98, 0, 234, 0.4);
+}
+
+.comment-submit-btn:disabled {
+  background: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+.comment-submit-btn ion-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* 暗色模式下的评论样式 */
+@media (prefers-color-scheme: dark) {
+  .comment-avatar .avatar-initials {
+    background: linear-gradient(180deg, #0f1115, #0b0d12);
+    color: #e5e7eb;
+  }
+  
+  .message-actions,
+  .comments-section,
+  .comment-input-section {
+    background: rgba(255, 255, 255, 0.02);
+  }
+  
+  .comment-item {
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* 响应式设计 - 评论区域 */
+@media (max-width: 480px) {
+  .message-actions {
+    padding: 10px 20px;
+  }
+  
+  .comments-list {
+    padding: 12px 20px 0;
+  }
+  
+  .comment-input-section {
+    padding: 12px 20px 16px;
+  }
+  
+  .comment-avatar {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .comment-avatar .avatar-initials {
+    font-size: 11px;
+  }
+  
+  .comment-submit-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .comment-submit-btn ion-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
 /* Animation utilities */
 @keyframes fadeIn {
   from {

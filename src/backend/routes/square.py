@@ -40,7 +40,8 @@ def _get_conn():
 
 
 def _ensure_table(conn):
-    ddl = """
+    # 创建广场消息表
+    posts_ddl = """
     CREATE TABLE IF NOT EXISTS square_posts (
         id VARCHAR(64) PRIMARY KEY,
         user_id VARCHAR(128) NULL,
@@ -54,9 +55,28 @@ def _ensure_table(conn):
         INDEX idx_created_at (created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     """
+    
+    # 创建评论表
+    comments_ddl = """
+    CREATE TABLE IF NOT EXISTS square_comments (
+        id VARCHAR(64) PRIMARY KEY,
+        post_id VARCHAR(64) NOT NULL,
+        user_id VARCHAR(128) NULL,
+        username VARCHAR(128) NULL,
+        avatar_url VARCHAR(500) NULL,
+        text_content VARCHAR(500) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_post_id (post_id),
+        INDEX idx_user_id (user_id),
+        INDEX idx_created_at (created_at),
+        FOREIGN KEY (post_id) REFERENCES square_posts(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    """
+    
     cur = conn.cursor()
     try:
-        cur.execute(ddl)
+        cur.execute(posts_ddl)
+        cur.execute(comments_ddl)
         conn.commit()
     finally:
         try:
@@ -195,6 +215,169 @@ def publish_post():
         return jsonify({"success": False, "message": "数据库错误", "error": str(e)}), 500
     except Exception as e:
         logger.exception("/square/publish server error: %s", e)
+        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
+
+
+@square_blueprint.route("/square/comments", methods=["POST", "OPTIONS"])
+def list_comments():
+    """获取指定消息的评论列表"""
+    if request.method == "OPTIONS":
+        return "", 200
+    try:
+        payload = request.get_json(silent=True) or {}
+        logger.info("/square/comments body_keys=%s", list(payload.keys()))
+
+        post_id = payload.get("post_id")
+        if not post_id:
+            return jsonify({"success": False, "message": "缺少消息ID"}), 400
+
+        conn = _get_conn()
+        try:
+            _ensure_table(conn)
+            cur = conn.cursor(dictionary=True)
+            try:
+                cur.execute(
+                    """
+                    SELECT id, user_id, username, avatar_url, text_content, created_at
+                    FROM square_comments
+                    WHERE post_id = %s
+                    ORDER BY created_at ASC
+                    """,
+                    (post_id,),
+                )
+                rows = cur.fetchall()
+            finally:
+                cur.close()
+        finally:
+            conn.close()
+
+        # 格式化评论数据
+        comments = []
+        for r in rows:
+            comments.append({
+                "id": r.get("id"),
+                "user_id": r.get("user_id"),
+                "username": r.get("username"),
+                "avatar_url": r.get("avatar_url"),
+                "text": r.get("text_content") or "",
+                "created_at": r.get("created_at").isoformat() if r.get("created_at") else None,
+            })
+
+        return jsonify({"success": True, "data": comments, "count": len(comments)})
+
+    except mysql_errors.Error as e:
+        if getattr(e, "errno", None) in (3024, 1205, 1213):
+            logger.warning("/square/comments db timeout/deadlock errno=%s msg=%s", getattr(e, "errno", None), str(e))
+            return jsonify({"success": False, "message": "数据库超时或死锁，请稍后重试"}), 504
+        logger.exception("/square/comments db error: %s", e)
+        return jsonify({"success": False, "message": "数据库错误", "error": str(e)}), 500
+    except Exception as e:
+        logger.exception("/square/comments server error: %s", e)
+        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
+
+
+@square_blueprint.route("/square/comment", methods=["POST", "OPTIONS"])
+def add_comment():
+    """添加评论"""
+    if request.method == "OPTIONS":
+        return "", 200
+    try:
+        body = request.get_json(silent=True) or {}
+        logger.info("/square/comment body_keys=%s", list(body.keys()))
+
+        post_id = (body.get("post_id") or "").strip()
+        user_id = (body.get("user_id") or "").strip() or None
+        username = (body.get("username") or "").strip() or None
+        avatar_url = (body.get("avatar_url") or "").strip() or None
+        text_content = (body.get("text") or body.get("text_content") or "").strip()
+
+        if not post_id:
+            return jsonify({"success": False, "message": "缺少消息ID"}), 400
+
+        if not text_content:
+            return jsonify({"success": False, "message": "评论内容不能为空"}), 400
+
+        if not (user_id or username):
+            return jsonify({"success": False, "message": "缺少用户标识"}), 400
+
+        comment_id = uuid.uuid4().hex
+
+        conn = _get_conn()
+        try:
+            _ensure_table(conn)
+            cur = conn.cursor()
+            try:
+                cur.execute(
+                    """
+                    INSERT INTO square_comments (id, post_id, user_id, username, avatar_url, text_content)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """,
+                    (comment_id, post_id, user_id, username, avatar_url, text_content),
+                )
+                conn.commit()
+            finally:
+                cur.close()
+        finally:
+            conn.close()
+
+        return jsonify({
+            "success": True,
+            "message": "评论成功",
+            "data": {"id": comment_id}
+        })
+
+    except mysql_errors.Error as e:
+        if getattr(e, "errno", None) in (3024, 1205, 1213):
+            logger.warning("/square/comment db timeout/deadlock errno=%s msg=%s", getattr(e, "errno", None), str(e))
+            return jsonify({"success": False, "message": "数据库超时或死锁，请稍后重试"}), 504
+        logger.exception("/square/comment db error: %s", e)
+        return jsonify({"success": False, "message": "数据库错误", "error": str(e)}), 500
+    except Exception as e:
+        logger.exception("/square/comment server error: %s", e)
+        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
+
+
+@square_blueprint.route("/square/comment/<comment_id>", methods=["DELETE", "OPTIONS"])
+def delete_comment(comment_id):
+    """删除评论"""
+    if request.method == "OPTIONS":
+        return "", 200
+    try:
+        if not comment_id:
+            return jsonify({"success": False, "message": "缺少评论ID"}), 400
+
+        conn = _get_conn()
+        try:
+            _ensure_table(conn)
+            cur = conn.cursor()
+            try:
+                cur.execute(
+                    "DELETE FROM square_comments WHERE id = %s",
+                    (comment_id,),
+                )
+                conn.commit()
+                affected_rows = cur.rowcount
+            finally:
+                cur.close()
+        finally:
+            conn.close()
+
+        if affected_rows == 0:
+            return jsonify({"success": False, "message": "评论不存在"}), 404
+
+        return jsonify({
+            "success": True,
+            "message": "删除成功"
+        })
+
+    except mysql_errors.Error as e:
+        if getattr(e, "errno", None) in (3024, 1205, 1213):
+            logger.warning("/square/comment delete db timeout/deadlock errno=%s msg=%s", getattr(e, "errno", None), str(e))
+            return jsonify({"success": False, "message": "数据库超时或死锁，请稍后重试"}), 504
+        logger.exception("/square/comment delete db error: %s", e)
+        return jsonify({"success": False, "message": "数据库错误", "error": str(e)}), 500
+    except Exception as e:
+        logger.exception("/square/comment delete server error: %s", e)
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
 
