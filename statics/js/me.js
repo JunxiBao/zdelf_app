@@ -708,10 +708,15 @@
           console.log("[me] 从数据库获取的头像URL:", avatar_url);
           user = { name: username, age, phone, avatar_url };
           
-          // 确保头像URL是完整的URL
+          // 确保头像URL是完整的URL，并添加时间戳避免缓存
           if (user.avatar_url && !user.avatar_url.startsWith('http')) {
             user.avatar_url = apiBase + user.avatar_url;
-            console.log("[me] 完整头像URL:", user.avatar_url);
+          }
+          // 添加时间戳参数避免缓存
+          if (user.avatar_url) {
+            const separator = user.avatar_url.includes('?') ? '&' : '?';
+            user.avatar_url = user.avatar_url + separator + 't=' + Date.now();
+            console.log("[me] 完整头像URL（带时间戳）:", user.avatar_url);
           }
           
           console.log("[me] 最终用户数据:", user);
@@ -2340,10 +2345,15 @@
         user.avatar_url = result.data.avatar_url;
         console.log("[me] 更新头像URL:", user.avatar_url);
         
-        // 确保头像URL是完整的URL
+        // 确保头像URL是完整的URL，并添加时间戳避免缓存
         if (user.avatar_url && !user.avatar_url.startsWith('http')) {
           user.avatar_url = apiBase + user.avatar_url;
-          console.log("[me] 完整头像URL:", user.avatar_url);
+        }
+        // 添加时间戳参数避免缓存
+        if (user.avatar_url) {
+          const separator = user.avatar_url.includes('?') ? '&' : '?';
+          user.avatar_url = user.avatar_url + separator + 't=' + Date.now();
+          console.log("[me] 完整头像URL（带时间戳）:", user.avatar_url);
         }
         
         renderUser();

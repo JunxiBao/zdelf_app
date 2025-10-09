@@ -78,15 +78,8 @@ def process_avatar_image(image_data, user_id):
         filename = f"{user_id}.png"
         filepath = os.path.join(AVATAR_UPLOAD_FOLDER, filename)
         
-        # 如果文件已存在，先删除旧文件
-        if os.path.exists(filepath):
-            try:
-                os.remove(filepath)
-                logger.info(f"已删除旧头像文件: {filename}")
-            except Exception as e:
-                logger.warning(f"删除旧头像文件失败: {e}")
-        
         # 直接保存，前端已经完成了压缩和圆形处理
+        # 由于文件名固定为 {user_id}.png，新文件会直接覆盖旧文件
         image.save(filepath, 'PNG', optimize=True, compress_level=6)
         
         # 记录文件大小
@@ -178,20 +171,8 @@ def upload_avatar():
             conn.commit()
             logger.info("/upload_avatar success user_id=%s username=%s avatar_url=%s", user_id, username, avatar_url)
             
-            # 删除旧的头像文件（如果存在）
-            if old_avatar_url:
-                try:
-                    # 从URL中提取文件名
-                    old_filename = old_avatar_url.split('/')[-1]
-                    old_filepath = os.path.join(AVATAR_UPLOAD_FOLDER, old_filename)
-                    
-                    if os.path.exists(old_filepath):
-                        os.remove(old_filepath)
-                        logger.info("/upload_avatar deleted old avatar file: %s", old_filename)
-                    else:
-                        logger.warning("/upload_avatar old avatar file not found: %s", old_filepath)
-                except Exception as e:
-                    logger.warning("/upload_avatar failed to delete old avatar: %s", str(e))
+            # 由于现在使用固定的文件名 {user_id}.png，新文件会直接覆盖旧文件
+            # 不需要手动删除旧文件
             
         except mysql_errors.Error as e:
             conn.rollback()
