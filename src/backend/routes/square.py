@@ -73,20 +73,12 @@ def list_posts():
         payload = request.get_json(silent=True) or {}
         logger.info("/square/list body_keys=%s", list(payload.keys()))
 
-        # pagination params
-        limit = payload.get("limit") or 15
+        limit = payload.get("limit") or 50
         try:
             limit = int(limit)
         except Exception:
-            limit = 15
-        limit = max(1, min(50, limit))
-
-        offset = payload.get("offset") or 0
-        try:
-            offset = int(offset)
-        except Exception:
-            offset = 0
-        offset = max(0, offset)
+            limit = 50
+        limit = max(1, min(200, limit))
 
         conn = _get_conn()
         try:
@@ -98,9 +90,9 @@ def list_posts():
                     SELECT id, user_id, username, avatar_url, text_content, image_urls, created_at
                     FROM square_posts
                     ORDER BY created_at DESC
-                    LIMIT %s OFFSET %s
+                    LIMIT %s
                     """,
-                    (limit, offset),
+                    (limit,),
                 )
                 rows = cur.fetchall()
             finally:
@@ -129,15 +121,7 @@ def list_posts():
                 }
             )
 
-        has_more = len(rows) == limit
-        next_offset = offset + len(rows)
-        return jsonify({
-            "success": True,
-            "data": records,
-            "count": len(records),
-            "has_more": has_more,
-            "next_offset": next_offset
-        })
+        return jsonify({"success": True, "data": records, "count": len(records)})
 
     except mysql_errors.Error as e:
         if getattr(e, "errno", None) in (3024, 1205, 1213):

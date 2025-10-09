@@ -176,12 +176,24 @@ def delete_account():
             
             phone_number = user_record[0]
             
+            # 获取用户头像URL（如果存在）
+            avatar_url = None
+            if user_id:
+                cursor.execute("SELECT avatar_url FROM users WHERE user_id=%s", (user_id,))
+            else:
+                cursor.execute("SELECT avatar_url FROM users WHERE username=%s", (username,))
+            
+            user_avatar_record = cursor.fetchone()
+            if user_avatar_record and user_avatar_record[0]:
+                avatar_url = user_avatar_record[0]
+            
             # 定义需要删除用户数据的表列表
             tables_to_clean = [
                 "metrics_files",  # 健康指标数据
                 "diet_files",     # 饮食记录数据
                 "case_files",     # 病例记录数据
                 "symptom_files",  # 症状跟踪数据
+                "square_posts",   # 广场帖子数据
             ]
             
             # 删除用户在各个数据表中的记录
@@ -206,6 +218,52 @@ def delete_account():
                     logger.info("/delete_account deleted from sms_codes: %d records", cursor.rowcount)
                 except Exception as e:
                     logger.warning("/delete_account failed to delete from sms_codes: %s", str(e))
+            
+            # 删除用户头像文件
+            if avatar_url:
+                try:
+                    import os
+                    # 从URL中提取文件名
+                    avatar_filename = avatar_url.split('/')[-1]
+                    avatar_folder = os.path.join(os.path.dirname(__file__), '../../statics/avatars')
+                    avatar_filepath = os.path.join(avatar_folder, avatar_filename)
+                    
+                    if os.path.exists(avatar_filepath):
+                        os.remove(avatar_filepath)
+                        deleted_counts["avatar_file"] = 1
+                        logger.info("/delete_account deleted avatar file: %s", avatar_filename)
+                    else:
+                        logger.warning("/delete_account avatar file not found: %s", avatar_filepath)
+                except Exception as e:
+                    logger.warning("/delete_account failed to delete avatar file: %s", str(e))
+            
+            # 删除用户上传的其他图片文件
+            try:
+                import os
+                import glob
+                images_folder = os.path.join(os.path.dirname(__file__), '../../statics/images')
+                user_identifier = user_id or username
+                
+                # 查找该用户的所有图片文件
+                pattern = os.path.join(images_folder, f"*_{user_identifier}_*")
+                user_image_files = glob.glob(pattern)
+                
+                deleted_image_count = 0
+                for image_file in user_image_files:
+                    try:
+                        if os.path.exists(image_file):
+                            os.remove(image_file)
+                            deleted_image_count += 1
+                            logger.info("/delete_account deleted user image: %s", os.path.basename(image_file))
+                    except Exception as e:
+                        logger.warning("/delete_account failed to delete image %s: %s", image_file, str(e))
+                
+                if deleted_image_count > 0:
+                    deleted_counts["user_images"] = deleted_image_count
+                    logger.info("/delete_account deleted %d user image files", deleted_image_count)
+                    
+            except Exception as e:
+                logger.warning("/delete_account failed to delete user images: %s", str(e))
             
             # 最后删除用户主记录
             if user_id:

@@ -1402,10 +1402,6 @@ body {
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
-    opacity: 0;
-}
-
-.uploaded-image-item:hover .remove-image-btn {
     opacity: 1;
 }
 

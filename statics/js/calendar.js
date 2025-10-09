@@ -324,9 +324,13 @@
                 picker.value = currentColor;
             }
             
+            // 点击打开颜色选择器时提供一次轻触觉反馈（避免拖动过程中连续震动）
+            picker.addEventListener('click', () => {
+                addHapticFeedback('Light');
+            });
+
             // 颜色变化事件
             picker.addEventListener('change', (e) => {
-                addHapticFeedback('Light');
                 const newColor = e.target.value;
                 SYMPTOM_COLORS[symptomCode] = newColor;
                 console.log(`🎨 症状${symptomCode}颜色更新为: ${newColor}`);

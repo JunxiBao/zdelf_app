@@ -106,7 +106,7 @@ if (document.fonts && document.fonts.ready) {
 const pageMap = [
   "../../src/daily.html",
   "../../src/notification.html",
-  "../../src/deepseek.html",
+  "../../src/square.html",
   "../../src/me.html",
 ];
 
@@ -204,7 +204,7 @@ function loadPage(index) {
       const scriptMap = [
         "../../statics/js/daily.js",
         "../../statics/js/notification.js",
-        "../../statics/js/deepseek.js",
+        "../../statics/js/square.js",
         "../../statics/js/me.js",
       ];
 
@@ -217,11 +217,14 @@ function loadPage(index) {
           const initName = scriptPath.split("/").pop().replace(".js", "");
           const cap = initName.charAt(0).toUpperCase() + initName.slice(1);
           
-          // 特殊处理 notification.js，因为它导出的是 initCase 而不是 initNotification
+          // 特殊处理不同页面的初始化函数
           let initFn, destroyFn;
           if (initName === 'notification') {
             initFn = window.initNotification || window.initCase;
             destroyFn = window.destroyNotification || window.destroyCase;
+          } else if (initName === 'square') {
+            initFn = window.initSquare;
+            destroyFn = window.destroySquare;
           } else {
             initFn = window[`init${cap}`];
             destroyFn = window[`destroy${cap}`];
@@ -252,11 +255,14 @@ function loadPage(index) {
           const initName = scriptPath.split("/").pop().replace(".js", ""); // daily / notification / deepseek / me
           const cap = initName.charAt(0).toUpperCase() + initName.slice(1);
           
-          // 特殊处理 notification.js，因为它导出的是 initCase 而不是 initNotification
+          // 特殊处理不同页面的初始化函数
           let initFn, destroyFn;
           if (initName === 'notification') {
             initFn = window.initNotification || window.initCase;
             destroyFn = window.destroyNotification || window.destroyCase;
+          } else if (initName === 'square') {
+            initFn = window.initSquare;
+            destroyFn = window.destroySquare;
           } else {
             initFn = window[`init${cap}`];
             destroyFn = window[`destroy${cap}`];
@@ -282,20 +288,12 @@ function loadPage(index) {
 // 使用新的高性能涟漪效果系统
 document.addEventListener('DOMContentLoaded', () => {
   // 为导航按钮添加涟漪效果
-  document.querySelectorAll(".nav-item .icon").forEach((button, index) => {
+  document.querySelectorAll(".nav-item .icon").forEach((button) => {
     if (window.AnimationUtils) {
-      // 为AI助手图标（索引2）使用特殊的爱心涟漪效果
-      if (index === 2) {
-        window.AnimationUtils.createHeartRipple(button, {
-          color: 'rgba(255, 105, 180, 0.15)',
-          duration: 500
-        });
-      } else {
-        window.AnimationUtils.createRipple(button, {
-          color: 'rgba(98, 0, 234, 0.12)',
-          duration: 400
-        });
-      }
+      window.AnimationUtils.createRipple(button, {
+        color: 'rgba(98, 0, 234, 0.12)',
+        duration: 400
+      });
     }
   });
 
@@ -331,6 +329,11 @@ function updateActive(index) {
   // 增强的指示器动画
   indicator.style.transform = `translateX(${index * 100}%)`;
   activeIndex = index;
+
+  // Emit a global event so external scripts (outside Shadow DOM) can react
+  try {
+    window.dispatchEvent(new CustomEvent('pageChanged', { detail: { index } }));
+  } catch (_) {}
 
   // 页面切换动画
   if (window.AnimationUtils && content) {

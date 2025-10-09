@@ -2122,43 +2122,41 @@
           imageOffsetY = 0;
         }
         
-        // 关键修复：考虑用户的拖拽和缩放操作
-        // 1. 计算图片在容器中的实际位置（考虑拖拽偏移）
+        // 关键修复：严格按照预览中的平移/缩放计算原图像素级裁剪矩形
+        // 1) 图片在容器中的中心（包含拖拽偏移）
         const imageCenterX = containerWidth / 2 + currentX;
         const imageCenterY = containerHeight / 2 + currentY;
-        
-        // 2. 计算裁剪区域相对于图片中心的位置
-        const relativeToImageX = (cropCenterX - imageCenterX) / (displayWidth * currentScale);
-        const relativeToImageY = (cropCenterY - imageCenterY) / (displayHeight * currentScale);
-        
-        // 3. 转换为相对于原始图片的坐标（0-1）
-        const cropX = 0.5 + relativeToImageX;
-        const cropY = 0.5 + relativeToImageY;
-        
-        // 4. 计算裁剪大小（考虑缩放）
-        const cropSize = cropRadius / (displayWidth * currentScale / 2);
-        
-        // 确保裁剪参数在有效范围内
-        const finalCropX = Math.max(0, Math.min(1, cropX));
-        const finalCropY = Math.max(0, Math.min(1, cropY));
-        const finalCropSize = Math.max(0.1, Math.min(1, cropSize));
-        
-        console.log("[me] 修复后的裁剪参数计算:", { 
-          // 原始数据
-          cropCenterX, cropCenterY, cropRadius,
-          imageOffsetX, imageOffsetY, displayWidth, displayHeight,
-          // 用户操作
-          currentScale, currentX, currentY,
-          // 计算过程
-          imageCenterX, imageCenterY,
-          relativeToImageX, relativeToImageY,
-          // 最终结果
-          cropX, cropY, cropSize,
-          finalCropX, finalCropY, finalCropSize
+
+        // 2) 预览圈中心相对图片中心的位移（容器像素）
+        const dxContainer = (cropCenterX - imageCenterX);
+        const dyContainer = (cropCenterY - imageCenterY);
+
+        // 3) 原图到容器的基础缩放系数（不含用户缩放）
+        const baseScale = displayWidth / imageNaturalWidth; // 等同于 displayHeight / imageNaturalHeight
+
+        // 4) 将容器像素位移还原到原图像素位移
+        const dxOriginal = dxContainer / (baseScale * currentScale);
+        const dyOriginal = dyContainer / (baseScale * currentScale);
+
+        // 5) 原图坐标系下的裁剪中心
+        const centerXOriginal = imageNaturalWidth / 2 + dxOriginal;
+        const centerYOriginal = imageNaturalHeight / 2 + dyOriginal;
+
+        // 6) 原图像素级边长（使得映射到容器后直径等于圆形直径）
+        const sourceSizePx = (cropRadius * 2) / (baseScale * currentScale);
+
+        // 7) 原图像素级裁剪矩形（不做边界夹取，保持与预览一致；越界部分输出为透明）
+        const sourceX = centerXOriginal - sourceSizePx / 2;
+        const sourceY = centerYOriginal - sourceSizePx / 2;
+
+        console.log('[me] 预览一致裁剪（原图像素）:', {
+          displayWidth, displayHeight, baseScale, currentScale,
+          dxContainer, dyContainer, dxOriginal, dyOriginal,
+          centerXOriginal, centerYOriginal, sourceSizePx, sourceX, sourceY
         });
-        
-        // 使用新的裁剪逻辑
-        cropAndUploadAvatar(imageData, finalCropX, finalCropY, finalCropSize, userId, username);
+
+        // 使用像素级裁剪以确保与预览一致
+        cropAndUploadAvatarFromSourceRect(imageData, sourceX, sourceY, sourceSizePx, userId, username);
         close();
       }, { once: true });
       
@@ -2260,6 +2258,47 @@
       } catch (error) {
         console.error("[me] 裁剪头像失败:", error);
         showErrorModal("头像裁剪失败，请稍后再试");
+      }
+    }
+    
+    // 使用源矩形进行精准裁剪并上传（与预览完全一致）
+    async function cropAndUploadAvatarFromSourceRect(imageData, sourceX, sourceY, sourceSize, userId, username) {
+      try {
+        const img = new Image();
+        img.onload = async function() {
+          const targetSize = 200;
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = targetSize;
+          canvas.height = targetSize;
+
+          // 开启透明背景，先清空
+          ctx.clearRect(0, 0, targetSize, targetSize);
+
+          // 如源矩形越界，drawImage 会自动只绘制交集部分，其余保持透明
+          ctx.drawImage(
+            img,
+            sourceX, sourceY, sourceSize, sourceSize,
+            0, 0, targetSize, targetSize
+          );
+
+          // 应用圆形裁剪以匹配预览圈
+          ctx.globalCompositeOperation = 'destination-in';
+          ctx.beginPath();
+          ctx.arc(targetSize / 2, targetSize / 2, targetSize / 2, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.fill();
+
+          const croppedData = canvas.toDataURL('image/png', 0.95);
+          await uploadAvatar(croppedData, userId, username);
+        };
+        img.onerror = function() {
+          showErrorModal('图片处理失败');
+        };
+        img.src = imageData;
+      } catch (err) {
+        console.error('[me] 精准裁剪失败:', err);
+        showErrorModal('头像裁剪失败，请稍后再试');
       }
     }
     
