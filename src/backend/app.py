@@ -24,6 +24,7 @@ from routes.sms import sms_blueprint
 from routes.uploadjson import uploadjson_blueprint
 from routes.avatar import avatar_blueprint
 from routes.image_upload import image_upload_blueprint
+from routes.square import square_blueprint
 import logging
 import time, uuid
 import os
@@ -41,6 +42,7 @@ app.register_blueprint(sms_blueprint)
 app.register_blueprint(uploadjson_blueprint)
 app.register_blueprint(avatar_blueprint)
 app.register_blueprint(image_upload_blueprint)
+app.register_blueprint(square_blueprint)
 
 # *CORS rule，Prevent unauthorized requests, enhance security
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
