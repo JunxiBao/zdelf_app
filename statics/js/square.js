@@ -50,6 +50,8 @@ function initSquare(shadowRoot) {
   setupEventListeners();
   // 初始化匿名按钮外观
   refreshAnonymousButton();
+  // 设置全局菜单关闭
+  setupGlobalMenuClose();
 
   // 接入全局动画系统，优化进入时的过渡，避免布局跳动
   try {
@@ -640,6 +642,12 @@ async function handlePublish() {
     if (publishSection) publishSection.style.display = 'none';
     if (publishTriggerBtn) publishTriggerBtn.style.display = 'flex';
     if (window.__hapticImpact__) window.__hapticImpact__('Medium');
+    
+    // 如果是匿名发布，记录消息ID到本地存储
+    if (isAnon && resJson.data && resJson.data.id) {
+      recordAnonymousMessage(resJson.data.id);
+    }
+    
     await loadMessages();
   } catch (error) {
     console.error('发布消息失败:', error);
@@ -945,8 +953,15 @@ function createMessageElement(message, index) {
   
   const timeAgo = getTimeAgo(message.timestamp);
   
+  // 判断是否是当前用户的消息
+  // 1. 实名消息：通过 user_id 匹配
+  // 2. 匿名消息：通过本地存储记录判断
+  const isRealNameUser = currentUser && message.authorId && currentUser.id === message.authorId;
+  const isAnonymousUser = !message.authorId && currentUser && isMyAnonymousMessage(message.id);
+  const isCurrentUser = isRealNameUser || isAnonymousUser;
+  
   // 调试信息
-  console.log('创建消息元素:', message.author, '图片数量:', message.images ? message.images.length : 0);
+  console.log('创建消息元素:', message.author, '图片数量:', message.images ? message.images.length : 0, '是否当前用户:', isCurrentUser);
   if (message.images && message.images.length > 0) {
     console.log('图片URLs:', message.images);
   }
@@ -963,6 +978,17 @@ function createMessageElement(message, index) {
         <div class="message-author">${escapeHtml(message.author)}</div>
         <div class="message-time">${timeAgo}</div>
       </div>
+      ${isCurrentUser ? `
+        <button class="menu-btn" onclick="toggleMessageMenu('${message.id}', event)">
+          <ion-icon ios="ellipsis-horizontal-outline" md="ellipsis-horizontal-sharp" aria-hidden="true"></ion-icon>
+        </button>
+        <div class="dropdown-menu" id="message-menu-${message.id}" style="display: none;">
+          <button class="dropdown-menu-item" onclick="deletePost('${message.id}')">
+            <ion-icon ios="trash-outline" md="trash-sharp" aria-hidden="true"></ion-icon>
+            <span>删除</span>
+          </button>
+        </div>
+      ` : ''}
     </div>
     <div class="message-content">
       ${message.text ? `<div class="message-text">${escapeHtml(message.text)}</div>` : ''}
@@ -1043,6 +1069,117 @@ function getTimeAgo(timestamp) {
     return `${diffDays}天前`;
   } else {
     return messageTime.toLocaleDateString('zh-CN');
+  }
+}
+
+/**
+ * 判断是否在删除时间窗口内（5分钟）
+ * @param {string} timestamp - 时间戳
+ * @returns {boolean} 是否在删除窗口内
+ */
+function isWithinDeleteWindow(timestamp) {
+  const now = new Date();
+  const messageTime = new Date(timestamp);
+  const diffMs = now - messageTime;
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  
+  // 5分钟内的匿名消息/评论允许删除
+  return diffMinutes <= 5;
+}
+
+/**
+ * 检查是否是当前用户的匿名消息
+ * @param {string} messageId - 消息ID
+ * @returns {boolean} 是否是当前用户的匿名消息
+ */
+function isMyAnonymousMessage(messageId) {
+  try {
+    const anonymousMessages = JSON.parse(localStorage.getItem('anonymousMessages') || '[]');
+    return anonymousMessages.includes(messageId);
+  } catch (error) {
+    console.error('检查匿名消息失败:', error);
+    return false;
+  }
+}
+
+/**
+ * 检查是否是当前用户的匿名评论
+ * @param {string} commentId - 评论ID
+ * @returns {boolean} 是否是当前用户的匿名评论
+ */
+function isMyAnonymousComment(commentId) {
+  try {
+    const anonymousComments = JSON.parse(localStorage.getItem('anonymousComments') || '[]');
+    return anonymousComments.includes(commentId);
+  } catch (error) {
+    console.error('检查匿名评论失败:', error);
+    return false;
+  }
+}
+
+/**
+ * 记录匿名消息ID到本地存储
+ * @param {string} messageId - 消息ID
+ */
+function recordAnonymousMessage(messageId) {
+  try {
+    const anonymousMessages = JSON.parse(localStorage.getItem('anonymousMessages') || '[]');
+    if (!anonymousMessages.includes(messageId)) {
+      anonymousMessages.push(messageId);
+      localStorage.setItem('anonymousMessages', JSON.stringify(anonymousMessages));
+    }
+  } catch (error) {
+    console.error('记录匿名消息失败:', error);
+  }
+}
+
+/**
+ * 记录匿名评论ID到本地存储
+ * @param {string} commentId - 评论ID
+ */
+function recordAnonymousComment(commentId) {
+  try {
+    const anonymousComments = JSON.parse(localStorage.getItem('anonymousComments') || '[]');
+    if (!anonymousComments.includes(commentId)) {
+      anonymousComments.push(commentId);
+      localStorage.setItem('anonymousComments', JSON.stringify(anonymousComments));
+    }
+  } catch (error) {
+    console.error('记录匿名评论失败:', error);
+  }
+}
+
+/**
+ * 从本地存储中移除匿名消息ID
+ * @param {string} messageId - 消息ID
+ */
+function removeAnonymousMessage(messageId) {
+  try {
+    const anonymousMessages = JSON.parse(localStorage.getItem('anonymousMessages') || '[]');
+    const index = anonymousMessages.indexOf(messageId);
+    if (index > -1) {
+      anonymousMessages.splice(index, 1);
+      localStorage.setItem('anonymousMessages', JSON.stringify(anonymousMessages));
+    }
+  } catch (error) {
+    console.error('移除匿名消息失败:', error);
+  }
+}
+
+/**
+ * 从本地存储中移除匿名评论ID
+ * @param {string} commentId - 评论ID
+ */
+function removeAnonymousComment(commentId) {
+  try {
+    const anonymousComments = JSON.parse(localStorage.getItem('anonymousComments') || '[]');
+    const index = anonymousComments.indexOf(commentId);
+    if (index > -1) {
+      anonymousComments.splice(index, 1);
+      localStorage.setItem('anonymousComments', JSON.stringify(anonymousComments));
+    }
+  } catch (error) {
+    console.error('移除匿名评论失败:', error);
   }
 }
 
@@ -1347,6 +1484,13 @@ function createCommentElement(comment) {
     (comment.avatar_url.startsWith('http') ? comment.avatar_url : (apiBase + comment.avatar_url)) : 
     null;
   
+  // 判断是否是当前用户的评论
+  // 1. 实名评论：通过 user_id 匹配
+  // 2. 匿名评论：通过本地存储记录判断
+  const isRealNameUser = currentUser && comment.user_id && currentUser.id === comment.user_id;
+  const isAnonymousUser = !comment.user_id && currentUser && isMyAnonymousComment(comment.id);
+  const isCurrentUser = isRealNameUser || isAnonymousUser;
+  
   return `
     <div class="comment-item">
       <div class="comment-avatar">
@@ -1362,6 +1506,17 @@ function createCommentElement(comment) {
         </div>
         <div class="comment-text">${escapeHtml(comment.text)}</div>
       </div>
+      ${isCurrentUser ? `
+        <button class="comment-menu-btn" onclick="toggleCommentMenu('${comment.id}', event)">
+          <ion-icon ios="ellipsis-horizontal-outline" md="ellipsis-horizontal-sharp" aria-hidden="true"></ion-icon>
+        </button>
+        <div class="comment-dropdown-menu" id="comment-menu-${comment.id}" style="display: none;">
+          <button class="dropdown-menu-item" onclick="deleteCommentWithRefresh('${comment.id}')">
+            <ion-icon ios="trash-outline" md="trash-sharp" aria-hidden="true"></ion-icon>
+            <span>删除</span>
+          </button>
+        </div>
+      ` : ''}
     </div>
   `;
 }
@@ -1465,6 +1620,11 @@ async function submitComment(postId) {
     
     if (!data.success) throw new Error(data.message || '评论失败');
     
+    // 如果是匿名评论，记录评论ID到本地存储
+    if (data.data && data.data.id && !identity.user_id) {
+      recordAnonymousComment(data.data.id);
+    }
+    
     // 清空输入框
     commentInput.value = '';
     
@@ -1522,6 +1682,165 @@ async function deleteComment(commentId) {
   }
 }
 
+/**
+ * 切换消息菜单显示/隐藏
+ * @param {string} messageId - 消息ID
+ * @param {Event} event - 点击事件
+ */
+function toggleMessageMenu(messageId, event) {
+  event.stopPropagation();
+  
+  const menu = squareRoot.getElementById(`message-menu-${messageId}`);
+  if (!menu) return;
+  
+  // 关闭所有其他菜单
+  const allMenus = squareRoot.querySelectorAll('.dropdown-menu, .comment-dropdown-menu');
+  allMenus.forEach(m => {
+    if (m.id !== `message-menu-${messageId}`) {
+      m.style.display = 'none';
+    }
+  });
+  
+  // 切换当前菜单
+  if (menu.style.display === 'none') {
+    menu.style.display = 'block';
+  } else {
+    menu.style.display = 'none';
+  }
+  
+  // 触觉反馈
+  if (window.__hapticImpact__) {
+    window.__hapticImpact__('Light');
+  }
+}
+
+/**
+ * 切换评论菜单显示/隐藏
+ * @param {string} commentId - 评论ID
+ * @param {Event} event - 点击事件
+ */
+function toggleCommentMenu(commentId, event) {
+  event.stopPropagation();
+  
+  const menu = squareRoot.getElementById(`comment-menu-${commentId}`);
+  if (!menu) return;
+  
+  // 关闭所有其他菜单
+  const allMenus = squareRoot.querySelectorAll('.dropdown-menu, .comment-dropdown-menu');
+  allMenus.forEach(m => {
+    if (m.id !== `comment-menu-${commentId}`) {
+      m.style.display = 'none';
+    }
+  });
+  
+  // 切换当前菜单
+  if (menu.style.display === 'none') {
+    menu.style.display = 'block';
+  } else {
+    menu.style.display = 'none';
+  }
+  
+  // 触觉反馈
+  if (window.__hapticImpact__) {
+    window.__hapticImpact__('Light');
+  }
+}
+
+/**
+ * 删除消息
+ * @param {string} postId - 消息ID
+ */
+async function deletePost(postId) {
+  if (!confirm('确定要删除这条消息吗？删除后将无法恢复。')) return;
+  
+  try {
+    const API_BASE = getApiBase();
+    const resp = await fetch(API_BASE + `/square/post/${postId}`, {
+      method: 'DELETE'
+    });
+    
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    
+    if (!data.success) throw new Error(data.message || '删除失败');
+    
+    showToast('删除成功');
+    
+    // 触觉反馈
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Medium');
+    }
+    
+    // 从本地存储中移除匿名消息ID
+    removeAnonymousMessage(postId);
+    
+    // 重新加载消息列表
+    await loadMessages();
+  } catch (error) {
+    console.error('删除消息失败:', error);
+    showToast('删除失败，请重试');
+  }
+}
+
+/**
+ * 删除评论并刷新评论列表
+ * @param {string} commentId - 评论ID
+ */
+async function deleteCommentWithRefresh(commentId) {
+  if (!confirm('确定要删除这条评论吗？')) return;
+  
+  try {
+    const API_BASE = getApiBase();
+    const resp = await fetch(API_BASE + `/square/comment/${commentId}`, {
+      method: 'DELETE'
+    });
+    
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    
+    if (!data.success) throw new Error(data.message || '删除失败');
+    
+    showToast('删除成功');
+    
+    // 触觉反馈
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Medium');
+    }
+    
+    // 从本地存储中移除匿名评论ID
+    removeAnonymousComment(commentId);
+    
+    // 找到评论所属的消息ID并重新加载该消息的评论
+    const commentElement = squareRoot.querySelector(`#comment-menu-${commentId}`)?.closest('.comment-item');
+    if (commentElement) {
+      const commentsSection = commentElement.closest('.comments-section');
+      if (commentsSection) {
+        const postId = commentsSection.id.replace('comments-', '');
+        await loadComments(postId);
+      }
+    }
+  } catch (error) {
+    console.error('删除评论失败:', error);
+    showToast('删除失败，请重试');
+  }
+}
+
+// 点击页面其他地方关闭所有菜单
+function setupGlobalMenuClose() {
+  const handler = (event) => {
+    // 如果点击的不是菜单按钮
+    if (!event.target.closest('.menu-btn') && !event.target.closest('.comment-menu-btn')) {
+      const allMenus = squareRoot.querySelectorAll('.dropdown-menu, .comment-dropdown-menu');
+      allMenus.forEach(menu => {
+        menu.style.display = 'none';
+      });
+    }
+  };
+  
+  squareRoot.addEventListener('click', handler);
+  cleanupFns.push(() => squareRoot.removeEventListener('click', handler));
+}
+
 // -----------------------------
 // Public API / 对外导出
 // -----------------------------
@@ -1533,5 +1852,9 @@ window.submitComment = submitComment;
 window.deleteComment = deleteComment;
 window.showCommentInput = showCommentInput;
 window.hideCommentInput = hideCommentInput;
+window.toggleMessageMenu = toggleMessageMenu;
+window.toggleCommentMenu = toggleCommentMenu;
+window.deletePost = deletePost;
+window.deleteCommentWithRefresh = deleteCommentWithRefresh;
 
 })();

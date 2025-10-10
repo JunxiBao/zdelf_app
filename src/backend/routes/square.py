@@ -337,6 +337,51 @@ def add_comment():
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
 
+@square_blueprint.route("/square/post/<post_id>", methods=["DELETE", "OPTIONS"])
+def delete_post(post_id):
+    """删除消息"""
+    if request.method == "OPTIONS":
+        return "", 200
+    try:
+        if not post_id:
+            return jsonify({"success": False, "message": "缺少消息ID"}), 400
+
+        conn = _get_conn()
+        try:
+            _ensure_table(conn)
+            cur = conn.cursor()
+            try:
+                # 删除消息（评论会因为外键级联删除自动删除）
+                cur.execute(
+                    "DELETE FROM square_posts WHERE id = %s",
+                    (post_id,),
+                )
+                conn.commit()
+                affected_rows = cur.rowcount
+            finally:
+                cur.close()
+        finally:
+            conn.close()
+
+        if affected_rows == 0:
+            return jsonify({"success": False, "message": "消息不存在"}), 404
+
+        return jsonify({
+            "success": True,
+            "message": "删除成功"
+        })
+
+    except mysql_errors.Error as e:
+        if getattr(e, "errno", None) in (3024, 1205, 1213):
+            logger.warning("/square/post delete db timeout/deadlock errno=%s msg=%s", getattr(e, "errno", None), str(e))
+            return jsonify({"success": False, "message": "数据库超时或死锁，请稍后重试"}), 504
+        logger.exception("/square/post delete db error: %s", e)
+        return jsonify({"success": False, "message": "数据库错误", "error": str(e)}), 500
+    except Exception as e:
+        logger.exception("/square/post delete server error: %s", e)
+        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
+
+
 @square_blueprint.route("/square/comment/<comment_id>", methods=["DELETE", "OPTIONS"])
 def delete_comment(comment_id):
     """删除评论"""

@@ -1771,6 +1771,150 @@
       });
     }
 
+    // 下载弹窗样式
+    function ensureDownloadStyles() {
+      if (document.getElementById("download-modal-style")) return;
+      const s = document.createElement("style");
+      s.id = "download-modal-style";
+      s.textContent = `
+      .download-mask{position:fixed;inset:0;background:color-mix(in srgb, var(--text,#000) 20%, transparent);backdrop-filter:saturate(120%) blur(2px);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s ease;z-index:10000}
+      .download-mask.show{opacity:1}
+      .download-dialog{width:min(92vw,400px);background:var(--card,#fff);color:var(--text,#111);border-radius:16px;box-shadow:var(--shadow-3,0 10px 30px rgba(0,0,0,.15));transform:translateY(12px) scale(.98);opacity:0;transition:transform .2s ease,opacity .2s ease;border:1px solid var(--border,rgba(0,0,0,.06))}
+      .download-dialog.show{transform:translateY(0) scale(1);opacity:1}
+      .download-header{padding:20px 24px 16px;font-weight:700;font-size:18px;text-align:center;border-bottom:1px solid var(--divider,rgba(0,0,0,.1))}
+      .download-body{padding:20px 24px;}
+      .download-section{margin-bottom:20px}
+      .download-section:last-child{margin-bottom:0}
+      .download-section p{margin:0 0 16px 0;color:var(--text-secondary,#666);font-size:14px;line-height:1.6}
+      .download-buttons{display:flex;flex-direction:column;gap:12px;}
+      .download-btn{appearance:none;border:0;padding:14px 20px;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s ease;text-align:center;}
+      .download-btn-ios{background:linear-gradient(135deg,#000,#333);color:#fff;}
+      .download-btn-ios:hover{background:linear-gradient(135deg,#333,#555);transform:translateY(-1px);}
+      .download-btn-android{background:linear-gradient(135deg,#3ddc84,#2bb96b);color:#fff;}
+      .download-btn-android:hover{background:linear-gradient(135deg,#2bb96b,#229756);transform:translateY(-1px);}
+      .download-btn ion-icon{width:20px;height:20px;}
+      .download-footer{display:flex;justify-content:center;padding:0 24px 20px}
+      .download-close-btn{appearance:none;border:0;padding:12px 24px;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;background:var(--surface,rgba(0,0,0,.04));color:var(--text,#111);transition:all 0.2s ease}
+      .download-close-btn:hover{background:var(--divider,rgba(0,0,0,.08));transform:translateY(-1px)}
+      @media (prefers-color-scheme: dark){
+        .download-mask{background:color-mix(in srgb,#000 50%, transparent)}
+        .download-dialog{background:var(--card,#1e1f22);color:var(--text,#e6e6e6);border-color:var(--border,rgba(255,255,255,.08))}
+        .download-section p{color:var(--text-secondary,#9aa3af)}
+        .download-close-btn{background:var(--surface,rgba(255,255,255,.08));color:var(--text,#e6e6e6)}
+        .download-close-btn:hover{background:rgba(255,255,255,.12)}
+      }
+      `;
+      document.head.appendChild(s);
+      cleanupFns.push(() => {
+        if (s.parentNode) s.remove();
+      });
+    }
+
+    function showDownloadModal() {
+      ensureDownloadStyles();
+      const mask = document.createElement("div");
+      mask.className = "download-mask";
+
+      const dialog = document.createElement("div");
+      dialog.className = "download-dialog";
+
+      const header = document.createElement("div");
+      header.className = "download-header";
+      header.textContent = "下载应用";
+
+      const body = document.createElement("div");
+      body.className = "download-body";
+
+      const section = document.createElement("div");
+      section.className = "download-section";
+      const text = document.createElement("p");
+      text.textContent = "选择您的设备平台下载紫癜精灵：";
+      section.append(text);
+
+      const buttons = document.createElement("div");
+      buttons.className = "download-buttons";
+
+      // iOS下载按钮
+      const iosBtn = document.createElement("a");
+      iosBtn.className = "download-btn download-btn-ios";
+      iosBtn.href = "https://apps.apple.com/cn/app/%E7%B4%AB%E7%99%9C%E7%B2%BE%E7%81%B5/id6749155721";
+      iosBtn.target = "_blank";
+      iosBtn.rel = "noopener noreferrer";
+      iosBtn.innerHTML = '<ion-icon name="logo-apple"></ion-icon><span>iOS 下载</span>';
+
+      // Android下载按钮
+      const androidBtn = document.createElement("a");
+      androidBtn.className = "download-btn download-btn-android";
+      androidBtn.href = "https://zdelf.cn/share/app-release.apk";
+      androidBtn.target = "_blank";
+      androidBtn.rel = "noopener noreferrer";
+      androidBtn.innerHTML = '<ion-icon name="logo-android"></ion-icon><span>Android 下载</span>';
+
+      buttons.append(iosBtn, androidBtn);
+      body.append(section, buttons);
+
+      const footer = document.createElement("div");
+      footer.className = "download-footer";
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "download-close-btn";
+      closeBtn.textContent = "关闭";
+      footer.append(closeBtn);
+
+      dialog.append(header, body, footer);
+      mask.appendChild(dialog);
+      document.body.appendChild(mask);
+
+      requestAnimationFrame(() => {
+        mask.classList.add("show");
+        dialog.classList.add("show");
+      });
+
+      const close = () => {
+        dialog.classList.remove("show");
+        mask.classList.remove("show");
+        const onEnd = () => {
+          mask.removeEventListener("transitionend", onEnd);
+          if (mask.parentNode) mask.remove();
+        };
+        mask.addEventListener("transitionend", onEnd);
+      };
+
+      closeBtn.addEventListener("click", () => {
+        triggerVibration('Light');
+        close();
+      }, { once: true });
+      
+      mask.addEventListener("click", (e) => {
+        if (e.target === mask) close();
+      });
+      
+      document.addEventListener("keydown", function escHandler(ev) {
+        if (ev.key === "Escape") {
+          document.removeEventListener("keydown", escHandler);
+          close();
+        }
+      });
+
+      // 为下载按钮添加点击震动
+      iosBtn.addEventListener("click", () => triggerVibration('Medium'));
+      androidBtn.addEventListener("click", () => triggerVibration('Medium'));
+
+      cleanupFns.push(() => {
+        if (mask.parentNode) mask.remove();
+      });
+    }
+
+    // 版本卡片点击
+    const versionCard = root.querySelector("#versionCard");
+    if (versionCard) {
+      const versionHandler = () => {
+        triggerVibration('Light');
+        showDownloadModal();
+      };
+      versionCard.addEventListener("click", versionHandler);
+      cleanupFns.push(() => versionCard.removeEventListener("click", versionHandler));
+    }
+
     // 列表项点击
     root.querySelectorAll("[data-action]").forEach((el) => {
       const actionHandler = () => {
