@@ -94,6 +94,7 @@ def list_posts():
         logger.info("/square/list body_keys=%s", list(payload.keys()))
 
         limit = payload.get("limit") or 50
+        current_user_id = payload.get("current_user_id")  # 当前用户ID，用于判断删除权限
         try:
             limit = int(limit)
         except Exception:
@@ -129,10 +130,20 @@ def list_posts():
                     images = json.loads(images)
                 except Exception:
                     images = []
+            
+            # 检查是否是匿名消息
+            is_anonymous = r.get("username") == "匿名用户"
+            
+            # 如果是匿名消息且不是当前用户的消息，隐藏user_id
+            if is_anonymous and r.get("user_id") != current_user_id:
+                user_id = None
+            else:
+                user_id = r.get("user_id")
+            
             records.append(
                 {
                     "id": r.get("id"),
-                    "user_id": r.get("user_id"),
+                    "user_id": user_id,  # 匿名消息且非当前用户时返回None
                     "username": r.get("username"),
                     "avatar_url": r.get("avatar_url"),
                     "text": r.get("text_content") or "",
@@ -168,6 +179,9 @@ def publish_post():
         text_content = (body.get("text") or body.get("text_content") or "").strip() or None
         images = body.get("images") or []
 
+        # 检查是否是匿名发布（用户名为"匿名用户"）
+        is_anonymous = username == "匿名用户"
+
         if not (user_id or username):
             return jsonify({"success": False, "message": "缺少用户标识"}), 400
 
@@ -188,6 +202,7 @@ def publish_post():
             _ensure_table(conn)
             cur = conn.cursor()
             try:
+                # 匿名发布时也记录user_id，但显示时保持匿名
                 cur.execute(
                     """
                     INSERT INTO square_posts (id, user_id, username, avatar_url, text_content, image_urls)
@@ -228,6 +243,7 @@ def list_comments():
         logger.info("/square/comments body_keys=%s", list(payload.keys()))
 
         post_id = payload.get("post_id")
+        current_user_id = payload.get("current_user_id")  # 当前用户ID，用于判断删除权限
         if not post_id:
             return jsonify({"success": False, "message": "缺少消息ID"}), 400
 
@@ -254,9 +270,18 @@ def list_comments():
         # 格式化评论数据
         comments = []
         for r in rows:
+            # 检查是否是匿名评论
+            is_anonymous = r.get("username") == "匿名用户"
+            
+            # 如果是匿名评论且不是当前用户的评论，隐藏user_id
+            if is_anonymous and r.get("user_id") != current_user_id:
+                user_id = None
+            else:
+                user_id = r.get("user_id")
+            
             comments.append({
                 "id": r.get("id"),
-                "user_id": r.get("user_id"),
+                "user_id": user_id,  # 匿名评论且非当前用户时返回None
                 "username": r.get("username"),
                 "avatar_url": r.get("avatar_url"),
                 "text": r.get("text_content") or "",
