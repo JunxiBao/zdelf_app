@@ -1655,7 +1655,8 @@ function toggleCommentMenu(commentId, event) {
  * @param {string} postId - 消息ID
  */
 async function deletePost(postId) {
-  if (!confirm('确定要删除这条消息吗？删除后将无法恢复。')) return;
+  const confirmed = await confirmDialog('确定要删除这条消息吗？删除后将无法恢复。', 'danger');
+  if (!confirmed) return;
   
   try {
     const API_BASE = getApiBase();
@@ -1690,7 +1691,8 @@ async function deletePost(postId) {
  * @param {string} commentId - 评论ID
  */
 async function deleteCommentWithRefresh(commentId) {
-  if (!confirm('确定要删除这条评论吗？')) return;
+  const confirmed = await confirmDialog('确定要删除这条评论吗？', 'danger');
+  if (!confirmed) return;
   
   try {
     const API_BASE = getApiBase();
@@ -1743,6 +1745,203 @@ function setupGlobalMenuClose() {
   cleanupFns.push(() => squareRoot.removeEventListener('click', handler));
 }
 
+/**
+ * 确保确认弹窗样式已加载
+ */
+function ensureConfirmStyles() {
+  if (document.getElementById("app-confirm-style")) return;
+  const s = document.createElement("style");
+  s.id = "app-confirm-style";
+  s.textContent = `
+    .app-confirm-mask {
+      position: fixed; 
+      inset: 0; 
+      background: color-mix(in srgb, var(--text, #000) 20%, transparent); 
+      backdrop-filter: saturate(120%) blur(2px); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      opacity: 0; 
+      transition: opacity .18s ease; 
+      z-index: 10000;
+    }
+    .app-confirm-mask.show {
+      opacity: 1;
+    }
+    .app-confirm { 
+      width: min(92vw, 360px); 
+      background: var(--card, #fff); 
+      color: var(--text, #111); 
+      border-radius: 16px; 
+      box-shadow: var(--shadow-2, 0 10px 30px rgba(0,0,0,.15)); 
+      transform: translateY(12px) scale(.98); 
+      opacity: 0; 
+      transition: transform .2s ease, opacity .2s ease; 
+      border: 1px solid var(--divider, rgba(0,0,0,.06));
+    }
+    .app-confirm.show { 
+      transform: translateY(0) scale(1); 
+      opacity: 1; 
+    }
+    .app-confirm__body { 
+      padding: 18px 18px 8px; 
+      font-size: 15px; 
+      line-height: 1.5; 
+    }
+    .app-confirm__footer { 
+      display: flex; 
+      gap: 10px; 
+      justify-content: flex-end; 
+      padding: 0 12px 12px; 
+    }
+    .app-confirm__btn { 
+      appearance: none; 
+      border: 0; 
+      padding: 9px 14px; 
+      border-radius: 12px; 
+      cursor: pointer; 
+      font-size: 14px; 
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .app-confirm__btn--ghost { 
+      background: var(--divider, rgba(0,0,0,.04)); 
+      color: var(--text, #111); 
+    }
+    .app-confirm__btn--ghost:hover {
+      background: var(--text-secondary, rgba(0,0,0,.08));
+    }
+    .app-confirm__btn--primary { 
+      background: var(--brand, #6200ea); 
+      color: #fff; 
+    }
+    .app-confirm__btn--primary:hover {
+      background: var(--brand-700, #4b00b5);
+      transform: translateY(-1px);
+    }
+    .app-confirm__btn--danger { 
+      background: var(--danger, #e53935); 
+      color: #fff; 
+    }
+    .app-confirm__btn--danger:hover {
+      background: #d32f2f;
+      transform: translateY(-1px);
+    }
+    .app-confirm__btn:focus { 
+      outline: 2px solid var(--brand, #6200ea); 
+      outline-offset: 2px; 
+    }
+    @media (prefers-color-scheme: dark) { 
+      .app-confirm-mask { 
+        background: color-mix(in srgb, #000 50%, transparent); 
+      }
+      .app-confirm { 
+        background: var(--card, #1e1f22); 
+        color: var(--text, #e6e6e6); 
+        border-color: var(--divider, rgba(255,255,255,.08)); 
+      }
+      .app-confirm__btn--ghost { 
+        background: var(--divider, rgba(255,255,255,.08)); 
+        color: var(--text, #e6e6e6); 
+      }
+      .app-confirm__btn--ghost:hover {
+        background: var(--text-secondary, rgba(255,255,255,.12));
+      }
+    }
+  `;
+  document.head.appendChild(s);
+  cleanupFns.push(() => {
+    if (s.parentNode) s.remove();
+  });
+}
+
+/**
+ * 自定义确认弹窗
+ * @param {string} message - 确认消息
+ * @param {string} type - 弹窗类型 ('danger' | 'warning' | 'info')
+ * @returns {Promise<boolean>} 用户是否确认
+ */
+function confirmDialog(message, type = 'danger') {
+  ensureConfirmStyles();
+  return new Promise((resolve) => {
+    const mask = document.createElement('div');
+    mask.className = 'app-confirm-mask';
+
+    const box = document.createElement('div');
+    box.className = 'app-confirm';
+
+    const body = document.createElement('div');
+    body.className = 'app-confirm__body';
+    body.textContent = message || '确定要执行此操作吗？';
+
+    const footer = document.createElement('div');
+    footer.className = 'app-confirm__footer';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'app-confirm__btn app-confirm__btn--ghost';
+    cancelBtn.textContent = '取消';
+
+    const okBtn = document.createElement('button');
+    okBtn.className = `app-confirm__btn app-confirm__btn--${type}`;
+    okBtn.textContent = '确定';
+
+    footer.append(cancelBtn, okBtn);
+    box.append(body, footer);
+    mask.appendChild(box);
+    document.body.appendChild(mask);
+
+    // 显示动画
+    requestAnimationFrame(() => {
+      mask.classList.add('show');
+      box.classList.add('show');
+    });
+
+    const close = (result) => {
+      box.classList.remove('show');
+      mask.classList.remove('show');
+      const onEnd = () => {
+        mask.removeEventListener('transitionend', onEnd);
+        if (mask.parentNode) mask.remove();
+      };
+      mask.addEventListener('transitionend', onEnd);
+      resolve(result);
+    };
+
+    // 事件处理
+    cancelBtn.addEventListener('click', () => {
+      if (window.__hapticImpact__) {
+        window.__hapticImpact__('Light');
+      }
+      close(false);
+    }, { once: true });
+
+    okBtn.addEventListener('click', () => {
+      if (window.__hapticImpact__) {
+        window.__hapticImpact__('Medium');
+      }
+      close(true);
+    }, { once: true });
+
+    mask.addEventListener('click', (e) => {
+      if (e.target === mask) {
+        close(false);
+      }
+    }, { once: true });
+
+    // ESC键关闭
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        close(false);
+        document.removeEventListener('keydown', handleEsc);
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+
+    // 聚焦到确定按钮
+    setTimeout(() => okBtn.focus(), 0);
+  });
+}
+
 // -----------------------------
 // Public API / 对外导出
 // -----------------------------
@@ -1758,5 +1957,6 @@ window.toggleMessageMenu = toggleMessageMenu;
 window.toggleCommentMenu = toggleCommentMenu;
 window.deletePost = deletePost;
 window.deleteCommentWithRefresh = deleteCommentWithRefresh;
+window.confirmDialog = confirmDialog;
 
 })();

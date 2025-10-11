@@ -13,6 +13,22 @@
  */
 (function () {
   console.debug("[me] me.js evaluated");
+  
+  // ==================== 应用版本配置 ====================
+  // 在这里修改应用版本号 - 格式: "主版本.次版本.修订版本.构建版本"
+  const APP_VERSION = "1.3.0.0";
+  
+  // 构建时间戳 - 用于强制刷新缓存
+  const BUILD_TIMESTAMP = Date.now();
+  
+  // 版本检查配置
+  const VERSION_CHECK_CONFIG = {
+    enabled: true,                    // 是否启用版本检查
+    serverUrl: "https://app.zdelf.cn/version/version.json",
+    timeout: 10000                    // 网络请求超时时间(毫秒)
+  };
+  // ====================================================
+  
   // Array of teardown callbacks to run when leaving the page
   let cleanupFns = [];
 
@@ -40,6 +56,31 @@
   let userPassword = "";
   // Keep current password only for equality check (never rendered)
   let currentPassword = null;
+
+  // 震动反馈函数
+  function triggerVibration(type = 'Light') {
+    // 检查震动设置
+    const vibrationEnabled = localStorage.getItem('vibration_enabled');
+    if (vibrationEnabled === 'false') return;
+    
+    try {
+      if (window.__hapticImpact__) {
+        window.__hapticImpact__(type);
+      } else {
+        // 降级到标准震动API
+        if (navigator.vibrate) {
+          const patterns = {
+            'Light': [10],
+            'Medium': [20],
+            'Heavy': [30]
+          };
+          navigator.vibrate(patterns[type] || patterns['Light']);
+        }
+      }
+    } catch (e) {
+      console.warn('震动反馈失败:', e);
+    }
+  }
 
   /**
    * Create a Material-like ripple effect inside the clicked element.
@@ -331,6 +372,40 @@
     const root = rootEl || document; // allow manual boot for standalone use
     
     console.log("[me] initMe初始化");
+    
+    
+    // 初始化版本显示
+    function updateVersionDisplay() {
+      try {
+        const version = getCurrentVersion();
+        const versionElement = root.querySelector("#versionCard .version-number");
+        
+        if (!versionElement) {
+          console.warn('版本显示元素未找到');
+          return;
+        }
+        
+        if (!version || typeof version !== 'string') {
+          console.warn('版本号无效:', version);
+          versionElement.textContent = "版本未知";
+          return;
+        }
+        
+        versionElement.textContent = `v${version}`;
+        console.log('更新版本显示为:', version);
+        console.log('构建时间戳:', BUILD_TIMESTAMP);
+      } catch (error) {
+        console.warn('更新版本显示失败:', error);
+        const versionElement = root.querySelector("#versionCard .version-number");
+        if (versionElement) {
+          versionElement.textContent = "版本错误";
+        }
+      }
+    }
+    
+    
+    // 页面加载后更新版本显示
+    updateVersionDisplay();
 
     // 震动反馈设置管理
     function getVibrationSetting() {
@@ -342,24 +417,6 @@
       localStorage.setItem('vibration_enabled', enabled.toString());
     }
 
-    function triggerVibration(type = 'Light') {
-      if (!getVibrationSetting()) return;
-      try {
-        if (window.__hapticImpact__) {
-          window.__hapticImpact__(type);
-        } else if (navigator.vibrate) {
-          // 降级到标准震动API
-          const patterns = {
-            'Light': [10],
-            'Medium': [20],
-            'Heavy': [30]
-          };
-          navigator.vibrate(patterns[type] || patterns['Light']);
-        }
-      } catch (e) {
-        console.debug('[vibration] 震动不可用:', e);
-      }
-    }
 
     // Toast notification helper（放最顶层，且不阻挡点击）
     const toast = (msg) => {
@@ -1810,6 +1867,441 @@
       });
     }
 
+    // 获取当前应用版本
+    function getCurrentVersion() {
+      try {
+        if (!APP_VERSION || typeof APP_VERSION !== 'string') {
+          throw new Error('版本号配置无效');
+        }
+        
+        console.log('从配置获取版本:', APP_VERSION);
+        console.log('构建时间戳:', BUILD_TIMESTAMP);
+        console.log('当前时间:', new Date().toISOString());
+        return APP_VERSION;
+      } catch (error) {
+        console.warn('获取版本信息失败:', error);
+        return "1.0.0.0"; // 安全的默认版本
+      }
+    }
+
+    // 强制清除所有缓存
+    function clearAllCache() {
+      try {
+        console.log('开始清除缓存...');
+        
+        // 清除localStorage中的版本相关缓存
+        const versionCacheKeys = [
+          'version_check_cache',
+          'version_data_cache', 
+          'app_version_cache',
+          'server_version_cache'
+        ];
+        
+        versionCacheKeys.forEach(key => {
+          if (localStorage.getItem(key)) {
+            localStorage.removeItem(key);
+            console.log(`已清除localStorage缓存: ${key}`);
+          }
+        });
+        
+        // 清除sessionStorage中的版本相关缓存
+        versionCacheKeys.forEach(key => {
+          if (sessionStorage.getItem(key)) {
+            sessionStorage.removeItem(key);
+            console.log(`已清除sessionStorage缓存: ${key}`);
+          }
+        });
+        
+        // 尝试清除浏览器缓存（如果支持）
+        if ('caches' in window) {
+          caches.keys().then(cacheNames => {
+            cacheNames.forEach(cacheName => {
+              if (cacheName.includes('version') || cacheName.includes('app')) {
+                caches.delete(cacheName);
+                console.log(`已清除浏览器缓存: ${cacheName}`);
+              }
+            });
+          }).catch(err => {
+            console.log('清除浏览器缓存失败:', err);
+          });
+        }
+        
+        // 强制刷新页面资源（通过添加时间戳参数）
+        const timestamp = Date.now();
+        console.log(`缓存清除完成，时间戳: ${timestamp}`);
+        
+        return timestamp;
+      } catch (error) {
+        console.warn('清除缓存时出错:', error);
+        return Date.now();
+      }
+    }
+
+    // 检查版本并显示模态框
+    async function checkVersionAndShowModal() {
+      // 检查是否启用版本检查
+      if (!VERSION_CHECK_CONFIG.enabled) {
+        console.log('版本检查已禁用');
+        showDownloadModal();
+        return;
+      }
+      
+      // 强制清除缓存
+      const cacheTimestamp = clearAllCache();
+      
+      // 先获取当前版本号，避免被"检查中..."覆盖
+      const currentVersion = getCurrentVersion();
+      console.log('获取到的当前版本:', currentVersion);
+      
+      // 显示加载状态
+      const versionNumber = root.querySelector("#versionCard .version-number");
+      const originalText = versionNumber.textContent;
+      versionNumber.textContent = "清除缓存中...";
+      
+      // 短暂延迟让用户看到清除缓存的状态
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      versionNumber.textContent = "检查中...";
+      
+      try {
+        console.log('开始检查版本...');
+        
+        // 使用配置的服务器URL，添加时间戳参数避免缓存
+        const serverUrl = VERSION_CHECK_CONFIG.serverUrl;
+        const separator = serverUrl.includes('?') ? '&' : '?';
+        const urlWithTimestamp = `${serverUrl}${separator}t=${cacheTimestamp}&_t=${Date.now()}`;
+        console.log('使用服务器URL:', urlWithTimestamp);
+        
+        // 创建超时控制器
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), VERSION_CHECK_CONFIG.timeout);
+        
+        // 获取服务器版本信息，添加缓存控制头
+        const response = await fetch(urlWithTimestamp, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          },
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`网络请求失败: ${response.status} ${response.statusText}`);
+        }
+        
+        const versionData = await response.json();
+        console.log('获取到的版本数据:', versionData);
+        
+        // 获取所有版本信息
+        const allVersions = versionData.versions;
+        console.log('所有版本信息:', allVersions);
+        
+        if (!allVersions || !Array.isArray(allVersions) || allVersions.length === 0) {
+          throw new Error('版本信息不完整');
+        }
+        
+        // 获取最新版本（数组中的最后一个元素）
+        const latestVersionInfo = allVersions[allVersions.length - 1];
+        console.log('最新版本信息:', latestVersionInfo);
+        
+        if (!latestVersionInfo || !latestVersionInfo.version) {
+          throw new Error('版本信息不完整');
+        }
+        
+        const serverVersion = latestVersionInfo.version;
+        
+        // 找出当前版本之后的所有版本更新
+        const relevantVersions = allVersions.filter(versionInfo => {
+          return compareVersions(currentVersion, versionInfo.version) < 0;
+        });
+        
+        console.log('相关版本更新:', relevantVersions);
+        
+        console.log('当前版本:', currentVersion, '服务器版本:', serverVersion);
+        
+        // 恢复版本号显示
+        versionNumber.textContent = originalText;
+        
+        // 比较版本
+        const isLatest = compareVersions(currentVersion, serverVersion) >= 0;
+        console.log('是否最新版本:', isLatest);
+        
+        // 显示相应的模态框
+        showVersionModal(isLatest, serverVersion, currentVersion, latestVersionInfo, relevantVersions);
+        
+      } catch (error) {
+        console.error('版本检查失败:', error);
+        console.error('错误详情:', error.message, error.stack);
+        
+        // 恢复版本号显示
+        const versionNumber = root.querySelector("#versionCard .version-number");
+        versionNumber.textContent = originalText;
+        
+        // 检查是否是网络错误
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          console.log('网络请求被阻止，可能是CORS或网络策略问题');
+          toast("网络请求被阻止，请检查网络设置");
+        } else {
+          // 显示更具体的错误信息
+          const errorMessage = error.message || '未知错误';
+          toast(`版本检查失败: ${errorMessage}`);
+        }
+        
+        // 显示默认下载模态框
+        showDownloadModal();
+      }
+    }
+
+    // 比较版本号 - 返回: 1(v1>v2), 0(v1=v2), -1(v1<v2)
+    function compareVersions(version1, version2) {
+      try {
+        if (!version1 || !version2) {
+          throw new Error('版本号不能为空');
+        }
+        
+        const v1parts = version1.split('.').map(part => {
+          const num = parseInt(part, 10);
+          return isNaN(num) ? 0 : num;
+        });
+        
+        const v2parts = version2.split('.').map(part => {
+          const num = parseInt(part, 10);
+          return isNaN(num) ? 0 : num;
+        });
+        
+        const maxLength = Math.max(v1parts.length, v2parts.length);
+        
+        for (let i = 0; i < maxLength; i++) {
+          const v1part = v1parts[i] || 0;
+          const v2part = v2parts[i] || 0;
+          
+          if (v1part > v2part) return 1;
+          if (v1part < v2part) return -1;
+        }
+        
+        return 0;
+      } catch (error) {
+        console.warn('版本比较失败:', error);
+        return 0; // 比较失败时认为版本相同
+      }
+    }
+
+    // 显示版本信息模态框
+    function showVersionModal(isLatest, serverVersion, currentVersion, latestVersionInfo, relevantVersions = []) {
+      ensureDownloadStyles();
+      const mask = document.createElement("div");
+      mask.className = "download-mask";
+
+      const dialog = document.createElement("div");
+      dialog.className = "download-dialog";
+
+      const header = document.createElement("div");
+      header.className = "download-header";
+      header.textContent = isLatest ? "版本信息" : "发现新版本";
+
+      const body = document.createElement("div");
+      body.className = "download-body";
+
+      // 版本信息部分
+      const versionInfo = document.createElement("div");
+      versionInfo.className = "download-section";
+      
+      if (isLatest) {
+        const latestText = document.createElement("p");
+        latestText.textContent = "您当前使用的是最新版本";
+        latestText.style.color = "#4CAF50";
+        latestText.style.fontWeight = "bold";
+        latestText.style.textAlign = "center";
+        latestText.style.marginBottom = "20px";
+        versionInfo.append(latestText);
+      } else {
+        const updateText = document.createElement("p");
+        updateText.textContent = "发现新版本，建议更新以获得更好的体验";
+        updateText.style.color = "#FF9800";
+        updateText.style.fontWeight = "bold";
+        updateText.style.textAlign = "center";
+        updateText.style.marginBottom = "20px";
+        versionInfo.append(updateText);
+      }
+
+      // 版本号对比
+      const versionCompare = document.createElement("div");
+      versionCompare.style.display = "flex";
+      versionCompare.style.justifyContent = "space-between";
+      versionCompare.style.marginBottom = "20px";
+      versionCompare.style.padding = "10px";
+      versionCompare.style.backgroundColor = "rgba(255,255,255,0.05)";
+      versionCompare.style.borderRadius = "8px";
+      
+      const currentVersionDiv = document.createElement("div");
+      currentVersionDiv.style.textAlign = "center";
+      const currentLabel = document.createElement("div");
+      currentLabel.textContent = "当前版本";
+      currentLabel.style.fontSize = "14px";
+      currentLabel.style.color = "#999";
+      currentLabel.style.marginBottom = "5px";
+      const currentVersionText = document.createElement("div");
+      currentVersionText.textContent = `v${currentVersion}`;
+      currentVersionText.style.fontSize = "18px";
+      currentVersionText.style.fontWeight = "bold";
+      currentVersionDiv.append(currentLabel, currentVersionText);
+      
+      const serverVersionDiv = document.createElement("div");
+      serverVersionDiv.style.textAlign = "center";
+      const serverLabel = document.createElement("div");
+      serverLabel.textContent = "最新版本";
+      serverLabel.style.fontSize = "14px";
+      serverLabel.style.color = "#999";
+      serverLabel.style.marginBottom = "5px";
+      const serverVersionText = document.createElement("div");
+      serverVersionText.textContent = `v${serverVersion}`;
+      serverVersionText.style.fontSize = "18px";
+      serverVersionText.style.fontWeight = "bold";
+      serverVersionText.style.color = isLatest ? "#4CAF50" : "#FF9800";
+      serverVersionDiv.append(serverLabel, serverVersionText);
+      
+      versionCompare.append(currentVersionDiv, serverVersionDiv);
+      versionInfo.append(versionCompare);
+
+      // 显示更新日志（如果有的话）
+      if (relevantVersions.length > 0) {
+        const changelogDiv = document.createElement("div");
+        changelogDiv.style.marginTop = "20px";
+        changelogDiv.style.padding = "15px";
+        changelogDiv.style.backgroundColor = "rgba(255,255,255,0.03)";
+        changelogDiv.style.borderRadius = "8px";
+        changelogDiv.style.border = "1px solid rgba(255,255,255,0.1)";
+        
+        const changelogTitle = document.createElement("div");
+        changelogTitle.textContent = relevantVersions.length > 1 ? "版本更新内容" : "更新内容";
+        changelogTitle.style.fontSize = "16px";
+        changelogTitle.style.fontWeight = "bold";
+        changelogTitle.style.marginBottom = "10px";
+        changelogTitle.style.color = "#fff";
+        
+        // 按版本号排序（从旧到新）
+        const sortedVersions = relevantVersions.sort((a, b) => compareVersions(a.version, b.version));
+        
+        sortedVersions.forEach((versionInfo, index) => {
+          if (versionInfo.changes && versionInfo.changes.length > 0) {
+            // 版本标题
+            const versionTitle = document.createElement("div");
+            versionTitle.textContent = `v${versionInfo.version} (${versionInfo.release_date || ''})`;
+            versionTitle.style.fontSize = "14px";
+            versionTitle.style.fontWeight = "bold";
+            versionTitle.style.color = "#4CAF50";
+            versionTitle.style.marginTop = index > 0 ? "15px" : "0";
+            versionTitle.style.marginBottom = "8px";
+            
+            // 更新内容列表
+            const changelogList = document.createElement("ul");
+            changelogList.style.margin = "0";
+            changelogList.style.paddingLeft = "20px";
+            changelogList.style.color = "#ccc";
+            changelogList.style.marginBottom = "10px";
+            
+            versionInfo.changes.forEach(change => {
+              const li = document.createElement("li");
+              li.textContent = change;
+              li.style.marginBottom = "3px";
+              li.style.fontSize = "13px";
+              changelogList.append(li);
+            });
+            
+            changelogDiv.append(versionTitle, changelogList);
+          }
+        });
+        
+        versionInfo.append(changelogDiv);
+      }
+
+      const buttons = document.createElement("div");
+      buttons.className = "download-buttons";
+
+      if (!isLatest) {
+        // 只有不是最新版本时才显示下载按钮
+        const downloadText = document.createElement("p");
+        downloadText.textContent = "选择您的设备平台下载最新版本：";
+        downloadText.style.marginBottom = "15px";
+        versionInfo.append(downloadText);
+
+        // iOS下载按钮
+        const iosBtn = document.createElement("a");
+        iosBtn.className = "download-btn download-btn-ios";
+        iosBtn.href = "https://apps.apple.com/cn/app/%E7%B4%AB%E7%99%9C%E7%B2%BE%E7%81%B5/id6749155721";
+        iosBtn.target = "_blank";
+        iosBtn.rel = "noopener noreferrer";
+        iosBtn.innerHTML = '<ion-icon name="logo-apple"></ion-icon><span>iOS 下载</span>';
+
+        // Android下载按钮
+        const androidBtn = document.createElement("a");
+        androidBtn.className = "download-btn download-btn-android";
+        androidBtn.href = "https://zdelf.cn/share/app-release.apk";
+        androidBtn.target = "_blank";
+        androidBtn.rel = "noopener noreferrer";
+        androidBtn.innerHTML = '<ion-icon name="logo-android"></ion-icon><span>Android 下载</span>';
+
+        buttons.append(iosBtn, androidBtn);
+        
+        // 为下载按钮添加点击震动
+        iosBtn.addEventListener("click", () => triggerVibration('Medium'));
+        androidBtn.addEventListener("click", () => triggerVibration('Medium'));
+      }
+
+      body.append(versionInfo, buttons);
+
+      const footer = document.createElement("div");
+      footer.className = "download-footer";
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "download-close-btn";
+      closeBtn.textContent = "关闭";
+      footer.append(closeBtn);
+
+      dialog.append(header, body, footer);
+      mask.appendChild(dialog);
+      document.body.appendChild(mask);
+
+      requestAnimationFrame(() => {
+        mask.classList.add("show");
+        dialog.classList.add("show");
+      });
+
+      const close = () => {
+        dialog.classList.remove("show");
+        mask.classList.remove("show");
+        const onEnd = () => {
+          mask.removeEventListener("transitionend", onEnd);
+          if (mask.parentNode) mask.remove();
+        };
+        mask.addEventListener("transitionend", onEnd);
+      };
+
+      closeBtn.addEventListener("click", () => {
+        triggerVibration('Light');
+        close();
+      }, { once: true });
+      
+      mask.addEventListener("click", (e) => {
+        if (e.target === mask) close();
+      });
+      
+      document.addEventListener("keydown", function escHandler(ev) {
+        if (ev.key === "Escape") {
+          document.removeEventListener("keydown", escHandler);
+          close();
+        }
+      });
+
+      cleanupFns.push(() => {
+        if (mask.parentNode) mask.remove();
+      });
+    }
+
     function showDownloadModal() {
       ensureDownloadStyles();
       const mask = document.createElement("div");
@@ -1909,7 +2401,7 @@
     if (versionCard) {
       const versionHandler = () => {
         triggerVibration('Light');
-        showDownloadModal();
+        checkVersionAndShowModal();
       };
       versionCard.addEventListener("click", versionHandler);
       cleanupFns.push(() => versionCard.removeEventListener("click", versionHandler));
