@@ -97,6 +97,14 @@ function destroySquare() {
     searchTimeout = null;
   }
   
+  // 清理所有动态创建的评论菜单
+  const allCommentMenus = squareRoot.querySelectorAll('.comment-dropdown-menu');
+  allCommentMenus.forEach(menu => {
+    if (menu.parentNode) {
+      menu.parentNode.removeChild(menu);
+    }
+  });
+  
   // 统一执行清理函数
   cleanupFns.forEach(fn => { try { fn(); } catch (_) {} });
   cleanupFns = [];
@@ -1948,6 +1956,11 @@ function renderComments(postId, comments) {
   
   commentsList.innerHTML = comments.map(comment => createCommentElement(comment)).join('');
   updateCommentCount(postId, comments.length);
+  
+  // 为每个评论创建菜单（放在主容器中）
+  comments.forEach(comment => {
+    createCommentMenu(comment);
+  });
 }
 
 /**
@@ -1969,8 +1982,9 @@ function createCommentElement(comment) {
   // 2. 匿名评论：也通过 user_id 匹配（后端会记录user_id，但前端显示时保持匿名）
   const isCurrentUser = currentUser && comment.user_id && currentUser.id === comment.user_id;
   
+  // 菜单现在不放在评论容器内，而是放到页面主容器
   return `
-    <div class="comment-item">
+    <div class="comment-item" data-comment-id="${comment.id}">
       <div class="comment-avatar">
         ${avatarUrl ? 
           `<img src="${avatarUrl}" alt="${comment.username}" class="avatar-image">` :
@@ -1984,30 +1998,59 @@ function createCommentElement(comment) {
         </div>
         <div class="comment-text">${escapeHtml(comment.text)}</div>
       </div>
-      <button class="comment-menu-btn" onclick="toggleCommentMenu('${comment.id}', event)">
+      <button class="comment-menu-btn" onclick="toggleCommentMenu('${comment.id}', event)" data-comment-id="${comment.id}">
         <ion-icon ios="ellipsis-horizontal-outline" md="ellipsis-horizontal-sharp" aria-hidden="true"></ion-icon>
       </button>
-      <div class="comment-dropdown-menu" id="comment-menu-${comment.id}" style="display: none;">
-        ${isCurrentUser ? `
-          <button class="dropdown-menu-item" onclick="deleteCommentWithRefresh('${comment.id}')">
-            <ion-icon ios="trash-outline" md="trash-sharp" aria-hidden="true"></ion-icon>
-            <span>删除</span>
-          </button>
-        ` : `
-          <button class="dropdown-menu-item" onclick="reportContent('comment', '${comment.id}', '${comment.user_id || ''}')">
-            <ion-icon ios="flag-outline" md="flag-sharp" aria-hidden="true"></ion-icon>
-            <span>举报</span>
-          </button>
-          ${comment.user_id && comment.username !== '匿名用户' ? `
-            <button class="dropdown-menu-item dropdown-menu-item-danger" onclick="blockUser('${comment.user_id}', '${escapeHtml(comment.username)}')">
-              <ion-icon ios="ban-outline" md="ban-sharp" aria-hidden="true"></ion-icon>
-              <span>屏蔽用户</span>
-            </button>
-          ` : ''}
-        `}
-      </div>
     </div>
   `;
+}
+
+/**
+ * 创建评论菜单（在主容器中）
+ * @param {Object} comment - 评论对象
+ */
+function createCommentMenu(comment) {
+  // 判断是否是当前用户的评论
+  const isCurrentUser = currentUser && comment.user_id && currentUser.id === comment.user_id;
+  
+  // 移除已存在的同ID菜单
+  const existingMenu = squareRoot.getElementById(`comment-menu-${comment.id}`);
+  if (existingMenu) {
+    existingMenu.remove();
+  }
+  
+  // 创建菜单元素
+  const menu = document.createElement('div');
+  menu.className = 'comment-dropdown-menu';
+  menu.id = `comment-menu-${comment.id}`;
+  menu.style.display = 'none';
+  menu.style.position = 'fixed';
+  menu.style.zIndex = '10000';
+  
+  // 菜单内容
+  menu.innerHTML = isCurrentUser ? `
+    <button class="dropdown-menu-item" onclick="deleteCommentWithRefresh('${comment.id}')">
+      <ion-icon ios="trash-outline" md="trash-sharp" aria-hidden="true"></ion-icon>
+      <span>删除</span>
+    </button>
+  ` : `
+    <button class="dropdown-menu-item" onclick="reportContent('comment', '${comment.id}', '${comment.user_id || ''}')">
+      <ion-icon ios="flag-outline" md="flag-sharp" aria-hidden="true"></ion-icon>
+      <span>举报</span>
+    </button>
+    ${comment.user_id && comment.username !== '匿名用户' ? `
+      <button class="dropdown-menu-item dropdown-menu-item-danger" onclick="blockUser('${comment.user_id}', '${escapeHtml(comment.username)}')">
+        <ion-icon ios="ban-outline" md="ban-sharp" aria-hidden="true"></ion-icon>
+        <span>屏蔽用户</span>
+      </button>
+    ` : ''}
+  `;
+  
+  // 添加到页面主容器
+  const appContainer = squareRoot.querySelector('.app') || squareRoot.querySelector('body') || squareRoot;
+  appContainer.appendChild(menu);
+  
+  return menu;
 }
 
 /**
@@ -2221,6 +2264,17 @@ function toggleCommentMenu(commentId, event) {
   
   // 切换当前菜单
   if (menu.style.display === 'none') {
+    // 计算菜单位置
+    const button = event.target.closest('.comment-menu-btn');
+    if (button) {
+      const rect = button.getBoundingClientRect();
+      
+      // 设置菜单位置（在按钮右侧偏下）
+      menu.style.top = `${rect.bottom + 5}px`;
+      menu.style.right = `${window.innerWidth - rect.right}px`;
+      menu.style.left = 'auto';
+    }
+    
     menu.style.display = 'block';
   } else {
     menu.style.display = 'none';
