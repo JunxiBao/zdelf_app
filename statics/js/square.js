@@ -2952,6 +2952,10 @@ function ensureReportDialogStyles() {
         background: var(--brand-dark, #2a0066);
       }
       
+      .report-details-label {
+        color: var(--text, #e6e6e6);
+      }
+      
       .report-details-textarea {
         background: var(--card, #2b2d31);
         border-color: var(--divider, #3a3c42);

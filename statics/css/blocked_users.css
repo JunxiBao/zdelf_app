@@ -51,6 +51,16 @@ body {
   margin: 0 auto;
   padding: 20px 16px 40px;
   min-height: 100vh;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* 顶部导航栏 */
@@ -60,6 +70,18 @@ body {
   justify-content: space-between;
   padding: 12px 0 20px;
   margin-bottom: 20px;
+  animation: slideInDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .back-btn {
@@ -78,7 +100,11 @@ body {
 
 .back-btn:hover {
   background: var(--divider);
-  transform: translateX(-2px);
+  transform: translateX(-4px) scale(1.05);
+}
+
+.back-btn:active {
+  transform: translateX(-2px) scale(0.95);
 }
 
 .back-btn ion-icon {
@@ -107,6 +133,7 @@ body {
   background: var(--card);
   border-radius: var(--radius);
   box-shadow: var(--shadow-1);
+  animation: slideInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s backwards;
 }
 
 .info-text {
@@ -133,20 +160,41 @@ body {
   justify-content: center;
   padding: 60px 20px;
   color: var(--text-secondary);
+  animation: fadeInScale 0.3s ease-out;
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--divider);
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--divider);
   border-top-color: var(--brand);
+  border-right-color: var(--brand);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
   margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-state p {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* 屏蔽用户列表 */
@@ -165,24 +213,59 @@ body {
   background: var(--card);
   border-radius: var(--radius);
   box-shadow: var(--shadow-1);
-  transition: all 0.2s ease;
-  animation: fadeIn 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, opacity;
+  position: relative;
+  overflow: hidden;
 }
 
-@keyframes fadeIn {
+/* 添加闪光效果 */
+.blocked-user-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.blocked-user-item:hover::before {
+  left: 100%;
+}
+
+@keyframes slideInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(30px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .blocked-user-item:hover {
   box-shadow: var(--shadow-2);
-  transform: translateY(-2px);
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* 删除动画 */
+.blocked-user-item.removing {
+  animation: slideOutRight 0.4s cubic-bezier(0.6, 0, 0.8, 0.2) forwards;
+}
+
+@keyframes slideOutRight {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%) scale(0.8);
+  }
 }
 
 /* 用户头像 */
@@ -196,18 +279,36 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  box-shadow: 0 2px 8px rgba(98, 0, 234, 0.2);
+}
+
+.blocked-user-item:hover .user-avatar {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 4px 16px rgba(98, 0, 234, 0.4);
 }
 
 .avatar-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.blocked-user-item:hover .avatar-image {
+  transform: scale(1.1);
 }
 
 .avatar-initials {
   color: white;
   font-size: 18px;
   font-weight: 600;
+  transition: transform 0.3s ease;
+}
+
+.blocked-user-item:hover .avatar-initials {
+  transform: scale(1.1);
 }
 
 /* 用户信息 */
@@ -240,21 +341,51 @@ body {
 /* 取消屏蔽按钮 */
 .unblock-btn {
   padding: 8px 16px;
-  border: 1px solid var(--danger);
+  border: 2px solid var(--danger);
   background: transparent;
   color: var(--danger);
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.unblock-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: var(--danger);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+}
+
+.unblock-btn:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .unblock-btn:hover {
-  background: var(--danger);
   color: white;
-  transform: scale(1.05);
+  border-color: var(--danger);
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
+}
+
+.unblock-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+.unblock-btn:active {
+  transform: scale(0.95) translateY(0);
 }
 
 /* 空状态 */
@@ -265,6 +396,18 @@ body {
   justify-content: center;
   padding: 80px 20px;
   text-align: center;
+  animation: fadeInScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .empty-icon {
@@ -276,12 +419,34 @@ body {
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
 }
 
 .empty-icon ion-icon {
   width: 48px;
   height: 48px;
   color: var(--success);
+  animation: rotateIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rotateIn {
+  from {
+    transform: rotate(-180deg) scale(0);
+  }
+  to {
+    transform: rotate(0deg) scale(1);
+  }
 }
 
 .empty-state h3 {

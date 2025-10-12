@@ -220,6 +220,48 @@ def delete_account():
                 except Exception as e:
                     logger.warning("/delete_account failed to delete from sms_codes: %s", str(e))
             
+            # 删除屏蔽用户记录（该用户作为屏蔽者和被屏蔽者的记录）
+            try:
+                blocked_count = 0
+                # 删除该用户屏蔽的其他用户
+                if user_id:
+                    cursor.execute("DELETE FROM blocked_users WHERE blocker_id=%s", (user_id,))
+                    blocked_count += cursor.rowcount
+                    # 删除其他用户屏蔽该用户的记录
+                    cursor.execute("DELETE FROM blocked_users WHERE blocked_id=%s", (user_id,))
+                    blocked_count += cursor.rowcount
+                else:
+                    cursor.execute("DELETE FROM blocked_users WHERE blocker_id=%s", (username,))
+                    blocked_count += cursor.rowcount
+                    cursor.execute("DELETE FROM blocked_users WHERE blocked_id=%s", (username,))
+                    blocked_count += cursor.rowcount
+                
+                deleted_counts["blocked_users"] = blocked_count
+                logger.info("/delete_account deleted from blocked_users: %d records", blocked_count)
+            except Exception as e:
+                logger.warning("/delete_account failed to delete from blocked_users: %s", str(e))
+            
+            # 删除举报记录（该用户作为举报者和被举报者的记录）
+            try:
+                report_count = 0
+                # 删除该用户提交的举报
+                if user_id:
+                    cursor.execute("DELETE FROM content_reports WHERE reporter_id=%s", (user_id,))
+                    report_count += cursor.rowcount
+                    # 删除针对该用户的举报
+                    cursor.execute("DELETE FROM content_reports WHERE reported_user_id=%s", (user_id,))
+                    report_count += cursor.rowcount
+                else:
+                    cursor.execute("DELETE FROM content_reports WHERE reporter_id=%s", (username,))
+                    report_count += cursor.rowcount
+                    cursor.execute("DELETE FROM content_reports WHERE reported_user_id=%s", (username,))
+                    report_count += cursor.rowcount
+                
+                deleted_counts["content_reports"] = report_count
+                logger.info("/delete_account deleted from content_reports: %d records", report_count)
+            except Exception as e:
+                logger.warning("/delete_account failed to delete from content_reports: %s", str(e))
+            
             # 删除用户头像文件
             if avatar_url:
                 try:

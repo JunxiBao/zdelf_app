@@ -1389,7 +1389,8 @@
       });
     }
 
-    function showHelpModal() {
+    // 合并的帮助与关于弹窗
+    function showCombinedHelpModal() {
       ensureHelpStyles();
       const mask = document.createElement("div");
       mask.className = "help-mask";
@@ -1399,10 +1400,12 @@
 
       const header = document.createElement("div");
       header.className = "help-header";
-      header.textContent = "帮助与反馈";
+      header.textContent = "关于与帮助";
 
       const body = document.createElement("div");
       body.className = "help-body";
+      body.style.maxHeight = "60vh";
+      body.style.overflowY = "auto";
 
       // App介绍
       const introSection = document.createElement("div");
@@ -1419,10 +1422,25 @@
       const featuresTitle = document.createElement("h3");
       featuresTitle.textContent = "主要功能";
       const featuresText = document.createElement("p");
-      featuresText.innerHTML = "• 健康指标记录与分析<br>• 饮食管理<br>• 病例记录<br>• AI智能助手<br>• 数据可视化展示";
+      featuresText.innerHTML = "• 健康指标记录与分析<br>• 饮食管理<br>• 病例记录<br>• 社区广场交流<br>• AI智能助手<br>• 数据可视化展示";
       featuresSection.append(featuresTitle, featuresText);
 
-      // 联系方式
+      // 免责声明部分
+      const disclaimerSection = document.createElement("div");
+      disclaimerSection.className = "help-section";
+      const disclaimerTitle = document.createElement("h3");
+      disclaimerTitle.textContent = "免责声明";
+      const disclaimerText1 = document.createElement("p");
+      disclaimerText1.innerHTML = "<strong>1. 健康建议仅供参考</strong><br>本应用提供的健康建议和信息仅供参考，不构成专业医疗意见。如有健康问题，请咨询专业医疗机构。";
+      const disclaimerText2 = document.createElement("p");
+      disclaimerText2.innerHTML = "<strong>2. 数据安全</strong><br>我们承诺保护您的个人健康数据，并采取必要的安全措施。但互联网传输存在固有风险。";
+      const disclaimerText3 = document.createElement("p");
+      disclaimerText3.innerHTML = "<strong>3. 服务变更</strong><br>我们保留随时修改或终止服务的权利，恕不另行通知。";
+      const disclaimerText4 = document.createElement("p");
+      disclaimerText4.innerHTML = "<strong>4. 用户责任</strong><br>用户应对自己发布的内容负责，不得发布违法、有害或侵权信息。";
+      disclaimerSection.append(disclaimerTitle, disclaimerText1, disclaimerText2, disclaimerText3, disclaimerText4);
+
+      // 联系方式（移到最后）
       const contactSection = document.createElement("div");
       contactSection.className = "help-section";
       const contactTitle = document.createElement("h3");
@@ -1438,7 +1456,7 @@
       contactInfo.append(contactText, developerInfo, designerInfo);
       contactSection.append(contactTitle, contactInfo);
 
-      body.append(introSection, featuresSection, contactSection);
+      body.append(introSection, featuresSection, disclaimerSection, contactSection);
 
       const footer = document.createElement("div");
       footer.className = "help-footer";
@@ -2404,14 +2422,12 @@
         triggerVibration('Light');
         
         if (el.dataset.action === "help") {
-          showHelpModal();
-        } else if (el.dataset.action === "disclaimer") {
-          showDisclaimerModal();
+          showCombinedHelpModal();
         } else if (el.dataset.action === "vibration") {
           showVibrationModal();
         } else if (el.dataset.action === "blocked-users") {
           // 跳转到屏蔽用户管理页面
-          window.location.href = "blocked_users.html";
+          window.location.href = "src/blocked_users.html";
         } else {
           toast("打开：" + el.dataset.action);
         }
