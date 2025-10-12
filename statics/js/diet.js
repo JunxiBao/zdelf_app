@@ -30,39 +30,8 @@ function hideSaveLoading(saveState, originalText = null) {
     saveState.spinner.classList.remove('show');
 }
 
-// 震动反馈初始化（兼容性处理）
-(function() {
-  'use strict';
-  // 如果全局震动反馈不存在，提供fallback实现
-  if (!window.__hapticImpact__) {
-    var isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
-    function getHaptics() {
-      var C = window.Capacitor || {};
-      return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null;
-    }
-    function isVibrationEnabled(){
-      try{
-        var v = localStorage.getItem('vibration_enabled');
-        return v === null ? true : v === 'true';
-      }catch(_){ return true; }
-    }
-    window.__hapticImpact__ = function(style){
-      if (!isVibrationEnabled()) return;
-      if (!isNative) {
-        try {
-          if (navigator.vibrate) {
-            var map = { Light: 10, Medium: 20, Heavy: 30 };
-            navigator.vibrate(map[style] || 10);
-          }
-        } catch(_) {}
-        return;
-      }
-      var h = getHaptics();
-      if (!h) return;
-      try { h.impact && h.impact({ style: style }); } catch(_) {}
-    };
-  }
-})();
+// 震动反馈 - 使用统一的HapticManager
+// HapticManager已在index.html中全局加载，这里直接使用即可
 
 // 页面初始化
 function initDietPage() {
@@ -113,7 +82,20 @@ function initDietPage() {
     // 初始化第一个餐次的图片上传按钮
     initDietImageUploadForMeal(1);
 
-    console.log('食物记录页面初始化完成');
+    // 使用输入框增强模块（优化键盘弹出和震动体验）
+    if (window.InputEnhancement) {
+        // 自动增强所有输入框，配置为聚焦时震动
+        window.InputEnhancement.autoEnhance({
+            hapticDelay: 50,        // 延迟震动，不干扰键盘
+            hapticOnBlur: true,     // 输入完成时震动
+            hapticOnInput: false    // 输入过程不震动
+        });
+        console.log('饮食记录 - 输入框增强已启用');
+    } else {
+        console.warn('饮食记录 - InputEnhancement 模块未加载');
+    }
+
+    console.log('饮食记录页面初始化完成');
 }
 
 // 为第一个餐次设置默认时间
@@ -140,10 +122,14 @@ function goBack() {
 }
 
 // 添加新餐次
-function addNewMeal() {
-    try {
-        window.__hapticImpact__ && window.__hapticImpact__('Light');
-    } catch(_) {}
+// silent: true = 静默模式（加载数据时），不触发震动
+function addNewMeal(silent = false) {
+    // 🔧 修复：只在用户主动点击时震动，加载数据时不震动
+    if (!silent) {
+        try {
+            window.__hapticImpact__ && window.__hapticImpact__('Light');
+        } catch(_) {}
+    }
 
     mealCounter++;
     const mealId = mealCounter;
@@ -447,10 +433,13 @@ async function saveAllMeals() {
 // =========== 图片上传相关（与 metrics 保持一致的流程） ==========
 
 function initDietImageUploadForMeal(mealId) {
-    try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
+    // 🔧 移除初始化时的震动（只应在点击时震动）
     const btn = document.getElementById(`dietImageUploadBtn-${mealId}`);
     if (!btn) return;
     btn.addEventListener('click', async function() {
+        // 点击上传按钮时的震动反馈
+        try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
+        
         try {
             // 权限（原生时）
             const permissions = await window.cameraUtils.checkPermissions();
@@ -494,6 +483,9 @@ async function handleDietImageDataUrl(mealId, dataUrl) {
         
         hideDietCompressionProgress();
         addDietImageToMeal(mealId, imageUrl, file.name);
+        
+        // 图片上传成功时的震动反馈
+        try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {}
         
         // 显示上传成功信息
         const originalSizeKB = (file.size / 1024).toFixed(1);
@@ -639,9 +631,11 @@ function addDietImageToMeal(mealId, imageSrc, fileName) {
     removeBtn.className = 'remove-image-btn';
     removeBtn.innerHTML = '×';
     removeBtn.onclick = function() {
+        // 删除图片时的震动反馈 - 使用Heavy表示删除操作
+        try { window.__hapticImpact__ && window.__hapticImpact__('Heavy'); } catch(_) {}
+        
         item.remove();
         dietImagesMap[mealId] = (dietImagesMap[mealId] || []).filter(u => u !== imageSrc);
-        try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {}
     };
     item.appendChild(img); item.appendChild(removeBtn); container.appendChild(item);
     item.style.opacity = '0'; item.style.transform = 'scale(0.8)';
@@ -689,8 +683,8 @@ function loadDietData() {
                     // 更新第一个餐次
                     fillMealData(1, mealData);
                 } else {
-                    // 添加新的餐次
-                    addNewMeal();
+                    // 添加新的餐次（静默模式，不震动）
+                    addNewMeal(true);
                     fillMealData(mealData.mealId, mealData);
                 }
             });

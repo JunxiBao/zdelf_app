@@ -57,25 +57,15 @@
   // Keep current password only for equality check (never rendered)
   let currentPassword = null;
 
-  // 震动反馈函数
-  function triggerVibration(type = 'Light') {
-    // 检查震动设置
-    const vibrationEnabled = localStorage.getItem('vibration_enabled');
-    if (vibrationEnabled === 'false') return;
-    
+  // 震动反馈函数 - 使用统一的HapticManager
+  function triggerVibration(type = 'Light', options = {}) {
     try {
-      if (window.__hapticImpact__) {
+      if (window.HapticManager) {
+        // 使用新的统一震动管理器，带防抖功能
+        window.HapticManager.impact(type, { context: 'me-page', debounce: 100, ...options });
+      } else if (window.__hapticImpact__) {
+        // 降级到旧版本
         window.__hapticImpact__(type);
-      } else {
-        // 降级到标准震动API
-        if (navigator.vibrate) {
-          const patterns = {
-            'Light': [10],
-            'Medium': [20],
-            'Heavy': [30]
-          };
-          navigator.vibrate(patterns[type] || patterns['Light']);
-        }
       }
     } catch (e) {
       console.warn('震动反馈失败:', e);
@@ -2419,6 +2409,9 @@
           showDisclaimerModal();
         } else if (el.dataset.action === "vibration") {
           showVibrationModal();
+        } else if (el.dataset.action === "blocked-users") {
+          // 跳转到屏蔽用户管理页面
+          window.location.href = "blocked_users.html";
         } else {
           toast("打开：" + el.dataset.action);
         }

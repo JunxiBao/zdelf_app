@@ -1,22 +1,16 @@
 (function () {
   "use strict";
 
-  // Lightweight haptics bridge for standalone page (only if not already provided)
-  try {
-    if (!window.__hapticImpact__) {
-      var isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
-      function getHaptics() {
-        var C = window.Capacitor || {};
-        return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null;
+  // 震动反馈 - 使用统一的HapticManager
+  function hapticImpact(style, options) {
+    try {
+      if (window.HapticManager) {
+        window.HapticManager.impact(style, { context: 'login-page', debounce: 100, ...options });
+      } else if (window.__hapticImpact__) {
+        window.__hapticImpact__(style);
       }
-      window.__hapticImpact__ = function(style){
-        if (!isNative) return;
-        var h = getHaptics();
-        if (!h) return;
-        try { h.impact && h.impact({ style: style }); } catch(_) {}
-      };
-    }
-  } catch(_) {}
+    } catch(_) {}
+  }
 
   /* =============================
    * 1) Viewport & scroll handling
@@ -102,7 +96,7 @@
       alert(message);
       return;
     }
-    try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
+    hapticImpact('Light');
     popupText.textContent = message;
     popup.classList.add("show");
     setTimeout(function () {
@@ -145,7 +139,7 @@
 
     var loginBtn = document.getElementById("loginBtn");
     if (loginBtn) {
-      loginBtn.addEventListener("click", function(){ try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {} });
+      loginBtn.addEventListener("click", function(){ hapticImpact('Medium'); });
       loginBtn.addEventListener("click", handleLogin);
     }
   });
@@ -233,7 +227,7 @@
         }
       }
       btn.addEventListener("click", function () {
-        try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
+        hapticImpact('Light');
         var show = input.getAttribute("type") === "password";
         var icon = show ? eyeOff : eye;
         if (icon && icon.animate) {

@@ -23,13 +23,22 @@
   <body>
     <!-- 主应用容器 -->
     <main class="app" aria-label="广场">
-      <!-- 顶部标题栏 -->
-      <header class="topbar">
-        <div class="title">广场</div>
-        <button class="refresh-btn" id="refreshBtn" aria-label="刷新">
-          <ion-icon ios="refresh-outline" md="refresh-sharp" aria-hidden="true"></ion-icon>
-        </button>
-      </header>
+      <!-- 搜索框容器 - 屏幕最上方 -->
+      <div class="search-container">
+        <div class="search-box">
+          <div class="search-input-wrapper">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <input type="text" id="searchInput" class="search-input" placeholder="搜索帖子..." autocomplete="off">
+            <button id="clearSearchBtn" class="clear-search-btn hidden" title="清除搜索">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- 发布触发按钮 -->
       <section class="publish-trigger-section">

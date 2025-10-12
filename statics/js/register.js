@@ -12,19 +12,18 @@
 (function () {
   "use strict";
 
-  // Lightweight haptics bridge for standalone page
-  try {
-    if (!window.__hapticImpact__) {
-      var isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
-      function getHaptics() { var C = window.Capacitor || {}; return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null; }
-      function isVibrationEnabled(){ try{ var v = localStorage.getItem('vibration_enabled'); return v === null ? true : v === 'true'; }catch(_){ return true; } }
-      window.__hapticImpact__ = function(style){
-        if (!isVibrationEnabled()) return;
-        if (!isNative) { try { if (navigator.vibrate) { var map = { Light: 10, Medium: 20, Heavy: 30 }; navigator.vibrate(map[style] || 10); } } catch(_) {} return; }
-        var h = getHaptics(); if (!h) return; try { h.impact && h.impact({ style: style }); } catch(_) {}
-      };
-    }
-  } catch(_) {}
+  // 震动反馈 - 使用统一的HapticManager
+  // 注意：register.html是独立页面，需要单独加载HapticManager
+  // 如果HapticManager未加载，使用降级方案
+  function hapticImpact(style, options) {
+    try {
+      if (window.HapticManager) {
+        window.HapticManager.impact(style, { context: 'register-page', debounce: 100, ...options });
+      } else if (window.__hapticImpact__) {
+        window.__hapticImpact__(style);
+      }
+    } catch(_) {}
+  }
 
   /* =============================
    * 1) Viewport & scroll handling
@@ -101,7 +100,7 @@
       alert(message);
       return;
     }
-    try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
+    hapticImpact('Light');
     popupText.textContent = message;
     popup.classList.add("show");
     setTimeout(function () {
@@ -162,7 +161,7 @@
     // Register button
     var registerBtn = document.getElementById("registerBtn");
     if (registerBtn) {
-      registerBtn.addEventListener("click", function(){ try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {} });
+      registerBtn.addEventListener("click", function(){ hapticImpact('Medium'); });
       registerBtn.addEventListener("click", handleRegister);
     }
 
@@ -327,7 +326,7 @@
         }
       }
       btn.addEventListener("click", function () {
-        try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
+        hapticImpact('Light');
         var show = input.getAttribute("type") === "password";
         var icon = show ? eyeOff : eye;
         if (icon && icon.animate) {

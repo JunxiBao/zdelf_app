@@ -20,43 +20,17 @@ const content = document.getElementById("content");
 const modal = document.getElementById("modal");
 const modalContent = document.getElementById("modalContent");
 
-// Haptics helper (only active in Capacitor native runtime)
+// Haptics helper - 使用统一的震动管理器
 const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
-function getHaptics() {
-  const C = window.Capacitor || {};
-  return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null;
-}
-function isVibrationEnabled() {
-  try {
-    const v = localStorage.getItem('vibration_enabled');
-    return v === null ? true : v === 'true';
-  } catch (_) {
-    return true;
-  }
-}
-function hapticImpact(style) {
-  if (!isVibrationEnabled()) return;
-  if (!isNative) {
-    // Web fallback when running in browser
-    try {
-      if (navigator.vibrate) {
-        const map = { Light: 10, Medium: 20, Heavy: 30 };
-        navigator.vibrate(map[style] || 10);
-      }
-    } catch (_) {}
-    return;
-  }
-  const h = getHaptics();
-  if (!h) return;
-  try {
-    h.impact && h.impact({ style });
-  } catch (e) {
-    // no-op in web or if plugin not available
-  }
-}
 
-// Expose haptics globally for subpages
-window.__hapticImpact__ = hapticImpact;
+// 使用HapticManager，如果未加载则提供fallback
+const hapticImpact = (style, options) => {
+  if (window.HapticManager) {
+    window.HapticManager.impact(style, options);
+  } else if (window.__hapticImpact__) {
+    window.__hapticImpact__(style);
+  }
+};
 
 // StatusBar helper
 function getStatusBar() {
@@ -352,7 +326,8 @@ function updateActive(index) {
 
 navItems.forEach((item, index) => {
   item.addEventListener("click", () => {
-    hapticImpact("Light");
+    // 使用上下文标识防止与涟漪效果的震动重复
+    hapticImpact("Light", { context: 'nav-tab', debounce: 150 });
     updateActive(index);
   });
 });

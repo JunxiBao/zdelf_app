@@ -483,20 +483,39 @@ body {
 .blood-test-value {
     flex: 1;
     padding: 12px 16px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid #e0e0e0 !important; /* 确保覆盖浏览器默认样式 */
     border-radius: 8px;
     font-size: 1em;
     font-family: inherit;
-    background: #fff;
-    color: #333;
+    background: #fff !important;
+    color: #333 !important;
     transition: all 0.2s ease;
+    /* 移除浏览器默认的验证样式 */
+    box-shadow: none !important;
 }
 
 .urinalysis-value:focus,
 .blood-test-value:focus {
-    border-color: #6200ea;
+    border-color: #6200ea !important;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1) !important;
+}
+
+/* 确保在各种状态下都保持一致的样式 */
+.urinalysis-value:invalid,
+.blood-test-value:invalid,
+.urinalysis-value:valid,
+.blood-test-value:valid {
+    border-color: #e0e0e0 !important;
+    box-shadow: none !important;
+}
+
+.urinalysis-value:focus:invalid,
+.blood-test-value:focus:invalid,
+.urinalysis-value:focus:valid,
+.blood-test-value:focus:valid {
+    border-color: #6200ea !important;
+    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1) !important;
 }
 
 .unit-reference {
@@ -1557,20 +1576,39 @@ body {
     }
 }
 
-/* 其他输入框样式 */
+/* 其他输入框样式 - 与普通输入框保持一致 */
 .other-text-input {
     width: 100%;
-    padding: 16px 48px 16px 16px;
-    font-size: 16px;
-    font-weight: 500;
+    padding: 12px 16px;
+    font-size: 1em;
+    font-family: inherit;
     color: #333;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border: 2px solid #e1e5e9;
-    border-radius: 12px;
+    background: #fff !important;
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 8px;
     outline: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+    box-shadow: none !important;
     box-sizing: border-box;
+}
+
+.other-text-input:focus {
+    border-color: #6200ea !important;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1) !important;
+}
+
+/* 确保在各种状态下都保持一致的样式 */
+.other-text-input:invalid,
+.other-text-input:valid {
+    border-color: #e0e0e0 !important;
+    box-shadow: none !important;
+}
+
+.other-text-input:focus:invalid,
+.other-text-input:focus:valid {
+    border-color: #6200ea !important;
+    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1) !important;
 }
 
 /* 自定义输入框样式 */

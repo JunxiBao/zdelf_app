@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!--
+  blocked_users.html — 屏蔽用户管理页面
+  
+  功能:
+  - 显示已屏蔽用户列表
+  - 支持取消屏蔽用户
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <title>屏蔽用户管理</title>
+    <!-- Ionicons -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/ionicons@7.1.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://cdn.jsdelivr.net/npm/ionicons@7.1.2/dist/ionicons/ionicons.js"></script>
+    <!-- 页面样式表 -->
+    <link rel="stylesheet" href="../statics/css/blocked_users.css" />
+  </head>
+  <body>
+    <!-- 主应用容器 -->
+    <main class="app" aria-label="屏蔽用户管理">
+      <!-- 顶部导航栏 -->
+      <header class="header">
+        <button class="back-btn" id="backBtn" aria-label="返回">
+          <ion-icon ios="chevron-back-outline" md="chevron-back-sharp"></ion-icon>
+        </button>
+        <h1 class="header-title">屏蔽用户管理</h1>
+        <div class="header-spacer"></div>
+      </header>
+
+      <!-- 说明文本 -->
+      <div class="info-section">
+        <p class="info-text">
+          <ion-icon ios="information-circle-outline" md="information-circle-sharp"></ion-icon>
+          屏蔽后将不会看到该用户的任何帖子和评论
+        </p>
+      </div>
+
+      <!-- 加载状态 -->
+      <div class="loading-state" id="loadingState">
+        <div class="loading-spinner"></div>
+        <p>加载中...</p>
+      </div>
+
+      <!-- 屏蔽用户列表 -->
+      <div class="blocked-list" id="blockedList">
+        <!-- 用户项将通过JavaScript动态添加 -->
+      </div>
+
+      <!-- 空状态 -->
+      <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-icon">
+          <ion-icon ios="checkmark-circle-outline" md="checkmark-circle-sharp"></ion-icon>
+        </div>
+        <h3>没有屏蔽任何用户</h3>
+        <p>屏蔽的用户会显示在这里</p>
+      </div>
+    </main>
+
+    <!-- 震动反馈管理器 -->
+    <script src="../statics/js/haptic-manager.js"></script>
+    <!-- 页面脚本 -->
+    <script src="../statics/js/blocked_users.js"></script>
+  </body>
+</html>
+

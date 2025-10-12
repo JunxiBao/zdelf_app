@@ -25,9 +25,15 @@ let messages = [];
 let messageTextarea, publishBtn, addImageBtn, imageFileInput, uploadedImages;
 let messagesList, loadingState, emptyState, messageCount, charCount;
 let publishTriggerBtn, publishSection, cancelBtn;
-let userAvatar, avatarImage, avatarInitials, userName, refreshBtn;
+let userAvatar, avatarImage, avatarInitials, userName;
+let searchInput, clearSearchBtn;
 let anonymousBtn;
 let isAnonymous = false;
+let searchQuery = '';
+let allMessages = []; // 存储所有消息用于搜索
+let searchTimeout = null; // 搜索防抖定时器
+let isDetailView = false; // 是否在详情视图
+let currentDetailPostId = null; // 当前详情视图的帖子ID
 
 /**
  * 初始化广场页面
@@ -85,15 +91,25 @@ function initSquare(shadowRoot) {
 function destroySquare() {
   console.log('🏛️ 销毁广场页面');
   
+  // 清除防抖定时器
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
+    searchTimeout = null;
+  }
+  
   // 统一执行清理函数
   cleanupFns.forEach(fn => { try { fn(); } catch (_) {} });
   cleanupFns = [];
   
   // 重置状态
   messages = [];
+  allMessages = [];
   currentUser = null;
   isInitialized = false;
   squareRoot = document;
+  searchQuery = '';
+  isDetailView = false;
+  currentDetailPostId = null;
   
   console.log('🧹 destroySquare 清理完成');
 }
@@ -116,7 +132,8 @@ function initializeElements() {
   avatarImage = squareRoot.getElementById('avatarImage');
   avatarInitials = squareRoot.getElementById('avatarInitials');
   userName = squareRoot.getElementById('userName');
-  refreshBtn = squareRoot.getElementById('refreshBtn');
+  searchInput = squareRoot.getElementById('searchInput');
+  clearSearchBtn = squareRoot.getElementById('clearSearchBtn');
   publishTriggerBtn = squareRoot.getElementById('publishTriggerBtn');
   publishSection = squareRoot.getElementById('publishSection');
   cancelBtn = squareRoot.getElementById('cancelBtn');
@@ -155,11 +172,24 @@ function setupEventListeners() {
     cleanupFns.push(() => imageFileInput.removeEventListener('change', imageHandler));
   }
   
-  // 刷新按钮
-  if (refreshBtn) {
-    const refreshHandler = () => handleRefresh();
-    refreshBtn.addEventListener('click', refreshHandler);
-    cleanupFns.push(() => refreshBtn.removeEventListener('click', refreshHandler));
+  // 搜索输入框
+  if (searchInput) {
+    const searchInputHandler = (e) => handleSearchInput(e);
+    searchInput.addEventListener('input', searchInputHandler);
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleSearch();
+      }
+    });
+    cleanupFns.push(() => searchInput.removeEventListener('input', searchInputHandler));
+  }
+  
+  
+  // 清除搜索按钮
+  if (clearSearchBtn) {
+    const clearHandler = () => handleClearSearch();
+    clearSearchBtn.addEventListener('click', clearHandler);
+    cleanupFns.push(() => clearSearchBtn.removeEventListener('click', clearHandler));
   }
 
   // 发布触发按钮
@@ -639,7 +669,17 @@ async function handlePublish() {
 
     // 3) 成功后刷新列表并清空表单
     clearPublishForm();
-    if (publishSection) publishSection.style.display = 'none';
+    if (publishSection) {
+      // 取消所有动画
+      try {
+        const animations = publishSection.getAnimations();
+        animations.forEach(anim => anim.cancel());
+      } catch (e) {
+        // 忽略错误
+      }
+      publishSection.style.display = 'none';
+      publishSection.style.opacity = '1';
+    }
     if (publishTriggerBtn) publishTriggerBtn.style.display = 'flex';
     if (window.__hapticImpact__) window.__hapticImpact__('Medium');
     
@@ -674,10 +714,71 @@ function clearPublishForm() {
 }
 
 /**
- * 处理刷新
+ * 处理搜索输入
  */
-function handleRefresh() {
-  loadMessages();
+function handleSearchInput(e) {
+  const query = e.target.value.trim();
+  searchQuery = query;
+  
+  // 显示/隐藏清除按钮
+  if (clearSearchBtn) {
+    clearSearchBtn.classList.toggle('hidden', !query);
+  }
+  
+  // 清除之前的定时器
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
+  }
+  
+  // 设置防抖，300ms后执行搜索
+  searchTimeout = setTimeout(() => {
+    performSearch(query);
+  }, 300);
+}
+
+
+/**
+ * 执行搜索
+ */
+function performSearch(query) {
+  if (!query || allMessages.length === 0) {
+    messages = [...allMessages];
+    updateMessagesList();
+    return;
+  }
+  
+  // 搜索消息内容和作者名称
+  const filteredMessages = allMessages.filter(message => {
+    const textMatch = message.text && message.text.toLowerCase().includes(query.toLowerCase());
+    const authorMatch = message.author && message.author.toLowerCase().includes(query.toLowerCase());
+    return textMatch || authorMatch;
+  });
+  
+  messages = filteredMessages;
+  updateMessagesList();
+}
+
+/**
+ * 清除搜索
+ */
+function handleClearSearch() {
+  // 清除防抖定时器
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
+  }
+  
+  if (searchInput) {
+    searchInput.value = '';
+    searchQuery = '';
+  }
+  
+  if (clearSearchBtn) {
+    clearSearchBtn.classList.add('hidden');
+  }
+  
+  // 显示所有消息
+  messages = [...allMessages];
+  updateMessagesList();
   
   // 触觉反馈
   if (window.__hapticImpact__) {
@@ -694,8 +795,16 @@ function handlePublishTrigger() {
     window.__hapticImpact__('Light');
   }
   
-  // 显示发布区域
+  // 显示发布区域，完全重置所有样式
   if (publishSection) {
+    // 取消所有动画（如果有）
+    const animations = publishSection.getAnimations();
+    animations.forEach(anim => anim.cancel());
+    
+    // 清除所有可能的残留样式，并强制设置可见
+    publishSection.style.opacity = '1';  // 强制设置为1而不是清空
+    publishSection.style.transform = '';
+    publishSection.style.transition = '';
     publishSection.style.display = 'block';
     publishSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -727,7 +836,16 @@ function handleCancel() {
   
   // 隐藏发布区域
   if (publishSection) {
+    // 取消所有动画
+    try {
+      const animations = publishSection.getAnimations();
+      animations.forEach(anim => anim.cancel());
+    } catch (e) {
+      // 忽略错误
+    }
+    
     publishSection.style.display = 'none';
+    publishSection.style.opacity = '1';  // 设置为1以覆盖任何动画状态
   }
   
   // 显示触发按钮
@@ -761,13 +879,17 @@ async function loadMessages() {
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     const list = (data && data.success && Array.isArray(data.data)) ? data.data : [];
-
+    
     // 归一化为现有渲染结构
-    messages = list.map((it) => {
+    const loadedMessages = list.map((it) => {
       const apiBase = getApiBase();
       const avatar = it.avatar_url ? (it.avatar_url.startsWith('http') ? it.avatar_url : (apiBase + it.avatar_url)) : null;
       const imgs = Array.isArray(it.images) ? it.images : (Array.isArray(it.image_urls) ? it.image_urls : []);
       const normImgs = imgs.map(u => (typeof u === 'string' ? (u.startsWith('http') ? u : (apiBase + u)) : '')).filter(Boolean);
+      
+      // 尝试多种可能的评论计数字段名
+      const commentCount = it.comment_count || it.comments_count || it.num_comments || it.comments || 0;
+      
       return {
         id: it.id,
         author: it.username || '匿名用户',
@@ -777,11 +899,20 @@ async function loadMessages() {
         images: normImgs,
         timestamp: it.created_at || new Date().toISOString(),
         likes: 0,
-        comments: 0
+        comments: 0,
+        comments_count: commentCount
       };
     });
+    
+    // 保存到 allMessages 用于搜索
+    allMessages = [...loadedMessages];
+    messages = [...loadedMessages];
 
     updateMessagesList();
+    
+    // 主动加载所有帖子的实际评论数
+    loadAllCommentCounts(loadedMessages);
+    
     // 列表渲染后淡入
     if (messagesList && window.AnimationUtils) {
       await window.AnimationUtils.fadeIn(messagesList, 220);
@@ -911,6 +1042,349 @@ function saveMessages() {
 }
 
 /**
+ * 显示帖子详情
+ * @param {string} postId - 帖子ID
+ */
+async function showPostDetail(postId) {
+  console.log('显示帖子详情:', postId);
+  
+  // 触觉反馈
+  if (window.__hapticImpact__) {
+    window.__hapticImpact__('Light');
+  }
+  
+  // 设置详情视图状态
+  isDetailView = true;
+  currentDetailPostId = postId;
+  
+  // 给容器添加详情模式class，减少顶部空白
+  const appContainer = squareRoot.querySelector('.app');
+  if (appContainer) {
+    appContainer.classList.add('detail-view-mode');
+  }
+  
+  // 获取需要操作的元素
+  const allMessageItems = squareRoot.querySelectorAll('.message-item');
+  const searchContainer = squareRoot.querySelector('.search-container');
+  const publishTrigger = squareRoot.querySelector('.publish-trigger-section');
+  const publishSec = squareRoot.querySelector('.publish-section');
+  const commentsSection = squareRoot.getElementById(`comments-${postId}`);
+  const messagesHeader = squareRoot.querySelector('.messages-header');
+  
+  // 收集要淡出的元素
+  const fadeOutElements = [];
+  if (searchContainer) fadeOutElements.push(searchContainer);
+  if (publishTrigger) fadeOutElements.push(publishTrigger);
+  if (publishSec) fadeOutElements.push(publishSec);
+  if (messagesHeader) fadeOutElements.push(messagesHeader);
+  
+  // 找到当前显示的帖子并添加详情模式样式
+  let currentPostElement = null;
+  allMessageItems.forEach(item => {
+    if (item.dataset.postId !== postId) {
+      fadeOutElements.push(item);
+    } else {
+      currentPostElement = item;
+      // 添加详情模式class，让帖子展开显示
+      item.classList.add('detail-mode');
+    }
+  });
+  
+  // 使用全局动画系统并行淡出所有元素
+  if (window.AnimationUtils) {
+    // 启用GPU加速
+    fadeOutElements.forEach(el => {
+      window.AnimationUtils.enableGPUAcceleration(el);
+      window.AnimationUtils.setWillChange(el, 'opacity, transform');
+    });
+    
+    // 并行执行淡出动画
+    await window.AnimationUtils.parallel(
+      fadeOutElements.map(el => () => window.AnimationUtils.fadeOut(el, 250))
+    );
+    
+    // 隐藏元素并完全清理样式
+    fadeOutElements.forEach(el => {
+      // 取消所有Web Animations API的动画
+      try {
+        const animations = el.getAnimations();
+        animations.forEach(anim => anim.cancel());
+      } catch (e) {
+        // 忽略错误
+      }
+      
+      el.style.display = 'none';
+      el.style.opacity = '';
+      el.style.transform = '';
+      el.style.transition = '';
+      window.AnimationUtils.clearWillChange(el);
+    });
+  } else {
+    // 降级处理：使用传统方式
+    fadeOutElements.forEach(el => {
+      el.style.transition = 'opacity 0.25s ease';
+      el.style.opacity = '0';
+    });
+    await new Promise(resolve => setTimeout(resolve, 260));
+    fadeOutElements.forEach(el => {
+      el.style.display = 'none';
+      el.style.opacity = '';
+      el.style.transition = '';
+    });
+  }
+  
+  // 添加返回按钮（带动画）
+  addBackButton();
+  
+  // 准备评论区域
+  if (commentsSection) {
+    commentsSection.style.display = 'block';
+    commentsSection.style.opacity = '0';
+    if (window.AnimationUtils) {
+      window.AnimationUtils.enableGPUAcceleration(commentsSection);
+      window.AnimationUtils.setWillChange(commentsSection, 'opacity, transform');
+    }
+  }
+  
+  // 滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  // 等待一帧
+  await new Promise(resolve => requestAnimationFrame(resolve));
+  
+  // 加载评论
+  await loadComments(postId);
+  
+  // 淡入评论区域
+  if (commentsSection && window.AnimationUtils) {
+    await window.AnimationUtils.slideUp(commentsSection, 300);
+    window.AnimationUtils.clearWillChange(commentsSection);
+  } else if (commentsSection) {
+    // 降级处理
+    commentsSection.style.transition = 'opacity 0.3s ease';
+    commentsSection.style.opacity = '1';
+    setTimeout(() => {
+      commentsSection.style.transition = '';
+    }, 350);
+  }
+}
+
+/**
+ * 返回列表视图
+ */
+async function backToList() {
+  console.log('返回列表视图');
+  
+  // 触觉反馈
+  if (window.__hapticImpact__) {
+    window.__hapticImpact__('Light');
+  }
+  
+  // 重置详情视图状态
+  const previousPostId = currentDetailPostId;
+  isDetailView = false;
+  currentDetailPostId = null;
+  
+  // 移除容器的详情模式class
+  const appContainer = squareRoot.querySelector('.app');
+  if (appContainer) {
+    appContainer.classList.remove('detail-view-mode');
+  }
+  
+  // 获取需要操作的元素
+  const commentsSection = previousPostId ? squareRoot.getElementById(`comments-${previousPostId}`) : null;
+  const allMessageItems = squareRoot.querySelectorAll('.message-item');
+  const searchContainer = squareRoot.querySelector('.search-container');
+  const publishTrigger = squareRoot.querySelector('.publish-trigger-section');
+  const publishSec = squareRoot.querySelector('.publish-section');
+  const messagesHeader = squareRoot.querySelector('.messages-header');
+  const backButtonContainer = squareRoot.querySelector('.back-button-container');
+  
+  // 使用全局动画系统淡出评论和返回按钮
+  const fadeOutItems = [];
+  if (commentsSection) fadeOutItems.push(commentsSection);
+  if (backButtonContainer) fadeOutItems.push(backButtonContainer);
+  
+  if (window.AnimationUtils && fadeOutItems.length > 0) {
+    // 启用GPU加速
+    fadeOutItems.forEach(el => {
+      window.AnimationUtils.enableGPUAcceleration(el);
+      window.AnimationUtils.setWillChange(el, 'opacity, transform');
+    });
+    
+    // 并行淡出
+    await window.AnimationUtils.parallel(
+      fadeOutItems.map(el => () => window.AnimationUtils.fadeOut(el, 200))
+    );
+    
+    // 清理
+    if (commentsSection) {
+      commentsSection.style.display = 'none';
+      window.AnimationUtils.clearWillChange(commentsSection);
+    }
+    if (backButtonContainer) {
+      removeBackButton();
+    }
+  } else {
+    // 降级处理
+    if (commentsSection) {
+      commentsSection.style.transition = 'opacity 0.2s ease';
+      commentsSection.style.opacity = '0';
+      await new Promise(resolve => setTimeout(resolve, 210));
+      commentsSection.style.display = 'none';
+      commentsSection.style.opacity = '';
+      commentsSection.style.transition = '';
+    }
+    if (backButtonContainer) {
+      backButtonContainer.style.transition = 'opacity 0.2s ease';
+      backButtonContainer.style.opacity = '0';
+      setTimeout(() => removeBackButton(), 210);
+    }
+  }
+  
+  // 直接显示所有元素，不使用淡入动画
+  allMessageItems.forEach(item => {
+    // 移除详情模式class，恢复卡片样式
+    item.classList.remove('detail-mode');
+    
+    if (item.style.display === 'none') {
+      item.style.display = 'block';
+    }
+    // 清除所有可能的内联样式
+    item.style.opacity = '';
+    item.style.transform = '';
+    item.style.transition = '';
+  });
+  
+  if (searchContainer && searchContainer.style.display === 'none') {
+    searchContainer.style.display = 'block';
+  }
+  if (searchContainer) {
+    searchContainer.style.opacity = '';
+    searchContainer.style.transform = '';
+    searchContainer.style.transition = '';
+  }
+  
+  if (publishTrigger && publishTrigger.style.display === 'none') {
+    publishTrigger.style.display = 'flex';
+  }
+  if (publishTrigger) {
+    publishTrigger.style.opacity = '';
+    publishTrigger.style.transform = '';
+    publishTrigger.style.transition = '';
+  }
+  
+  if (messagesHeader && messagesHeader.style.display === 'none') {
+    messagesHeader.style.display = 'flex';
+  }
+  if (messagesHeader) {
+    messagesHeader.style.opacity = '';
+    messagesHeader.style.transform = '';
+    messagesHeader.style.transition = '';
+  }
+  
+  // 重置发布区域状态（确保隐藏并清除所有样式）
+  if (publishSec) {
+    // 取消所有动画
+    try {
+      const animations = publishSec.getAnimations();
+      animations.forEach(anim => anim.cancel());
+    } catch (e) {
+      // 忽略错误
+    }
+    
+    publishSec.style.display = 'none';
+    publishSec.style.opacity = '1';
+    publishSec.style.transform = '';
+    publishSec.style.transition = '';
+  }
+  
+  // 滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+/**
+ * 添加返回按钮
+ */
+async function addBackButton() {
+  // 如果已经存在返回按钮，不重复添加
+  if (squareRoot.querySelector('.back-button-container')) {
+    return;
+  }
+  
+  const backButtonContainer = document.createElement('div');
+  backButtonContainer.className = 'back-button-container';
+  backButtonContainer.innerHTML = `
+    <button class="back-to-list-btn" onclick="backToList()">
+      <ion-icon ios="close-outline" md="close-sharp" aria-hidden="true"></ion-icon>
+    </button>
+  `;
+  
+  // 插入到 messages-section 前面
+  const messagesSection = squareRoot.querySelector('.messages-section');
+  if (messagesSection && messagesSection.parentNode) {
+    messagesSection.parentNode.insertBefore(backButtonContainer, messagesSection);
+    
+    // 使用全局动画系统
+    if (window.AnimationUtils) {
+      // 初始状态
+      backButtonContainer.style.opacity = '0';
+      backButtonContainer.style.transform = 'scale(0.8)';
+      
+      // 启用GPU加速
+      window.AnimationUtils.enableGPUAcceleration(backButtonContainer);
+      window.AnimationUtils.setWillChange(backButtonContainer, 'opacity, transform');
+      
+      // 等待一帧
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      
+      // 使用Web Animations API
+      const animation = backButtonContainer.animate([
+        { opacity: 0, transform: 'scale(0.8)' },
+        { opacity: 1, transform: 'scale(1)' }
+      ], {
+        duration: window.AnimationUtils.getAdjustedDuration(250),
+        easing: window.AnimationUtils.config.easing.smooth,
+        fill: 'forwards'
+      });
+      
+      animation.addEventListener('finish', () => {
+        backButtonContainer.style.opacity = '';
+        backButtonContainer.style.transform = '';
+        window.AnimationUtils.clearWillChange(backButtonContainer);
+      });
+    } else {
+      // 降级处理
+      backButtonContainer.style.opacity = '0';
+      backButtonContainer.style.transform = 'scale(0.8)';
+      
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          backButtonContainer.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+          backButtonContainer.style.opacity = '1';
+          backButtonContainer.style.transform = 'scale(1)';
+          
+          setTimeout(() => {
+            backButtonContainer.style.transition = '';
+            backButtonContainer.style.transform = '';
+          }, 320);
+        });
+      });
+    }
+  }
+}
+
+/**
+ * 移除返回按钮
+ */
+function removeBackButton() {
+  const backButtonContainer = squareRoot.querySelector('.back-button-container');
+  if (backButtonContainer && backButtonContainer.parentNode) {
+    backButtonContainer.parentNode.removeChild(backButtonContainer);
+  }
+}
+
+/**
  * 更新消息列表显示
  */
 function updateMessagesList() {
@@ -932,9 +1406,6 @@ function updateMessagesList() {
   messages.forEach((message, index) => {
     const messageElement = createMessageElement(message, index);
     messagesList.appendChild(messageElement);
-    
-    // 自动加载评论
-    loadComments(message.id);
   });
   
   // 更新消息计数
@@ -951,6 +1422,7 @@ function createMessageElement(message, index) {
   const messageDiv = document.createElement('div');
   messageDiv.className = 'message-item';
   messageDiv.style.animationDelay = `${index * 0.1}s`;
+  messageDiv.dataset.postId = message.id; // 存储帖子ID
   
   const timeAgo = getTimeAgo(message.timestamp);
   
@@ -977,28 +1449,45 @@ function createMessageElement(message, index) {
         <div class="message-author">${escapeHtml(message.author)}</div>
         <div class="message-time">${timeAgo}</div>
       </div>
-      ${isCurrentUser ? `
-        <button class="menu-btn" onclick="toggleMessageMenu('${message.id}', event)">
-          <ion-icon ios="ellipsis-horizontal-outline" md="ellipsis-horizontal-sharp" aria-hidden="true"></ion-icon>
-        </button>
-        <div class="dropdown-menu" id="message-menu-${message.id}" style="display: none;">
+      <button class="menu-btn" onclick="toggleMessageMenu('${message.id}', event)">
+        <ion-icon ios="ellipsis-horizontal-outline" md="ellipsis-horizontal-sharp" aria-hidden="true"></ion-icon>
+      </button>
+      <div class="dropdown-menu" id="message-menu-${message.id}" style="display: none;">
+        ${isCurrentUser ? `
           <button class="dropdown-menu-item" onclick="deletePost('${message.id}')">
             <ion-icon ios="trash-outline" md="trash-sharp" aria-hidden="true"></ion-icon>
             <span>删除</span>
           </button>
-        </div>
-      ` : ''}
+        ` : `
+          <button class="dropdown-menu-item" onclick="reportContent('post', '${message.id}', '${message.authorId || ''}')">
+            <ion-icon ios="flag-outline" md="flag-sharp" aria-hidden="true"></ion-icon>
+            <span>举报</span>
+          </button>
+          ${message.authorId && message.author !== '匿名用户' ? `
+            <button class="dropdown-menu-item dropdown-menu-item-danger" onclick="blockUser('${message.authorId}', '${escapeHtml(message.author)}')">
+              <ion-icon ios="ban-outline" md="ban-sharp" aria-hidden="true"></ion-icon>
+              <span>屏蔽用户</span>
+            </button>
+          ` : ''}
+        `}
+      </div>
     </div>
     <div class="message-content">
       ${message.text ? `<div class="message-text">${escapeHtml(message.text)}</div>` : ''}
       ${message.images && message.images.length > 0 ? 
         `<div class="message-images">
           ${message.images.map((img, imgIndex) => 
-            `<img src="${img}" alt="消息图片" class="message-image" onclick="openImageModal('${img}')" onerror="console.error('图片加载失败:', this.src); this.style.display='none'" onload="console.log('图片加载成功:', this.src)" loading="lazy">`
+            `<img src="${img}" alt="消息图片" class="message-image" onclick="openImageModal('${img}'); event.stopPropagation();" onerror="console.error('图片加载失败:', this.src); this.style.display='none'" onload="console.log('图片加载成功:', this.src)" loading="lazy">`
           ).join('')}
         </div>` : ''}
     </div>
-    <div class="comments-section" id="comments-${message.id}">
+    <div class="message-footer">
+      <div class="comment-count" id="comment-count-${message.id}">
+        <ion-icon ios="chatbubble-outline" md="chatbubble-sharp" aria-hidden="true"></ion-icon>
+        <span class="count-text">${message.comments_count || message.comments || 0}</span>
+      </div>
+    </div>
+    <div class="comments-section" id="comments-${message.id}" style="display: none;">
       <div class="comments-list" id="comments-list-${message.id}">
         <!-- 评论将通过JavaScript动态添加 -->
       </div>
@@ -1029,6 +1518,28 @@ function createMessageElement(message, index) {
       </div>
     </div>
   `;
+  
+  // 添加点击事件来显示帖子详情
+  const messageContent = messageDiv.querySelector('.message-content');
+  const messageHeader = messageDiv.querySelector('.message-header');
+  
+  const clickHandler = (e) => {
+    // 如果点击的是菜单按钮、图片或评论计数，不触发详情视图
+    if (e.target.closest('.menu-btn') || 
+        e.target.closest('.dropdown-menu') || 
+        e.target.closest('.message-image') ||
+        e.target.closest('.comment-count')) {
+      return;
+    }
+    showPostDetail(message.id);
+  };
+  
+  if (messageContent) {
+    messageContent.addEventListener('click', clickHandler);
+  }
+  if (messageHeader) {
+    messageHeader.addEventListener('click', clickHandler);
+  }
   
   return messageDiv;
 }
@@ -1093,7 +1604,11 @@ function isWithinDeleteWindow(timestamp) {
  */
 function updateMessageCount() {
   if (messageCount) {
-    messageCount.textContent = `${messages.length} 条消息`;
+    if (searchQuery) {
+      messageCount.textContent = `${messages.length} 条搜索结果`;
+    } else {
+      messageCount.textContent = `${messages.length} 条消息`;
+    }
   }
 }
 
@@ -1333,6 +1848,44 @@ function toggleComments(postId) {
 }
 
 /**
+ * 批量加载所有帖子的评论数
+ * @param {Array} messages - 帖子数组
+ */
+async function loadAllCommentCounts(messages) {
+  if (!messages || messages.length === 0) return;
+  
+  // 异步加载每个帖子的评论数，不阻塞UI，并分散请求时间
+  messages.forEach((message, index) => {
+    // 每个请求间隔50ms，避免同时发送太多请求
+    setTimeout(async () => {
+      try {
+        const API_BASE = getApiBase();
+        const identity = await resolveUserIdentity();
+        const resp = await fetch(API_BASE + '/square/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            post_id: message.id,
+            current_user_id: identity.user_id || null
+          })
+        });
+        
+        if (!resp.ok) return; // 静默失败，不影响用户体验
+        const data = await resp.json();
+        
+        if (data.success && Array.isArray(data.data)) {
+          // 更新评论计数显示
+          updateCommentCount(message.id, data.data.length);
+        }
+      } catch (error) {
+        // 静默失败，不显示错误
+        console.debug(`加载帖子 ${message.id} 的评论数失败:`, error);
+      }
+    }, index * 50); // 每个请求延迟50ms
+  });
+}
+
+/**
  * 加载指定消息的评论
  * @param {string} postId - 消息ID
  */
@@ -1363,6 +1916,21 @@ async function loadComments(postId) {
 }
 
 /**
+ * 更新评论计数
+ * @param {string} postId - 消息ID
+ * @param {number} count - 评论数量
+ */
+function updateCommentCount(postId, count) {
+  const commentCountElement = squareRoot.getElementById(`comment-count-${postId}`);
+  if (commentCountElement) {
+    const countText = commentCountElement.querySelector('.count-text');
+    if (countText) {
+      countText.textContent = count;
+    }
+  }
+}
+
+/**
  * 渲染评论列表
  * @param {string} postId - 消息ID
  * @param {Array} comments - 评论数组
@@ -1372,11 +1940,14 @@ function renderComments(postId, comments) {
   if (!commentsList) return;
   
   if (comments.length === 0) {
-    commentsList.innerHTML = '<div class="no-comments">还没有评论，来抢沙发吧！</div>';
+    // 没有评论时不显示任何内容，但保持容器存在
+    commentsList.innerHTML = '';
+    updateCommentCount(postId, 0);
     return;
   }
   
   commentsList.innerHTML = comments.map(comment => createCommentElement(comment)).join('');
+  updateCommentCount(postId, comments.length);
 }
 
 /**
@@ -1413,17 +1984,28 @@ function createCommentElement(comment) {
         </div>
         <div class="comment-text">${escapeHtml(comment.text)}</div>
       </div>
-      ${isCurrentUser ? `
-        <button class="comment-menu-btn" onclick="toggleCommentMenu('${comment.id}', event)">
-          <ion-icon ios="ellipsis-horizontal-outline" md="ellipsis-horizontal-sharp" aria-hidden="true"></ion-icon>
-        </button>
-        <div class="comment-dropdown-menu" id="comment-menu-${comment.id}" style="display: none;">
+      <button class="comment-menu-btn" onclick="toggleCommentMenu('${comment.id}', event)">
+        <ion-icon ios="ellipsis-horizontal-outline" md="ellipsis-horizontal-sharp" aria-hidden="true"></ion-icon>
+      </button>
+      <div class="comment-dropdown-menu" id="comment-menu-${comment.id}" style="display: none;">
+        ${isCurrentUser ? `
           <button class="dropdown-menu-item" onclick="deleteCommentWithRefresh('${comment.id}')">
             <ion-icon ios="trash-outline" md="trash-sharp" aria-hidden="true"></ion-icon>
             <span>删除</span>
           </button>
-        </div>
-      ` : ''}
+        ` : `
+          <button class="dropdown-menu-item" onclick="reportContent('comment', '${comment.id}', '${comment.user_id || ''}')">
+            <ion-icon ios="flag-outline" md="flag-sharp" aria-hidden="true"></ion-icon>
+            <span>举报</span>
+          </button>
+          ${comment.user_id && comment.username !== '匿名用户' ? `
+            <button class="dropdown-menu-item dropdown-menu-item-danger" onclick="blockUser('${comment.user_id}', '${escapeHtml(comment.username)}')">
+              <ion-icon ios="ban-outline" md="ban-sharp" aria-hidden="true"></ion-icon>
+              <span>屏蔽用户</span>
+            </button>
+          ` : ''}
+        `}
+      </div>
     </div>
   `;
 }
@@ -1676,7 +2258,10 @@ async function deletePost(postId) {
       window.__hapticImpact__('Medium');
     }
     
-    // 不再需要从本地存储中移除，因为统一通过user_id匹配
+    // 如果删除的是当前详情视图的帖子，返回列表
+    if (isDetailView && currentDetailPostId === postId) {
+      backToList();
+    }
     
     // 重新加载消息列表
     await loadMessages();
@@ -1942,6 +2527,450 @@ function confirmDialog(message, type = 'danger') {
   });
 }
 
+/**
+ * 举报内容
+ * @param {string} contentType - 'post' or 'comment'
+ * @param {string} contentId - 内容ID
+ * @param {string} reportedUserId - 被举报用户ID
+ */
+async function reportContent(contentType, contentId, reportedUserId) {
+  // 触觉反馈
+  if (window.__hapticImpact__) {
+    window.__hapticImpact__('Light');
+  }
+  
+  // 关闭菜单
+  const allMenus = squareRoot.querySelectorAll('.dropdown-menu, .comment-dropdown-menu');
+  allMenus.forEach(menu => menu.style.display = 'none');
+  
+  // 显示举报原因选择对话框
+  const reason = await showReportDialog();
+  if (!reason) return;
+  
+  try {
+    const identity = await resolveUserIdentity();
+    if (!identity.user_id) {
+      showToast('请先登录');
+      return;
+    }
+    
+    const API_BASE = getApiBase();
+    const payload = {
+      reporter_id: identity.user_id,
+      content_type: contentType,
+      content_id: contentId,
+      reported_user_id: reportedUserId || undefined,
+      reason: reason.value,
+      details: reason.details || undefined
+    };
+    
+    const resp = await fetch(API_BASE + '/report/content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    
+    if (!data.success) throw new Error(data.message || '举报失败');
+    
+    showToast('举报已提交，感谢您的反馈');
+    
+    // 触觉反馈
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Medium');
+    }
+  } catch (error) {
+    console.error('举报失败:', error);
+    showToast(error.message || '举报失败，请重试');
+  }
+}
+
+/**
+ * 屏蔽用户
+ * @param {string} blockedId - 被屏蔽用户ID
+ * @param {string} blockedName - 被屏蔽用户名
+ */
+async function blockUser(blockedId, blockedName) {
+  // 触觉反馈
+  if (window.__hapticImpact__) {
+    window.__hapticImpact__('Light');
+  }
+  
+  // 关闭菜单
+  const allMenus = squareRoot.querySelectorAll('.dropdown-menu, .comment-dropdown-menu');
+  allMenus.forEach(menu => menu.style.display = 'none');
+  
+  const confirmed = await confirmDialog(
+    `确定要屏蔽用户"${blockedName}"吗？屏蔽后将不会看到该用户的任何内容。`,
+    'danger'
+  );
+  if (!confirmed) return;
+  
+  try {
+    const identity = await resolveUserIdentity();
+    if (!identity.user_id) {
+      showToast('请先登录');
+      return;
+    }
+    
+    const API_BASE = getApiBase();
+    const payload = {
+      blocker_id: identity.user_id,
+      blocked_id: blockedId
+    };
+    
+    const resp = await fetch(API_BASE + '/block/user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    
+    if (!data.success) throw new Error(data.message || '屏蔽失败');
+    
+    showToast('已屏蔽该用户');
+    
+    // 触觉反馈
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Medium');
+    }
+    
+    // 重新加载消息列表以过滤被屏蔽用户的内容
+    await loadMessages();
+  } catch (error) {
+    console.error('屏蔽用户失败:', error);
+    showToast(error.message || '屏蔽失败，请重试');
+  }
+}
+
+/**
+ * 显示举报原因选择对话框
+ * @returns {Promise<Object|null>} 返回选择的原因和详情，或null
+ */
+function showReportDialog() {
+  ensureReportDialogStyles();
+  
+  return new Promise((resolve) => {
+    const mask = document.createElement('div');
+    mask.className = 'report-dialog-mask';
+    
+    const dialog = document.createElement('div');
+    dialog.className = 'report-dialog';
+    
+    const title = document.createElement('h3');
+    title.className = 'report-dialog-title';
+    title.textContent = '举报原因';
+    
+    const reasons = [
+      { value: 'spam', label: '垃圾广告', icon: 'megaphone' },
+      { value: 'harassment', label: '骚扰辱骂', icon: 'sad' },
+      { value: 'hate_speech', label: '仇恨言论', icon: 'warning' },
+      { value: 'violence', label: '暴力内容', icon: 'alert-circle' },
+      { value: 'adult_content', label: '色情内容', icon: 'eye-off' },
+      { value: 'misleading', label: '虚假误导', icon: 'help-circle' },
+      { value: 'privacy_violation', label: '侵犯隐私', icon: 'lock-closed' },
+      { value: 'other', label: '其他', icon: 'ellipsis-horizontal-circle' }
+    ];
+    
+    const reasonsList = document.createElement('div');
+    reasonsList.className = 'report-reasons-list';
+    
+    let selectedReason = null;
+    
+    reasons.forEach(reason => {
+      const item = document.createElement('button');
+      item.className = 'report-reason-item';
+      item.innerHTML = `
+        <ion-icon ios="${reason.icon}-outline" md="${reason.icon}-sharp"></ion-icon>
+        <span>${reason.label}</span>
+      `;
+      
+      item.addEventListener('click', () => {
+        // 移除其他选中状态
+        reasonsList.querySelectorAll('.report-reason-item').forEach(i => {
+          i.classList.remove('selected');
+        });
+        // 设置当前选中
+        item.classList.add('selected');
+        selectedReason = reason.value;
+        submitBtn.disabled = false;
+      });
+      
+      reasonsList.appendChild(item);
+    });
+    
+    const detailsLabel = document.createElement('label');
+    detailsLabel.className = 'report-details-label';
+    detailsLabel.textContent = '补充说明（可选）';
+    
+    const detailsTextarea = document.createElement('textarea');
+    detailsTextarea.className = 'report-details-textarea';
+    detailsTextarea.placeholder = '请详细描述问题...';
+    detailsTextarea.maxLength = 500;
+    
+    const footer = document.createElement('div');
+    footer.className = 'report-dialog-footer';
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'report-dialog-btn report-dialog-btn-cancel';
+    cancelBtn.textContent = '取消';
+    
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'report-dialog-btn report-dialog-btn-submit';
+    submitBtn.textContent = '提交举报';
+    submitBtn.disabled = true;
+    
+    footer.append(cancelBtn, submitBtn);
+    dialog.append(title, reasonsList, detailsLabel, detailsTextarea, footer);
+    mask.appendChild(dialog);
+    document.body.appendChild(mask);
+    
+    // 显示动画
+    requestAnimationFrame(() => {
+      mask.classList.add('show');
+      dialog.classList.add('show');
+    });
+    
+    const close = (result) => {
+      dialog.classList.remove('show');
+      mask.classList.remove('show');
+      setTimeout(() => {
+        if (mask.parentNode) mask.remove();
+      }, 200);
+      resolve(result);
+    };
+    
+    cancelBtn.addEventListener('click', () => {
+      if (window.__hapticImpact__) window.__hapticImpact__('Light');
+      close(null);
+    });
+    
+    submitBtn.addEventListener('click', () => {
+      if (window.__hapticImpact__) window.__hapticImpact__('Medium');
+      if (selectedReason) {
+        close({
+          value: selectedReason,
+          details: detailsTextarea.value.trim() || null
+        });
+      }
+    });
+    
+    mask.addEventListener('click', (e) => {
+      if (e.target === mask) close(null);
+    });
+  });
+}
+
+/**
+ * 确保举报对话框样式已加载
+ */
+function ensureReportDialogStyles() {
+  if (document.getElementById('report-dialog-style')) return;
+  
+  const style = document.createElement('style');
+  style.id = 'report-dialog-style';
+  style.textContent = `
+    .report-dialog-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10001;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    .report-dialog-mask.show {
+      opacity: 1;
+    }
+    
+    .report-dialog {
+      width: min(90vw, 420px);
+      max-height: 80vh;
+      background: var(--card, #fff);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      transform: translateY(20px) scale(0.95);
+      opacity: 0;
+      transition: all 0.2s ease;
+      overflow-y: auto;
+    }
+    
+    .report-dialog.show {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+    
+    .report-dialog-title {
+      margin: 0 0 16px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text, #111);
+    }
+    
+    .report-reasons-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .report-reason-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 8px;
+      border: 2px solid var(--divider, #e0e0e0);
+      border-radius: 12px;
+      background: var(--card, #fff);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 13px;
+      color: var(--text-secondary, #666);
+    }
+    
+    .report-reason-item ion-icon {
+      font-size: 24px;
+      color: var(--text-secondary, #666);
+    }
+    
+    .report-reason-item:hover {
+      border-color: var(--brand, #6200ea);
+      background: var(--brand-light, #f3e5f5);
+    }
+    
+    .report-reason-item.selected {
+      border-color: var(--brand, #6200ea);
+      background: var(--brand-light, #f3e5f5);
+      color: var(--brand, #6200ea);
+    }
+    
+    .report-reason-item.selected ion-icon {
+      color: var(--brand, #6200ea);
+    }
+    
+    .report-details-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text, #111);
+    }
+    
+    .report-details-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 12px;
+      border: 1px solid var(--divider, #e0e0e0);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      margin-bottom: 16px;
+      background: var(--card, #fff);
+      color: var(--text, #111);
+    }
+    
+    .report-details-textarea:focus {
+      outline: none;
+      border-color: var(--brand, #6200ea);
+    }
+    
+    .report-dialog-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    
+    .report-dialog-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .report-dialog-btn-cancel {
+      background: var(--divider, #e0e0e0);
+      color: var(--text, #111);
+    }
+    
+    .report-dialog-btn-cancel:hover {
+      background: var(--divider-dark, #bdbdbd);
+    }
+    
+    .report-dialog-btn-submit {
+      background: var(--brand, #6200ea);
+      color: #fff;
+    }
+    
+    .report-dialog-btn-submit:hover:not(:disabled) {
+      background: var(--brand-700, #4b00b5);
+      transform: translateY(-1px);
+    }
+    
+    .report-dialog-btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .report-dialog {
+        background: var(--card, #1e1f22);
+      }
+      
+      .report-dialog-title {
+        color: var(--text, #e6e6e6);
+      }
+      
+      .report-reason-item {
+        background: var(--card, #2b2d31);
+        border-color: var(--divider, #3a3c42);
+        color: var(--text-secondary, #b0b3b8);
+      }
+      
+      .report-reason-item ion-icon {
+        color: var(--text-secondary, #b0b3b8);
+      }
+      
+      .report-reason-item:hover {
+        background: var(--brand-dark, #2a0066);
+      }
+      
+      .report-reason-item.selected {
+        background: var(--brand-dark, #2a0066);
+      }
+      
+      .report-details-textarea {
+        background: var(--card, #2b2d31);
+        border-color: var(--divider, #3a3c42);
+        color: var(--text, #e6e6e6);
+      }
+      
+      .report-dialog-btn-cancel {
+        background: var(--divider, #3a3c42);
+        color: var(--text, #e6e6e6);
+      }
+    }
+  `;
+  
+  document.head.appendChild(style);
+  cleanupFns.push(() => {
+    if (style.parentNode) style.remove();
+  });
+}
+
 // -----------------------------
 // Public API / 对外导出
 // -----------------------------
@@ -1958,5 +2987,9 @@ window.toggleCommentMenu = toggleCommentMenu;
 window.deletePost = deletePost;
 window.deleteCommentWithRefresh = deleteCommentWithRefresh;
 window.confirmDialog = confirmDialog;
+window.showPostDetail = showPostDetail;
+window.backToList = backToList;
+window.reportContent = reportContent;
+window.blockUser = blockUser;
 
 })();

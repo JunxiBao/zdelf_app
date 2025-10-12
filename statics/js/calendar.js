@@ -6,42 +6,8 @@
 (function() {
     'use strict';
 
-    // 震动反馈初始化（兼容性处理）
-    if (!window.__hapticImpact__) {
-        var isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
-        function getHaptics() {
-            var C = window.Capacitor || {};
-            return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null;
-        }
-        function isVibrationEnabled(){
-            try{
-                var v = localStorage.getItem('vibration_enabled');
-                return v === null ? true : v === 'true';
-            }catch(_){ return true; }
-        }
-        window.__hapticImpact__ = function(style){
-            if (!isVibrationEnabled()) return;
-            if (!isNative) {
-                // 在非原生环境中，尝试使用Web Vibration API作为fallback
-                if (navigator.vibrate) {
-                    const patterns = {
-                        'Light': 50,
-                        'Medium': 100,
-                        'Heavy': 200
-                    };
-                    navigator.vibrate(patterns[style] || 50);
-                    console.log(`🔔 振动反馈: ${style} (${patterns[style] || 50}ms)`);
-                }
-                return;
-            }
-            var h = getHaptics();
-            if (!h) return;
-            try { 
-                h.impact && h.impact({ style: style }); 
-                console.log(`🔔 原生振动反馈: ${style}`);
-            } catch(_) {}
-        };
-    }
+    // 震动反馈 - 使用统一的HapticManager
+    // HapticManager已在index.html中全局加载，这里直接使用即可
 
     // 月份名称
     const monthNames = [

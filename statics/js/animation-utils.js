@@ -186,14 +186,9 @@
         ripple.remove();
       });
 
-      // 触觉反馈
-      if (window.__hapticImpact__) {
-        try {
-          window.__hapticImpact__('Light');
-        } catch (e) {
-          // 忽略错误
-        }
-      }
+      // 触觉反馈 - 使用HapticManager统一管理，避免重复震动
+      // 注意：涟漪效果不再主动触发震动，由具体的点击事件控制
+      // 这样可以避免与其他事件处理器的震动反馈重复
     }
 
     destroy() {

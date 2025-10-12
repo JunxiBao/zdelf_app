@@ -77,58 +77,276 @@ body {
 .app {
   max-width: 680px;
   margin: 0 auto;
-  padding: 20px 16px 40px;
+  padding: 100px 8px 40px; /* 减少左右间距，让卡片更靠近屏幕边缘 */
   /* 使用全局动画系统统一淡入，这里移除默认动画避免双重动画导致跳动 */
 }
 
-/* Top bar */
-.topbar {
+/* 详情视图模式 - 减少顶部空白 */
+.app.detail-view-mode {
+  padding-top: 50px;
+}
+
+/* 搜索框容器 - 屏幕最上方 */
+.search-container {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: calc(100% - 40px);
+  max-width: 600px;
+  transition: all 0.3s ease;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.search-box {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 18px;
+  padding: 3px;
+  box-shadow: 0 3px 16px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(102, 126, 234, 0.1) 0%, transparent 50%, rgba(102, 126, 234, 0.05) 100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.search-box:focus-within {
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px) scale(1.01);
+}
+
+.search-box:focus-within::before {
+  opacity: 1;
+}
+
+.search-input-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
+  background: transparent;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
-.topbar .title {
-  font-weight: 700;
-  font-size: 20px;
-  letter-spacing: 0.2px;
-  color: var(--text);
+.search-icon {
+  position: absolute;
+  left: 16px;
+  color: #9ca3af;
+  z-index: 1;
+  pointer-events: none;
 }
 
-.refresh-btn {
-  background: var(--card);
-  border: 1px solid var(--divider);
-  border-radius: 12px;
-  padding: 10px;
+.search-input:focus + .search-icon {
+  color: #667eea;
+  transform: scale(1.1);
+}
+
+.search-input {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  color: #1f2937;
+  outline: none;
+  font-weight: 500;
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.search-input:focus {
+  color: #1f2937;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 12px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: none;
+  color: white;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  color: var(--text-secondary);
+  padding: 8px;
+  border-radius: 12px;
+  min-width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-1);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+  position: relative;
+  overflow: hidden;
+  z-index: 2;
 }
 
-.refresh-btn:hover {
-  background: var(--brand);
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-2);
+.clear-search-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.05) 100%);
+  opacity: 0;
 }
 
-.refresh-btn:active {
-  transform: translateY(0) scale(0.95);
+.clear-search-btn:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
-.refresh-btn ion-icon {
-  width: 20px;
-  height: 20px;
+.clear-search-btn:hover::before {
+  opacity: 1;
+}
+
+.clear-search-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+}
+
+.clear-search-btn svg {
+  position: relative;
+  z-index: 1;
+}
+
+.clear-search-btn.hidden {
+  display: none;
+}
+
+/* 深色模式搜索框样式 */
+@media (prefers-color-scheme: dark) {
+  .search-box {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    border-color: rgba(167, 139, 250, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .search-box::before {
+    background: linear-gradient(45deg, rgba(167, 139, 250, 0.1) 0%, transparent 50%, rgba(167, 139, 250, 0.05) 100%);
+  }
+
+  .search-box:focus-within {
+    box-shadow: 0 8px 32px rgba(167, 139, 250, 0.2);
+    border-color: rgba(167, 139, 250, 0.4);
+  }
+
+  .search-icon {
+    color: #6b7280;
+  }
+
+  .search-input:focus + .search-icon {
+    color: #a78bfa;
+  }
+
+  .search-input {
+    color: #f9fafb;
+  }
+
+  .search-input::placeholder {
+    color: #6b7280;
+  }
+
+  .search-input:focus {
+    color: #f9fafb;
+  }
+
+  .clear-search-btn {
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    box-shadow: 0 2px 8px rgba(248, 113, 113, 0.4);
+  }
+
+  .clear-search-btn:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 4px 12px rgba(248, 113, 113, 0.5);
+  }
+}
+
+/* 返回按钮容器 */
+.back-button-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.back-to-list-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text);
+  border: 1px solid var(--divider);
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.back-to-list-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 1);
+}
+
+.back-to-list-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.back-to-list-btn ion-icon {
+  font-size: 24px;
+  display: block;
+}
+
+/* 暗色模式下的返回按钮 */
+@media (prefers-color-scheme: dark) {
+  .back-to-list-btn {
+    background: rgba(21, 25, 36, 0.95);
+    color: var(--text);
+    border-color: var(--divider);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .back-to-list-btn:hover {
+    background: rgba(21, 25, 36, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
 }
 
 /* 发布触发按钮样式 */
 .publish-trigger-section {
   margin-bottom: 20px;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .publish-trigger-btn {
@@ -560,6 +778,9 @@ body {
   justify-content: space-between;
   margin-bottom: 20px;
   padding: 0 4px;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .messages-header h2 {
@@ -623,31 +844,103 @@ body {
   box-shadow: var(--shadow-2);
   overflow: hidden;
   border: 1px solid var(--divider);
-  transition: all 0.3s ease;
-  animation: messageSlideIn 0.5s ease-out;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: messageSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 @keyframes messageSlideIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .message-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+}
+
+/* 详情模式 - 移除卡片样式，让内容平铺展开 */
+.message-item.detail-mode {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  margin: 0;
+  padding: 0;
+}
+
+.message-item.detail-mode:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.message-item.detail-mode .message-header {
+  border-bottom: none;
+  padding: 12px 60px 12px 0; /* 右边留出空间给按钮 */
+}
+
+.message-item.detail-mode .menu-btn {
+  top: 12px;
+  right: 0;
+}
+
+.message-item.detail-mode .message-content {
+  padding: 12px 0 20px;
+}
+
+.message-item.detail-mode .message-footer {
+  padding: 0 0 12px;
+  display: none; /* 隐藏评论计数，因为评论就在下面 */
+}
+
+/* 详情模式下的帖子内容样式 - 让主体更突出 */
+.message-item.detail-mode .message-text {
+  font-size: 19px;
+  line-height: 1.75;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+
+.message-item.detail-mode .message-author {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.message-item.detail-mode .message-time {
+  font-size: 14px;
+}
+
+.message-item.detail-mode .message-avatar {
+  width: 44px;
+  height: 44px;
+}
+
+/* 详情模式下的图片 - 更大更突出 */
+.message-item.detail-mode .message-images {
+  gap: 16px;
+}
+
+.message-item.detail-mode .message-image {
+  height: 180px;
+  border-radius: 16px;
 }
 
 .message-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 20px 24px 16px;
+  padding: 20px 60px 16px 24px; /* 右边留出空间给按钮 */
   border-bottom: 1px solid var(--divider);
   position: relative;
 }
@@ -697,6 +990,7 @@ body {
 
 .message-info {
   flex: 1;
+  min-width: 0; /* 允许内容收缩 */
 }
 
 .message-author {
@@ -704,6 +998,9 @@ body {
   font-size: 16px;
   color: var(--text);
   margin: 0 0 4px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .message-time {
@@ -713,13 +1010,17 @@ body {
 }
 
 .message-content {
-  padding: 0 24px 20px;
+  padding: 12px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 80px;
 }
 
 .message-text {
   color: var(--text);
   line-height: 1.6;
-  margin: 0 0 16px 0;
+  margin: 0;
   white-space: pre-wrap;
   word-wrap: break-word;
 }
@@ -729,6 +1030,10 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 12px;
+  margin-top: 0;
+}
+
+.message-text + .message-images {
   margin-top: 12px;
 }
 
@@ -739,13 +1044,45 @@ body {
   border-radius: 12px;
   box-shadow: var(--shadow-1);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .message-image:hover {
-  transform: scale(1.02);
-  box-shadow: var(--shadow-2);
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  border-color: rgba(98, 0, 234, 0.2);
+}
+
+/* 消息底部 - 包含评论计数 */
+.message-footer {
+  padding: 0 24px 12px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.comment-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: transparent;
+  pointer-events: none;
+  user-select: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.comment-count ion-icon {
+  font-size: 18px;
+}
+
+.comment-count .count-text {
+  font-weight: 500;
+  line-height: 1;
 }
 
 /* Empty state */
@@ -810,7 +1147,60 @@ body {
 /* Responsive design */
 @media (max-width: 480px) {
   .app {
-    padding: 16px 12px 40px;
+    padding: 90px 6px 40px; /* 移动端减少左右间距，让卡片更靠近屏幕边缘 */
+  }
+  
+  .app.detail-view-mode {
+    padding-top: 50px;
+  }
+  
+  .search-container {
+    top: 20px;
+    width: calc(100% - 20px);
+    max-width: none;
+  }
+  
+  .search-box {
+    border-radius: 16px;
+    padding: 3px;
+  }
+  
+  .search-input {
+    padding: 14px 14px 14px 48px;
+    font-size: 0.95rem;
+  }
+  
+  .search-icon {
+    left: 14px;
+    width: 18px;
+    height: 18px;
+  }
+  
+  .clear-search-btn {
+    right: 10px;
+    min-width: 28px;
+    height: 28px;
+    padding: 6px;
+  }
+  
+  .clear-search-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .back-button-container {
+    top: 16px;
+    right: 16px;
+  }
+  
+  .back-to-list-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 22px;
+  }
+  
+  .back-to-list-btn ion-icon {
+    font-size: 22px;
   }
   
   .publish-header {
@@ -826,11 +1216,35 @@ body {
   }
   
   .message-header {
-    padding: 16px 20px 12px;
+    padding: 16px 56px 12px 20px; /* 右边留出空间给按钮 */
   }
   
   .message-content {
-    padding: 0 20px 16px;
+    padding: 10px 20px;
+    min-height: 70px;
+  }
+  
+  /* 移动端三个点按钮 */
+  .menu-btn {
+    top: 16px;
+    right: 20px;
+    width: 28px;
+    height: 28px;
+  }
+  
+  .menu-btn ion-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .dropdown-menu {
+    right: 16px;
+    min-width: 100px;
+    font-size: 14px;
+  }
+  
+  .message-footer {
+    padding: 0 20px 10px;
   }
   
   .user-avatar,
@@ -847,6 +1261,62 @@ body {
     min-height: 100px;
     font-size: 15px;
   }
+  
+  /* 移动端详情模式字体调整 */
+  .message-item.detail-mode .message-header {
+    padding: 12px 56px 12px 0; /* 右边留出空间给按钮 */
+  }
+  
+  .message-item.detail-mode .menu-btn {
+    top: 12px;
+    right: 0;
+  }
+  
+  .message-item.detail-mode .message-text {
+    font-size: 18px;
+    line-height: 1.7;
+    letter-spacing: 0.2px;
+  }
+  
+  .message-item.detail-mode .message-author {
+    font-size: 16px;
+  }
+  
+  .message-item.detail-mode .message-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .message-item.detail-mode .comment-text {
+    font-size: 12px;
+  }
+  
+  .message-item.detail-mode .comment-author {
+    font-size: 12px;
+  }
+  
+  .message-item.detail-mode .comment-time {
+    font-size: 10px;
+  }
+  
+  .message-item.detail-mode .comment-avatar {
+    width: 30px;
+    height: 30px;
+  }
+  
+  /* 移动端详情模式评论项间距调整 */
+  .message-item.detail-mode .comment-item {
+    padding: 3px 0;
+  }
+  
+  /* 移动端详情模式图片调整 */
+  .message-item.detail-mode .message-images {
+    gap: 12px;
+  }
+  
+  .message-item.detail-mode .message-image {
+    height: 150px;
+  }
 }
 
 
@@ -854,9 +1324,111 @@ body {
 .comments-section {
   border-top: 1px solid var(--divider);
   background: linear-gradient(135deg, rgba(98, 0, 234, 0.02) 0%, rgba(0, 0, 0, 0.01) 100%);
-  animation: slideDown 0.3s ease-out;
   border-radius: 0 0 16px 16px;
   overflow: hidden;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* 详情模式下的评论区域样式 */
+.message-item.detail-mode .comments-section {
+  border-top: 1px solid var(--divider);
+  background: transparent;
+  border-radius: 0;
+  margin-top: 24px;
+  padding-top: 20px;
+}
+
+/* 详情模式下的评论列表样式 */
+.message-item.detail-mode .comments-list {
+  padding: 0;
+  max-height: none; /* 移除最大高度限制，让评论自然展开 */
+}
+
+/* 详情模式下的评论项样式 - 移除卡片效果 */
+.message-item.detail-mode .comment-item {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 3px 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--divider);
+  min-height: auto;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+/* 详情模式下的评论菜单按钮位置 */
+.message-item.detail-mode .comment-menu-btn {
+  top: 3px; /* 和详情模式的padding对齐 */
+  right: 0;
+}
+
+.message-item.detail-mode .comment-dropdown-menu {
+  top: 3px;
+  right: 36px;
+}
+
+.message-item.detail-mode .comment-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.message-item.detail-mode .comment-item:hover {
+  background: transparent !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* 详情模式下的评论文字 - 比帖子内容小 */
+.message-item.detail-mode .comment-text {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.message-item.detail-mode .comment-author {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.message-item.detail-mode .comment-time {
+  font-size: 11px;
+  line-height: 1.2;
+  margin-top: 1px;
+}
+
+.message-item.detail-mode .comment-avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.message-item.detail-mode .comment-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-item.detail-mode .comment-info {
+  margin-bottom: 4px;
+}
+
+/* 详情模式下的评论输入区域 */
+.message-item.detail-mode .comment-input-section {
+  background: transparent;
+  border-radius: 0;
+  padding: 16px 0 20px;
+  margin-top: 16px;
+}
+
+/* 详情模式下的增加评论按钮区域 */
+.message-item.detail-mode .add-comment-section {
+  padding: 8px 0 12px;
 }
 
 @keyframes slideDown {
@@ -901,14 +1473,14 @@ body {
   display: flex;
   gap: 12px;
   margin-bottom: 16px;
-  padding: 16px 20px;
+  padding: 16px 50px 16px 20px; /* 右边留出空间给菜单按钮 */
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-  animation: commentSlideIn 0.3s ease-out;
-  align-items: center;
-  height: 72px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: commentSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  align-items: flex-start; /* 改为顶部对齐，让按钮能和用户名对齐 */
+  min-height: 72px; /* 改为最小高度 */
   flex-shrink: 0;
   position: relative;
 }
@@ -920,18 +1492,18 @@ body {
 @keyframes commentSlideIn {
   from {
     opacity: 0;
-    transform: translateX(-10px);
+    transform: translateX(-20px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
   }
 }
 
 .comment-item:hover {
-  background: rgba(255, 255, 255, 0.8);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px) scale(1.005);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
 
@@ -1178,7 +1750,7 @@ body {
 
 /* 增加评论按钮样式 */
 .add-comment-section {
-  padding: 16px 24px 20px;
+  padding: 8px 24px 16px; /* 减少顶部间距，从16px改为8px */
   text-align: center;
 }
 
@@ -1188,7 +1760,7 @@ body {
   border-radius: 20px;
   padding: 12px 24px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1214,14 +1786,14 @@ body {
   background: linear-gradient(135deg, var(--brand) 0%, var(--brand-700) 100%);
   color: white;
   border-color: var(--brand);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(98, 0, 234, 0.3);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 20px rgba(98, 0, 234, 0.35);
   animation: none;
 }
 
 .add-comment-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(98, 0, 234, 0.2);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(98, 0, 234, 0.25);
   animation: none;
 }
 
@@ -1342,8 +1914,33 @@ body {
   }
   
   .comment-item {
-    height: 64px;
-    padding: 14px 16px;
+    min-height: 64px;
+    padding: 14px 46px 14px 16px; /* 右边留出空间给按钮 */
+  }
+  
+  /* 移动端评论菜单按钮位置 */
+  .comment-menu-btn {
+    top: 14px; /* 和移动端padding对齐 */
+  }
+  
+  .comment-dropdown-menu {
+    top: 14px;
+  }
+  
+  /* 移动端详情模式下的评论项 - 覆盖通用样式 */
+  .message-item.detail-mode .comment-item {
+    min-height: auto;
+    padding: 3px 0;
+  }
+  
+  .message-item.detail-mode .comment-menu-btn {
+    top: 3px;
+    right: 0;
+  }
+  
+  .message-item.detail-mode .comment-dropdown-menu {
+    top: 3px;
+    right: 36px;
   }
   
   .comment-submit-btn {
@@ -1357,8 +1954,8 @@ body {
   }
   
   .add-comment-section {
-    padding: 12px 20px 16px;
-    margin-top: 16px;
+    padding: 6px 20px 12px; /* 移动端也减少间距 */
+    margin-top: 8px; /* 减少顶部边距 */
   }
   
   .add-comment-btn {
@@ -1381,7 +1978,8 @@ body {
   }
 }
 
-/* 三个点菜单按钮样式 */
+/* ========== 三个点菜单按钮 ========== */
+/* 帖子右上角的三个点按钮 */
 .menu-btn {
   position: absolute;
   top: 20px;
@@ -1397,11 +1995,11 @@ body {
   justify-content: center;
   color: var(--text-secondary);
   transition: all 0.2s ease;
-  z-index: 10;
+  z-index: 5;
 }
 
 .menu-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.06);
   color: var(--text);
 }
 
@@ -1410,11 +2008,12 @@ body {
   height: 20px;
 }
 
-/* 下拉菜单样式 */
+/* 下拉菜单样式 - 显示在按钮下方 */
 .dropdown-menu {
   position: absolute;
-  top: 52px;
-  right: 24px;
+  top: 100%;
+  right: 20px;
+  margin-top: 4px;
   background: var(--card);
   border: 1px solid var(--divider);
   border-radius: 12px;
@@ -1458,6 +2057,15 @@ body {
   color: var(--danger);
 }
 
+.dropdown-menu-item-danger {
+  color: var(--danger);
+}
+
+.dropdown-menu-item-danger:hover {
+  background: rgba(229, 57, 53, 0.15);
+  color: var(--danger);
+}
+
 .dropdown-menu-item ion-icon {
   width: 18px;
   height: 18px;
@@ -1466,9 +2074,8 @@ body {
 /* 评论项中的菜单按钮 */
 .comment-menu-btn {
   position: absolute;
-  top: 50%;
+  top: 16px; /* 和padding对齐，让按钮在用户名那一行 */
   right: 16px;
-  transform: translateY(-50%);
   width: 28px;
   height: 28px;
   background: transparent;
@@ -1486,6 +2093,7 @@ body {
 .comment-menu-btn:hover {
   background: rgba(0, 0, 0, 0.05);
   color: var(--text);
+  transform: scale(1.05);
 }
 
 .comment-menu-btn ion-icon {
@@ -1496,9 +2104,8 @@ body {
 /* 评论的下拉菜单 */
 .comment-dropdown-menu {
   position: absolute;
-  top: 50%;
-  right: 50px;
-  transform: translateY(-50%);
+  top: 16px; /* 和按钮对齐 */
+  right: 50px; /* 在按钮左边显示 */
   background: var(--card);
   border: 1px solid var(--divider);
   border-radius: 12px;

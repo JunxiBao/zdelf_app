@@ -27,39 +27,8 @@ function hideSaveLoading(saveState, originalText = null) {
     saveState.spinner.classList.remove('show');
 }
 
-// 震动反馈初始化（兼容性处理）
-(function() {
-  'use strict';
-  // 如果全局震动反馈不存在，提供fallback实现
-  if (!window.__hapticImpact__) {
-    var isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
-    function getHaptics() {
-      var C = window.Capacitor || {};
-      return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null;
-    }
-    function isVibrationEnabled(){
-      try{
-        var v = localStorage.getItem('vibration_enabled');
-        return v === null ? true : v === 'true';
-      }catch(_){ return true; }
-    }
-    window.__hapticImpact__ = function(style){
-      if (!isVibrationEnabled()) return;
-      if (!isNative) {
-        try {
-          if (navigator.vibrate) {
-            var map = { Light: 10, Medium: 20, Heavy: 30 };
-            navigator.vibrate(map[style] || 10);
-          }
-        } catch(_) {}
-        return;
-      }
-      var h = getHaptics();
-      if (!h) return;
-      try { h.impact && h.impact({ style: style }); } catch(_) {}
-    };
-  }
-})();
+// 震动反馈 - 使用统一的HapticManager
+// HapticManager已在index.html中全局加载，这里直接使用即可
 
 // 页面初始化
 function initMetricsPage() {
@@ -109,7 +78,6 @@ function initMetricsPage() {
     
     // 初始化出血点图片上传功能
     initBleedingImageUpload();
-    
 
     // 初始化自我评分滑块功能
     initSelfRatingSlider();
@@ -122,6 +90,17 @@ function initMetricsPage() {
     
     // 初始化症状矩阵
     initSymptomsMatrix();
+
+    // 使用输入框增强模块（优化键盘弹出和震动体验）
+    if (window.InputEnhancement) {
+        // 自动增强所有输入框，配置为不在input时震动
+        window.InputEnhancement.autoEnhance({
+            hapticDelay: 50,        // 延迟震动，不干扰键盘
+            hapticOnBlur: true,     // 输入完成时震动
+            hapticOnInput: false    // 输入过程不震动
+        });
+        console.log('✅ 输入框体验增强已启用');
+    }
 
     console.log('健康指标页面初始化完成');
 }
@@ -784,8 +763,8 @@ function fillFormData(type, data) {
 
 // 初始化出血点选择功能
 function initBleedingPointSelection() {
-    // 添加第一个出血点项目
-    addBleedingPoint();
+    // 添加第一个出血点项目（初始化，不震动）
+    addBleedingPoint('', '', 0);  // 传入 index=0 表示初始化
     
     // 初始化添加按钮和图片上传状态
     validateBleedingPointControls();
@@ -805,10 +784,13 @@ function addBleedingPoint(selectedValue = '', otherDescription = '', index = nul
         }, 300);
     }
     
-    // 添加按钮点击时的震动反馈
-    try {
-        window.__hapticImpact__ && window.__hapticImpact__('Medium');
-    } catch(_) {}
+    // 🔧 修复：只在用户主动点击时震动，初始化时不震动
+    // index === null 表示是用户点击添加，不是初始化加载
+    if (index === null) {
+        try {
+            window.__hapticImpact__ && window.__hapticImpact__('Medium');
+        } catch(_) {}
+    }
     
     const itemIndex = index !== null ? index : container.children.length;
     
@@ -839,7 +821,6 @@ function addBleedingPoint(selectedValue = '', otherDescription = '', index = nul
         <div class="other-bleeding-input" style="display: none;">
             <div class="other-input-wrapper">
                 <input type="text" class="other-bleeding-text other-text-input" placeholder="请描述其他出血部位...">
-                <div class="input-icon">✏️</div>
             </div>
         </div>
     `;
@@ -917,10 +898,7 @@ function addBleedingPoint(selectedValue = '', otherDescription = '', index = nul
     // 更新删除按钮显示状态
     updateBleedingPointRemoveButtons();
     
-    // 添加震动反馈
-    try {
-        window.__hapticImpact__ && window.__hapticImpact__('Heavy');
-    } catch(_) {}
+    // 🔧 移除重复的震动反馈（已在函数开头根据 index 条件判断）
 }
 
 // 删除出血点项目
@@ -2207,38 +2185,12 @@ function addUrinalysisItem(selectedItem = '', value = '', index = null) {
         } catch(_) {}
     });
     
-    const valueInput = itemDiv.querySelector('.urinalysis-value');
-    let inputTimer;
+    // 🔧 修复：移除手动添加的事件监听器
+    // InputEnhancement 已经自动处理了所有输入框的 focus/input/blur 事件
+    // 手动添加会导致重复监听，造成双重震动和焦点问题
     
-    valueInput.addEventListener('input', function() {
-        // 清除之前的定时器
-        if (inputTimer) {
-            clearTimeout(inputTimer);
-        }
-        
-        // 防抖处理，避免过于频繁的震动
-        inputTimer = setTimeout(() => {
-            try {
-                window.__hapticImpact__ && window.__hapticImpact__('Light');
-            } catch(_) {}
-        }, 200);
-    });
-    
-    // 输入框聚焦时的震动
-    valueInput.addEventListener('focus', function() {
-        try {
-            window.__hapticImpact__ && window.__hapticImpact__('Light');
-        } catch(_) {}
-    });
-    
-    // 输入框失去焦点时的震动（输入完成）
-    valueInput.addEventListener('blur', function() {
-        if (this.value.trim()) {
-            try {
-                window.__hapticImpact__ && window.__hapticImpact__('Medium');
-            } catch(_) {}
-        }
-    });
+    // 注意：不需要手动为输入框添加任何事件监听器
+    // InputEnhancement 的 MutationObserver 会自动检测并增强新添加的输入框
     
     // 更新删除按钮显示状态
     updateRemoveButtons();
@@ -2354,26 +2306,55 @@ let bloodTestItemIndex = 0;
 // 切换自定义输入框显示/隐藏
 function toggleCustomInput(selectElement) {
     const itemDiv = selectElement.closest('.blood-test-item, .urinalysis-item, .symptoms-item');
-    if (!itemDiv) return;
+    if (!itemDiv) return null;
     
     const customWrapper = itemDiv.querySelector('.custom-input-wrapper');
     const itemInput = itemDiv.querySelector('.item-input');
     const symptomsDetailWrapper = itemDiv.querySelector('.symptoms-detail-wrapper');
     const selectedValue = selectElement.value;
     
+    let inputToFocus = null; // 🔧 记录需要聚焦的输入框
+    
     // 对于血常规和尿常规，控制数值输入框的显示
     if (itemDiv.classList.contains('blood-test-item') || itemDiv.classList.contains('urinalysis-item')) {
         if (itemInput) {
             if (selectedValue && selectedValue !== '') {
                 itemInput.style.display = 'flex';
-                // 添加动画效果
-                itemInput.style.opacity = '0';
-                itemInput.style.transform = 'translateY(-10px)';
-                setTimeout(() => {
-                    itemInput.style.transition = 'all 0.3s ease';
-                    itemInput.style.opacity = '1';
-                    itemInput.style.transform = 'translateY(0)';
-                }, 10);
+                
+                // 🔧 关键修复：移除动画，直接显示
+                // 动画期间的 reflow/repaint 可能导致iOS WebView强制移除焦点
+                itemInput.style.opacity = '1';
+                itemInput.style.transform = 'translateY(0)';
+                
+                // 🔧 关键修复：禁用select的tabindex，防止它重新获得焦点
+                // 这样可以避免iOS在input和select之间的焦点来回跳转
+                selectElement.setAttribute('tabindex', '-1');
+                if (document.activeElement === selectElement) {
+                    selectElement.blur();
+                }
+                console.log('[DEBUG] 已禁用select焦点并让其失去焦点');
+                
+                // 🔧 输入框变为可见后，立即增强它
+                // 在元素可见时添加事件监听器，iOS才会正确识别焦点
+                const input = itemInput.querySelector('input');
+                console.log('[DEBUG] 输入框变为可见', {
+                    hasInput: !!input,
+                    hasEnhancement: !!window.InputEnhancement,
+                    isEnhanced: input?._inputEnhanced,
+                    isVisible: input?.offsetParent !== null,
+                    display: input ? window.getComputedStyle(input).display : 'N/A',
+                    selectHasFocus: document.activeElement === selectElement
+                });
+                
+                if (input && window.InputEnhancement && !input._inputEnhanced) {
+                    console.log('[DEBUG] 准备增强输入框');
+                    window.InputEnhancement.enhance(input, {
+                        hapticDelay: 50,
+                        hapticOnBlur: false,  // 🔧 禁用blur震动，避免与iOS焦点机制冲突
+                        hapticOnInput: false
+                    });
+                    console.log('[DEBUG] 增强完成，input._inputEnhanced =', input._inputEnhanced);
+                }
             } else {
                 itemInput.style.display = 'none';
                 // 清除数值输入框的值
@@ -2431,6 +2412,9 @@ function toggleCustomInput(selectElement) {
             }
         }
     }
+    
+    // 🔧 返回需要聚焦的输入框（如果有）
+    return inputToFocus;
 }
 
 // 添加血常规检测项目
@@ -2531,38 +2515,9 @@ function addBloodTestItem(selectedItem = '', value = '', index = null) {
         } catch(_) {}
     });
     
-    const valueInput = itemDiv.querySelector('.blood-test-value');
-    let inputTimer;
-    
-    valueInput.addEventListener('input', function() {
-        // 清除之前的定时器
-        if (inputTimer) {
-            clearTimeout(inputTimer);
-        }
-        
-        // 防抖处理，避免过于频繁的震动
-        inputTimer = setTimeout(() => {
-            try {
-                window.__hapticImpact__ && window.__hapticImpact__('Light');
-            } catch(_) {}
-        }, 200);
-    });
-    
-    // 输入框聚焦时的震动
-    valueInput.addEventListener('focus', function() {
-        try {
-            window.__hapticImpact__ && window.__hapticImpact__('Light');
-        } catch(_) {}
-    });
-    
-    // 输入框失去焦点时的震动（输入完成）
-    valueInput.addEventListener('blur', function() {
-        if (this.value.trim()) {
-            try {
-                window.__hapticImpact__ && window.__hapticImpact__('Medium');
-            } catch(_) {}
-        }
-    });
+    // 注意：不需要手动为输入框添加事件监听器
+    // InputEnhancement的MutationObserver会在container.appendChild(itemDiv)后自动检测并增强
+    // 手动调用enhance()会导致重复添加事件监听器，造成双击问题
     
     // 更新删除按钮显示状态
     updateBloodTestRemoveButtons();
@@ -2697,40 +2652,9 @@ function initBloodTestMatrix() {
         });
     });
     
-    const existingInputs = container.querySelectorAll('.blood-test-value');
-    existingInputs.forEach(input => {
-        let inputTimer;
-        
-        input.addEventListener('input', function() {
-            // 清除之前的定时器
-            if (inputTimer) {
-                clearTimeout(inputTimer);
-            }
-            
-            // 防抖处理，避免过于频繁的震动
-            inputTimer = setTimeout(() => {
-                try {
-                    window.__hapticImpact__ && window.__hapticImpact__('Light');
-                } catch(_) {}
-            }, 200);
-        });
-        
-        // 输入框聚焦时的震动
-        input.addEventListener('focus', function() {
-            try {
-                window.__hapticImpact__ && window.__hapticImpact__('Light');
-            } catch(_) {}
-        });
-        
-        // 输入框失去焦点时的震动（输入完成）
-        input.addEventListener('blur', function() {
-            if (this.value.trim()) {
-                try {
-                    window.__hapticImpact__ && window.__hapticImpact__('Medium');
-                } catch(_) {}
-            }
-        });
-    });
+    // 注意：不再手动为现有输入框添加事件监听器
+    // InputEnhancement 模块的 autoEnhance 已经在页面初始化时处理了所有输入框
+    // 这样可以避免重复的事件监听器导致的双击问题
     
     // 初始化删除按钮状态和添加按钮状态
     updateBloodTestRemoveButtons();
@@ -2762,40 +2686,9 @@ function initUrinalysisMatrix() {
         });
     });
     
-    const existingInputs = container.querySelectorAll('.urinalysis-value');
-    existingInputs.forEach(input => {
-        let inputTimer;
-        
-        input.addEventListener('input', function() {
-            // 清除之前的定时器
-            if (inputTimer) {
-                clearTimeout(inputTimer);
-            }
-            
-            // 防抖处理，避免过于频繁的震动
-            inputTimer = setTimeout(() => {
-                try {
-                    window.__hapticImpact__ && window.__hapticImpact__('Light');
-                } catch(_) {}
-            }, 200);
-        });
-        
-        // 输入框聚焦时的震动
-        input.addEventListener('focus', function() {
-            try {
-                window.__hapticImpact__ && window.__hapticImpact__('Light');
-            } catch(_) {}
-        });
-        
-        // 输入框失去焦点时的震动（输入完成）
-        input.addEventListener('blur', function() {
-            if (this.value.trim()) {
-                try {
-                    window.__hapticImpact__ && window.__hapticImpact__('Medium');
-                } catch(_) {}
-            }
-        });
-    });
+    // 注意：不再手动为现有输入框添加事件监听器
+    // InputEnhancement 模块的 autoEnhance 已经在页面初始化时处理了所有输入框
+    // 这样可以避免重复的事件监听器导致的双击问题
     
     // 初始化删除按钮状态和添加按钮状态
     updateRemoveButtons();

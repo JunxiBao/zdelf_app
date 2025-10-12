@@ -10,14 +10,16 @@
  * - 轻量交互：弹窗、加载遮罩、60s 重发倒计时
  */
 (function () {
-  // Lightweight haptics bridge (only if not provided by shell)
-  try {
-    if (!window.__hapticImpact__) {
-      const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
-      function getHaptics(){ const C = window.Capacitor || {}; return (C.Plugins && C.Plugins.Haptics) || window.Haptics || C.Haptics || null; }
-      window.__hapticImpact__ = function(style){ if (!isNative) return; const h = getHaptics(); if (!h) return; try { h.impact && h.impact({ style }); } catch(_) {} };
-    }
-  } catch(_) {}
+  // 震动反馈 - 使用统一的HapticManager
+  function hapticImpact(style, options) {
+    try {
+      if (window.HapticManager) {
+        window.HapticManager.impact(style, { context: 'loginbyphone-page', debounce: 100, ...options });
+      } else if (window.__hapticImpact__) {
+        window.__hapticImpact__(style);
+      }
+    } catch(_) {}
+  }
   const phone = document.getElementById("phone");
   const code = document.getElementById("smsCode");
   const sendBtn = document.getElementById("sendCodeBtn");
@@ -64,7 +66,7 @@
   /** Show a lightweight toast popup (falls back to alert if popup DOM missing). */
   function toast(text) {
     if (!popup || !popupText) return alert(text);
-    try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
+    hapticImpact('Light');
     popupText.textContent = text;
     popup.classList.add("show");
     setTimeout(() => popup.classList.remove("show"), 1800);
@@ -116,7 +118,7 @@
   }
 
   sendBtn.addEventListener("click", async () => {
-    try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
+    hapticImpact('Light');
     const v = phone.value;
     if (!validPhone(v)) {
       toast("请填写有效手机号");
@@ -160,7 +162,7 @@
   });
 
   loginBtn.addEventListener("click", async () => {
-    try { window.__hapticImpact__ && window.__hapticImpact__('Medium'); } catch(_) {}
+    hapticImpact('Medium');
     const v = phone.value;
     const c = (code.value || "").trim();
 

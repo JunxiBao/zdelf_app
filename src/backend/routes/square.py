@@ -106,15 +106,29 @@ def list_posts():
             _ensure_table(conn)
             cur = conn.cursor(dictionary=True)
             try:
-                cur.execute(
-                    """
-                    SELECT id, user_id, username, avatar_url, text_content, image_urls, created_at
-                    FROM square_posts
-                    ORDER BY created_at DESC
-                    LIMIT %s
-                    """,
-                    (limit,),
-                )
+                # If current_user_id is provided, filter out posts from blocked users
+                if current_user_id:
+                    cur.execute(
+                        """
+                        SELECT p.id, p.user_id, p.username, p.avatar_url, p.text_content, p.image_urls, p.created_at
+                        FROM square_posts p
+                        LEFT JOIN blocked_users b ON b.blocker_id = %s AND b.blocked_id = p.user_id
+                        WHERE b.id IS NULL
+                        ORDER BY p.created_at DESC
+                        LIMIT %s
+                        """,
+                        (current_user_id, limit),
+                    )
+                else:
+                    cur.execute(
+                        """
+                        SELECT id, user_id, username, avatar_url, text_content, image_urls, created_at
+                        FROM square_posts
+                        ORDER BY created_at DESC
+                        LIMIT %s
+                        """,
+                        (limit,),
+                    )
                 rows = cur.fetchall()
             finally:
                 cur.close()
@@ -252,15 +266,28 @@ def list_comments():
             _ensure_table(conn)
             cur = conn.cursor(dictionary=True)
             try:
-                cur.execute(
-                    """
-                    SELECT id, user_id, username, avatar_url, text_content, created_at
-                    FROM square_comments
-                    WHERE post_id = %s
-                    ORDER BY created_at ASC
-                    """,
-                    (post_id,),
-                )
+                # If current_user_id is provided, filter out comments from blocked users
+                if current_user_id:
+                    cur.execute(
+                        """
+                        SELECT c.id, c.user_id, c.username, c.avatar_url, c.text_content, c.created_at
+                        FROM square_comments c
+                        LEFT JOIN blocked_users b ON b.blocker_id = %s AND b.blocked_id = c.user_id
+                        WHERE c.post_id = %s AND b.id IS NULL
+                        ORDER BY c.created_at ASC
+                        """,
+                        (current_user_id, post_id),
+                    )
+                else:
+                    cur.execute(
+                        """
+                        SELECT id, user_id, username, avatar_url, text_content, created_at
+                        FROM square_comments
+                        WHERE post_id = %s
+                        ORDER BY created_at ASC
+                        """,
+                        (post_id,),
+                    )
                 rows = cur.fetchall()
             finally:
                 cur.close()
