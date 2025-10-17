@@ -1704,10 +1704,13 @@ body {
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   font-size: 14px;
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(98, 0, 234, 0.3);
+  min-width: 100px;
+  white-space: nowrap;
 }
 
 .reply-submit-btn:hover {
@@ -2290,6 +2293,14 @@ body {
     gap: 12px;
   }
   
+  .reply-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: nowrap;
+  }
+  
   .reply-input {
     min-height: 70px;
     font-size: 13px;
@@ -2299,11 +2310,33 @@ body {
   .reply-submit-btn {
     padding: 8px 16px;
     font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 80px;
+  }
+  
+  .reply-submit-btn ion-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  
+  .reply-submit-btn span {
+    white-space: nowrap;
   }
   
   .reply-target {
     font-size: 11px;
     padding: 2px 8px;
+  }
+  
+  .reply-char-count {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    flex-shrink: 0;
   }
   
   .reply-btn {

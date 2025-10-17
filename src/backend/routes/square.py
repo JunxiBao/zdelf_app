@@ -80,6 +80,17 @@ def _ensure_table(conn):
     try:
         cur.execute(posts_ddl)
         cur.execute(comments_ddl)
+        
+        # 检查并添加parent_comment_id字段（如果不存在）
+        try:
+            cur.execute("ALTER TABLE square_comments ADD COLUMN parent_comment_id VARCHAR(64) NULL")
+            cur.execute("ALTER TABLE square_comments ADD INDEX idx_parent_comment_id (parent_comment_id)")
+            cur.execute("ALTER TABLE square_comments ADD FOREIGN KEY (parent_comment_id) REFERENCES square_comments(id) ON DELETE CASCADE")
+        except mysql_errors.ProgrammingError as e:
+            # 字段已存在，忽略错误
+            if "Duplicate column name" not in str(e) and "Duplicate key name" not in str(e):
+                raise
+        
         conn.commit()
     finally:
         try:
