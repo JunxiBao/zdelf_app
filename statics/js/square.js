@@ -1954,11 +1954,25 @@ function renderComments(postId, comments) {
     return;
   }
   
-  commentsList.innerHTML = comments.map(comment => createCommentElement(comment)).join('');
+  // 创建评论映射，方便查找父评论
+  const commentMap = {};
+  comments.forEach(comment => {
+    commentMap[comment.id] = comment;
+  });
+  
+  // 为每个评论添加父评论信息
+  const commentsWithParent = comments.map(comment => {
+    if (comment.parent_comment_id && commentMap[comment.parent_comment_id]) {
+      comment.parentComment = commentMap[comment.parent_comment_id];
+    }
+    return comment;
+  });
+  
+  commentsList.innerHTML = commentsWithParent.map(comment => createCommentElement(comment)).join('');
   updateCommentCount(postId, comments.length);
   
   // 为每个评论创建菜单（放在主容器中）
-  comments.forEach(comment => {
+  commentsWithParent.forEach(comment => {
     createCommentMenu(comment);
   });
 }
@@ -1982,9 +1996,21 @@ function createCommentElement(comment) {
   // 2. 匿名评论：也通过 user_id 匹配（后端会记录user_id，但前端显示时保持匿名）
   const isCurrentUser = currentUser && comment.user_id && currentUser.id === comment.user_id;
   
+  // 判断是否是回复评论
+  const isReply = comment.parent_comment_id !== null && comment.parent_comment_id !== undefined;
+  
+  // 构建回复显示文本 - 更优雅的显示方式
+  let replyInfo = '';
+  if (isReply && comment.parentComment) {
+    replyInfo = `<div class="reply-info">
+      <span class="reply-label">回复</span>
+      <span class="reply-target">${escapeHtml(comment.parentComment.username)}</span>
+    </div>`;
+  }
+  
   // 菜单现在不放在评论容器内，而是放到页面主容器
   return `
-    <div class="comment-item" data-comment-id="${comment.id}">
+    <div class="comment-item" data-comment-id="${comment.id}" data-parent-comment-id="${comment.parent_comment_id || ''}">
       <div class="comment-avatar">
         ${avatarUrl ? 
           `<img src="${avatarUrl}" alt="${comment.username}" class="avatar-image">` :
@@ -1996,11 +2022,46 @@ function createCommentElement(comment) {
           <div class="comment-author">${escapeHtml(comment.username)}</div>
           <div class="comment-time">${timeAgo}</div>
         </div>
+        ${replyInfo}
         <div class="comment-text">${escapeHtml(comment.text)}</div>
+        <div class="comment-actions">
+          <button class="reply-btn" onclick="showReplyInput('${comment.id}')">
+            <ion-icon ios="arrow-undo-outline" md="arrow-undo-sharp" aria-hidden="true"></ion-icon>
+            <span>回复</span>
+          </button>
+        </div>
       </div>
       <button class="comment-menu-btn" onclick="toggleCommentMenu('${comment.id}', event)" data-comment-id="${comment.id}">
         <ion-icon ios="ellipsis-horizontal-outline" md="ellipsis-horizontal-sharp" aria-hidden="true"></ion-icon>
       </button>
+    </div>
+    <div class="reply-input-section" id="reply-input-section-${comment.id}" style="display: none;">
+      <div class="reply-input-wrapper">
+        <div class="reply-input-header">
+          <span class="reply-input-label">回复 ${escapeHtml(comment.username)}</span>
+          <button class="reply-close-btn" onclick="hideReplyInput('${comment.id}')">
+            <ion-icon ios="close-outline" md="close-sharp" aria-hidden="true"></ion-icon>
+          </button>
+        </div>
+        <div class="reply-input-container">
+          <textarea 
+            class="reply-input" 
+            id="reply-input-${comment.id}"
+            placeholder="写下你的回复..."
+            maxlength="500"
+            rows="3"
+          ></textarea>
+          <div class="reply-actions">
+            <div class="reply-char-count">
+              <span id="reply-char-count-${comment.id}">0</span>/500
+            </div>
+            <button class="reply-submit-btn" onclick="submitReply('${comment.id}')">
+              <ion-icon ios="send-outline" md="send-sharp" aria-hidden="true"></ion-icon>
+              <span>发送</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -2178,6 +2239,157 @@ async function submitComment(postId) {
   } catch (error) {
     console.error('评论失败:', error);
     showToast('评论失败，请重试');
+  }
+}
+
+/**
+ * 显示回复输入框
+ * @param {string} commentId - 评论ID
+ */
+function showReplyInput(commentId) {
+  const replySection = squareRoot.getElementById(`reply-input-section-${commentId}`);
+  const replyBtn = squareRoot.querySelector(`button[onclick="showReplyInput('${commentId}')"]`);
+  
+  if (replySection && replyBtn) {
+    // 隐藏回复按钮
+    replyBtn.style.display = 'none';
+    
+    // 显示回复输入框
+    replySection.style.display = 'block';
+    
+    // 聚焦到输入框并设置字符计数
+    const textarea = squareRoot.getElementById(`reply-input-${commentId}`);
+    const charCount = squareRoot.getElementById(`reply-char-count-${commentId}`);
+    if (textarea) {
+      setTimeout(() => {
+        textarea.focus();
+      }, 100);
+      
+      // 添加字符计数监听
+      const updateCharCount = () => {
+        if (charCount) {
+          charCount.textContent = textarea.value.length;
+        }
+      };
+      
+      textarea.addEventListener('input', updateCharCount);
+      // 清理函数
+      const cleanup = () => {
+        textarea.removeEventListener('input', updateCharCount);
+      };
+      cleanupFns.push(cleanup);
+    }
+    
+    // 触觉反馈
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Light');
+    }
+  }
+}
+
+/**
+ * 隐藏回复输入框
+ * @param {string} commentId - 评论ID
+ */
+function hideReplyInput(commentId) {
+  const replySection = squareRoot.getElementById(`reply-input-section-${commentId}`);
+  const replyBtn = squareRoot.querySelector(`button[onclick="showReplyInput('${commentId}')"]`);
+  
+  if (replySection && replyBtn) {
+    // 隐藏回复输入框
+    replySection.style.display = 'none';
+    
+    // 显示回复按钮
+    replyBtn.style.display = 'flex';
+    
+    // 清空输入框内容
+    const textarea = squareRoot.getElementById(`reply-input-${commentId}`);
+    if (textarea) {
+      textarea.value = '';
+    }
+    
+    // 触觉反馈
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Light');
+    }
+  }
+}
+
+/**
+ * 提交回复
+ * @param {string} commentId - 评论ID
+ */
+async function submitReply(commentId) {
+  const replyInput = squareRoot.getElementById(`reply-input-${commentId}`);
+  if (!replyInput) return;
+  
+  const text = replyInput.value.trim();
+  if (!text) {
+    showToast('请输入回复内容');
+    return;
+  }
+  
+  try {
+    const identity = await resolveUserIdentity();
+    if (!identity.user_id && !identity.username) {
+      alert('未获取到用户身份，请先登录');
+      return;
+    }
+    
+    // 获取帖子ID
+    const commentElement = squareRoot.querySelector(`[data-comment-id="${commentId}"]`);
+    if (!commentElement) {
+      showToast('找不到评论信息');
+      return;
+    }
+    
+    // 从评论元素向上查找帖子ID
+    const commentsSection = commentElement.closest('.comments-section');
+    if (!commentsSection) {
+      showToast('找不到帖子信息');
+      return;
+    }
+    const postId = commentsSection.id.replace('comments-', '');
+    
+    const API_BASE = getApiBase();
+    const payload = {
+      post_id: postId,
+      parent_comment_id: commentId, // 设置父评论ID
+      user_id: identity.user_id || undefined,
+      username: identity.username || undefined,
+      avatar_url: identity.avatar_url || undefined,
+      text: text
+    };
+    
+    const resp = await fetch(API_BASE + '/square/comment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    
+    if (!data.success) throw new Error(data.message || '回复失败');
+    
+    // 清空输入框
+    replyInput.value = '';
+    
+    // 隐藏回复输入框，显示回复按钮
+    hideReplyInput(commentId);
+    
+    // 重新加载评论
+    await loadComments(postId);
+    
+    // 触觉反馈
+    if (window.__hapticImpact__) {
+      window.__hapticImpact__('Medium');
+    }
+    
+    showToast('回复成功');
+  } catch (error) {
+    console.error('回复失败:', error);
+    showToast('回复失败，请重试');
   }
 }
 
@@ -3049,5 +3261,8 @@ window.showPostDetail = showPostDetail;
 window.backToList = backToList;
 window.reportContent = reportContent;
 window.blockUser = blockUser;
+window.showReplyInput = showReplyInput;
+window.hideReplyInput = hideReplyInput;
+window.submitReply = submitReply;
 
 })();

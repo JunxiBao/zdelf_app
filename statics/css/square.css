@@ -1472,17 +1472,18 @@ body {
 .comment-item {
   display: flex;
   gap: 12px;
-  margin-bottom: 16px;
-  padding: 16px 50px 16px 20px; /* 右边留出空间给菜单按钮 */
+  margin-bottom: 20px;
+  padding: 16px 50px 16px 16px; /* 统一的内边距，确保内容不溢出 */
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(0, 0, 0, 0.05);
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   animation: commentSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  align-items: flex-start; /* 改为顶部对齐，让按钮能和用户名对齐 */
-  min-height: 72px; /* 改为最小高度 */
+  align-items: flex-start;
+  min-height: auto; /* 让高度自适应内容 */
   flex-shrink: 0;
   position: relative;
+  overflow: hidden; /* 防止内容溢出 */
 }
 
 .comment-item:last-child {
@@ -1504,6 +1505,225 @@ body {
   background: rgba(255, 255, 255, 0.9);
   transform: translateY(-2px) scale(1.005);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* 回复信息显示样式 - 优雅的显示方式 */
+.reply-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  margin-top: 0;
+  padding: 0;
+}
+
+.reply-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.reply-target {
+  font-size: 12px;
+  color: var(--brand);
+  font-weight: 600;
+  background: rgba(98, 0, 234, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+/* 评论操作按钮 */
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+.reply-btn {
+  background: transparent;
+  border: 1px solid rgba(98, 0, 234, 0.2);
+  border-radius: 16px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 500;
+  min-height: 32px;
+  white-space: nowrap;
+}
+
+.reply-btn:hover {
+  background: rgba(98, 0, 234, 0.1);
+  border-color: var(--brand);
+  transform: translateY(-1px);
+}
+
+.reply-btn ion-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* 回复输入区域 - 优雅的布局 */
+.reply-input-section {
+  margin: 16px 0 24px 0;
+  padding: 0;
+  animation: replySlideDown 0.3s ease-out;
+  clear: both;
+}
+
+@keyframes replySlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reply-input-wrapper {
+  background: var(--card);
+  border-radius: 16px;
+  border: 1px solid var(--divider);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.reply-input-wrapper:hover {
+  box-shadow: var(--shadow-2);
+  border-color: rgba(98, 0, 234, 0.2);
+}
+
+.reply-input-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, rgba(98, 0, 234, 0.05) 0%, rgba(0, 0, 0, 0.02) 100%);
+  border-bottom: 1px solid var(--divider);
+  min-height: 48px;
+}
+
+.reply-input-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.reply-close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reply-close-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text);
+}
+
+.reply-close-btn ion-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.reply-input-container {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.reply-input {
+  width: 100%;
+  min-height: 80px;
+  max-height: 120px;
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--card);
+  resize: vertical;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.reply-input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+  background: var(--card);
+}
+
+.reply-input::placeholder {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.reply-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.reply-char-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.reply-submit-btn {
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-700) 100%);
+  color: white;
+  border: none;
+  border-radius: 24px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(98, 0, 234, 0.3);
+}
+
+.reply-submit-btn:hover {
+  background: linear-gradient(135deg, var(--brand-700) 0%, #7c4dff 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(98, 0, 234, 0.4);
+}
+
+.reply-submit-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(98, 0, 234, 0.3);
+}
+
+.reply-submit-btn ion-icon {
+  width: 16px;
+  height: 16px;
 }
 
 
@@ -1558,17 +1778,19 @@ body {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
-  height: 72px;
+  min-height: auto; /* 让高度自适应内容 */
   position: relative;
+  gap: 6px;
 }
 
 .comment-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  margin-top: 0;
 }
 
 .comment-author {
@@ -1584,11 +1806,11 @@ body {
 
 .comment-text {
   color: var(--text);
-  line-height: 1.4;
+  line-height: 1.5;
   font-size: 14px;
   white-space: pre-wrap;
   word-wrap: break-word;
-  margin: 0;
+  margin: 0 0 6px 0;
 }
 
 .no-comments {
@@ -1869,6 +2091,77 @@ body {
     border-color: #a78bfa;
     animation: none;
   }
+  
+  /* 暗色模式下的回复样式 */
+  .reply-target {
+    background: rgba(167, 139, 250, 0.15);
+    color: #a78bfa;
+  }
+  
+  .reply-input-wrapper {
+    background: var(--card);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .reply-input-wrapper:hover {
+    border-color: rgba(167, 139, 250, 0.3);
+  }
+  
+  .reply-input-header {
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.08) 0%, rgba(0, 0, 0, 0.02) 100%);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .reply-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .reply-input {
+    background: var(--card);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+  }
+  
+  .reply-input:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+  }
+  
+  .reply-btn {
+    border-color: rgba(167, 139, 250, 0.3);
+    color: #a78bfa;
+  }
+  
+  .reply-btn:hover {
+    background: rgba(167, 139, 250, 0.1);
+    border-color: #a78bfa;
+  }
+  
+  .reply-input-container {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(167, 139, 250, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  
+  .reply-input-section {
+    margin: 20px 0 28px 0;
+  }
+  
+  .reply-input:focus {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.3);
+  }
+  
+  .reply-cancel-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #9ca3af;
+  }
+  
+  .reply-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #e5e7eb;
+  }
 }
 
 /* 响应式设计 - 评论区域 */
@@ -1914,8 +2207,9 @@ body {
   }
   
   .comment-item {
-    min-height: 64px;
-    padding: 14px 46px 14px 16px; /* 右边留出空间给按钮 */
+    min-height: auto; /* 让高度自适应内容 */
+    padding: 16px 46px 16px 16px; /* 统一的内边距 */
+    margin-bottom: 16px;
   }
   
   /* 移动端评论菜单按钮位置 */
@@ -1930,7 +2224,7 @@ body {
   /* 移动端详情模式下的评论项 - 覆盖通用样式 */
   .message-item.detail-mode .comment-item {
     min-height: auto;
-    padding: 3px 0;
+    padding: 12px 46px 12px 16px; /* 保持适当的内边距 */
   }
   
   .message-item.detail-mode .comment-menu-btn {
@@ -1975,6 +2269,75 @@ body {
   
   .add-comment-btn:active {
     animation: none;
+  }
+  
+  /* 移动端回复样式 */
+  .reply-input-wrapper {
+    border-radius: 12px;
+  }
+  
+  .reply-input-header {
+    padding: 12px 16px;
+    min-height: 44px;
+  }
+  
+  .reply-input-label {
+    font-size: 13px;
+  }
+  
+  .reply-input-container {
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .reply-input {
+    min-height: 70px;
+    font-size: 13px;
+    padding: 12px 14px;
+  }
+  
+  .reply-submit-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+  
+  .reply-target {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+  
+  .reply-btn {
+    padding: 5px 12px;
+    gap: 5px;
+    min-height: 30px;
+    font-size: 11px;
+  }
+  
+  .reply-btn ion-icon {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .reply-input-container {
+    padding: 8px;
+  }
+  
+  .reply-input {
+    min-height: 32px;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  
+  .reply-cancel-btn,
+  .reply-submit-btn {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .reply-cancel-btn ion-icon,
+  .reply-submit-btn ion-icon {
+    width: 14px;
+    height: 14px;
   }
 }
 

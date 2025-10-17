@@ -61,15 +61,18 @@ def _ensure_table(conn):
     CREATE TABLE IF NOT EXISTS square_comments (
         id VARCHAR(64) PRIMARY KEY,
         post_id VARCHAR(64) NOT NULL,
+        parent_comment_id VARCHAR(64) NULL,
         user_id VARCHAR(128) NULL,
         username VARCHAR(128) NULL,
         avatar_url VARCHAR(500) NULL,
         text_content VARCHAR(500) NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_post_id (post_id),
+        INDEX idx_parent_comment_id (parent_comment_id),
         INDEX idx_user_id (user_id),
         INDEX idx_created_at (created_at),
-        FOREIGN KEY (post_id) REFERENCES square_posts(id) ON DELETE CASCADE
+        FOREIGN KEY (post_id) REFERENCES square_posts(id) ON DELETE CASCADE,
+        FOREIGN KEY (parent_comment_id) REFERENCES square_comments(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     """
     
@@ -270,21 +273,27 @@ def list_comments():
                 if current_user_id:
                     cur.execute(
                         """
-                        SELECT c.id, c.user_id, c.username, c.avatar_url, c.text_content, c.created_at
+                        SELECT c.id, c.parent_comment_id, c.user_id, c.username, c.avatar_url, c.text_content, c.created_at
                         FROM square_comments c
                         LEFT JOIN blocked_users b ON b.blocker_id = %s AND b.blocked_id = c.user_id
                         WHERE c.post_id = %s AND b.id IS NULL
-                        ORDER BY c.created_at ASC
+                        ORDER BY 
+                            CASE WHEN c.parent_comment_id IS NULL THEN c.created_at ELSE NULL END ASC,
+                            c.parent_comment_id ASC,
+                            c.created_at ASC
                         """,
                         (current_user_id, post_id),
                     )
                 else:
                     cur.execute(
                         """
-                        SELECT id, user_id, username, avatar_url, text_content, created_at
+                        SELECT id, parent_comment_id, user_id, username, avatar_url, text_content, created_at
                         FROM square_comments
                         WHERE post_id = %s
-                        ORDER BY created_at ASC
+                        ORDER BY 
+                            CASE WHEN parent_comment_id IS NULL THEN created_at ELSE NULL END ASC,
+                            parent_comment_id ASC,
+                            created_at ASC
                         """,
                         (post_id,),
                     )
@@ -308,6 +317,7 @@ def list_comments():
             
             comments.append({
                 "id": r.get("id"),
+                "parent_comment_id": r.get("parent_comment_id"),
                 "user_id": user_id,  # 匿名评论且非当前用户时返回None
                 "username": r.get("username"),
                 "avatar_url": r.get("avatar_url"),
@@ -338,6 +348,7 @@ def add_comment():
         logger.info("/square/comment body_keys=%s", list(body.keys()))
 
         post_id = (body.get("post_id") or "").strip()
+        parent_comment_id = (body.get("parent_comment_id") or "").strip() or None
         user_id = (body.get("user_id") or "").strip() or None
         username = (body.get("username") or "").strip() or None
         avatar_url = (body.get("avatar_url") or "").strip() or None
@@ -361,10 +372,10 @@ def add_comment():
             try:
                 cur.execute(
                     """
-                    INSERT INTO square_comments (id, post_id, user_id, username, avatar_url, text_content)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    INSERT INTO square_comments (id, post_id, parent_comment_id, user_id, username, avatar_url, text_content)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                     """,
-                    (comment_id, post_id, user_id, username, avatar_url, text_content),
+                    (comment_id, post_id, parent_comment_id, user_id, username, avatar_url, text_content),
                 )
                 conn.commit()
             finally:
