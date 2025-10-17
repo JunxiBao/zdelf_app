@@ -187,14 +187,15 @@ def delete_account():
             if user_avatar_record and user_avatar_record[0]:
                 avatar_url = user_avatar_record[0]
             
-            # 定义需要删除用户数据的表列表
+            # 定义需要删除用户数据的表列表（按依赖关系排序）
+            # 注意：由于外键约束，删除顺序很重要
             tables_to_clean = [
                 "metrics_files",     # 健康指标数据
                 "diet_files",        # 饮食记录数据
                 "case_files",        # 病例记录数据
                 "symptom_files",     # 症状跟踪数据
-                "square_posts",      # 广场帖子数据
-                "square_comments",   # 广场评论数据
+                "square_comments",   # 广场评论数据（先删除子评论）
+                "square_posts",      # 广场帖子数据（后删除，会级联删除相关评论）
             ]
             
             # 删除用户在各个数据表中的记录
@@ -207,6 +208,11 @@ def delete_account():
                         cursor.execute(f"DELETE FROM {table} WHERE username=%s", (username,))
                     deleted_counts[table] = cursor.rowcount
                     logger.info("/delete_account deleted from %s: %d records", table, cursor.rowcount)
+                    
+                    # 特殊处理：删除广场评论时，由于外键约束会自动删除相关子评论
+                    if table == "square_comments":
+                        logger.info("/delete_account 由于外键约束，所有该用户的子评论也会被自动删除")
+                    
                 except Exception as e:
                     logger.warning("/delete_account failed to delete from %s: %s", table, str(e))
                     # 继续删除其他表，不因某个表删除失败而中断

@@ -1484,6 +1484,13 @@ body {
   flex-shrink: 0;
   position: relative;
   overflow: hidden; /* 防止内容溢出 */
+  cursor: pointer; /* 添加点击光标 */
+}
+
+.comment-item:hover {
+  background: rgba(98, 0, 234, 0.05);
+  border-color: rgba(98, 0, 234, 0.1);
+  transform: translateY(-1px);
 }
 
 .comment-item:last-child {
@@ -1507,31 +1514,123 @@ body {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
-/* 回复信息显示样式 - 紧凑但清晰的显示方式 */
-.reply-info {
+/* 回复区域容器 */
+.replies-section {
+  margin: 4px 0 8px 48px; /* 减少上边距，让回复区域更贴近主评论 */
+}
+
+/* 回复切换按钮 */
+.replies-toggle {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 4px;
-  margin-top: 0;
-  padding: 0;
-  font-size: 11px;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
 }
 
-.reply-label {
-  color: var(--text-secondary);
+.replies-toggle:hover {
+  background: transparent;
+}
+
+.replies-toggle-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6200ea;
+  font-size: 14px;
   font-weight: 500;
-  opacity: 0.7;
 }
 
-.reply-target {
-  color: var(--brand);
+.replies-chevron {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.replies-count {
+  color: #6200ea;
+}
+
+/* 回复列表 */
+.replies-list {
+  margin-top: 8px;
+  border-left: 2px solid rgba(98, 0, 234, 0.1);
+}
+
+
+/* 回复元素样式 - 显示在父评论下方 */
+.reply-item {
+  margin: 8px 0 8px 48px; /* 左边距与评论内容对齐 */
+  padding: 8px 12px;
+  background: rgba(98, 0, 234, 0.03);
+  border-left: 2px solid rgba(98, 0, 234, 0.2);
+  border-radius: 0 8px 8px 0;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.reply-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+/* 回复菜单按钮 */
+.reply-menu-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 1; /* 始终显示，不隐藏 */
+}
+
+.reply-menu-btn:hover {
+  background: rgba(255, 255, 255, 1);
+  color: #333;
+  transform: scale(1.1);
+}
+
+.reply-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.reply-username {
   font-weight: 600;
-  background: rgba(98, 0, 234, 0.08);
-  padding: 1px 6px;
-  border-radius: 8px;
-  display: inline-block;
+  font-size: 13px;
+  color: var(--brand);
+}
+
+.reply-time {
   font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.reply-text {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 /* 评论操作按钮 */
@@ -2096,8 +2195,12 @@ body {
   }
   
   /* 暗色模式下的回复样式 */
-  .reply-target {
-    background: rgba(167, 139, 250, 0.15);
+  .reply-item {
+    background: rgba(167, 139, 250, 0.05);
+    border-left-color: rgba(167, 139, 250, 0.3);
+  }
+  
+  .reply-username {
     color: #a78bfa;
   }
   
@@ -2198,6 +2301,24 @@ body {
   .comment-close-btn ion-icon {
     width: 14px;
     height: 14px;
+  }
+  
+  /* 移动端回复区域样式 */
+  .replies-section {
+    margin: 2px 0 6px 32px; /* 移动端进一步减少间距和缩进 */
+  }
+  
+  .replies-toggle {
+    padding: 6px 0; /* 移动端减少内边距 */
+  }
+  
+  .replies-toggle-content {
+    font-size: 13px; /* 移动端稍微减小字体 */
+  }
+  
+  .replies-chevron {
+    width: 14px;
+    height: 14px; /* 移动端稍微减小图标 */
   }
   
   .comment-avatar {
@@ -2327,9 +2448,17 @@ body {
     white-space: nowrap;
   }
   
-  .reply-target {
-    font-size: 11px;
-    padding: 2px 8px;
+  .reply-item {
+    margin: 6px 0 6px 40px; /* 移动端调整左边距 */
+    padding: 6px 10px;
+  }
+  
+  .reply-username {
+    font-size: 12px;
+  }
+  
+  .reply-text {
+    font-size: 12px;
   }
   
   .reply-char-count {
@@ -2564,5 +2693,59 @@ body {
   to {
     transform: scale(12);
     opacity: 0;
+  }
+}
+
+/* 暗色模式下的回复元素样式 */
+@media (prefers-color-scheme: dark) {
+  .replies-toggle {
+    background: transparent;
+    border: none;
+  }
+  
+  .replies-toggle:hover {
+    background: transparent;
+  }
+  
+  .replies-toggle-content {
+    color: #a78bfa;
+  }
+  
+  .replies-count {
+    color: #a78bfa;
+  }
+  
+  .replies-list {
+    border-left-color: rgba(98, 0, 234, 0.2);
+  }
+  
+  
+  .reply-item {
+    background: rgba(98, 0, 234, 0.08);
+    border-left-color: rgba(98, 0, 234, 0.3);
+  }
+  
+  .reply-menu-btn {
+    background: rgba(0, 0, 0, 0.6);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ccc;
+    opacity: 1; /* 确保暗色模式下也始终显示 */
+  }
+  
+  .reply-menu-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+  }
+  
+  .reply-username {
+    color: #e0e0e0;
+  }
+  
+  .reply-time {
+    color: #b0b0b0;
+  }
+  
+  .reply-text {
+    color: #f0f0f0;
   }
 }

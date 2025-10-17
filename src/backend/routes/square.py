@@ -420,6 +420,8 @@ def delete_post(post_id):
             cur = conn.cursor()
             try:
                 # 删除消息（评论会因为外键级联删除自动删除）
+                # 由于外键约束：FOREIGN KEY (post_id) REFERENCES square_posts(id) ON DELETE CASCADE
+                # 删除帖子时会自动删除所有相关的主评论和子评论
                 cur.execute(
                     "DELETE FROM square_posts WHERE id = %s",
                     (post_id,),
@@ -464,6 +466,9 @@ def delete_comment(comment_id):
             _ensure_table(conn)
             cur = conn.cursor()
             try:
+                # 删除评论（子评论会因为外键级联删除自动删除）
+                # 由于外键约束：FOREIGN KEY (parent_comment_id) REFERENCES square_comments(id) ON DELETE CASCADE
+                # 删除主评论时会自动删除所有相关的子评论
                 cur.execute(
                     "DELETE FROM square_comments WHERE id = %s",
                     (comment_id,),
