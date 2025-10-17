@@ -1471,9 +1471,9 @@ body {
 
 .comment-item {
   display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-  padding: 16px 50px 16px 16px; /* 统一的内边距，确保内容不溢出 */
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 14px 50px 14px 14px; /* 紧凑的内边距 */
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(0, 0, 0, 0.05);
@@ -1507,31 +1507,31 @@ body {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
-/* 回复信息显示样式 - 优雅的显示方式 */
+/* 回复信息显示样式 - 紧凑但清晰的显示方式 */
 .reply-info {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: 4px;
+  margin-bottom: 4px;
   margin-top: 0;
   padding: 0;
+  font-size: 11px;
 }
 
 .reply-label {
-  font-size: 12px;
   color: var(--text-secondary);
   font-weight: 500;
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
 .reply-target {
-  font-size: 12px;
   color: var(--brand);
   font-weight: 600;
-  background: rgba(98, 0, 234, 0.1);
-  padding: 2px 8px;
-  border-radius: 10px;
+  background: rgba(98, 0, 234, 0.08);
+  padding: 1px 6px;
+  border-radius: 8px;
   display: inline-block;
+  font-size: 11px;
 }
 
 /* 评论操作按钮 */
@@ -1539,7 +1539,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 6px;
+  margin-top: 4px;
   margin-bottom: 0;
 }
 
@@ -1571,9 +1571,9 @@ body {
   height: 14px;
 }
 
-/* 回复输入区域 - 优雅的布局 */
+/* 回复输入区域 - 紧凑的布局 */
 .reply-input-section {
-  margin: 16px 0 24px 0;
+  margin: 12px 0 16px 0;
   padding: 0;
   animation: replySlideDown 0.3s ease-out;
   clear: both;
@@ -1608,10 +1608,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 10px 14px;
   background: linear-gradient(135deg, rgba(98, 0, 234, 0.05) 0%, rgba(0, 0, 0, 0.02) 100%);
   border-bottom: 1px solid var(--divider);
-  min-height: 48px;
+  min-height: 40px;
 }
 
 .reply-input-label {
@@ -1646,22 +1646,22 @@ body {
 }
 
 .reply-input-container {
-  padding: 18px 20px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .reply-input {
   width: 100%;
-  min-height: 80px;
-  max-height: 120px;
+  min-height: 60px;
+  max-height: 100px;
   border: 1px solid var(--divider);
-  border-radius: 12px;
-  padding: 12px 16px;
+  border-radius: 10px;
+  padding: 10px 14px;
   font-family: inherit;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.4;
   color: var(--text);
   background: var(--card);
   resize: vertical;
@@ -1785,14 +1785,14 @@ body {
   align-items: flex-start;
   min-height: auto; /* 让高度自适应内容 */
   position: relative;
-  gap: 6px;
+  gap: 4px; /* 减少间距 */
 }
 
 .comment-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   margin-top: 0;
 }
 
@@ -1809,11 +1809,11 @@ body {
 
 .comment-text {
   color: var(--text);
-  line-height: 1.5;
+  line-height: 1.4;
   font-size: 14px;
   white-space: pre-wrap;
   word-wrap: break-word;
-  margin: 0 0 6px 0;
+  margin: 0 0 4px 0;
 }
 
 .no-comments {
@@ -2211,8 +2211,8 @@ body {
   
   .comment-item {
     min-height: auto; /* 让高度自适应内容 */
-    padding: 16px 46px 16px 16px; /* 统一的内边距 */
-    margin-bottom: 16px;
+    padding: 12px 46px 12px 12px; /* 更紧凑的内边距 */
+    margin-bottom: 12px;
   }
   
   /* 移动端评论菜单按钮位置 */
@@ -2280,17 +2280,17 @@ body {
   }
   
   .reply-input-header {
-    padding: 12px 16px;
-    min-height: 44px;
+    padding: 8px 12px;
+    min-height: 36px;
   }
   
   .reply-input-label {
-    font-size: 13px;
+    font-size: 12px;
   }
   
   .reply-input-container {
-    padding: 16px;
-    gap: 12px;
+    padding: 12px;
+    gap: 8px;
   }
   
   .reply-actions {
@@ -2302,9 +2302,9 @@ body {
   }
   
   .reply-input {
-    min-height: 70px;
+    min-height: 50px;
     font-size: 13px;
-    padding: 12px 14px;
+    padding: 8px 12px;
   }
   
   .reply-submit-btn {

@@ -288,10 +288,7 @@ def list_comments():
                         FROM square_comments c
                         LEFT JOIN blocked_users b ON b.blocker_id = %s AND b.blocked_id = c.user_id
                         WHERE c.post_id = %s AND b.id IS NULL
-                        ORDER BY 
-                            CASE WHEN c.parent_comment_id IS NULL THEN c.created_at ELSE NULL END ASC,
-                            c.parent_comment_id ASC,
-                            c.created_at ASC
+                        ORDER BY c.created_at ASC
                         """,
                         (current_user_id, post_id),
                     )
@@ -301,10 +298,7 @@ def list_comments():
                         SELECT id, parent_comment_id, user_id, username, avatar_url, text_content, created_at
                         FROM square_comments
                         WHERE post_id = %s
-                        ORDER BY 
-                            CASE WHEN parent_comment_id IS NULL THEN created_at ELSE NULL END ASC,
-                            parent_comment_id ASC,
-                            created_at ASC
+                        ORDER BY created_at ASC
                         """,
                         (post_id,),
                     )
