@@ -924,7 +924,7 @@ body {
   100% { transform: rotate(360deg); }
 }
 
-/* 搜索加载动画 */
+/* 搜索加载动画 - 统一风格，移除方框 */
 .search-loading {
   position: relative;
   min-height: 200px;
@@ -932,11 +932,11 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  margin: 16px 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
   transition: all 0.3s ease;
 }
 
@@ -960,12 +960,14 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* 深色模式搜索加载样式 */
+/* 深色模式搜索加载样式 - 统一风格 */
 @media (prefers-color-scheme: dark) {
   .search-loading {
-    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
   }
   
   .search-loading-spinner {
@@ -979,7 +981,7 @@ body {
   }
 }
 
-/* 局部加载动画 */
+/* 局部加载动画 - 统一风格，移除方框 */
 .local-loading {
   position: relative;
   min-height: 200px;
@@ -987,11 +989,11 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  margin: 16px 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
   transition: all 0.3s ease;
 }
 
@@ -1015,58 +1017,39 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* 数据类型特定的局部加载样式 */
-.local-loading.metrics {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-color: rgba(59, 130, 246, 0.1);
-}
-
-.local-loading.metrics .local-loading-spinner {
-  border: 3px solid rgba(59, 130, 246, 0.1);
-  border-top: 3px solid #3b82f6;
-  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.2);
-}
-
-.local-loading.metrics .local-loading-text {
-  color: #1e40af;
-}
-
-.local-loading.diet {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-  border-color: rgba(16, 185, 129, 0.1);
-}
-
-.local-loading.diet .local-loading-spinner {
-  border: 3px solid rgba(16, 185, 129, 0.1);
-  border-top: 3px solid #10b981;
-  box-shadow: 0 2px 12px rgba(16, 185, 129, 0.2);
-}
-
-.local-loading.diet .local-loading-text {
-  color: #047857;
-}
-
+/* 统一风格的局部加载样式 - 移除彩色主题 */
+.local-loading.metrics,
+.local-loading.diet,
 .local-loading.case {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  border-color: rgba(245, 158, 11, 0.1);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
 }
 
+.local-loading.metrics .local-loading-spinner,
+.local-loading.diet .local-loading-spinner,
 .local-loading.case .local-loading-spinner {
-  border: 3px solid rgba(245, 158, 11, 0.1);
-  border-top: 3px solid #f59e0b;
-  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.2);
+  border: 3px solid rgba(98, 0, 234, 0.1);
+  border-top: 3px solid #6200ea;
+  box-shadow: 0 2px 12px rgba(98, 0, 234, 0.2);
 }
 
+.local-loading.metrics .local-loading-text,
+.local-loading.diet .local-loading-text,
 .local-loading.case .local-loading-text {
-  color: #92400e;
+  color: #666;
 }
 
-/* 深色模式局部加载样式 */
+/* 深色模式局部加载样式 - 统一风格 */
 @media (prefers-color-scheme: dark) {
   .local-loading {
-    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
   }
   
   .local-loading-spinner {
@@ -1079,50 +1062,29 @@ body {
     color: #d1d5db;
   }
   
-  /* 深色模式数据类型特定样式 */
-  .local-loading.metrics {
-    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-    border-color: rgba(96, 165, 250, 0.2);
-  }
-  
-  .local-loading.metrics .local-loading-spinner {
-    border: 3px solid rgba(96, 165, 250, 0.1);
-    border-top: 3px solid #60a5fa;
-    box-shadow: 0 2px 12px rgba(96, 165, 250, 0.3);
-  }
-  
-  .local-loading.metrics .local-loading-text {
-    color: #dbeafe;
-  }
-  
-  .local-loading.diet {
-    background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
-    border-color: rgba(52, 211, 153, 0.2);
-  }
-  
-  .local-loading.diet .local-loading-spinner {
-    border: 3px solid rgba(52, 211, 153, 0.1);
-    border-top: 3px solid #34d399;
-    box-shadow: 0 2px 12px rgba(52, 211, 153, 0.3);
-  }
-  
-  .local-loading.diet .local-loading-text {
-    color: #d1fae5;
-  }
-  
+  /* 深色模式统一样式 - 移除彩色主题 */
+  .local-loading.metrics,
+  .local-loading.diet,
   .local-loading.case {
-    background: linear-gradient(135deg, #92400e 0%, #b45309 100%);
-    border-color: rgba(251, 191, 36, 0.2);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
   }
   
+  .local-loading.metrics .local-loading-spinner,
+  .local-loading.diet .local-loading-spinner,
   .local-loading.case .local-loading-spinner {
-    border: 3px solid rgba(251, 191, 36, 0.1);
-    border-top: 3px solid #fbbf24;
-    box-shadow: 0 2px 12px rgba(251, 191, 36, 0.3);
+    border: 3px solid rgba(167, 139, 250, 0.1);
+    border-top: 3px solid #a78bfa;
+    box-shadow: 0 2px 12px rgba(167, 139, 250, 0.3);
   }
   
+  .local-loading.metrics .local-loading-text,
+  .local-loading.diet .local-loading-text,
   .local-loading.case .local-loading-text {
-    color: #fef3c7;
+    color: #d1d5db;
   }
 }
 

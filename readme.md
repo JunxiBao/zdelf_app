@@ -48,7 +48,7 @@ A comprehensive health and wellness management application built with modern web
 ### Key Components
 - **Bottom Navigation**: Material Design-inspired tab navigation
 - **Modal System**: Overlay-based content presentation
-- **Date Picker**: Flatpickr integration for date selection
+- **Date Picker**: Native browser date input for date selection
 - **Loading States**: Smooth transitions and feedback indicators
 
 ## 🚀 Getting Started
