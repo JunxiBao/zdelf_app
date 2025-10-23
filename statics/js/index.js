@@ -62,6 +62,101 @@ function applyStatusBarTheme() {
   }
 }
 
+// 智能StoreKit评分管理
+function initRating() {
+  if (window.OfficialRating) {
+    console.log('智能StoreKit评分插件已加载');
+    
+    // 初始化用户数据
+    initUserData();
+    
+    // 延迟检查评分条件
+    setTimeout(async () => {
+      try {
+        const shouldShow = await checkRatingEligibility();
+        if (shouldShow) {
+          await window.OfficialRating.requestReview();
+          console.log('智能触发原生StoreKit评分弹窗');
+        }
+      } catch (error) {
+        console.log('智能评分触发失败:', error.message);
+      }
+    }, 5000); // 5秒后检查
+  }
+}
+
+// 初始化用户数据
+function initUserData() {
+  const now = Date.now();
+  
+  // 设置安装日期（如果不存在）
+  if (!localStorage.getItem('appInstallDate')) {
+    localStorage.setItem('appInstallDate', now.toString());
+  }
+  
+  // 增加启动次数
+  const launchCount = parseInt(localStorage.getItem('launchCount') || '0') + 1;
+  localStorage.setItem('launchCount', launchCount.toString());
+  
+  // 记录启动时间
+  localStorage.setItem('lastLaunchTime', now.toString());
+}
+
+// 检查评分资格
+function checkRatingEligibility() {
+  const now = Date.now();
+  const installDate = parseInt(localStorage.getItem('appInstallDate') || '0');
+  const launchCount = parseInt(localStorage.getItem('launchCount') || '0');
+  const lastRatingRequest = parseInt(localStorage.getItem('lastRatingRequest') || '0');
+  
+  // 最少使用7天
+  const minDays = 7;
+  const daysSinceInstall = (now - installDate) / (1000 * 60 * 60 * 24);
+  
+  // 最少启动10次
+  const minLaunches = 10;
+  
+  // 评分间隔30天
+  const ratingInterval = 30;
+  const daysSinceLastRating = (now - lastRatingRequest) / (1000 * 60 * 60 * 24);
+  
+  const shouldShow = 
+    daysSinceInstall >= minDays && 
+    launchCount >= minLaunches && 
+    daysSinceLastRating >= ratingInterval;
+  
+  console.log('评分资格检查:', {
+    daysSinceInstall: Math.floor(daysSinceInstall),
+    launchCount,
+    daysSinceLastRating: Math.floor(daysSinceLastRating),
+    shouldShow
+  });
+  
+  return shouldShow;
+}
+
+// 记录用户重要操作
+function trackUserAction(action) {
+  const now = Date.now();
+  const actionCount = parseInt(localStorage.getItem(`action_${action}`) || '0') + 1;
+  localStorage.setItem(`action_${action}`, actionCount.toString());
+  localStorage.setItem(`last_${action}`, now.toString());
+  
+  // 检查是否应该触发评分
+  setTimeout(async () => {
+    try {
+      const shouldShow = await checkRatingEligibility();
+      if (shouldShow) {
+        await window.OfficialRating.requestReview();
+        localStorage.setItem('lastRatingRequest', now.toString());
+        console.log('用户操作触发原生StoreKit评分弹窗');
+      }
+    } catch (error) {
+      console.log('用户操作评分触发失败:', error.message);
+    }
+  }, 2000);
+}
+
 // Keep dynamic content scrollable and size it under the fixed bottom nav
 function setNavHeightVar() {
   const nav = document.querySelector(".nav-container");
@@ -261,6 +356,9 @@ function loadPage(index) {
 
 // 使用新的高性能涟漪效果系统
 document.addEventListener('DOMContentLoaded', () => {
+  // 初始化原生StoreKit评分管理
+  initRating();
+  
   // 为导航按钮添加涟漪效果
   document.querySelectorAll(".nav-item .icon").forEach((button) => {
     if (window.AnimationUtils) {
@@ -328,6 +426,10 @@ navItems.forEach((item, index) => {
   item.addEventListener("click", () => {
     // 使用上下文标识防止与涟漪效果的震动重复
     hapticImpact("Light", { context: 'nav-tab', debounce: 150 });
+    
+    // 记录用户导航行为
+    trackUserAction('navigation_click');
+    
     updateActive(index);
   });
 });
@@ -406,7 +508,12 @@ function closeModal() {
 centerBtn.addEventListener("click", () => {
   // 改为直接跳转到选项页面
   try { hapticImpact("Medium"); } catch(_) {}
-  window.location.href = "src/options.html";
+  
+  // 记录用户重要操作
+  trackUserAction('center_button_click');
+  
+  // 使用URL工具函数跳转到选项页面
+  window.navigateTo("src/options.html");
 });
 
 // Click outside (backdrop) closes the modal

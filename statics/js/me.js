@@ -16,7 +16,7 @@
   
   // ==================== 应用版本配置 ====================
   // 在这里修改应用版本号 - 格式: "主版本.次版本.修订版本.构建版本"
-  const APP_VERSION = "1.3.1.0";
+  const APP_VERSION = "1.3.3.0";
   
   // 构建时间戳 - 用于强制刷新缓存
   const BUILD_TIMESTAMP = Date.now();
@@ -1984,17 +1984,42 @@
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), VERSION_CHECK_CONFIG.timeout);
         
-        // 获取服务器版本信息，添加缓存控制头
-        const response = await fetch(urlWithTimestamp, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          },
-          signal: controller.signal
-        });
+        // 获取服务器版本信息，使用CapacitorHttp避免WebView限制
+        let response;
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Http) {
+          // 使用CapacitorHttp插件
+          const http = window.Capacitor.Plugins.Http;
+          const httpResponse = await http.request({
+            url: urlWithTimestamp,
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          });
+          
+          // 将CapacitorHttp响应转换为标准Response格式
+          response = {
+            ok: httpResponse.status >= 200 && httpResponse.status < 300,
+            status: httpResponse.status,
+            statusText: httpResponse.statusText || 'OK',
+            json: () => Promise.resolve(httpResponse.data)
+          };
+        } else {
+          // 回退到普通fetch
+          response = await fetch(urlWithTimestamp, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            },
+            signal: controller.signal
+          });
+        }
         
         clearTimeout(timeoutId);
         

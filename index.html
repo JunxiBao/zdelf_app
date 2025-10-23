@@ -29,9 +29,9 @@
 
     <link rel="stylesheet" href="./statics/css/animations.css" />
     <link rel="stylesheet" href="./statics/css/index.css" />
-    <!-- Ionicons (Apple-style icons) - China-friendly via jsDelivr -->
-    <script type="module" src="https://cdn.jsdelivr.net/npm/ionicons@7.1.2/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://cdn.jsdelivr.net/npm/ionicons@7.1.2/dist/ionicons/ionicons.js"></script>
+    <!-- Ionicons (Apple-style icons) - Local files -->
+    <script type="module" src="./statics/libs/ionicons/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="./statics/libs/ionicons/ionicons.js"></script>
 
     <!-- Force icon font styles to remain consistent even if overridden by subpages -->
     <style>
@@ -129,6 +129,10 @@
       <div class="modal-content" id="modalContent"></div>
     </div>
 
+    <!-- 设备检测和安全区适配 - 必须最先加载 -->
+    <script src="./statics/js/device-detection.js"></script>
+    <!-- URL工具函数 - 解决Android设备URL问题 -->
+    <script src="./statics/js/url-utils.js"></script>
     <!-- 震动反馈管理器 - 必须最先加载 -->
     <script src="./statics/js/haptic-manager.js"></script>
     <!-- 动画工具库 -->
@@ -139,6 +143,8 @@
     <script src="./statics/js/animation-performance.js"></script>
     <!-- 状态栏管理 -->
     <script src="./statics/js/status-bar.js"></script>
+    <!-- 官方Capacitor评分插件 -->
+    <script src="./statics/js/official-rating.js"></script>
     <!-- App shell JavaScript: handles navigation, page loading, and modal interactions -->
     <script src="./statics/js/index.js"></script>
     <!-- Global AI heart + modal (outside Shadow DOM) -->

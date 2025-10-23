@@ -4005,11 +4005,8 @@ function openCalendarPage() {
     return `${year}-${month}-${day}`;
   })();
   
-  // 跳转到日历页面
-  const calendarUrl = `${window.location.origin}${window.location.pathname.replace('/index.html', '').replace('/daily.html', '')}/src/calendar.html?date=${currentDate}`;
-  
-  console.log('🔗 跳转到日历页面:', calendarUrl);
-  window.location.href = calendarUrl;
+  // 跳转到日历页面 - 使用URL工具函数
+  window.navigateTo('src/calendar.html', { date: currentDate });
 }
 
 // -----------------------------

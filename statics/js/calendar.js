@@ -1225,10 +1225,8 @@
         if (window.history.length > 1) {
             window.history.back();
         } else {
-            // 如果没有历史记录，跳转到日常页面
-            const dailyUrl = window.location.href.replace('/src/calendar.html', '/index.html');
-            console.log('🔗 返回到日常页面:', dailyUrl);
-            window.location.href = dailyUrl;
+            // 如果没有历史记录，跳转到日常页面 - 使用URL工具函数
+            window.navigateTo('index.html');
         }
     }
 

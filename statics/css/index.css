@@ -64,7 +64,19 @@ html {
   background: var(--color-surface);
   /* 为状态栏区域设置背景色 */
   padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   background-color: var(--color-surface);
+}
+
+/* Android全屏模式优化 - 移除系统UI的padding */
+@media screen and (max-width: 768px) {
+  html {
+    /* Android全屏模式下，系统UI被隐藏，不需要额外的padding */
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 body {
@@ -91,16 +103,179 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  bottom: calc(var(--nav-h, 80px) + env(safe-area-inset-bottom));
+  bottom: calc(var(--nav-h, 80px) + max(env(safe-area-inset-bottom), 20px));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* smooth iOS momentum */
   contain: content;
   /* 确保内容区域背景色一致 */
   background: var(--color-surface);
 }
+
+/* Android全屏模式下的内容区域优化 */
+@media screen and (max-width: 768px) {
+  .content {
+    /* Android全屏模式下，系统UI被隐藏，内容区域可以延伸到屏幕边缘 */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--nav-h, 80px) + 20px); /* 只保留导航栏高度 + 固定间距 */
+  }
+}
+
+/* Android设备完全全屏模式专用样式 */
+.android-device .content {
+  /* Android完全全屏模式：内容区域延伸到屏幕边缘，包括手势条区域 */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-h, 80px) + 10px); /* 减少底部间距，因为手势条已隐藏 */
+}
+
+.android-fullscreen .nav-container {
+  /* Android完全全屏模式：导航栏固定在屏幕最底部，无系统UI干扰 */
+  padding-bottom: 10px; /* 减少底部间距 */
+  bottom: 0;
+  /* 确保导航栏在屏幕最底部，不被手势条遮挡 */
+  position: fixed;
+  z-index: 1000;
+}
+
+/* Android挖孔屏设备专用样式 */
+.android-notch-screen .content {
+  /* 挖孔屏设备：内容区域延伸到屏幕边缘，但避开状态栏区域 */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-h, 80px) + 20px);
+  /* 为状态栏区域添加顶部padding */
+  padding-top: max(env(safe-area-inset-top), 24px);
+}
+
+.android-notch-screen .nav-container {
+  /* 挖孔屏设备：导航栏适配，保留状态栏区域 */
+  padding-bottom: 20px;
+  bottom: 0;
+  position: fixed;
+  z-index: 1000;
+  /* 为状态栏区域添加顶部padding */
+  padding-top: max(env(safe-area-inset-top), 24px);
+}
+
+/* Android标准模式设备专用样式 */
+.android-standard .content {
+  /* 标准模式：内容区域避开系统UI */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-h, 80px) + max(env(safe-area-inset-bottom), 20px));
+  /* 为状态栏和导航栏添加padding */
+  padding-top: max(env(safe-area-inset-top), 24px);
+  padding-left: max(env(safe-area-inset-left), 0px);
+  padding-right: max(env(safe-area-inset-right), 0px);
+}
+
+.android-standard .nav-container {
+  /* 标准模式：导航栏适配系统UI */
+  padding-bottom: max(env(safe-area-inset-bottom), 20px);
+  bottom: 0;
+  position: fixed;
+  z-index: 1000;
+  /* 为状态栏区域添加顶部padding */
+  padding-top: max(env(safe-area-inset-top), 24px);
+}
+
+/* iOS设备保持现有安全区配置 */
+.ios-device .content {
+  /* iOS设备：保持安全区配置 */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-h, 80px) + max(env(safe-area-inset-bottom), 20px));
+}
+
+.ios-safe-area .nav-container {
+  /* iOS设备：保持安全区配置 */
+  padding-bottom: max(env(safe-area-inset-bottom), 20px);
+}
+
+/* iOS设备优化：确保状态栏区域背景色一致 */
+.ios-device html {
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  background-color: var(--color-surface);
+}
+
+.ios-device body {
+  background-color: var(--color-surface);
+}
+
+/* iOS设备：确保内容区域不遮挡状态栏 */
+.ios-device .content {
+  padding-top: max(20px, env(safe-area-inset-top));
+}
 /* Fixed nav stays pinned and respects safe area */
 .nav-container {
   padding-bottom: env(safe-area-inset-bottom);
+  /* Android底部导航栏适配 */
+  padding-bottom: max(env(safe-area-inset-bottom), 20px);
+}
+
+/* Android全屏模式下的导航栏优化 */
+@media screen and (max-width: 768px) {
+  .nav-container {
+    /* Android全屏模式下，系统导航栏被隐藏，使用固定底部间距 */
+    padding-bottom: 20px;
+    /* 确保导航栏在屏幕最底部 */
+    bottom: 0;
+  }
+}
+
+/* Android底部导航栏特殊适配 */
+@supports (padding: max(0px)) {
+  .nav-container {
+    padding-bottom: max(env(safe-area-inset-bottom), 20px);
+  }
+}
+
+/* 针对Android设备的额外适配 */
+@media screen and (max-width: 768px) {
+  .nav-container {
+    /* 确保在Android设备上有足够的底部间距 */
+    padding-bottom: max(env(safe-area-inset-bottom), 24px);
+    /* 添加最小高度确保不被遮挡 */
+    min-height: calc(80px + max(env(safe-area-inset-bottom), 24px));
+  }
+}
+
+/* iOS和Android通用安全区适配 */
+@supports (padding: max(0px)) {
+  /* 确保在所有设备上都有最小安全间距 */
+  .nav-container {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+  
+  .content {
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+  }
+}
+
+/* 针对不同设备的特殊适配 */
+@media screen and (max-width: 414px) {
+  /* 小屏设备适配 */
+  .nav-container {
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
+  }
+}
+
+@media screen and (min-width: 768px) {
+  /* 大屏设备适配 */
+  .nav-container {
+    padding-bottom: max(env(safe-area-inset-bottom), 32px);
+  }
 }
 /* Ensure modal still covers viewport without enabling body scroll */
 .modal {
