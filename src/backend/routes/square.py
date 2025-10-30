@@ -405,6 +405,133 @@ def add_comment():
         return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
 
 
+@square_blueprint.route("/square/related", methods=["POST", "OPTIONS"])
+def list_user_related():
+    """列出与当前用户相关的所有评论与回复
+    - 用户自己发布的帖子下的所有评论（含嵌套回复，因同属同一post_id）
+    - 所有对当前用户评论的直接回复（不局限于其帖子）
+    返回扁平列表，并附带所属帖子的基础信息，按时间倒序。
+    """
+    if request.method == "OPTIONS":
+        return "", 200
+    try:
+        payload = request.get_json(silent=True) or {}
+        current_user_id = (payload.get("current_user_id") or "").strip()
+        limit = payload.get("limit") or 200
+        try:
+            limit = int(limit)
+        except Exception:
+            limit = 200
+        limit = max(1, min(500, limit))
+
+        if not current_user_id:
+            return jsonify({"success": False, "message": "缺少用户ID"}), 400
+
+        conn = _get_conn()
+        try:
+            _ensure_table(conn)
+            cur = conn.cursor(dictionary=True)
+            try:
+                # 1) 找到当前用户发布的帖子ID
+                cur.execute(
+                    "SELECT id FROM square_posts WHERE user_id = %s",
+                    (current_user_id,)
+                )
+                post_rows = cur.fetchall() or []
+                my_post_ids = [r["id"] for r in post_rows]
+
+                related_comments = []
+
+                # 2) 这些帖子下的全部评论（包含嵌套，因为同post_id）
+                if my_post_ids:
+                    in_clause = ",".join(["%s"] * len(my_post_ids))
+                    query = f"""
+                        SELECT c.id, c.post_id, c.parent_comment_id, c.user_id, c.username, c.avatar_url, c.text_content, c.created_at,
+                               p.user_id AS post_user_id, p.username AS post_username
+                        FROM square_comments c
+                        JOIN square_posts p ON p.id = c.post_id
+                        WHERE c.post_id IN ({in_clause})
+                    """
+                    cur.execute(query, tuple(my_post_ids))
+                    related_comments.extend(cur.fetchall() or [])
+
+                # 3) 所有对当前用户评论的直接回复（parent_comment_id 属于我发的评论）
+                cur.execute(
+                    "SELECT id FROM square_comments WHERE user_id = %s",
+                    (current_user_id,)
+                )
+                my_comment_rows = cur.fetchall() or []
+                my_comment_ids = [r["id"] for r in my_comment_rows]
+                if my_comment_ids:
+                    in_clause = ",".join(["%s"] * len(my_comment_ids))
+                    query = f"""
+                        SELECT c.id, c.post_id, c.parent_comment_id, c.user_id, c.username, c.avatar_url, c.text_content, c.created_at,
+                               p.user_id AS post_user_id, p.username AS post_username
+                        FROM square_comments c
+                        JOIN square_posts p ON p.id = c.post_id
+                        WHERE c.parent_comment_id IN ({in_clause})
+                    """
+                    cur.execute(query, tuple(my_comment_ids))
+                    related_comments.extend(cur.fetchall() or [])
+
+                # 去重（按评论ID）并按时间倒序
+                uniq = {}
+                for r in related_comments:
+                    uniq[r["id"]] = r
+                items = list(uniq.values())
+                items.sort(key=lambda r: r.get("created_at") or datetime(1970,1,1), reverse=True)
+                items = items[:limit]
+
+                # 过滤被我拉黑的用户内容（如果存在block表）
+                # 这里保持简单：仅在最终列表中过滤
+                try:
+                    cur.execute(
+                        "SELECT blocked_id FROM blocked_users WHERE blocker_id = %s",
+                        (current_user_id,)
+                    )
+                    blocked = {row["blocked_id"] for row in (cur.fetchall() or [])}
+                except Exception:
+                    blocked = set()
+
+            finally:
+                cur.close()
+        finally:
+            conn.close()
+
+        data = []
+        for r in items:
+            # 匿名处理：匿名且不是我时隐藏user_id
+            is_anon_comment = (r.get("username") == "匿名用户") and (r.get("user_id") != current_user_id)
+            user_id = None if is_anon_comment else r.get("user_id")
+
+            if user_id and user_id in blocked:
+                continue
+
+            data.append({
+                "id": r.get("id"),
+                "post_id": r.get("post_id"),
+                "parent_comment_id": r.get("parent_comment_id"),
+                "user_id": user_id,
+                "username": r.get("username"),
+                "avatar_url": r.get("avatar_url"),
+                "text": r.get("text_content") or "",
+                "created_at": r.get("created_at").isoformat() if r.get("created_at") else None,
+                "post_user_id": r.get("post_user_id"),
+                "post_username": r.get("post_username"),
+            })
+
+        return jsonify({"success": True, "data": data, "count": len(data)})
+
+    except mysql_errors.Error as e:
+        if getattr(e, "errno", None) in (3024, 1205, 1213):
+            logger.warning("/square/related db timeout/deadlock errno=%s msg=%s", getattr(e, "errno", None), str(e))
+            return jsonify({"success": False, "message": "数据库超时或死锁，请稍后重试"}), 504
+        logger.exception("/square/related db error: %s", e)
+        return jsonify({"success": False, "message": "数据库错误", "error": str(e)}), 500
+    except Exception as e:
+        logger.exception("/square/related server error: %s", e)
+        return jsonify({"success": False, "message": "服务器错误", "error": str(e)}), 500
+
 @square_blueprint.route("/square/post/<post_id>", methods=["DELETE", "OPTIONS"])
 def delete_post(post_id):
     """删除消息"""
