@@ -378,6 +378,51 @@ document.addEventListener('DOMContentLoaded', () => {
       centered: true
     });
   }
+
+  // Deep-link into Square with specific post
+  try {
+    const pendingPostId = localStorage.getItem('open_square_post_id');
+    if (pendingPostId) {
+      // Expose to square.js after it loads
+      window.__OPEN_SQUARE_POST_ID = pendingPostId;
+      localStorage.removeItem('open_square_post_id');
+      // Switch to Square tab (index 2)
+      updateActive(2);
+    } else {
+      // Load default tab on first open
+      updateActive(activeIndex || 0);
+    }
+  } catch (_) {
+    updateActive(activeIndex || 0);
+  }
+
+  // Global route loading overlay helpers
+  function showGlobalLoading() {
+    if (document.getElementById('global-loading-overlay')) return;
+    const ov = document.createElement('div');
+    ov.id = 'global-loading-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:99999';
+    ov.innerHTML = `
+      <style>
+        #global-loading-overlay{background:#ffffff}
+        #global-loading-overlay .spinner{width:48px;height:48px;border:3px solid rgba(98,0,234,0.18);border-top-color:#7c4dff;border-radius:50%;animation:spin .8s linear infinite}
+        @media (prefers-color-scheme: dark){
+          #global-loading-overlay{background:#0f1115}
+          #global-loading-overlay .spinner{border-color:rgba(167,139,250,0.22);border-top-color:#a78bfa}
+        }
+        @keyframes spin{to{transform:rotate(360deg)}}
+      </style>
+      <div class="spinner"></div>
+    `;
+    document.body.appendChild(ov);
+  }
+  function hideGlobalLoading() {
+    const ov = document.getElementById('global-loading-overlay');
+    if (ov) ov.remove();
+    try { localStorage.removeItem('global_loading'); } catch(_) {}
+  }
+  try { if (localStorage.getItem('global_loading') === '1' || window.__OPEN_SQUARE_POST_ID) showGlobalLoading(); } catch(_) {}
+  window.addEventListener('globalLoadingDone', hideGlobalLoading, { once: true });
 });
 
 // 增强的tab切换动画
@@ -541,5 +586,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
-  updateActive(0);
+  // If deep-linking to a Square post, open Square tab instead
+  if (window.__OPEN_SQUARE_POST_ID) {
+    updateActive(2);
+  } else {
+    updateActive(0);
+  }
 });

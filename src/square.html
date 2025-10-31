@@ -46,6 +46,11 @@
           <ion-icon ios="add-circle-outline" md="add-circle-sharp" aria-hidden="true"></ion-icon>
           <span>分享想法</span>
         </button>
+        <div class="secondary-icon-row">
+          <button class="feedback-icon-btn" id="feedbackIconBtn" aria-label="与你有关" title="与你有关" onclick="window.location.href='src/related.html'">
+            <ion-icon ios="chatbox-ellipses-outline" md="chatbox-ellipses-sharp" aria-hidden="true"></ion-icon>
+          </button>
+        </div>
       </section>
 
       <!-- 发布消息区域 - 默认隐藏 -->
@@ -105,10 +110,7 @@
 
       <!-- 消息列表区域 -->
       <section class="messages-section" aria-label="消息列表">
-        <div class="messages-header">
-          <h2>最新动态</h2>
-          <div class="message-count" id="messageCount">0 条消息</div>
-        </div>
+        
         
         <!-- 加载状态 -->
         <div class="loading-state" id="loadingState">

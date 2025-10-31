@@ -382,6 +382,90 @@ body {
   font-size: 20px;
 }
 
+/* 次级图标行（位于发布按钮下方，右对齐） */
+.secondary-icon-row {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.feedback-icon-btn {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  cursor: pointer;
+  box-shadow: var(--shadow-1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.feedback-icon-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
+  color: var(--brand);
+  background: linear-gradient(135deg, rgba(98,0,234,0.06) 0%, rgba(98,0,234,0.03) 100%);
+  border-color: rgba(98, 0, 234, 0.25);
+}
+
+.feedback-icon-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-1);
+}
+
+.feedback-icon-btn ion-icon { width: 22px; height: 22px; display: block; }
+
+.feedback-icon-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(98, 0, 234, 0.14), var(--shadow-2);
+  border-color: rgba(98, 0, 234, 0.28);
+}
+
+/* Relate 更新提示圆圈 */
+.related-update-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: #ff3b30;
+  color: #ffffff;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(255, 59, 48, 0.3);
+  z-index: 10;
+  border: 2px solid #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .related-update-badge {
+    border-color: #0f1115;
+    box-shadow: 0 2px 4px rgba(255, 59, 48, 0.4);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .feedback-icon-btn {
+    background: rgba(255,255,255,0.03);
+    border-color: var(--divider);
+  }
+  .feedback-icon-btn:hover {
+    background: rgba(255,255,255,0.08);
+  }
+}
+
 /* Publish section */
 .publish-section {
   margin-bottom: 24px;
@@ -1516,7 +1600,8 @@ body {
 
 /* 回复区域容器 */
 .replies-section {
-  margin: 4px 0 8px 48px; /* 减少上边距，让回复区域更贴近主评论 */
+  /* 与上方主评论左侧对齐 */
+  margin: 4px 0 8px 14px; /* 与评论内头像左边缘对齐（comment-item 左内边距为14px） */
 }
 
 /* 回复切换按钮 */
@@ -1557,13 +1642,15 @@ body {
 /* 回复列表 */
 .replies-list {
   margin-top: 8px;
-  border-left: 2px solid rgba(98, 0, 234, 0.1);
+  /* 去掉左侧紫色竖线 */
+  border-left: none;
 }
 
 
 /* 回复元素样式 - 显示在父评论下方 */
 .reply-item {
-  margin: 8px 0 8px 48px; /* 左边距与评论内容对齐 */
+  /* 与上方主评论左侧对齐 */
+  margin: 8px 0 8px 14px; /* 与评论内头像左边缘对齐 */
   padding: 8px 12px;
   background: rgba(98, 0, 234, 0.03);
   border-left: 2px solid rgba(98, 0, 234, 0.2);
@@ -2305,7 +2392,8 @@ body {
   
   /* 移动端回复区域样式 */
   .replies-section {
-    margin: 2px 0 6px 32px; /* 移动端进一步减少间距和缩进 */
+    /* 移动端同样与主评论左对齐 */
+    margin: 2px 0 6px 12px; /* 移动端 comment-item 左内边距更紧凑，这里用12px */
   }
   
   .replies-toggle {
@@ -2449,7 +2537,7 @@ body {
   }
   
   .reply-item {
-    margin: 6px 0 6px 40px; /* 移动端调整左边距 */
+    margin: 6px 0 6px 12px;
     padding: 6px 10px;
   }
   
