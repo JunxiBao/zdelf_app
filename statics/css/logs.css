@@ -32,6 +32,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);height:100%;}
   display:flex;align-items:center;gap:8px;
   padding:12px 12px;border-bottom:1px solid var(--border);
   background:var(--bg);
+  backdrop-filter:saturate(1.2) blur(4px);
 }
 .back-btn{
   display:inline-flex;align-items:center;justify-content:center;
@@ -42,6 +43,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);height:100%;}
 .header-spacer{flex:1;}
 
 .controls{display:flex;flex-direction:column;gap:10px;padding:12px;border-bottom:1px solid var(--border);background:var(--bg);}
+.controls{position:sticky;top:56px;z-index:9;}
 .controls .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
 .control{display:flex;flex-direction:column;gap:6px;}
 .control select{
@@ -52,6 +54,8 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);height:100%;}
   display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--border);
   background:var(--card);color:var(--fg);border-radius:10px;cursor:pointer;
 }
+.btn:hover{border-color:var(--accent)}
+.btn-ghost{background:transparent}
 .toggle{display:inline-flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card);}
 .toggle input{margin:0;}
 
@@ -59,6 +63,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);height:100%;}
   flex:1;display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--border);
   background:var(--card);border-radius:10px;min-width:220px;
 }
+.search-icon{opacity:.7}
 .search input{
   flex:1;border:none;outline:none;background:transparent;color:var(--fg);
 }
@@ -66,8 +71,10 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);height:100%;}
   display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;
   background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;
 }
+.right{margin-left:auto;}
 .levels{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
 .levels label{display:inline-flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--card);}
+.match-count{min-width:28px;text-align:center;border:1px solid var(--border);border-radius:8px;padding:6px 8px;background:var(--card);color:var(--muted);}
 
 .viewer{position:relative;flex:1;min-height:0;padding:0;}
 .loading{
@@ -85,6 +92,14 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);height:100%;}
   margin:0;padding:12px;overflow:auto;height:calc(100vh - 176px);
   font-family:var(--mono);font-size:12px;line-height:1.6;background:var(--bg);
   white-space:pre-wrap;word-break:break-word;border-top:1px solid var(--border);
+}
+.log-content.show-line-numbers{counter-reset: ln;}
+.log-content .line{display:flex;gap:12px;align-items:flex-start;white-space:pre-wrap;word-break:break-word;}
+.log-content.show-line-numbers .line::before{
+  counter-increment: ln;
+  content: counter(ln);
+  display:inline-block;min-width:3ch;text-align:right;color:var(--muted);
+  user-select:none;
 }
 
 /* 等级颜色 */
