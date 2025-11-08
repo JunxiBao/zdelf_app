@@ -17,6 +17,26 @@
     <title>日志监视器</title>
     <!-- 页面样式 -->
     <link rel="stylesheet" href="../statics/css/logs.css" />
+    <script>
+      // 轻量兜底：若外部脚本加载失败或未执行，至少能显示登录弹窗
+      (function () {
+        function isAuthorized() {
+          try {
+            var uid = localStorage.getItem('userId') || '';
+            var uname = localStorage.getItem('username') || '';
+            // 与 logs.js 中的白名单保持一致
+            var allowed = { Qkr: 1, JunxiBao: 1 };
+            return !!uid && !!allowed[uname];
+          } catch (_) { return false; }
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+          if (!isAuthorized()) {
+            var el = document.getElementById('authOverlay');
+            if (el) el.hidden = false;
+          }
+        });
+      })();
+    </script>
   </head>
   <body>
     <!-- 认证遮罩（仅本页使用，不依赖主应用） -->
@@ -157,7 +177,7 @@
     <!-- 震动反馈（可选） -->
     <script src="../statics/js/haptic-manager.js"></script>
     <!-- 页面脚本 -->
-    <script src="../statics/js/logs.js"></script>
+    <script src="../statics/js/logs.js" onerror="(function(){var el=document.getElementById('authOverlay'); if(el) el.hidden=false;})();"></script>
   </body>
   </html>
 

@@ -44,6 +44,20 @@
   }
 
   async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+    // 移动端兼容：若不支持 AbortController，则使用 Promise.race 进行超时降级
+    if (typeof AbortController === 'undefined') {
+      let timeoutId;
+      try {
+        return await Promise.race([
+          fetch(url, options),
+          new Promise((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error('timeout')), timeoutMs);
+          })
+        ]);
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
+    }
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeoutMs);
     try {
