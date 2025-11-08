@@ -56,13 +56,23 @@ CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 # Request lifecycle logging & health check
 
 # set timer and calculate the time the request need 
+def _should_log(path: str) -> bool:
+    try:
+        # 忽略日志监视器自身的接口，防止刷屏
+        if path.startswith("/logs/"):
+            return False
+    except Exception:
+        pass
+    return True
+
 @app.before_request
 def _start_timer() -> None:
     g._ts = time.perf_counter()
     g.request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
     rid = g.request_id
     rid_short = (rid.split("-")[0] if isinstance(rid, str) and "-" in rid else str(rid)[:8])
-    logging.getLogger("app").info("%s -> %s %s len=%s", rid_short, request.method, request.path, request.content_length or 0)
+    if _should_log(request.path):
+        logging.getLogger("app").info("%s -> %s %s len=%s", rid_short, request.method, request.path, request.content_length or 0)
 
 @app.after_request
 def _log_response(resp)-> None:
@@ -74,7 +84,8 @@ def _log_response(resp)-> None:
     resp.headers["X-Request-ID"] = rid
     resp.headers["Server-Timing"] = f"app;dur={dur_ms:.1f}"
     rid_short = (rid.split("-")[0] if isinstance(rid, str) and "-" in rid else str(rid)[:8])
-    logging.getLogger("app").info("%s <- %s %.1fms %s", rid_short, request.path, dur_ms, resp.status_code)
+    if _should_log(request.path):
+        logging.getLogger("app").info("%s <- %s %.1fms %s", rid_short, request.path, dur_ms, resp.status_code)
     return resp
 
 

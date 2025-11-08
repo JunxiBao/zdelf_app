@@ -15,6 +15,7 @@
   let searchQuery = '';
   let activeLevels = new Set(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']);
   let timer = null;
+  let isInitial = true;
 
   function getApiBase() {
     try {
@@ -112,9 +113,9 @@
     }
   }
 
-  async function loadFiles() {
+  async function loadFiles(showSpinner = true) {
     try {
-      showLoading(true);
+      if (showSpinner) showLoading(true);
       const endpoint = api('/logs/files');
       const res = await fetchWithTimeout(endpoint, { credentials: 'include' });
       const data = await res.json();
@@ -141,14 +142,14 @@
         logContent.textContent = '⚠️ 无法加载日志文件列表，请检查网络或 API_BASE 配置。';
       }
     } finally {
-      showLoading(false);
+      if (showSpinner) showLoading(false);
     }
   }
 
-  async function loadContent() {
+  async function loadContent(showSpinner = true) {
     if (!currentFile) return;
     try {
-      showLoading(true);
+      if (showSpinner) showLoading(true);
       const url = api(`/logs/content?file=${encodeURIComponent(currentFile)}&tail=${currentTail}`);
       const res = await fetchWithTimeout(url, { credentials: 'include' });
       if (!res.ok) throw new Error(res.statusText);
@@ -161,14 +162,15 @@
         logContent.textContent = '⚠️ 无法加载日志内容，请检查网络或 API_BASE 配置。';
       }
     } finally {
-      showLoading(false);
+      if (showSpinner) showLoading(false);
     }
   }
 
   function startAutoRefresh() {
     stopAutoRefresh();
     if (autoRefresh && autoRefresh.checked) {
-      timer = setInterval(loadContent, 2000);
+      // 自动刷新不显示加载中
+      timer = setInterval(() => loadContent(false), 2000);
     }
   }
   function stopAutoRefresh() {
@@ -183,7 +185,7 @@
       try { window.history.back(); } catch (_) {}
     });
     refreshBtn.addEventListener('click', () => {
-      loadFiles().then(loadContent);
+      loadFiles(true).then(() => loadContent(true));
       if (window.__hapticImpact__) window.__hapticImpact__('Light');
     });
     autoRefresh.addEventListener('change', () => {
@@ -240,8 +242,13 @@
     currentTail = parseInt(tailSelect.value, 10) || 1000;
 
     bindEvents();
-    loadFiles().then(() => loadContent());
-    startAutoRefresh();
+    // 首次加载显示加载中，完成后启动自动刷新（自动刷新不显示加载中）
+    loadFiles(true)
+      .then(() => loadContent(true))
+      .finally(() => {
+        isInitial = false;
+        startAutoRefresh();
+      });
   }
 
   document.addEventListener('DOMContentLoaded', init);
