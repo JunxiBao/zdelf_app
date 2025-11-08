@@ -8,6 +8,8 @@
   let levelToggles;
   let showLineNumbersToggle, useRegexToggle, caseSensitiveToggle;
   let prevMatchBtn, nextMatchBtn, matchCountBadge, copyBtn, downloadBtn, jumpBottomBtn;
+  let controlsEl, toggleControlsBtn, summaryFileEl, summaryTailEl, summaryAutoEl;
+  let fileListEl;
 
   // 状态
   let files = [];
@@ -190,6 +192,22 @@
     }
   }
 
+  function updateSummary() {
+    if (!summaryFileEl || !summaryTailEl || !summaryAutoEl) return;
+    try {
+      const fileLabel = currentFile || '';
+      summaryFileEl.textContent = fileLabel ? `文件: ${fileLabel}` : '';
+      summaryTailEl.textContent = `尾行数: ${currentTail}`;
+      summaryAutoEl.textContent = `自动刷新: ${autoRefresh && autoRefresh.checked ? '开' : '关'}`;
+    } catch (_) {}
+  }
+
+  function setControlsCollapsed(collapsed) {
+    if (!controlsEl || !toggleControlsBtn) return;
+    controlsEl.classList.toggle('collapsed', !!collapsed);
+    toggleControlsBtn.textContent = collapsed ? '工具栏 ▾' : '工具栏 ▴';
+  }
+
   async function loadFiles(showSpinner = true) {
     try {
       if (showSpinner) showLoading(true);
@@ -206,6 +224,8 @@
         opt.textContent = `${f.name} (${formatBytes(f.size)}) ${time ? ' - ' + time : ''}`;
         fileSelect.appendChild(opt);
       });
+      // 渲染侧栏文件列表（桌面端）
+      renderFileList();
       // 选中第一个或保留当前
       if (!currentFile && files.length) {
         currentFile = files[0].name;
@@ -213,6 +233,7 @@
       if (currentFile) {
         fileSelect.value = currentFile;
       }
+      updateSummary();
     } catch (e) {
       console.warn('读取日志文件列表失败', e);
       if (logContent) {
@@ -233,6 +254,7 @@
       const data = await res.json();
       rawText = String(data.content || '');
       render();
+      updateSummary();
     } catch (e) {
       console.warn('读取日志内容失败', e);
       if (logContent) {
@@ -269,14 +291,18 @@
     });
     autoRefresh.addEventListener('change', () => {
       startAutoRefresh();
+      updateSummary();
     });
     tailSelect.addEventListener('change', () => {
       currentTail = parseInt(tailSelect.value, 10) || 1000;
       loadContent();
+      updateSummary();
     });
     fileSelect.addEventListener('change', () => {
       currentFile = fileSelect.value || '';
       loadContent();
+      updateSummary();
+      markActiveFileInList();
     });
     searchInput.addEventListener('input', () => {
       searchQuery = searchInput.value || '';
@@ -322,6 +348,25 @@
     jumpBottomBtn.addEventListener('click', () => {
       logContent.scrollTop = logContent.scrollHeight;
     });
+    toggleControlsBtn.addEventListener('click', () => {
+      const isCollapsed = controlsEl.classList.contains('collapsed');
+      setControlsCollapsed(!isCollapsed);
+    });
+    if (fileListEl) {
+      fileListEl.addEventListener('click', (e) => {
+        const li = e.target.closest('li[data-name]');
+        if (!li) return;
+        const name = li.getAttribute('data-name') || '';
+        if (!name) return;
+        if (currentFile !== name) {
+          currentFile = name;
+          if (fileSelect) fileSelect.value = name;
+          loadContent();
+          updateSummary();
+          markActiveFileInList();
+        }
+      });
+    }
     // 视口可见时，自动刷新才生效
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) stopAutoRefresh();
@@ -332,6 +377,12 @@
   function init() {
     // 获取元素
     backBtn = document.getElementById('backBtn');
+    controlsEl = document.querySelector('.controls');
+    toggleControlsBtn = document.getElementById('toggleControls');
+    summaryFileEl = document.getElementById('summaryFile');
+    summaryTailEl = document.getElementById('summaryTail');
+    summaryAutoEl = document.getElementById('summaryAuto');
+    fileListEl = document.getElementById('fileList');
     fileSelect = document.getElementById('fileSelect');
     tailSelect = document.getElementById('tailSelect');
     refreshBtn = document.getElementById('refreshBtn');
@@ -360,6 +411,9 @@
     showLineNumbers = !!(showLineNumbersToggle && showLineNumbersToggle.checked);
 
     bindEvents();
+    // 默认折叠工具栏
+    setControlsCollapsed(true);
+    updateSummary();
     // 首次加载显示加载中，完成后启动自动刷新（自动刷新不显示加载中）
     loadFiles(true)
       .then(() => loadContent(true))
@@ -367,6 +421,35 @@
         isInitial = false;
         startAutoRefresh();
       });
+  }
+
+  function renderFileList() {
+    if (!fileListEl) return;
+    fileListEl.innerHTML = '';
+    files.forEach((f) => {
+      const li = document.createElement('li');
+      li.className = 'file-item';
+      li.setAttribute('data-name', f.name);
+      const mtime = f.mtime ? new Date(f.mtime * 1000).toLocaleString() : '';
+      li.innerHTML = `
+        <div class="name" title="${f.name}">${f.name}</div>
+        <div class="meta">
+          <span>${formatBytes(f.size)}</span>
+          ${mtime ? `<span>${mtime}</span>` : ''}
+        </div>
+      `;
+      fileListEl.appendChild(li);
+    });
+    markActiveFileInList();
+  }
+
+  function markActiveFileInList() {
+    if (!fileListEl) return;
+    const items = fileListEl.querySelectorAll('.file-item');
+    items.forEach((it) => {
+      const name = it.getAttribute('data-name') || '';
+      it.classList.toggle('active', !!currentFile && name === currentFile);
+    });
   }
 
   document.addEventListener('DOMContentLoaded', init);

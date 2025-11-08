@@ -9,7 +9,7 @@ import os
 import io
 import time
 from typing import List
-from flask import Blueprint, jsonify, request, abort, make_response
+from flask import Blueprint, jsonify, request, abort
 
 logs_blueprint = Blueprint("logs", __name__)
 
@@ -102,12 +102,7 @@ def _tail_lines(path: str, max_lines: int = 1000, encoding: str = "utf-8") -> st
 
 @logs_blueprint.get("/logs/files")
 def list_files():
-    resp = jsonify({"files": _list_log_files()})
-    # 禁止缓存，确保轮询拿到最新列表
-    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    resp.headers["Pragma"] = "no-cache"
-    resp.headers["Expires"] = "0"
-    return resp
+    return jsonify({"files": _list_log_files()})
 
 
 @logs_blueprint.get("/logs/content")
@@ -129,17 +124,12 @@ def get_content():
         st = os.stat(path)
     except Exception as e:
         abort(500, description=f"读取失败: {e}")
-    resp = jsonify({
+    return jsonify({
         "file": name,
         "tail": tail_lines,
         "content": content,
         "size": getattr(st, "st_size", 0),
         "mtime": getattr(st, "st_mtime", int(time.time()))
     })
-    # 禁止缓存，确保轮询拿到最新内容
-    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    resp.headers["Pragma"] = "no-cache"
-    resp.headers["Expires"] = "0"
-    return resp
 
 

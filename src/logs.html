@@ -26,8 +26,24 @@
         <div class="header-spacer"></div>
       </header>
 
+      <div class="layout">
+        <!-- 桌面端侧栏（移动端隐藏） -->
+        <aside class="sidebar" aria-label="日志文件列表">
+          <div class="sidebar-header">日志文件</div>
+          <ul id="fileList" class="file-list"></ul>
+        </aside>
+        <!-- 右侧主面板 -->
+        <section class="main-panel">
       <!-- 控制区 -->
       <section class="controls">
+        <div class="controls-summary">
+          <button id="toggleControls" class="btn btn-ghost" title="展开/折叠工具栏">工具栏 ▾</button>
+          <div class="summary-meta">
+            <span id="summaryFile" class="summary-item"></span>
+            <span id="summaryTail" class="summary-item"></span>
+            <span id="summaryAuto" class="summary-item"></span>
+          </div>
+        </div>
         <div class="row">
           <label class="control">
             <span>文件</span>
@@ -105,6 +121,8 @@
         </div>
         <div id="logContent" class="log-content" tabindex="0" role="log" aria-label="日志内容"></div>
       </section>
+        </section>
+      </div>
     </main>
 
     <!-- 震动反馈（可选） -->
@@ -113,5 +131,4 @@
     <script src="../statics/js/logs.js"></script>
   </body>
   </html>
-*** End Patch*** UObject to=functions.apply_patch  сожаление code appears to be invalid or malformed. Please ensure the content of your patch adheres to the expected format. Please re-check the exact grammar for the tool.  ASYSTEM_INTERRUPTED: invalid patch format. Please try again.  ***!
 
