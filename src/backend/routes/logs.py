@@ -13,9 +13,11 @@ from flask import Blueprint, jsonify, request, abort
 
 logs_blueprint = Blueprint("logs", __name__)
 
-# 计算日志目录：相对当前文件 ../../log
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-LOG_DIR = os.path.normpath(os.path.join(_BASE_DIR, "../../log"))
+# 计算日志目录：相对当前文件 ../../../log
+# routes/logs.py 位于 www/src/backend/routes
+# 后端日志写入 www/log，因此需要回到 www 目录后进入 log
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # .../www/src/backend/routes
+LOG_DIR = os.path.normpath(os.path.join(_BASE_DIR, "../../../log"))  # .../www/log
 
 
 def _ensure_log_dir() -> None:
@@ -60,38 +62,42 @@ def _list_log_files() -> List[dict]:
 
 
 def _tail_lines(path: str, max_lines: int = 1000, encoding: str = "utf-8") -> str:
-    """高效读取文件尾部若干行"""
+    """高效读取文件尾部若干行（兼容超大文件）"""
     if max_lines <= 0:
         return ""
-    # 若文件较小，直接读取
     try:
         size = os.path.getsize(path)
     except OSError:
         abort(404, description="文件不存在")
 
-    # 逐块向后读取
-    chunk_size = 4096
+    # 小文件直接读取
+    if size <= 2_000_000:  # 2MB
+        try:
+            with open(path, "r", encoding=encoding, errors="replace") as f:
+                data = f.read()
+        except UnicodeDecodeError:
+            with open(path, "rb") as f:
+                data = f.read().decode(encoding, errors="replace")
+        lines = data.splitlines()
+        return "\n".join(lines[-max_lines:])
+
+    # 大文件块读，从末尾往前直到凑够行数
+    chunk_size = 8192
+    chunks = []
+    lines_count = 0
     with open(path, "rb") as f:
-        if size == 0:
-            return ""
-        # 从文件末尾开始
-        f.seek(0, io.SEEK_END)
-        buffer = bytearray()
-        lines_found = 0
-        while f.tell() > 0 and lines_found <= max_lines:
-            read_size = min(chunk_size, f.tell())
-            f.seek(-read_size, io.SEEK_CUR)
-            data = f.read(read_size)
-            f.seek(-read_size, io.SEEK_CUR)
-            buffer.extendleft(data[::-1])  # 反向插入以避免频繁拼接
-            lines_found = buffer.count(b"\n")
-            if f.tell() == 0:
-                break
-        # 取最后 max_lines 行
-        parts = buffer[::-1].split(b"\n")
-        tail = parts[-max_lines - 1:] if len(parts) > max_lines else parts
-        text = b"\n".join(tail).decode(encoding, errors="replace")
-        return text
+        pos = size
+        while pos > 0 and lines_count <= max_lines:
+            read_size = chunk_size if pos >= chunk_size else pos
+            pos -= read_size
+            f.seek(pos)
+            chunk = f.read(read_size)
+            chunks.append(chunk)
+            lines_count += chunk.count(b"\n")
+        data = b"".join(reversed(chunks))
+    parts = data.split(b"\n")
+    tail = parts[-max_lines:] if len(parts) > max_lines else parts
+    return b"\n".join(tail).decode(encoding, errors="replace")
 
 
 @logs_blueprint.get("/logs/files")

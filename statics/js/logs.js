@@ -18,13 +18,28 @@
 
   function getApiBase() {
     try {
-      const base = (window.__API_BASE__ || '').trim();
+      let base = (window.__API_BASE__ || window.API_BASE || localStorage.getItem('API_BASE') || '').trim();
+      if (!base) {
+        // 与项目其它页面保持一致的默认值
+        base = 'https://app.zdelf.cn';
+      }
       return base.replace(/\/$/, '');
-    } catch (_) { return ''; }
+    } catch (_) { return 'https://app.zdelf.cn'; }
   }
   function api(path) {
     const base = getApiBase();
     return `${base}${path}`;
+  }
+
+  async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { ...options, signal: controller.signal });
+      return res;
+    } finally {
+      clearTimeout(id);
+    }
   }
 
   function showLoading(show) {
@@ -100,7 +115,8 @@
   async function loadFiles() {
     try {
       showLoading(true);
-      const res = await fetch(api('/logs/files'), { credentials: 'include' });
+      const endpoint = api('/logs/files');
+      const res = await fetchWithTimeout(endpoint, { credentials: 'include' });
       const data = await res.json();
       files = Array.isArray(data.files) ? data.files : [];
       // 渲染选择器
@@ -121,6 +137,9 @@
       }
     } catch (e) {
       console.warn('读取日志文件列表失败', e);
+      if (logContent) {
+        logContent.textContent = '⚠️ 无法加载日志文件列表，请检查网络或 API_BASE 配置。';
+      }
     } finally {
       showLoading(false);
     }
@@ -131,13 +150,16 @@
     try {
       showLoading(true);
       const url = api(`/logs/content?file=${encodeURIComponent(currentFile)}&tail=${currentTail}`);
-      const res = await fetch(url, { credentials: 'include' });
+      const res = await fetchWithTimeout(url, { credentials: 'include' });
       if (!res.ok) throw new Error(res.statusText);
       const data = await res.json();
       rawText = String(data.content || '');
       render();
     } catch (e) {
       console.warn('读取日志内容失败', e);
+      if (logContent) {
+        logContent.textContent = '⚠️ 无法加载日志内容，请检查网络或 API_BASE 配置。';
+      }
     } finally {
       showLoading(false);
     }
