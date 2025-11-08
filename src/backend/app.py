@@ -27,6 +27,7 @@ from routes.image_upload import image_upload_blueprint
 from routes.square import square_blueprint
 from routes.report import report_blueprint
 from routes.block import block_blueprint
+from routes.logs import logs_blueprint
 import logging
 import time, uuid
 import os
@@ -47,6 +48,7 @@ app.register_blueprint(image_upload_blueprint)
 app.register_blueprint(square_blueprint)
 app.register_blueprint(report_blueprint)
 app.register_blueprint(block_blueprint)
+app.register_blueprint(logs_blueprint)
 
 # *CORS rule，Prevent unauthorized requests, enhance security
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
@@ -58,7 +60,9 @@ CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 def _start_timer() -> None:
     g._ts = time.perf_counter()
     g.request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
-    logging.getLogger("app").info("[%s] -> %s %s body_len=%s", g.request_id, request.method, request.path, request.content_length or 0)
+    rid = g.request_id
+    rid_short = (rid.split("-")[0] if isinstance(rid, str) and "-" in rid else str(rid)[:8])
+    logging.getLogger("app").info("%s -> %s %s len=%s", rid_short, request.method, request.path, request.content_length or 0)
 
 @app.after_request
 def _log_response(resp)-> None:
@@ -66,9 +70,11 @@ def _log_response(resp)-> None:
         dur_ms = (time.perf_counter() - g._ts) * 1000
     except Exception:
         dur_ms = -1
-    resp.headers["X-Request-ID"] = getattr(g, "request_id", "-")
+    rid = getattr(g, "request_id", "-")
+    resp.headers["X-Request-ID"] = rid
     resp.headers["Server-Timing"] = f"app;dur={dur_ms:.1f}"
-    logging.getLogger("app").info("[%s] <- %s in %.1fms status=%s", getattr(g, "request_id", "-"), request.path, dur_ms, resp.status_code)
+    rid_short = (rid.split("-")[0] if isinstance(rid, str) and "-" in rid else str(rid)[:8])
+    logging.getLogger("app").info("%s <- %s %.1fms %s", rid_short, request.path, dur_ms, resp.status_code)
     return resp
 
 
@@ -88,7 +94,8 @@ def _handle_err(e):
     if isinstance(e, HTTPException):
         raise e
     rid = getattr(g, "request_id", "-")
-    logging.getLogger("app").exception("[%s] Unhandled error: %s", rid, e)
+    rid_short = (rid.split("-")[0] if isinstance(rid, str) and "-" in rid else str(rid)[:8])
+    logging.getLogger("app").exception("%s !! %s", rid_short, e)
     return jsonify({"error": "internal_error", "request_id": rid}), 500
 
 
@@ -122,8 +129,11 @@ class ConsoleColorFormatter(logging.Formatter):
         message = super().format(record)
         return f"{color}{message}{self.RESET}"
 
-console_formatter = ConsoleColorFormatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
-plain_formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
+# 简短格式：HH:MM:SS L message（L 为等级首字母）
+_SHORT_FMT = "%(asctime)s %(levelname).1s %(message)s"
+_DATE_FMT = "%H:%M:%S"
+console_formatter = ConsoleColorFormatter(_SHORT_FMT, datefmt=_DATE_FMT)
+plain_formatter = logging.Formatter(_SHORT_FMT, datefmt=_DATE_FMT)
 file_handler.setFormatter(plain_formatter)
 
 # Attach handler once

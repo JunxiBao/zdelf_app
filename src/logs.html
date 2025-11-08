@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!--
+  logs.html — 日志监视器
+  功能:
+  - 列出后端生成的日志文件
+  - 读取选中文件尾部内容（tail）
+  - 搜索过滤、等级颜色区分、自动刷新与置底
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <title>日志监视器</title>
+    <!-- 图标库 -->
+    <script type="module" src="../statics/libs/ionicons/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="../statics/libs/ionicons/ionicons.js"></script>
+    <!-- 页面样式 -->
+    <link rel="stylesheet" href="../statics/css/logs.css" />
+  </head>
+  <body>
+    <main class="app" aria-label="日志监视器">
+      <!-- 顶部栏 -->
+      <header class="header">
+        <button class="back-btn" id="backBtn" aria-label="返回">
+          <ion-icon ios="chevron-back-outline" md="chevron-back-sharp"></ion-icon>
+        </button>
+        <h1 class="header-title">日志监视器</h1>
+        <div class="header-spacer"></div>
+      </header>
+
+      <!-- 控制区 -->
+      <section class="controls">
+        <div class="row">
+          <label class="control">
+            <span>文件</span>
+            <select id="fileSelect" aria-label="日志文件"></select>
+          </label>
+          <label class="control">
+            <span>尾行数</span>
+            <select id="tailSelect" aria-label="尾部行数">
+              <option value="200">200</option>
+              <option value="500">500</option>
+              <option value="1000" selected>1000</option>
+              <option value="2000">2000</option>
+              <option value="5000">5000</option>
+            </select>
+          </label>
+          <div class="btns">
+            <button id="refreshBtn" class="btn" title="刷新">
+              <ion-icon ios="refresh-outline" md="refresh-sharp"></ion-icon>
+              刷新
+            </button>
+            <label class="toggle" title="自动刷新">
+              <input type="checkbox" id="autoRefresh" />
+              <span>自动刷新</span>
+            </label>
+            <label class="toggle" title="始终滚动到底部">
+              <input type="checkbox" id="stickBottom" checked />
+              <span>置底</span>
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          <label class="search">
+            <ion-icon ios="search-outline" md="search-sharp"></ion-icon>
+            <input id="searchInput" type="text" placeholder="搜索关键字（支持实时过滤与高亮）" />
+            <button id="clearSearch" class="icon-btn" title="清除搜索">
+              <ion-icon ios="close-circle-outline" md="close-circle-sharp"></ion-icon>
+            </button>
+          </label>
+          <div class="levels">
+            <label><input type="checkbox" data-level="DEBUG" checked /> DEBUG</label>
+            <label><input type="checkbox" data-level="INFO" checked /> INFO</label>
+            <label><input type="checkbox" data-level="WARNING" checked /> WARN</label>
+            <label><input type="checkbox" data-level="ERROR" checked /> ERROR</label>
+            <label><input type="checkbox" data-level="CRITICAL" checked /> CRITICAL</label>
+          </div>
+        </div>
+      </section>
+
+      <!-- 内容区 -->
+      <section class="viewer" id="viewer" aria-live="polite" aria-busy="false">
+        <div class="loading" id="loading" hidden>
+          <div class="spinner"></div>
+          <span>加载中...</span>
+        </div>
+        <pre id="logContent" class="log-content" tabindex="0"></pre>
+      </section>
+    </main>
+
+    <!-- 震动反馈（可选） -->
+    <script src="../statics/js/haptic-manager.js"></script>
+    <!-- 页面脚本 -->
+    <script src="../statics/js/logs.js"></script>
+  </body>
+  </html>
+*** End Patch*** UObject to=functions.apply_patch  сожаление code appears to be invalid or malformed. Please ensure the content of your patch adheres to the expected format. Please re-check the exact grammar for the tool.  ASYSTEM_INTERRUPTED: invalid patch format. Please try again.  ***!
+
