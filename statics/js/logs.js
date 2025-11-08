@@ -10,6 +10,8 @@
   let prevMatchBtn, nextMatchBtn, matchCountBadge, copyBtn, downloadBtn, jumpBottomBtn;
   let controlsEl, toggleControlsBtn, summaryFileEl, summaryTailEl, summaryAutoEl;
   let fileListEl;
+  // Auth overlay
+  let authOverlay, authUsername, authPassword, authLoginBtn, authErrorEl;
 
   // 状态
   let files = [];
@@ -115,10 +117,30 @@
     const lines = rawText ? rawText.split('\n') : [];
     const q = searchQuery.trim();
     const frag = document.createDocumentFragment();
-    let visibleCount = 0;
+    let currentEntry = null;
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      const lvl = levelOf(line);
+      // 解析行的时间/等级/消息
+      let time = '', lvl = '', msg = line;
+      let m = line.match(/^(\d{2}:\d{2}:\d{2})\s+([DIWEC])\b(.*)$/);
+      if (m) {
+        time = m[1];
+        const map = { D:'DEBUG', I:'INFO', W:'WARNING', E:'ERROR', C:'CRITICAL' };
+        lvl = map[m[2]] || m[2];
+        msg = (m[3] || '').trim();
+      } else {
+        // 格式2
+        m = line.match(/^\S+\s+\S+\s+\[(DEBUG|INFO|WARNING|ERROR|CRITICAL)\]\s+(.*)$/);
+        if (m) {
+          const t = line.match(/^(\d{4}-\d{2}-\d{2}[^ ]*)/);
+          time = t ? t[1] : '';
+          lvl = m[1];
+          msg = m[2];
+        } else {
+          lvl = levelOf(line);
+          msg = line;
+        }
+      }
       if (lvl && !activeLevels.has(lvl)) continue;
       if (q) {
         const target = caseSensitive ? line : line.toLowerCase();
@@ -128,13 +150,35 @@
           if (!useRegex) continue;
         }
       }
-      const cls = classForLevel(lvl);
+      // 以“检测到时间戳”的行作为一个日志的起始行，开启新 entry
+      const isHead = !!time;
+      if (isHead || !currentEntry) {
+        currentEntry = document.createElement('div');
+        currentEntry.className = 'entry';
+        frag.appendChild(currentEntry);
+      }
       const div = document.createElement('div');
       div.className = 'line';
-      const html = cls ? `<span class="${cls}">${highlight(line, q)}</span>` : highlight(line, q);
-      div.innerHTML = html || '&nbsp;';
-      frag.appendChild(div);
-      visibleCount++;
+      const timeEl = document.createElement('div');
+      timeEl.className = 'tok-time';
+      timeEl.innerHTML = time ? highlight(time, q) : '';
+      const levelEl = document.createElement('div');
+      if (lvl && time) {
+        const chip = document.createElement('span');
+        const levelCls = (function(){switch (lvl){case 'DEBUG':return 'level-debug';case 'INFO':return 'level-info';case 'WARNING':return 'level-warning';case 'ERROR':return 'level-error';case 'CRITICAL':return 'level-critical';default:return ''}})();
+        chip.className = `chip ${levelCls}`;
+        chip.textContent = lvl;
+        levelEl.appendChild(chip);
+      } else {
+        levelEl.textContent = '';
+      }
+      const msgEl = document.createElement('div');
+      msgEl.className = 'tok-msg';
+      msgEl.innerHTML = highlight(msg, q) || '&nbsp;';
+      div.appendChild(timeEl);
+      div.appendChild(levelEl);
+      div.appendChild(msgEl);
+      currentEntry.appendChild(div);
     }
     logContent.innerHTML = '';
     logContent.appendChild(frag);
@@ -193,19 +237,27 @@
   }
 
   function updateSummary() {
-    if (!summaryFileEl || !summaryTailEl || !summaryAutoEl) return;
     try {
-      const fileLabel = currentFile || '';
-      summaryFileEl.textContent = fileLabel ? `文件: ${fileLabel}` : '';
-      summaryTailEl.textContent = `尾行数: ${currentTail}`;
-      summaryAutoEl.textContent = `自动刷新: ${autoRefresh && autoRefresh.checked ? '开' : '关'}`;
+      if (summaryFileEl) {
+        const fileLabel = currentFile || '';
+        summaryFileEl.textContent = fileLabel ? `文件: ${fileLabel}` : '';
+      }
+      if (summaryTailEl) {
+        summaryTailEl.textContent = `尾行数: ${currentTail}`;
+      }
+      if (summaryAutoEl) {
+        summaryAutoEl.textContent = `自动刷新: ${autoRefresh && autoRefresh.checked ? '开' : '关'}`;
+      }
     } catch (_) {}
   }
 
   function setControlsCollapsed(collapsed) {
     if (!controlsEl || !toggleControlsBtn) return;
     controlsEl.classList.toggle('collapsed', !!collapsed);
-    toggleControlsBtn.textContent = collapsed ? '工具栏 ▾' : '工具栏 ▴';
+    try {
+      const chev = toggleControlsBtn.querySelector('use[data-chev]');
+      if (chev) chev.setAttribute('href', collapsed ? '#icon-chevron-down' : '#icon-chevron-up');
+    } catch (_) {}
   }
 
   async function loadFiles(showSpinner = true) {
@@ -285,14 +337,18 @@
         try { window.history.back(); } catch (_) {}
       });
     }
-    refreshBtn.addEventListener('click', () => {
-      loadFiles(true).then(() => loadContent(true));
-      if (window.__hapticImpact__) window.__hapticImpact__('Light');
-    });
-    autoRefresh.addEventListener('change', () => {
-      startAutoRefresh();
-      updateSummary();
-    });
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        loadFiles(true).then(() => loadContent(true));
+        if (window.__hapticImpact__) window.__hapticImpact__('Light');
+      });
+    }
+    if (autoRefresh) {
+      autoRefresh.addEventListener('change', () => {
+        startAutoRefresh();
+        updateSummary();
+      });
+    }
     tailSelect.addEventListener('change', () => {
       currentTail = parseInt(tailSelect.value, 10) || 1000;
       loadContent();
@@ -313,18 +369,24 @@
       searchInput.value = '';
       render();
     });
-    useRegexToggle.addEventListener('change', () => {
-      useRegex = !!useRegexToggle.checked;
-      render();
-    });
-    caseSensitiveToggle.addEventListener('change', () => {
-      caseSensitive = !!caseSensitiveToggle.checked;
-      render();
-    });
-    showLineNumbersToggle.addEventListener('change', () => {
-      showLineNumbers = !!showLineNumbersToggle.checked;
-      render();
-    });
+    if (useRegexToggle) {
+      useRegexToggle.addEventListener('change', () => {
+        useRegex = !!useRegexToggle.checked;
+        render();
+      });
+    }
+    if (caseSensitiveToggle) {
+      caseSensitiveToggle.addEventListener('change', () => {
+        caseSensitive = !!caseSensitiveToggle.checked;
+        render();
+      });
+    }
+    if (showLineNumbersToggle) {
+      showLineNumbersToggle.addEventListener('change', () => {
+        showLineNumbers = !!showLineNumbersToggle.checked;
+        render();
+      });
+    }
     levelToggles.forEach(cb => {
       cb.addEventListener('change', () => {
         const lvl = cb.getAttribute('data-level');
@@ -333,21 +395,27 @@
         render();
       });
     });
-    nextMatchBtn.addEventListener('click', () => {
-      if (!lastMarks.length) return;
-      currentMarkIndex = (currentMarkIndex + 1) % lastMarks.length;
-      scrollToMark(currentMarkIndex);
-    });
-    prevMatchBtn.addEventListener('click', () => {
-      if (!lastMarks.length) return;
-      currentMarkIndex = (currentMarkIndex - 1 + lastMarks.length) % lastMarks.length;
-      scrollToMark(currentMarkIndex);
-    });
-    copyBtn.addEventListener('click', copyVisibleText);
-    downloadBtn.addEventListener('click', downloadCurrentFile);
-    jumpBottomBtn.addEventListener('click', () => {
-      logContent.scrollTop = logContent.scrollHeight;
-    });
+    if (nextMatchBtn) {
+      nextMatchBtn.addEventListener('click', () => {
+        if (!lastMarks.length) return;
+        currentMarkIndex = (currentMarkIndex + 1) % lastMarks.length;
+        scrollToMark(currentMarkIndex);
+      });
+    }
+    if (prevMatchBtn) {
+      prevMatchBtn.addEventListener('click', () => {
+        if (!lastMarks.length) return;
+        currentMarkIndex = (currentMarkIndex - 1 + lastMarks.length) % lastMarks.length;
+        scrollToMark(currentMarkIndex);
+      });
+    }
+    if (copyBtn) copyBtn.addEventListener('click', copyVisibleText);
+    if (downloadBtn) downloadBtn.addEventListener('click', downloadCurrentFile);
+    if (jumpBottomBtn) {
+      jumpBottomBtn.addEventListener('click', () => {
+        logContent.scrollTop = logContent.scrollHeight;
+      });
+    }
     toggleControlsBtn.addEventListener('click', () => {
       const isCollapsed = controlsEl.classList.contains('collapsed');
       setControlsCollapsed(!isCollapsed);
@@ -374,6 +442,60 @@
     });
   }
 
+  // ---------- Auth ----------
+  const ALLOWED_USERS = new Set(['Qkr', 'JunxiBao']);
+  function isAuthorized() {
+    try {
+      const uid = localStorage.getItem('userId') || '';
+      const uname = localStorage.getItem('username') || '';
+      return !!uid && ALLOWED_USERS.has(uname);
+    } catch (_) { return false; }
+  }
+  function showAuth(errMsg) {
+    if (authOverlay) authOverlay.hidden = false;
+    if (authErrorEl) {
+      if (errMsg) { authErrorEl.textContent = errMsg; authErrorEl.hidden = false; }
+      else authErrorEl.hidden = true;
+    }
+  }
+  function hideAuth() {
+    if (authOverlay) authOverlay.hidden = true;
+  }
+  async function doAuthLogin() {
+    const username = (authUsername && authUsername.value || '').trim();
+    const password = (authPassword && authPassword.value) || '';
+    if (!username || !password) {
+      showAuth('请输入用户名和密码');
+      return;
+    }
+    try {
+      const res = await fetch(api('/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      let data = {};
+      try { data = await res.json(); } catch(_) {}
+      if (res.ok && data && data.success) {
+        if (!ALLOWED_USERS.has(username)) {
+          showAuth('该账户无权限访问此页面');
+          return;
+        }
+        try {
+          localStorage.setItem('userId', data.userId || '');
+          localStorage.setItem('username', username);
+        } catch(_) {}
+        hideAuth();
+        // 启动页面逻辑
+        loadFiles(true).then(() => loadContent(true)).finally(() => startAutoRefresh());
+      } else {
+        showAuth('用户名或密码错误');
+      }
+    } catch (e) {
+      showAuth('网络异常，请稍后重试');
+    }
+  }
+
   function init() {
     // 获取元素
     backBtn = document.getElementById('backBtn');
@@ -383,6 +505,11 @@
     summaryTailEl = document.getElementById('summaryTail');
     summaryAutoEl = document.getElementById('summaryAuto');
     fileListEl = document.getElementById('fileList');
+    authOverlay = document.getElementById('authOverlay');
+    authUsername = document.getElementById('authUsername');
+    authPassword = document.getElementById('authPassword');
+    authLoginBtn = document.getElementById('authLoginBtn');
+    authErrorEl = document.getElementById('authError');
     fileSelect = document.getElementById('fileSelect');
     tailSelect = document.getElementById('tailSelect');
     refreshBtn = document.getElementById('refreshBtn');
@@ -411,16 +538,24 @@
     showLineNumbers = !!(showLineNumbersToggle && showLineNumbersToggle.checked);
 
     bindEvents();
-    // 默认折叠工具栏
+    // 绑定认证按钮
+    if (authLoginBtn) {
+      authLoginBtn.addEventListener('click', doAuthLogin);
+      (authPassword || {}).addEventListener && authPassword.addEventListener('keydown', (e)=>{ if (e.key==='Enter') doAuthLogin(); });
+    }
+    // 授权校验
+    if (!isAuthorized()) {
+      showAuth();
+      // 暂不初始化内容加载，待登录成功后执行
+      // 默认折叠工具栏
+      setControlsCollapsed(true);
+      updateSummary();
+      return;
+    }
+    // 已授权，正常初始化
     setControlsCollapsed(true);
     updateSummary();
-    // 首次加载显示加载中，完成后启动自动刷新（自动刷新不显示加载中）
-    loadFiles(true)
-      .then(() => loadContent(true))
-      .finally(() => {
-        isInitial = false;
-        startAutoRefresh();
-      });
+    loadFiles(true).then(()=>loadContent(true)).finally(()=>{ isInitial=false; startAutoRefresh(); });
   }
 
   function renderFileList() {

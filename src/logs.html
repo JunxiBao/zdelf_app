@@ -19,10 +19,70 @@
     <link rel="stylesheet" href="../statics/css/logs.css" />
   </head>
   <body>
+    <!-- 认证遮罩（仅本页使用，不依赖主应用） -->
+    <div id="authOverlay" class="auth-overlay" hidden>
+      <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+        <h2 id="authTitle" class="auth-title">访问日志监视器</h2>
+        <p class="auth-desc">请输入账号和密码</p>
+        <label class="auth-field">
+          <span>用户名</span>
+          <input id="authUsername" type="text" autocomplete="username" placeholder="用户名" />
+        </label>
+        <label class="auth-field">
+          <span>密码</span>
+          <input id="authPassword" type="password" autocomplete="current-password" placeholder="密码" />
+        </label>
+        <div class="auth-actions">
+          <button id="authLoginBtn" class="btn" aria-label="登录">
+            登录
+          </button>
+        </div>
+        <div id="authError" class="auth-error" role="alert" aria-live="assertive" hidden></div>
+      </div>
+    </div>
+    <!-- 内联SVG图标库（无外部依赖） -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+      <symbol id="icon-refresh" viewBox="0 0 24 24">
+        <path d="M21 12a9 9 0 1 1-2.64-6.36" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M21 4v5h-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/>
+        <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24">
+        <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="icon-chevron-down" viewBox="0 0 24 24">
+        <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="icon-chevron-up" viewBox="0 0 24 24">
+        <path d="M6 15l6-6 6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="icon-copy" viewBox="0 0 24 24">
+        <rect x="9" y="9" width="10" height="10" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/>
+        <rect x="5" y="5" width="10" height="10" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/>
+      </symbol>
+      <symbol id="icon-download" viewBox="0 0 24 24">
+        <path d="M12 3v12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M8 11l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5 21h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="icon-arrow-bottom" viewBox="0 0 24 24">
+        <path d="M12 5v12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M8 13l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="icon-theme" viewBox="0 0 24 24">
+        <path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" stroke="currentColor" stroke-width="2" fill="none"/>
+      </symbol>
+    </svg>
     <main class="app" aria-label="日志监视器">
       <!-- 顶部栏 -->
       <header class="header">
-        <h1 class="header-title">日志监视器</h1>
+        <div class="header-left">
+          <h1 class="header-title">日志监视器</h1>
+          <div class="header-subtitle">开发者实时日志 · 独立网页工具</div>
+        </div>
         <div class="header-spacer"></div>
       </header>
 
@@ -37,14 +97,17 @@
       <!-- 控制区 -->
       <section class="controls">
         <div class="controls-summary">
-          <button id="toggleControls" class="btn btn-ghost" title="展开/折叠工具栏">工具栏 ▾</button>
+          <button id="toggleControls" class="btn btn-ghost" title="展开/折叠工具栏" aria-label="展开或折叠工具栏">
+            <svg class="icon"><use data-chev="1" href="#icon-chevron-down"></use></svg>
+            <span class="label">工具栏</span>
+          </button>
           <div class="summary-meta">
             <span id="summaryFile" class="summary-item"></span>
             <span id="summaryTail" class="summary-item"></span>
-            <span id="summaryAuto" class="summary-item"></span>
           </div>
         </div>
-        <div class="row">
+        <div class="controls-body">
+        <div class="row row-a">
           <label class="control">
             <span>文件</span>
             <select id="fileSelect" aria-label="日志文件"></select>
@@ -52,57 +115,22 @@
           <label class="control">
             <span>尾行数</span>
             <select id="tailSelect" aria-label="尾部行数">
-              <option value="200">200</option>
+              <option value="200" selected>200</option>
               <option value="500">500</option>
-              <option value="1000" selected>1000</option>
+              <option value="1000">1000</option>
               <option value="2000">2000</option>
               <option value="5000">5000</option>
             </select>
           </label>
-          <div class="btns">
-            <button id="refreshBtn" class="btn" title="刷新">
-              ⟳ 刷新
-            </button>
-            <label class="toggle" title="自动刷新">
-              <input type="checkbox" id="autoRefresh" checked />
-              <span>自动刷新</span>
-            </label>
-            <label class="toggle" title="始终滚动到底部">
-              <input type="checkbox" id="stickBottom" checked />
-              <span>置底</span>
-            </label>
-            <label class="toggle" title="显示行号">
-              <input type="checkbox" id="showLineNumbers" />
-              <span>行号</span>
-            </label>
-          </div>
         </div>
-        <div class="row">
+        <div class="row row-b">
           <label class="search">
-            <span class="search-icon">🔍</span>
+            <svg class="icon"><use href="#icon-search"></use></svg>
             <input id="searchInput" type="text" placeholder="搜索关键字（支持实时过滤与高亮）" />
             <button id="clearSearch" class="icon-btn" title="清除搜索">
-              ✖
+              <svg class="icon"><use href="#icon-close"></use></svg>
             </button>
           </label>
-          <label class="toggle" title="正则">
-            <input type="checkbox" id="useRegex" />
-            <span>正则</span>
-          </label>
-          <label class="toggle" title="区分大小写">
-            <input type="checkbox" id="caseSensitive" />
-            <span>大小写</span>
-          </label>
-          <div class="btns">
-            <button class="btn btn-ghost" id="prevMatch" title="上一个">↑</button>
-            <button class="btn btn-ghost" id="nextMatch" title="下一个">↓</button>
-            <span class="match-count" id="matchCount">0</span>
-          </div>
-          <div class="btns right">
-            <button class="btn btn-ghost" id="copyVisible" title="复制当前可见">复制</button>
-            <button class="btn btn-ghost" id="downloadFile" title="下载当前文件">下载</button>
-            <button class="btn btn-ghost" id="jumpBottom" title="滚动到底部">到底</button>
-          </div>
           <div class="levels">
             <label><input type="checkbox" data-level="DEBUG" checked /> DEBUG</label>
             <label><input type="checkbox" data-level="INFO" checked /> INFO</label>
@@ -110,6 +138,7 @@
             <label><input type="checkbox" data-level="ERROR" checked /> ERROR</label>
             <label><input type="checkbox" data-level="CRITICAL" checked /> CRITICAL</label>
           </div>
+        </div>
         </div>
       </section>
 
