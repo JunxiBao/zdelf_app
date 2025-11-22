@@ -91,6 +91,14 @@ def _ensure_table(conn):
             if "Duplicate column name" not in str(e) and "Duplicate key name" not in str(e):
                 raise
         
+        # 检查并添加tags字段（如果不存在）
+        try:
+            cur.execute("ALTER TABLE square_posts ADD COLUMN tags JSON NULL")
+        except mysql_errors.ProgrammingError as e:
+            # 字段已存在，忽略错误
+            if "Duplicate column name" not in str(e):
+                raise
+        
         conn.commit()
     finally:
         try:
@@ -120,29 +128,61 @@ def list_posts():
             _ensure_table(conn)
             cur = conn.cursor(dictionary=True)
             try:
+                # 获取筛选tag
+                filter_tag = payload.get("tag")
+                
                 # If current_user_id is provided, filter out posts from blocked users
                 if current_user_id:
-                    cur.execute(
-                        """
-                        SELECT p.id, p.user_id, p.username, p.avatar_url, p.text_content, p.image_urls, p.created_at
-                        FROM square_posts p
-                        LEFT JOIN blocked_users b ON b.blocker_id = %s AND b.blocked_id = p.user_id
-                        WHERE b.id IS NULL
-                        ORDER BY p.created_at DESC
-                        LIMIT %s
-                        """,
-                        (current_user_id, limit),
-                    )
+                    if filter_tag:
+                        # 使用JSON_CONTAINS检查数组中是否包含指定tag，同时处理NULL情况
+                        # JSON_CONTAINS检查字符串是否在JSON数组中
+                        cur.execute(
+                            """
+                            SELECT p.id, p.user_id, p.username, p.avatar_url, p.text_content, p.image_urls, p.tags, p.created_at
+                            FROM square_posts p
+                            LEFT JOIN blocked_users b ON b.blocker_id = %s AND b.blocked_id = p.user_id
+                            WHERE b.id IS NULL AND p.tags IS NOT NULL AND JSON_CONTAINS(p.tags, %s)
+                            ORDER BY p.created_at DESC
+                            LIMIT %s
+                            """,
+                            (current_user_id, json.dumps(filter_tag), limit),
+                        )
+                    else:
+                        cur.execute(
+                            """
+                            SELECT p.id, p.user_id, p.username, p.avatar_url, p.text_content, p.image_urls, p.tags, p.created_at
+                            FROM square_posts p
+                            LEFT JOIN blocked_users b ON b.blocker_id = %s AND b.blocked_id = p.user_id
+                            WHERE b.id IS NULL
+                            ORDER BY p.created_at DESC
+                            LIMIT %s
+                            """,
+                            (current_user_id, limit),
+                        )
                 else:
-                    cur.execute(
-                        """
-                        SELECT id, user_id, username, avatar_url, text_content, image_urls, created_at
-                        FROM square_posts
-                        ORDER BY created_at DESC
-                        LIMIT %s
-                        """,
-                        (limit,),
-                    )
+                    if filter_tag:
+                        # 使用JSON_CONTAINS检查数组中是否包含指定tag，同时处理NULL情况
+                        # JSON_CONTAINS检查字符串是否在JSON数组中
+                        cur.execute(
+                            """
+                            SELECT id, user_id, username, avatar_url, text_content, image_urls, tags, created_at
+                            FROM square_posts
+                            WHERE tags IS NOT NULL AND JSON_CONTAINS(tags, %s)
+                            ORDER BY created_at DESC
+                            LIMIT %s
+                            """,
+                            (json.dumps(filter_tag), limit),
+                        )
+                    else:
+                        cur.execute(
+                            """
+                            SELECT id, user_id, username, avatar_url, text_content, image_urls, tags, created_at
+                            FROM square_posts
+                            ORDER BY created_at DESC
+                            LIMIT %s
+                            """,
+                            (limit,),
+                        )
                 rows = cur.fetchall()
             finally:
                 cur.close()
@@ -158,6 +198,15 @@ def list_posts():
                     images = json.loads(images)
                 except Exception:
                     images = []
+            
+            tags = r.get("tags")
+            if isinstance(tags, str):
+                try:
+                    tags = json.loads(tags)
+                except Exception:
+                    tags = []
+            if not isinstance(tags, list):
+                tags = []
             
             # 检查是否是匿名消息
             is_anonymous = r.get("username") == "匿名用户"
@@ -176,6 +225,7 @@ def list_posts():
                     "avatar_url": r.get("avatar_url"),
                     "text": r.get("text_content") or "",
                     "images": images or [],
+                    "tags": tags or [],
                     "created_at": r.get("created_at").isoformat() if r.get("created_at") else None,
                 }
             )
@@ -206,6 +256,7 @@ def publish_post():
         avatar_url = (body.get("avatar_url") or "").strip() or None
         text_content = (body.get("text") or body.get("text_content") or "").strip() or None
         images = body.get("images") or []
+        tags = body.get("tags") or []
 
         # 检查是否是匿名发布（用户名为"匿名用户"）
         is_anonymous = username == "匿名用户"
@@ -222,6 +273,13 @@ def publish_post():
             for it in images:
                 if isinstance(it, str) and it:
                     safe_images.append(it)
+        
+        # Ensure tags is JSON-serializable list of strings
+        safe_tags = []
+        if isinstance(tags, list):
+            for it in tags:
+                if isinstance(it, str) and it.strip():
+                    safe_tags.append(it.strip())
 
         post_id = uuid.uuid4().hex
 
@@ -233,10 +291,10 @@ def publish_post():
                 # 匿名发布时也记录user_id，但显示时保持匿名
                 cur.execute(
                     """
-                    INSERT INTO square_posts (id, user_id, username, avatar_url, text_content, image_urls)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    INSERT INTO square_posts (id, user_id, username, avatar_url, text_content, image_urls, tags)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                     """,
-                    (post_id, user_id, username, avatar_url, text_content, json.dumps(safe_images, ensure_ascii=False)),
+                    (post_id, user_id, username, avatar_url, text_content, json.dumps(safe_images, ensure_ascii=False), json.dumps(safe_tags, ensure_ascii=False) if safe_tags else None),
                 )
                 conn.commit()
             finally:

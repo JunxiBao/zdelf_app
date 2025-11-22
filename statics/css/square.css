@@ -382,11 +382,13 @@ body {
   font-size: 20px;
 }
 
-/* 次级图标行（位于发布按钮下方，右对齐） */
+/* 次级图标行（位于发布按钮下方，左右分布：tag筛选在左，按钮在右） */
 .secondary-icon-row {
-  margin-top: 8px;
+  margin-top: 16px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 
 .feedback-icon-btn {
@@ -2837,3 +2839,426 @@ body {
     color: #f0f0f0;
   }
 }
+
+/* ========== Tag相关样式 ========== */
+/* Tag选择区域 */
+.tag-section {
+  margin: 16px 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--divider);
+}
+
+.tag-title {
+  margin: 0 0 12px 0;
+  font-size: 0.95em;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.tag-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tag-select-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.tag-select-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--card);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-1);
+  min-width: 120px;
+  position: relative;
+  pointer-events: none; /* 让点击穿透到select */
+}
+
+.tag-select-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
+  color: var(--brand);
+  background: linear-gradient(135deg, rgba(98,0,234,0.06) 0%, rgba(98,0,234,0.03) 100%);
+  border-color: rgba(98, 0, 234, 0.25);
+}
+
+.tag-select-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-1);
+}
+
+.tag-select-btn ion-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.tag-select {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 3;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+}
+
+.tag-input-wrapper {
+  position: relative;
+  display: none; /* 默认隐藏，选择"其他"时显示 */
+}
+
+.tag-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--card);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.tag-input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+}
+
+.tag-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selected-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(98, 0, 234, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+  border: 1px solid rgba(98, 0, 234, 0.2);
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--brand);
+  font-weight: 500;
+}
+
+.tag-text {
+  line-height: 1;
+}
+
+.tag-remove-btn {
+  background: transparent;
+  border: none;
+  color: var(--brand);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.tag-remove-btn:hover {
+  background: rgba(98, 0, 234, 0.2);
+  transform: scale(1.1);
+}
+
+.tag-remove-btn ion-icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* Tag筛选区域（在secondary-icon-row中） */
+.tag-filter-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0; /* 允许收缩 */
+  gap: 8px;
+}
+
+.tag-filter-select {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px 12px;
+  padding-right: 32px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--card);
+  outline: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  box-shadow: var(--shadow-1);
+  height: 42px; /* 与feedback-icon-btn保持一致的高度 */
+}
+
+.tag-filter-select:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1), var(--shadow-1);
+}
+
+.tag-filter-select:hover {
+  border-color: var(--brand);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
+  color: var(--brand);
+  background: linear-gradient(135deg, rgba(98,0,234,0.06) 0%, rgba(98,0,234,0.03) 100%);
+  border-color: rgba(98, 0, 234, 0.25);
+}
+
+.tag-filter-input-wrapper {
+  display: none; /* 默认隐藏，选择"其他"时显示 */
+  flex: 1;
+  min-width: 0;
+}
+
+.tag-filter-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--card);
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-1);
+  height: 42px; /* 与feedback-icon-btn保持一致的高度 */
+}
+
+.tag-filter-input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1), var(--shadow-1);
+}
+
+.tag-filter-input:hover {
+  border-color: var(--brand);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
+}
+
+.tag-filter-input::placeholder {
+  color: var(--text-secondary);
+}
+
+/* 消息中的tag显示 */
+.message-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+.message-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, rgba(98, 0, 234, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+  border: 1px solid rgba(98, 0, 234, 0.2);
+  border-radius: 16px;
+  font-size: 12px;
+  color: var(--brand);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.message-tag:hover {
+  background: linear-gradient(135deg, rgba(98, 0, 234, 0.15) 0%, rgba(124, 58, 237, 0.1) 100%);
+  border-color: var(--brand);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(98, 0, 234, 0.2);
+}
+
+/* 暗色模式下的tag样式 */
+@media (prefers-color-scheme: dark) {
+  .tag-select {
+    background: var(--card);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa3af' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+  
+  .tag-select:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+  }
+  
+  .tag-select-btn {
+    background: rgba(255,255,255,0.03);
+    border-color: var(--divider);
+  }
+  
+  .tag-select-btn:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(167, 139, 250, 0.3);
+    color: #a78bfa;
+  }
+  
+  .tag-input {
+    background: var(--card);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+  }
+  
+  .tag-input:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+  }
+  
+  .selected-tag {
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.15) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border-color: rgba(167, 139, 250, 0.3);
+    color: #a78bfa;
+  }
+  
+  .tag-remove-btn {
+    color: #a78bfa;
+  }
+  
+  .tag-remove-btn:hover {
+    background: rgba(167, 139, 250, 0.2);
+  }
+  
+  .message-tag {
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.15) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border-color: rgba(167, 139, 250, 0.3);
+    color: #a78bfa;
+  }
+  
+  .message-tag:hover {
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(139, 92, 246, 0.12) 100%);
+    border-color: #a78bfa;
+    box-shadow: 0 2px 6px rgba(167, 139, 250, 0.3);
+  }
+  
+  .tag-filter-select {
+    background: rgba(255,255,255,0.03);
+    border-color: var(--divider);
+    color: var(--text);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa3af' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  
+  .tag-filter-select:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1), var(--shadow-2);
+  }
+  
+  .tag-filter-select:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(167, 139, 250, 0.3);
+    color: #a78bfa;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-2);
+  }
+  
+  .tag-filter-input {
+    background: rgba(255,255,255,0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+  }
+  
+  .tag-filter-input:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1), var(--shadow-2);
+  }
+  
+  .tag-filter-input:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(167, 139, 250, 0.3);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-2);
+  }
+}
+
+/* 移动端tag样式 */
+@media (max-width: 480px) {
+  .tag-section {
+    margin: 12px 0;
+    padding-top: 12px;
+  }
+  
+  .tag-title {
+    font-size: 0.9em;
+    margin-bottom: 10px;
+  }
+  
+  .tag-select {
+    padding: 8px 12px;
+    padding-right: 32px;
+    font-size: 13px;
+  }
+  
+  .tag-input {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .selected-tag {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+  
+  .tag-filter-select {
+    padding: 6px 10px;
+    padding-right: 28px;
+    font-size: 12px;
+    min-width: 100px;
+  }
+  
+  .tag-filter-input {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .secondary-icon-row {
+    gap: 8px;
+  }
+  
+  .message-tag {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+}
+

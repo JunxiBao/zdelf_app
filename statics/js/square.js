@@ -34,6 +34,11 @@ let allMessages = []; // 存储所有消息用于搜索
 let searchTimeout = null; // 搜索防抖定时器
 let isDetailView = false; // 是否在详情视图
 let currentDetailPostId = null; // 当前详情视图的帖子ID
+let tagInput, tagSelect, tagSelectBtn, tagSelectBtnText, tagInputWrapper, selectedTags; // Tag相关元素（发布时使用）
+let tagFilterSelect, tagFilterInput, tagFilterInputWrapper; // Tag筛选相关元素
+let selectedTagList = []; // 已选择的tag列表
+let currentFilterTag = ''; // 当前筛选的tag
+let allTags = new Set(); // 所有已使用的tag集合
 
 /**
  * 初始化广场页面
@@ -227,6 +232,15 @@ function initializeElements() {
   publishSection = squareRoot.getElementById('publishSection');
   cancelBtn = squareRoot.getElementById('cancelBtn');
   anonymousBtn = squareRoot.getElementById('anonymousBtn');
+  tagInput = squareRoot.getElementById('tagInput');
+  tagSelect = squareRoot.getElementById('tagSelect');
+  tagSelectBtn = squareRoot.getElementById('tagSelectBtn');
+  tagSelectBtnText = squareRoot.getElementById('tagSelectBtnText');
+  tagInputWrapper = squareRoot.getElementById('tagInputWrapper');
+  selectedTags = squareRoot.getElementById('selectedTags');
+  tagFilterSelect = squareRoot.getElementById('tagFilterSelect');
+  tagFilterInput = squareRoot.getElementById('tagFilterInput');
+  tagFilterInputWrapper = squareRoot.getElementById('tagFilterInputWrapper');
   // feedbackIconBtn 用于显示 relate 更新提示
   // 注意：这个元素在 square.html 中，需要通过 squareRoot 获取
 }
@@ -304,6 +318,131 @@ function setupEventListeners() {
     const btnHandler = () => handleAnonymousBtnClick();
     anonymousBtn.addEventListener('click', btnHandler);
     cleanupFns.push(() => anonymousBtn.removeEventListener('click', btnHandler));
+  }
+  
+  // Tag选择按钮 - 不需要单独处理，因为select覆盖在上面会直接接收点击
+  
+  // Tag选择器（隐藏，通过按钮触发）
+  if (tagSelect) {
+    const tagSelectHandler = (e) => {
+      const selectedValue = e.target.value;
+      if (selectedValue === '其他') {
+        // 显示输入框
+        if (tagInputWrapper) {
+          tagInputWrapper.style.display = 'block';
+        }
+        if (tagInput) {
+          tagInput.focus();
+        }
+        // 更新按钮文字
+        if (tagSelectBtnText) {
+          tagSelectBtnText.textContent = '其他';
+        }
+      } else if (selectedValue && selectedValue !== '') {
+        // 选择默认标签，直接添加
+        addTag(selectedValue);
+        // 重置选择器
+        e.target.value = '';
+        // 更新按钮文字
+        if (tagSelectBtnText) {
+          tagSelectBtnText.textContent = '选择标签';
+        }
+        // 隐藏输入框
+        if (tagInputWrapper) {
+          tagInputWrapper.style.display = 'none';
+        }
+      } else {
+        // 选择"请选择标签..."，隐藏输入框
+        if (tagInputWrapper) {
+          tagInputWrapper.style.display = 'none';
+        }
+        // 更新按钮文字
+        if (tagSelectBtnText) {
+          tagSelectBtnText.textContent = '选择标签';
+        }
+      }
+    };
+    tagSelect.addEventListener('change', tagSelectHandler);
+    cleanupFns.push(() => tagSelect.removeEventListener('change', tagSelectHandler));
+  }
+  
+  // Tag输入框（仅在选择"其他"时显示）
+  if (tagInput) {
+    const tagInputHandler = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const customTag = e.target.value.trim();
+        if (customTag) {
+          addTag(customTag);
+          // 重置选择器和输入框
+          if (tagSelect) {
+            tagSelect.value = '';
+          }
+          if (tagSelectBtnText) {
+            tagSelectBtnText.textContent = '选择标签';
+          }
+          if (tagInputWrapper) {
+            tagInputWrapper.style.display = 'none';
+          }
+        }
+      }
+    };
+    tagInput.addEventListener('keypress', tagInputHandler);
+    cleanupFns.push(() => tagInput.removeEventListener('keypress', tagInputHandler));
+  }
+  
+  // Tag筛选选择器
+  if (tagFilterSelect) {
+    const tagFilterSelectHandler = (e) => {
+      const selectedValue = e.target.value;
+      if (selectedValue === '其他') {
+        // 显示输入框
+        if (tagFilterInputWrapper) {
+          tagFilterInputWrapper.style.display = 'block';
+        }
+        if (tagFilterInput) {
+          tagFilterInput.focus();
+        }
+      } else if (selectedValue && selectedValue !== '') {
+        // 选择默认标签，直接筛选
+        filterByTag(selectedValue);
+        // 隐藏输入框
+        if (tagFilterInputWrapper) {
+          tagFilterInputWrapper.style.display = 'none';
+        }
+      } else {
+        // 选择"全部"，清除筛选
+        filterByTag('');
+        // 隐藏输入框
+        if (tagFilterInputWrapper) {
+          tagFilterInputWrapper.style.display = 'none';
+        }
+      }
+    };
+    tagFilterSelect.addEventListener('change', tagFilterSelectHandler);
+    cleanupFns.push(() => tagFilterSelect.removeEventListener('change', tagFilterSelectHandler));
+  }
+  
+  // Tag筛选输入框（仅在选择"其他"时显示）
+  if (tagFilterInput) {
+    const tagFilterInputHandler = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const customTag = e.target.value.trim();
+        if (customTag) {
+          filterByTag(customTag);
+          // 重置选择器和输入框
+          if (tagFilterSelect) {
+            tagFilterSelect.value = '';
+          }
+          if (tagFilterInputWrapper) {
+            tagFilterInputWrapper.style.display = 'none';
+          }
+        }
+      }
+    };
+    tagFilterInput.addEventListener('keypress', tagFilterInputHandler);
+    cleanupFns.push(() => tagFilterInput.removeEventListener('keypress', tagFilterInputHandler));
   }
 }
 
@@ -749,7 +888,8 @@ async function handlePublish() {
     username: isAnon ? '匿名用户' : (identity.username || undefined),
     avatar_url: isAnon ? undefined : (identity.avatar_url || undefined),
     text: text || undefined,
-    images: uploadedUrls
+    images: uploadedUrls,
+    tags: selectedTagList.length > 0 ? selectedTagList : undefined
   };
     const resp = await fetch(API_BASE + '/square/publish', {
       method: 'POST',
@@ -804,6 +944,23 @@ function clearPublishForm() {
   if (publishBtn) {
     publishBtn.disabled = true;
   }
+  // 清空tag选择
+  selectedTagList = [];
+  if (selectedTags) {
+    selectedTags.innerHTML = '';
+  }
+  if (tagInput) {
+    tagInput.value = '';
+  }
+  if (tagSelect) {
+    tagSelect.value = '';
+  }
+  if (tagSelectBtnText) {
+    tagSelectBtnText.textContent = '选择标签';
+  }
+  if (tagInputWrapper) {
+    tagInputWrapper.style.display = 'none';
+  }
 }
 
 /**
@@ -840,11 +997,13 @@ function performSearch(query) {
     return;
   }
   
-  // 搜索消息内容和作者名称
+  // 搜索消息内容、作者名称和标签
   const filteredMessages = allMessages.filter(message => {
     const textMatch = message.text && message.text.toLowerCase().includes(query.toLowerCase());
     const authorMatch = message.author && message.author.toLowerCase().includes(query.toLowerCase());
-    return textMatch || authorMatch;
+    const tagMatch = message.tags && Array.isArray(message.tags) && 
+      message.tags.some(tag => tag && tag.toLowerCase().includes(query.toLowerCase()));
+    return textMatch || authorMatch || tagMatch;
   });
   
   messages = filteredMessages;
@@ -966,12 +1125,16 @@ async function loadMessages() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         limit: 50,
-        current_user_id: identity.user_id || null
+        current_user_id: identity.user_id || null,
+        tag: currentFilterTag || undefined
       })
     });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     const list = (data && data.success && Array.isArray(data.data)) ? data.data : [];
+    
+    // 清空allTags集合，重新收集
+    allTags.clear();
     
     // 归一化为现有渲染结构
     const loadedMessages = list.map((it) => {
@@ -983,6 +1146,14 @@ async function loadMessages() {
       // 尝试多种可能的评论计数字段名
       const commentCount = it.comment_count || it.comments_count || it.num_comments || it.comments || 0;
       
+      const tags = Array.isArray(it.tags) ? it.tags.filter(t => t && typeof t === 'string' && t.trim()) : [];
+      // 收集所有tag到allTags集合
+      tags.forEach(tag => {
+        if (tag && typeof tag === 'string' && tag.trim()) {
+          allTags.add(tag.trim());
+        }
+      });
+      
       return {
         id: it.id,
         author: it.username || '匿名用户',
@@ -990,6 +1161,7 @@ async function loadMessages() {
         avatar: avatar,
         text: it.text || it.text_content || '',
         images: normImgs,
+        tags: tags,
         timestamp: it.created_at || new Date().toISOString(),
         likes: 0,
         comments: 0,
@@ -1000,6 +1172,9 @@ async function loadMessages() {
     // 保存到 allMessages 用于搜索
     allMessages = [...loadedMessages];
     messages = [...loadedMessages];
+
+    // 更新tag筛选器
+    updateTagFilter();
 
     updateMessagesList();
     
@@ -1743,6 +1918,14 @@ function createMessageElement(message, index) {
     </div>
     <div class="message-content">
       ${message.text ? `<div class="message-text">${escapeHtml(message.text)}</div>` : ''}
+      ${message.tags && message.tags.length > 0 ? 
+        `<div class="message-tags">
+          ${message.tags.map(tag => {
+            const safeTag = (tag || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+            const escapedTag = escapeHtml(tag || '');
+            return `<span class="message-tag" onclick="filterByTag('${safeTag}'); event.stopPropagation();">#${escapedTag}</span>`;
+          }).join('')}
+        </div>` : ''}
       ${message.images && message.images.length > 0 ? 
         `<div class="message-images">
           ${message.images.map((img, imgIndex) => 
@@ -3868,5 +4051,111 @@ window.toggleReplyInput = toggleReplyInput;
 window.toggleReplies = toggleReplies;
 window.handleCommentClick = handleCommentClick;
 window.handleReplyClick = handleReplyClick;
+window.filterByTag = filterByTag;
+window.removeTag = removeTag;
+
+/**
+ * 添加tag
+ * @param {string} tag - tag名称
+ */
+function addTag(tag) {
+  if (!tag || tag.length === 0) return;
+  if (selectedTagList.length >= 5) {
+    showToast('最多只能添加5个标签');
+    return;
+  }
+  if (selectedTagList.includes(tag)) {
+    showToast('该标签已添加');
+    return;
+  }
+  
+  selectedTagList.push(tag);
+  if (tagInput) {
+    tagInput.value = '';
+  }
+  updateSelectedTagsDisplay();
+  
+  if (window.__hapticImpact__) {
+    window.__hapticImpact__('Light');
+  }
+}
+
+/**
+ * 移除tag
+ * @param {string} tag - tag名称
+ */
+function removeTag(tag) {
+  selectedTagList = selectedTagList.filter(t => t !== tag);
+  updateSelectedTagsDisplay();
+  
+  if (window.__hapticImpact__) {
+    window.__hapticImpact__('Light');
+  }
+}
+
+/**
+ * 更新已选择tag的显示
+ */
+function updateSelectedTagsDisplay() {
+  if (!selectedTags) return;
+  
+  selectedTags.innerHTML = selectedTagList.map(tag => {
+    // 转义标签名用于显示和onclick属性
+    const escapedTag = escapeHtml(tag);
+    // 使用 data 属性来避免特殊字符问题
+    const safeTag = tag.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    return `
+    <span class="selected-tag">
+      <span class="tag-text">#${escapedTag}</span>
+      <button class="tag-remove-btn" onclick="removeTag('${safeTag}')" aria-label="移除标签">
+        <ion-icon ios="close-outline" md="close-sharp" aria-hidden="true"></ion-icon>
+      </button>
+    </span>
+  `;
+  }).join('');
+}
+
+/**
+ * 按tag筛选
+ * @param {string} tag - tag名称
+ */
+function filterByTag(tag) {
+  currentFilterTag = tag || '';
+  
+  // 更新筛选选择器状态
+  if (tagFilterSelect) {
+    // 如果tag在默认选项中，设置选择器值
+    const option = Array.from(tagFilterSelect.options).find(opt => opt.value === tag);
+    if (option) {
+      tagFilterSelect.value = tag;
+    } else {
+      // 自定义tag，清空选择器
+      tagFilterSelect.value = '';
+    }
+  }
+  
+  // 重新加载消息
+  loadMessages();
+  
+  if (window.__hapticImpact__) {
+    window.__hapticImpact__('Light');
+  }
+}
+
+/**
+ * 更新tag筛选器显示
+ * 注意：现在使用选择器，不再需要动态添加按钮
+ */
+function updateTagFilter() {
+  // 如果当前筛选的tag不在默认选项中，可以选择保持当前筛选状态
+  // 或者将选择器重置为"全部"
+  if (tagFilterSelect && currentFilterTag) {
+    const option = Array.from(tagFilterSelect.options).find(opt => opt.value === currentFilterTag);
+    if (!option) {
+      // 自定义tag，保持选择器为空（显示"全部"）
+      tagFilterSelect.value = '';
+    }
+  }
+}
 
 })();

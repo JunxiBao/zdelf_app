@@ -47,6 +47,23 @@
           <span>分享想法</span>
         </button>
         <div class="secondary-icon-row">
+          <!-- Tag筛选区域 -->
+          <div class="tag-filter-container" id="tagFilterContainer">
+            <select id="tagFilterSelect" class="tag-filter-select">
+              <option value="">全部</option>
+              <option value="健康">健康</option>
+              <option value="运动">运动</option>
+              <option value="饮食">饮食</option>
+              <option value="心情">心情</option>
+              <option value="学习">学习</option>
+              <option value="工作">工作</option>
+              <option value="生活">生活</option>
+              <option value="其他">其他</option>
+            </select>
+            <div class="tag-filter-input-wrapper" id="tagFilterInputWrapper" style="display: none;">
+              <input type="text" id="tagFilterInput" class="tag-filter-input" placeholder="输入自定义标签..." maxlength="20">
+            </div>
+          </div>
           <button class="feedback-icon-btn" id="feedbackIconBtn" aria-label="与你有关" title="与你有关" onclick="window.location.href='src/related.html'">
             <ion-icon ios="chatbox-ellipses-outline" md="chatbox-ellipses-sharp" aria-hidden="true"></ion-icon>
           </button>
@@ -77,6 +94,34 @@
           </div>
           
           <div class="publish-content">
+            <!-- Tag选择区域 -->
+            <div class="tag-section">
+              <h4 class="tag-title">选择标签（可选）</h4>
+              <div class="tag-container">
+                <div class="tag-select-wrapper">
+                  <button id="tagSelectBtn" class="tag-select-btn" type="button">
+                    <span id="tagSelectBtnText">选择标签</span>
+                    <ion-icon ios="chevron-down-outline" md="chevron-down-sharp" aria-hidden="true"></ion-icon>
+                  </button>
+                  <select id="tagSelect" class="tag-select">
+                    <option value="">请选择标签...</option>
+                    <option value="健康">健康</option>
+                    <option value="运动">运动</option>
+                    <option value="饮食">饮食</option>
+                    <option value="心情">心情</option>
+                    <option value="学习">学习</option>
+                    <option value="工作">工作</option>
+                    <option value="生活">生活</option>
+                    <option value="其他">其他</option>
+                  </select>
+                </div>
+                <div class="tag-input-wrapper" id="tagInputWrapper" style="display: none;">
+                  <input type="text" id="tagInput" class="tag-input" placeholder="输入自定义标签并按回车添加..." maxlength="20">
+                </div>
+                <div class="selected-tags" id="selectedTags"></div>
+              </div>
+            </div>
+            
             <textarea 
               id="messageText" 
               class="message-textarea" 
