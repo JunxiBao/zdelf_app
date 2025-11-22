@@ -80,8 +80,6 @@ function initOptionsPage() {
         card.removeEventListener('click', handleOptionClick);
         // 添加新的监听器
         card.addEventListener('click', handleOptionClick);
-        // 添加涟漪效果
-        attachButtonRipple(card);
     });
     
     console.log('[Options] 已为', optionCards.length, '个选项卡绑定点击事件');
@@ -174,26 +172,6 @@ function goBack() {
     window.location.href = '../index.html';
 }
 
-// 为按钮添加涟漪效果
-function attachButtonRipple(btn) {
-    if (!btn) return;
-    
-    // 🔧 修复：使用标记避免重复添加涟漪效果
-    if (btn._hasRipple) return;
-    btn._hasRipple = true;
-
-    btn.addEventListener("click", function (e) {
-        // 涟漪效果已经在CSS中处理，这里可以添加额外的逻辑
-        // 注意：震动反馈由 handleOptionClick 处理，这里不重复触发
-        const rect = this.getBoundingClientRect();
-        const ripple = document.createElement("span");
-        ripple.className = "btn-ripple";
-        ripple.style.left = e.clientX - rect.left + "px";
-        ripple.style.top = e.clientY - rect.top + "px";
-        this.appendChild(ripple);
-        setTimeout(() => ripple.remove(), 520);
-    });
-}
 
 // 显示提示消息
 function showToast(message) {
@@ -256,28 +234,6 @@ style.textContent = `
         }
     }
 
-    .btn-ripple {
-        position: absolute;
-        border-radius: 50%;
-        pointer-events: none;
-        inset: 0;
-        width: 20px;
-        height: 20px;
-        transform: translate(-50%, -50%) scale(0);
-        background: radial-gradient(
-            circle,
-            rgba(255, 255, 255, 0.45) 0%,
-            rgba(255, 255, 255, 0) 60%
-        );
-        animation: ripple 0.5s ease-out forwards;
-    }
-
-    @keyframes ripple {
-        to {
-            transform: translate(-50%, -50%) scale(12);
-            opacity: 0;
-        }
-    }
 `;
 document.head.appendChild(style);
 

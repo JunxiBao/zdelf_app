@@ -2878,7 +2878,6 @@ body {
   color: var(--text);
   background: var(--card);
   cursor: pointer;
-  transition: all 0.2s ease;
   box-shadow: var(--shadow-1);
   min-width: 120px;
   position: relative;
@@ -2886,7 +2885,6 @@ body {
 }
 
 .tag-select-btn:hover {
-  transform: translateY(-1px);
   box-shadow: var(--shadow-2);
   color: var(--brand);
   background: linear-gradient(135deg, rgba(98,0,234,0.06) 0%, rgba(98,0,234,0.03) 100%);
@@ -2894,14 +2892,12 @@ body {
 }
 
 .tag-select-btn:active {
-  transform: translateY(0);
   box-shadow: var(--shadow-1);
 }
 
 .tag-select-btn ion-icon {
   width: 16px;
   height: 16px;
-  transition: transform 0.2s ease;
 }
 
 .tag-select {
@@ -2923,6 +2919,12 @@ body {
   padding: 0;
 }
 
+.tag-select option:disabled {
+  color: #999;
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
 .tag-input-wrapper {
   position: relative;
   display: none; /* 默认隐藏，选择"其他"时显示 */
@@ -2937,7 +2939,6 @@ body {
   color: var(--text);
   background: var(--card);
   outline: none;
-  transition: all 0.2s ease;
 }
 
 .tag-input:focus {
@@ -3017,7 +3018,6 @@ body {
   color: var(--text);
   background: var(--card);
   outline: none;
-  transition: all 0.2s ease;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
@@ -3032,14 +3032,22 @@ body {
 .tag-filter-select:focus {
   border-color: var(--brand);
   box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1), var(--shadow-1);
+  color: var(--brand);
+  background: linear-gradient(135deg, rgba(98,0,234,0.06) 0%, rgba(98,0,234,0.03) 100%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236200ea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat, no-repeat;
+  background-position: 0 0, right 10px center;
+  background-size: 100% 100%, auto;
+  border-color: rgba(98, 0, 234, 0.25);
 }
 
 .tag-filter-select:hover {
   border-color: var(--brand);
-  transform: translateY(-1px);
   box-shadow: var(--shadow-2);
   color: var(--brand);
-  background: linear-gradient(135deg, rgba(98,0,234,0.06) 0%, rgba(98,0,234,0.03) 100%);
+  background: linear-gradient(135deg, rgba(98,0,234,0.06) 0%, rgba(98,0,234,0.03) 100%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat, no-repeat;
+  background-position: 0 0, right 10px center;
+  background-size: 100% 100%, auto;
   border-color: rgba(98, 0, 234, 0.25);
 }
 
@@ -3058,7 +3066,6 @@ body {
   color: var(--text);
   background: var(--card);
   outline: none;
-  transition: all 0.2s ease;
   box-shadow: var(--shadow-1);
   height: 42px; /* 与feedback-icon-btn保持一致的高度 */
 }
@@ -3070,7 +3077,6 @@ body {
 
 .tag-filter-input:hover {
   border-color: var(--brand);
-  transform: translateY(-1px);
   box-shadow: var(--shadow-2);
 }
 
@@ -3083,8 +3089,8 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  margin-top: 0;
 }
 
 .message-tag {
@@ -3116,6 +3122,12 @@ body {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa3af' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
+  }
+  
+  .tag-select option:disabled {
+    color: #666;
+    background-color: rgba(255, 255, 255, 0.05);
+    cursor: not-allowed;
   }
   
   .tag-select:focus {
@@ -3183,13 +3195,21 @@ body {
   .tag-filter-select:focus {
     border-color: #a78bfa;
     box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1), var(--shadow-2);
+    color: #a78bfa;
+    background: rgba(255,255,255,0.08), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a78bfa' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat, no-repeat;
+    background-position: 0 0, right 10px center;
+    background-size: 100% 100%, auto;
+    border-color: rgba(167, 139, 250, 0.3);
   }
   
   .tag-filter-select:hover {
-    background: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.08), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa3af' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat, no-repeat;
+    background-position: 0 0, right 10px center;
+    background-size: 100% 100%, auto;
     border-color: rgba(167, 139, 250, 0.3);
     color: #a78bfa;
-    transform: translateY(-1px);
     box-shadow: var(--shadow-2);
   }
   

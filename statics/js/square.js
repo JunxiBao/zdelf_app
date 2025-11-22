@@ -364,6 +364,9 @@ function setupEventListeners() {
     };
     tagSelect.addEventListener('change', tagSelectHandler);
     cleanupFns.push(() => tagSelect.removeEventListener('change', tagSelectHandler));
+    
+    // 初始化时更新选择器状态
+    updateTagSelectOptions();
   }
   
   // Tag输入框（仅在选择"其他"时显示）
@@ -396,27 +399,33 @@ function setupEventListeners() {
     const tagFilterSelectHandler = (e) => {
       const selectedValue = e.target.value;
       if (selectedValue === '其他') {
+        // 如果当前已经有自定义标签在筛选，保持输入框显示当前标签
+        if (currentFilterTag && tagFilterSelect.options[Array.from(tagFilterSelect.options).findIndex(opt => opt.value === currentFilterTag)] === undefined) {
+          // 当前筛选的是自定义标签，保持显示
+          if (tagFilterInput) {
+            tagFilterInput.value = currentFilterTag;
+            tagFilterInput.readOnly = true;
+          }
+        } else {
+          // 清空输入框，允许输入新标签
+          if (tagFilterInput) {
+            tagFilterInput.value = '';
+            tagFilterInput.readOnly = false;
+          }
+        }
         // 显示输入框
         if (tagFilterInputWrapper) {
           tagFilterInputWrapper.style.display = 'block';
         }
-        if (tagFilterInput) {
+        if (tagFilterInput && !tagFilterInput.readOnly) {
           tagFilterInput.focus();
         }
       } else if (selectedValue && selectedValue !== '') {
         // 选择默认标签，直接筛选
         filterByTag(selectedValue);
-        // 隐藏输入框
-        if (tagFilterInputWrapper) {
-          tagFilterInputWrapper.style.display = 'none';
-        }
       } else {
         // 选择"全部"，清除筛选
         filterByTag('');
-        // 隐藏输入框
-        if (tagFilterInputWrapper) {
-          tagFilterInputWrapper.style.display = 'none';
-        }
       }
     };
     tagFilterSelect.addEventListener('change', tagFilterSelectHandler);
@@ -430,14 +439,9 @@ function setupEventListeners() {
         e.preventDefault();
         const customTag = e.target.value.trim();
         if (customTag) {
+          // 调用filterByTag，它会处理选择器状态和输入框显示
+          // 不要在这里再次操作输入框，因为filterByTag已经处理好了
           filterByTag(customTag);
-          // 重置选择器和输入框
-          if (tagFilterSelect) {
-            tagFilterSelect.value = '';
-          }
-          if (tagFilterInputWrapper) {
-            tagFilterInputWrapper.style.display = 'none';
-          }
         }
       }
     };
@@ -961,6 +965,7 @@ function clearPublishForm() {
   if (tagInputWrapper) {
     tagInputWrapper.style.display = 'none';
   }
+  updateTagSelectOptions(); // 更新选择器状态，恢复所有选项可选
 }
 
 /**
@@ -1917,7 +1922,6 @@ function createMessageElement(message, index) {
       </div>
     </div>
     <div class="message-content">
-      ${message.text ? `<div class="message-text">${escapeHtml(message.text)}</div>` : ''}
       ${message.tags && message.tags.length > 0 ? 
         `<div class="message-tags">
           ${message.tags.map(tag => {
@@ -1926,6 +1930,7 @@ function createMessageElement(message, index) {
             return `<span class="message-tag" onclick="filterByTag('${safeTag}'); event.stopPropagation();">#${escapedTag}</span>`;
           }).join('')}
         </div>` : ''}
+      ${message.text ? `<div class="message-text">${escapeHtml(message.text)}</div>` : ''}
       ${message.images && message.images.length > 0 ? 
         `<div class="message-images">
           ${message.images.map((img, imgIndex) => 
@@ -4055,6 +4060,30 @@ window.filterByTag = filterByTag;
 window.removeTag = removeTag;
 
 /**
+ * 更新tag选择器的选项状态（禁用已选择的标签）
+ */
+function updateTagSelectOptions() {
+  if (!tagSelect) return;
+  
+  const options = tagSelect.querySelectorAll('option');
+  options.forEach(option => {
+    const value = option.value;
+    // 跳过空选项和"其他"选项
+    if (!value || value === '' || value === '其他') {
+      option.disabled = false;
+      return;
+    }
+    
+    // 如果标签已选择，禁用该选项
+    if (selectedTagList.includes(value)) {
+      option.disabled = true;
+    } else {
+      option.disabled = false;
+    }
+  });
+}
+
+/**
  * 添加tag
  * @param {string} tag - tag名称
  */
@@ -4062,10 +4091,12 @@ function addTag(tag) {
   if (!tag || tag.length === 0) return;
   if (selectedTagList.length >= 5) {
     showToast('最多只能添加5个标签');
+    updateTagSelectOptions(); // 更新选择器状态
     return;
   }
   if (selectedTagList.includes(tag)) {
     showToast('该标签已添加');
+    updateTagSelectOptions(); // 更新选择器状态
     return;
   }
   
@@ -4074,6 +4105,7 @@ function addTag(tag) {
     tagInput.value = '';
   }
   updateSelectedTagsDisplay();
+  updateTagSelectOptions(); // 更新选择器状态
   
   if (window.__hapticImpact__) {
     window.__hapticImpact__('Light');
@@ -4087,6 +4119,7 @@ function addTag(tag) {
 function removeTag(tag) {
   selectedTagList = selectedTagList.filter(t => t !== tag);
   updateSelectedTagsDisplay();
+  updateTagSelectOptions(); // 更新选择器状态，恢复已移除标签的可选状态
   
   if (window.__hapticImpact__) {
     window.__hapticImpact__('Light');
@@ -4128,9 +4161,32 @@ function filterByTag(tag) {
     const option = Array.from(tagFilterSelect.options).find(opt => opt.value === tag);
     if (option) {
       tagFilterSelect.value = tag;
+      // 隐藏输入框
+      if (tagFilterInputWrapper) {
+        tagFilterInputWrapper.style.display = 'none';
+      }
+    } else if (tag && tag !== '') {
+      // 自定义tag，保持选择器显示"其他"，并显示当前筛选的标签
+      tagFilterSelect.value = '其他';
+      // 在输入框中显示当前筛选的标签（只读模式）
+      if (tagFilterInput) {
+        tagFilterInput.value = tag;
+        tagFilterInput.readOnly = true;
+      }
+      if (tagFilterInputWrapper) {
+        tagFilterInputWrapper.style.display = 'block';
+      }
     } else {
-      // 自定义tag，清空选择器
+      // 清空筛选，显示"全部"
       tagFilterSelect.value = '';
+      // 隐藏输入框
+      if (tagFilterInputWrapper) {
+        tagFilterInputWrapper.style.display = 'none';
+      }
+      if (tagFilterInput) {
+        tagFilterInput.value = '';
+        tagFilterInput.readOnly = false;
+      }
     }
   }
   
@@ -4147,13 +4203,42 @@ function filterByTag(tag) {
  * 注意：现在使用选择器，不再需要动态添加按钮
  */
 function updateTagFilter() {
-  // 如果当前筛选的tag不在默认选项中，可以选择保持当前筛选状态
-  // 或者将选择器重置为"全部"
-  if (tagFilterSelect && currentFilterTag) {
-    const option = Array.from(tagFilterSelect.options).find(opt => opt.value === currentFilterTag);
-    if (!option) {
-      // 自定义tag，保持选择器为空（显示"全部"）
+  // 根据当前筛选的tag更新选择器状态
+  if (tagFilterSelect) {
+    if (currentFilterTag) {
+      // 检查是否是默认选项
+      const option = Array.from(tagFilterSelect.options).find(opt => opt.value === currentFilterTag);
+      if (option) {
+        // 是默认选项，设置选择器值
+        tagFilterSelect.value = currentFilterTag;
+        // 隐藏输入框
+        if (tagFilterInputWrapper) {
+          tagFilterInputWrapper.style.display = 'none';
+        }
+        if (tagFilterInput) {
+          tagFilterInput.readOnly = false;
+        }
+      } else {
+        // 是自定义tag，保持选择器显示"其他"，并在输入框显示标签
+        tagFilterSelect.value = '其他';
+        if (tagFilterInput) {
+          tagFilterInput.value = currentFilterTag;
+          tagFilterInput.readOnly = true;
+        }
+        if (tagFilterInputWrapper) {
+          tagFilterInputWrapper.style.display = 'block';
+        }
+      }
+    } else {
+      // 没有筛选，显示"全部"
       tagFilterSelect.value = '';
+      if (tagFilterInputWrapper) {
+        tagFilterInputWrapper.style.display = 'none';
+      }
+      if (tagFilterInput) {
+        tagFilterInput.value = '';
+        tagFilterInput.readOnly = false;
+      }
     }
   }
 }

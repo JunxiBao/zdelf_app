@@ -16,7 +16,7 @@
   
   // ==================== 应用版本配置 ====================
   // 在这里修改应用版本号 - 格式: "主版本.次版本.修订版本.构建版本"
-  const APP_VERSION = "1.3.4.0";
+  const APP_VERSION = "1.4.0.0";
   
   // 构建时间戳 - 用于强制刷新缓存
   const BUILD_TIMESTAMP = Date.now();
@@ -1456,7 +1456,29 @@
       contactInfo.append(contactText, developerInfo, designerInfo);
       contactSection.append(contactTitle, contactInfo);
 
-      body.append(introSection, featuresSection, disclaimerSection, contactSection);
+      // 备案号和版权信息
+      const footerSection = document.createElement("div");
+      footerSection.className = "help-section";
+      footerSection.style.marginTop = "24px";
+      footerSection.style.paddingTop = "20px";
+      footerSection.style.borderTop = "1px solid var(--divider, rgba(0,0,0,.1))";
+      footerSection.style.textAlign = "center";
+      
+      const icpInfo = document.createElement("p");
+      icpInfo.style.margin = "0 0 8px 0";
+      icpInfo.style.fontSize = "12px";
+      icpInfo.style.color = "var(--text-secondary, #666)";
+      icpInfo.innerHTML = '<a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">浙ICP备2023040285号-4A</a>';
+      
+      const copyrightInfo = document.createElement("p");
+      copyrightInfo.style.margin = "0";
+      copyrightInfo.style.fontSize = "12px";
+      copyrightInfo.style.color = "var(--text-secondary, #666)";
+      copyrightInfo.textContent = "© 2025 JunxiBao. All rights reserved.";
+      
+      footerSection.append(icpInfo, copyrightInfo);
+
+      body.append(introSection, featuresSection, disclaimerSection, contactSection, footerSection);
 
       const footer = document.createElement("div");
       footer.className = "help-footer";
