@@ -27,7 +27,6 @@
     <main class="app" aria-label="我的">
       <!-- Top bar with title -->
       <header class="topbar">
-        <div class="title">我的</div>
       </header>
 
       <!-- Profile Card -->
@@ -52,6 +51,19 @@
           </button>
         </div>
 
+      </section>
+
+      <!-- Questionnaire Card -->
+      <!-- Questionnaire section: click to open survey URL -->
+      <section class="questionnaire-card rippleable" data-action="questionnaire" aria-label="填写问卷">
+        <div class="questionnaire-content">
+          <ion-icon ios="clipboard-outline" md="clipboard-sharp" aria-hidden="true"></ion-icon>
+          <div class="questionnaire-info">
+            <div class="questionnaire-label">用户问卷</div>
+            <div class="questionnaire-desc">分享您的使用体验和建议</div>
+          </div>
+          <ion-icon ios="chevron-forward-outline" md="chevron-forward-sharp" aria-hidden="true"></ion-icon>
+        </div>
       </section>
 
       <!-- Settings List -->

@@ -16,7 +16,7 @@
   
   // ==================== 应用版本配置 ====================
   // 在这里修改应用版本号 - 格式: "主版本.次版本.修订版本.构建版本"
-  const APP_VERSION = "1.4.0.0";
+  const APP_VERSION = "1.4.1.0";
   
   // 构建时间戳 - 用于强制刷新缓存
   const BUILD_TIMESTAMP = Date.now();
@@ -786,6 +786,209 @@
       toast("未找到用户ID/用户名，本地显示占位");
     }
 
+    // Questionnaire modal - 从底部弹出显示问卷
+    function ensureQuestionnaireModalStyles() {
+      if (document.getElementById("questionnaire-modal-style")) return;
+      const s = document.createElement("style");
+      s.id = "questionnaire-modal-style";
+      s.textContent = `
+        .questionnaire-modal-mask {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(8px);
+          z-index: 10000;
+          display: flex;
+          align-items: flex-end;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        .questionnaire-modal-mask.show {
+          opacity: 1;
+        }
+        .questionnaire-modal-container {
+          width: 100%;
+          max-width: 100%;
+          height: 100vh;
+          background: var(--card, #ffffff);
+          border-radius: 0;
+          box-shadow: none;
+          display: flex;
+          flex-direction: column;
+          transform: translateY(100%);
+          transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          position: relative;
+          overflow: hidden;
+        }
+        .questionnaire-modal-mask.show .questionnaire-modal-container {
+          transform: translateY(0);
+        }
+        .questionnaire-modal-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 20px;
+          border-bottom: 1px solid var(--divider, #e5e7eb);
+          background: var(--card, #ffffff);
+          flex-shrink: 0;
+        }
+        .questionnaire-modal-title {
+          font-weight: 600;
+          font-size: 18px;
+          color: var(--text, #111827);
+        }
+        .questionnaire-modal-close {
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          background: transparent;
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: var(--text-secondary, #6b7280);
+          transition: all 0.2s ease;
+        }
+        .questionnaire-modal-close:hover {
+          background: var(--divider, #e5e7eb);
+          color: var(--text, #111827);
+        }
+        .questionnaire-modal-close ion-icon {
+          width: 24px;
+          height: 24px;
+        }
+        .questionnaire-modal-body {
+          flex: 1;
+          overflow: hidden;
+          position: relative;
+        }
+        .questionnaire-modal-iframe {
+          width: 100%;
+          height: 100%;
+          border: none;
+          display: block;
+        }
+        @media (prefers-color-scheme: dark) {
+          .questionnaire-modal-container {
+            background: var(--card, #151924);
+          }
+          .questionnaire-modal-header {
+            background: var(--card, #151924);
+            border-bottom-color: var(--divider, #232836);
+          }
+          .questionnaire-modal-title {
+            color: var(--text, #e5e7eb);
+          }
+          .questionnaire-modal-close {
+            color: var(--text-secondary, #9aa3af);
+          }
+          .questionnaire-modal-close:hover {
+            background: var(--divider, #232836);
+            color: var(--text, #e5e7eb);
+          }
+        }
+      `;
+      document.head.appendChild(s);
+      cleanupFns.push(() => {
+        if (s.parentNode) s.remove();
+      });
+    }
+
+    function showQuestionnaireModal() {
+      ensureQuestionnaireModalStyles();
+      triggerVibration('Light');
+      
+      const questionnaireUrl = "https://www.wenjuan.com/s/UZBZJvvCl93/";
+      
+      // 移除已存在的模态框
+      const existingMask = document.querySelector('.questionnaire-modal-mask');
+      if (existingMask) {
+        existingMask.remove();
+      }
+      
+      const mask = document.createElement("div");
+      mask.className = "questionnaire-modal-mask";
+      mask.setAttribute("role", "dialog");
+      mask.setAttribute("aria-modal", "true");
+      mask.setAttribute("aria-label", "用户问卷");
+      
+      const container = document.createElement("div");
+      container.className = "questionnaire-modal-container";
+      
+      // 头部
+      const header = document.createElement("div");
+      header.className = "questionnaire-modal-header";
+      
+      const title = document.createElement("div");
+      title.className = "questionnaire-modal-title";
+      title.textContent = "用户问卷";
+      
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "questionnaire-modal-close";
+      closeBtn.setAttribute("aria-label", "关闭");
+      closeBtn.innerHTML = '<ion-icon ios="close-outline" md="close-sharp" aria-hidden="true"></ion-icon>';
+      
+      header.appendChild(title);
+      header.appendChild(closeBtn);
+      
+      // 内容区域
+      const body = document.createElement("div");
+      body.className = "questionnaire-modal-body";
+      
+      const iframe = document.createElement("iframe");
+      iframe.className = "questionnaire-modal-iframe";
+      iframe.src = questionnaireUrl;
+      iframe.setAttribute("allow", "fullscreen");
+      iframe.setAttribute("sandbox", "allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox");
+      
+      body.appendChild(iframe);
+      
+      container.appendChild(header);
+      container.appendChild(body);
+      mask.appendChild(container);
+      document.body.appendChild(mask);
+      
+      // 显示动画
+      requestAnimationFrame(() => {
+        mask.classList.add("show");
+      });
+      
+      // 关闭函数
+      const closeModal = () => {
+        mask.classList.remove("show");
+        container.style.transform = "translateY(100%)";
+        setTimeout(() => {
+          if (mask.parentNode) {
+            mask.remove();
+          }
+        }, 400);
+      };
+      
+      // 绑定关闭事件
+      closeBtn.addEventListener("click", closeModal);
+      mask.addEventListener("click", (e) => {
+        if (e.target === mask) {
+          closeModal();
+        }
+      });
+      
+      // ESC键关闭
+      const escHandler = (ev) => {
+        if (ev.key === "Escape") {
+          document.removeEventListener("keydown", escHandler);
+          closeModal();
+        }
+      };
+      document.addEventListener("keydown", escHandler);
+      
+      cleanupFns.push(() => {
+        document.removeEventListener("keydown", escHandler);
+        if (mask.parentNode) mask.remove();
+      });
+    }
+
     // Confirm modal (for logout)
     function ensureConfirmStyles() {
       if (document.getElementById("app-confirm-style")) return;
@@ -1450,7 +1653,7 @@
       const contactText = document.createElement("p");
       contactText.textContent = "如有任何问题或建议，请通过以下方式联系我们：";
       const developerInfo = document.createElement("p");
-      developerInfo.innerHTML = "开发者：鲍俊希 <a class='contact-email' href='mailto:junxibao@junxibao.com'>junxibao@junxibao.com</a>";
+      developerInfo.innerHTML = "开发者：鲍俊希 <a class='contact-email' href='mailto:zdelf@junxibao.com'>zdelf@junxibao.com</a>";
       const designerInfo = document.createElement("p");
       designerInfo.innerHTML = "设计师：裘可然 <a class='contact-email' href='mailto:391257652@qq.com'>391257652@qq.com</a>";
       contactInfo.append(contactText, developerInfo, designerInfo);
@@ -1639,7 +1842,7 @@
       const contactText = document.createElement("p");
       contactText.textContent = "如有疑问，请联系：";
       const developerInfo = document.createElement("p");
-      developerInfo.innerHTML = "开发者：鲍俊希 <a class='contact-email' href='mailto:junxibao@junxibao.com'>junxibao@junxibao.com</a>";
+      developerInfo.innerHTML = "开发者：鲍俊希 <a class='contact-email' href='mailto:zdelf@junxibao.com'>zdelf@junxibao.com</a>";
       const designerInfo = document.createElement("p");
       designerInfo.innerHTML = "设计师：裘可然 <a class='contact-email' href='mailto:391257652@qq.com'>391257652@qq.com</a>";
       contactInfo.append(contactText, developerInfo, designerInfo);
@@ -2475,6 +2678,9 @@
         } else if (el.dataset.action === "blocked-users") {
           // 跳转到屏蔽用户管理页面
           window.location.href = "src/blocked_users.html";
+        } else if (el.dataset.action === "questionnaire") {
+          // 从底部弹出显示问卷
+          showQuestionnaireModal();
         } else {
           toast("打开：" + el.dataset.action);
         }

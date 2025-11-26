@@ -77,7 +77,7 @@ body {
 .app {
   max-width: 680px;
   margin: 0 auto;
-  padding: 20px 16px 40px;
+  padding: 10px 16px 40px;
   animation: fadeIn 0.6s ease both;
 }
 
@@ -86,7 +86,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 18px;
+  margin-bottom: 8px;
 }
 
 .topbar ion-icon {
@@ -568,6 +568,63 @@ body {
   }
 }
 
+/* Questionnaire card styles - 与页面其他元素统一 */
+.questionnaire-card {
+  margin-top: 18px;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-2);
+  border: 1px solid var(--divider);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.questionnaire-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.1);
+}
+
+.questionnaire-content {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.questionnaire-content ion-icon:first-child {
+  width: 22px;
+  height: 22px;
+  color: var(--text-secondary);
+}
+
+.questionnaire-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.questionnaire-label {
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.questionnaire-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.questionnaire-content ion-icon:last-child {
+  width: 22px;
+  height: 22px;
+  color: var(--text-secondary);
+}
+
 /* Version card styles - 与页面其他元素统一 */
 .version-card {
   margin-top: 18px;
@@ -641,6 +698,10 @@ body {
   .avatar {
     width: 72px;
     height: 72px;
+  }
+  
+  .questionnaire-card {
+    padding: 14px 16px;
   }
   
   .version-card {
