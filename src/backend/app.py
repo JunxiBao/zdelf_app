@@ -28,6 +28,7 @@ from routes.square import square_blueprint
 from routes.report import report_blueprint
 from routes.block import block_blueprint
 from routes.logs import logs_blueprint
+from routes.stats import stats_blueprint
 import logging
 import time, uuid
 import os
@@ -49,6 +50,7 @@ app.register_blueprint(square_blueprint)
 app.register_blueprint(report_blueprint)
 app.register_blueprint(block_blueprint)
 app.register_blueprint(logs_blueprint)
+app.register_blueprint(stats_blueprint)
 
 # *CORS rule，Prevent unauthorized requests, enhance security
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)

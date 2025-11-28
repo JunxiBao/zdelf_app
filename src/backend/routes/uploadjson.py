@@ -10,6 +10,17 @@ from flask import Blueprint, request, jsonify
 import mysql.connector
 from mysql.connector import errors as mysql_errors
 
+# 导入统计更新函数（延迟导入避免循环依赖）
+def _update_streak_if_needed(user_id):
+    """在用户上传记录后自动更新统计"""
+    if not user_id:
+        return
+    try:
+        from routes.stats import update_user_streak_async
+        update_user_streak_async(user_id)
+    except Exception as e:
+        logger.debug("Failed to auto-update streak: %s", e)
+
 load_dotenv()
 
 logger = logging.getLogger("app.uploadjson")
@@ -227,6 +238,9 @@ def upload_json_auto():
         finally:
             conn.close()
 
+        # 自动更新用户的连续记录天数统计（异步执行，不阻塞响应）
+        _update_streak_if_needed(user_id)
+
         return jsonify({
             "success": True,
             "message": f"数据已自动分析并存储为 {detected_kind} 类型",
@@ -292,6 +306,9 @@ def upload_json(kind):
                 conn.close()
             except Exception:
                 pass
+
+        # 自动更新用户的连续记录天数统计（异步执行，不阻塞响应）
+        _update_streak_if_needed(user_id)
 
         return jsonify({"success": True, "message": "上传成功", "id": rec_id, "file_name": file_name, "kind": kind})
 
