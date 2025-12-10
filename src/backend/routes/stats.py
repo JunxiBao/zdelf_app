@@ -234,6 +234,7 @@ def _check_user_has_submission_for_date(user_id, target_date, conn):
                     WHERE user_id = %s AND DATE(created_at) = %s
                     LIMIT 1
                 """
+                # 注意：COUNT(*) 不需要 LIMIT 1，但保留它不影响功能，可以提前返回
                 cursor.execute(query, (user_id, target_date))
                 row = cursor.fetchone()
                 if row and row[0] > 0:
@@ -284,6 +285,11 @@ def check_and_reset_streaks_for_missing_checkins():
                 checked_count = 0
                 error_count = 0
                 
+                # 批量处理，减少事务提交次数，提高性能
+                # 每处理100个用户提交一次，或者遇到错误时回滚
+                batch_size = 100
+                batch_count = 0
+                
                 for (user_id,) in all_users:
                     try:
                         checked_count += 1
@@ -293,18 +299,20 @@ def check_and_reset_streaks_for_missing_checkins():
                         
                         if not has_submission:
                             # 昨天没有提交，重置连续打卡为0
-                            # 但需要保留 max_streak（历史最长连续天数）
-                            cursor.execute("SELECT max_streak FROM users WHERE user_id = %s", (user_id,))
-                            row = cursor.fetchone()
-                            existing_max_streak = row[0] if row else 0
-                            
+                            # max_streak（历史最长连续天数）会自动保留，因为只更新 current_streak
                             cursor.execute(
                                 "UPDATE users SET current_streak = 0 WHERE user_id = %s",
                                 (user_id,)
                             )
-                            conn.commit()
                             reset_count += 1
+                            batch_count += 1
                             logger.debug("用户 %s 昨天未打卡，已重置连续打卡为 0", user_id)
+                            
+                            # 每处理一定数量的用户就提交一次，避免长时间锁定
+                            if batch_count >= batch_size:
+                                conn.commit()
+                                batch_count = 0
+                                logger.debug("批量提交：已处理 %d 个用户的重置操作", batch_size)
                         else:
                             logger.debug("用户 %s 昨天已打卡，无需重置", user_id)
                             
@@ -312,7 +320,13 @@ def check_and_reset_streaks_for_missing_checkins():
                         error_count += 1
                         logger.exception("检查用户 %s 时出错: %s", user_id, e)
                         conn.rollback()
+                        batch_count = 0
                         continue
+                
+                # 提交剩余的操作
+                if batch_count > 0:
+                    conn.commit()
+                    logger.debug("提交剩余 %d 个用户的重置操作", batch_count)
                 
                 logger.info("每日打卡检查完成：共检查 %d 个用户，重置 %d 个用户，错误 %d 个", 
                           checked_count, reset_count, error_count)

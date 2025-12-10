@@ -171,15 +171,84 @@ _app_logger = logging.getLogger("app")
 _app_logger.setLevel(logging.INFO)
 
 # 设置定时任务：每天0点检查所有用户的打卡情况并重置未打卡用户的连续天数
-scheduler = BackgroundScheduler(timezone='Asia/Shanghai')
-scheduler.add_job(
-    func=check_and_reset_streaks_for_missing_checkins,
-    trigger=CronTrigger(hour=0, minute=0),  # 每天0点执行
-    id='daily_checkin_check',
-    name='每日打卡检查任务',
-    replace_existing=True
-)
-scheduler.start()
-_app_logger.info("定时任务已启动：每天0点自动检查用户打卡情况")
+# 注意：如果使用 Gunicorn 等多进程模式，需要确保定时任务只在一个进程中运行
+# 使用文件锁机制确保只有一个进程启动定时任务
+import os
+import atexit
+import fcntl
+import errno
+
+_scheduler = None
+_lock_file = None
+
+def _try_start_scheduler():
+    """尝试启动定时任务（使用文件锁确保只有一个进程运行）"""
+    global _scheduler, _lock_file
+    
+    # 如果设置了环境变量 DISABLE_SCHEDULER，则不启动
+    if os.getenv('DISABLE_SCHEDULER') == '1':
+        _app_logger.info("定时任务已禁用（DISABLE_SCHEDULER=1）")
+        return
+    
+    # 使用文件锁确保只有一个进程启动定时任务
+    lock_file_path = os.path.join(os.path.dirname(__file__), '.scheduler.lock')
+    
+    try:
+        _lock_file = open(lock_file_path, 'w')
+        # 尝试获取非阻塞排他锁
+        fcntl.flock(_lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        
+        # 成功获取锁，启动定时任务
+        _scheduler = BackgroundScheduler(timezone='Asia/Shanghai')
+        _scheduler.add_job(
+            func=check_and_reset_streaks_for_missing_checkins,
+            trigger=CronTrigger(hour=0, minute=0),  # 每天0点执行
+            id='daily_checkin_check',
+            name='每日打卡检查任务',
+            replace_existing=True
+        )
+        _scheduler.start()
+        _app_logger.info("定时任务已启动：每天0点自动检查用户打卡情况")
+        
+        # 注册关闭函数，确保应用退出时正确关闭调度器
+        def _shutdown_scheduler():
+            global _scheduler, _lock_file
+            if _scheduler and _scheduler.running:
+                _scheduler.shutdown()
+                _app_logger.info("定时任务已关闭")
+            if _lock_file:
+                try:
+                    fcntl.flock(_lock_file.fileno(), fcntl.LOCK_UN)
+                    _lock_file.close()
+                    if os.path.exists(lock_file_path):
+                        os.remove(lock_file_path)
+                except Exception:
+                    pass
+        
+        atexit.register(_shutdown_scheduler)
+        
+    except (IOError, OSError) as e:
+        # 无法获取锁，说明其他进程已经启动了定时任务
+        if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK:
+            _app_logger.info("定时任务已在其他进程中运行，跳过启动")
+        else:
+            _app_logger.warning("无法创建定时任务锁文件: %s，跳过定时任务启动", e)
+        if _lock_file:
+            try:
+                _lock_file.close()
+            except Exception:
+                pass
+        _lock_file = None
+    except Exception as e:
+        _app_logger.exception("启动定时任务时出错: %s", e)
+        if _lock_file:
+            try:
+                _lock_file.close()
+            except Exception:
+                pass
+        _lock_file = None
+
+# 尝试启动定时任务
+_try_start_scheduler()
 
 # !Do not run a dev server in production. Use Gunicorn/Uvicorn, e.g.:
