@@ -218,6 +218,121 @@ def update_user_streak_async(user_id):
     thread.start()
 
 
+def _check_user_has_submission_for_date(user_id, target_date, conn):
+    """
+    检查用户在指定日期是否有任何提交记录（diet、metrics、case、symptom）
+    参数: user_id - 用户ID, target_date - 目标日期（date对象）, conn - 数据库连接
+    返回: True 如果有提交，False 如果没有
+    """
+    cursor = conn.cursor()
+    try:
+        for table in RECORD_TABLES:
+            try:
+                query = f"""
+                    SELECT COUNT(*) as count
+                    FROM {table}
+                    WHERE user_id = %s AND DATE(created_at) = %s
+                    LIMIT 1
+                """
+                cursor.execute(query, (user_id, target_date))
+                row = cursor.fetchone()
+                if row and row[0] > 0:
+                    return True
+            except mysql_errors.ProgrammingError as e:
+                # 表不存在，跳过
+                if e.errno == 1146:
+                    continue
+                else:
+                    raise
+            except Exception as e:
+                logger.warning("Error checking %s for user %s on %s: %s", table, user_id, target_date, e)
+                continue
+        return False
+    finally:
+        try:
+            cursor.close()
+        except Exception:
+            pass
+
+
+def check_and_reset_streaks_for_missing_checkins():
+    """
+    检查所有用户昨天的打卡情况，如果昨天没有打卡则重置连续打卡天数为0
+    这个函数应该在每天0点自动执行
+    """
+    logger.info("开始执行每日打卡检查任务：检查所有用户昨天的打卡情况")
+    
+    try:
+        conn = _get_conn()
+        try:
+            _ensure_streak_columns(conn)
+            
+            # 获取昨天的日期
+            yesterday = date.today() - timedelta(days=1)
+            logger.info("检查日期：%s", yesterday)
+            
+            cursor = conn.cursor()
+            try:
+                # 获取所有用户ID
+                cursor.execute("SELECT user_id FROM users")
+                all_users = cursor.fetchall()
+                total_users = len(all_users)
+                
+                logger.info("共有 %d 个用户需要检查", total_users)
+                
+                reset_count = 0
+                checked_count = 0
+                error_count = 0
+                
+                for (user_id,) in all_users:
+                    try:
+                        checked_count += 1
+                        
+                        # 检查昨天是否有提交
+                        has_submission = _check_user_has_submission_for_date(user_id, yesterday, conn)
+                        
+                        if not has_submission:
+                            # 昨天没有提交，重置连续打卡为0
+                            # 但需要保留 max_streak（历史最长连续天数）
+                            cursor.execute("SELECT max_streak FROM users WHERE user_id = %s", (user_id,))
+                            row = cursor.fetchone()
+                            existing_max_streak = row[0] if row else 0
+                            
+                            cursor.execute(
+                                "UPDATE users SET current_streak = 0 WHERE user_id = %s",
+                                (user_id,)
+                            )
+                            conn.commit()
+                            reset_count += 1
+                            logger.debug("用户 %s 昨天未打卡，已重置连续打卡为 0", user_id)
+                        else:
+                            logger.debug("用户 %s 昨天已打卡，无需重置", user_id)
+                            
+                    except Exception as e:
+                        error_count += 1
+                        logger.exception("检查用户 %s 时出错: %s", user_id, e)
+                        conn.rollback()
+                        continue
+                
+                logger.info("每日打卡检查完成：共检查 %d 个用户，重置 %d 个用户，错误 %d 个", 
+                          checked_count, reset_count, error_count)
+                
+            finally:
+                try:
+                    cursor.close()
+                except Exception:
+                    pass
+                    
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+                
+    except Exception as e:
+        logger.exception("执行每日打卡检查任务时出错: %s", e)
+
+
 @stats_blueprint.route('/stats/update_streak', methods=['POST', 'OPTIONS'])
 def update_streak():
     """

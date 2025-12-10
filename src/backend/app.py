@@ -28,11 +28,13 @@ from routes.square import square_blueprint
 from routes.report import report_blueprint
 from routes.block import block_blueprint
 from routes.logs import logs_blueprint
-from routes.stats import stats_blueprint
+from routes.stats import stats_blueprint, check_and_reset_streaks_for_missing_checkins
 import logging
 import time, uuid
 import os
 from concurrent_log_handler import ConcurrentRotatingFileHandler as RotatingFileHandler
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 # make blue prints
 app = Flask(__name__)
@@ -167,5 +169,17 @@ if not _has_console_handler():
 # use app to replace root, enhance logging
 _app_logger = logging.getLogger("app")
 _app_logger.setLevel(logging.INFO)
+
+# 设置定时任务：每天0点检查所有用户的打卡情况并重置未打卡用户的连续天数
+scheduler = BackgroundScheduler(timezone='Asia/Shanghai')
+scheduler.add_job(
+    func=check_and_reset_streaks_for_missing_checkins,
+    trigger=CronTrigger(hour=0, minute=0),  # 每天0点执行
+    id='daily_checkin_check',
+    name='每日打卡检查任务',
+    replace_existing=True
+)
+scheduler.start()
+_app_logger.info("定时任务已启动：每天0点自动检查用户打卡情况")
 
 # !Do not run a dev server in production. Use Gunicorn/Uvicorn, e.g.:
