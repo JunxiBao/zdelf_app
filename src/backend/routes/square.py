@@ -66,7 +66,7 @@ def _check_content_moderation(content):
         # 使用更精确的匹配，避免误判（例如"死"这个词单独出现时）
         if keyword.lower() in content_lower:
             logger.warning(f"Content moderation: banned keyword detected: {keyword} in content: {content[:50]}")
-            return False, f"检测到违规词语「{keyword}」：包含不当用语"
+            return False, f'检测到违规词语"{keyword}"：包含不当用语'
     
     if not DEEPSEEK_API_KEY:
         logger.error("DEEPSEEK_API_KEY not configured! Content moderation will use keyword filter only.")
@@ -156,51 +156,103 @@ def _check_content_moderation(content):
             # 移除"违规"关键词
             reason_part = reply.replace('违规', '').strip()
             
+            violation_word = None
+            violation_type = None
+            
             # 处理不同的分隔符格式
             # 优先处理冒号格式：违规：词语，说明
             if '：' in reason_part or ':' in reason_part:
                 # 格式：违规：词语，说明 或 违规：词语:说明
-                parts = reason_part.replace('：', ':').split(':', 1)  # 只分割第一个冒号
+                # 先统一替换中文冒号为英文冒号
+                reason_part_normalized = reason_part.replace('：', ':')
+                parts = reason_part_normalized.split(':', 1)  # 只分割第一个冒号
                 if len(parts) >= 2:
                     # 提取具体违规词语和说明
-                    violation_word = parts[0].strip()
-                    violation_type = parts[1].replace('，', '').replace(',', '').strip()
-                    if violation_word and violation_type:
-                        reason = f"检测到违规词语「{violation_word}」：{violation_type}"
-                    elif violation_word:
-                        reason = f"检测到违规词语「{violation_word}」"
+                    violation_word_candidate = parts[0].strip()
+                    violation_type_candidate = parts[1].strip()
+                    
+                    # 如果第一部分为空（说明冒号在开头），则从第二部分提取
+                    if not violation_word_candidate:
+                        # 尝试从第二部分提取词语（可能在逗号前）
+                        if '，' in violation_type_candidate or ',' in violation_type_candidate:
+                            type_parts = violation_type_candidate.split('，' if '，' in violation_type_candidate else ',', 1)
+                            violation_word = type_parts[0].strip()
+                            violation_type = type_parts[1].strip() if len(type_parts) > 1 else None
+                        else:
+                            # 如果没有逗号，尝试智能提取：找到第一个常见违规类型关键词之前的内容
+                            type_keywords = ['包含', '涉及', '属于', '是']
+                            for keyword in type_keywords:
+                                if keyword in violation_type_candidate:
+                                    idx = violation_type_candidate.find(keyword)
+                                    violation_word = violation_type_candidate[:idx].strip()
+                                    violation_type = violation_type_candidate[idx:].strip()
+                                    break
+                            if not violation_word:
+                                # 如果找不到关键词，尝试提取前几个字作为违规词
+                                words = violation_type_candidate.split()
+                                if words:
+                                    violation_word = words[0] if len(words[0]) <= 10 else violation_type_candidate[:10]
+                                    violation_type = violation_type_candidate[len(violation_word):].strip()
                     else:
-                        reason = violation_type if violation_type else "内容包含不当信息"
+                        violation_word = violation_word_candidate
+                        # 从说明中移除逗号
+                        violation_type = violation_type_candidate.replace('，', '').replace(',', '').strip()
                 else:
-                    reason = reason_part.replace('，', '').replace(',', '').strip()
+                    # 只有一个部分，尝试提取
+                    reason_clean = reason_part_normalized.strip()
+                    if reason_clean:
+                        # 尝试找到常见违规类型关键词
+                        type_keywords = ['包含', '涉及', '属于', '是']
+                        for keyword in type_keywords:
+                            if keyword in reason_clean:
+                                idx = reason_clean.find(keyword)
+                                violation_word = reason_clean[:idx].strip()
+                                violation_type = reason_clean[idx:].strip()
+                                break
+                        if not violation_word:
+                            # 如果找不到，整个作为违规词
+                            violation_word = reason_clean
             elif '，' in reason_part or ',' in reason_part:
                 # 格式：违规，词语，说明
                 parts = reason_part.split('，' if '，' in reason_part else ',', 1)
                 if len(parts) >= 2:
                     violation_word = parts[0].strip()
                     violation_type = parts[1].strip()
-                    if violation_word and violation_type:
-                        reason = f"检测到违规词语「{violation_word}」：{violation_type}"
-                    elif violation_word:
-                        reason = f"检测到违规词语「{violation_word}」"
-                    else:
-                        reason = violation_type if violation_type else "内容包含不当信息"
                 else:
-                    reason = reason_part.replace('，', '').replace(',', '').strip()
+                    violation_word = parts[0].strip() if parts else None
             else:
                 # 格式：违规 词语 说明（空格分隔）
-                reason = reason_part.strip()
+                reason_clean = reason_part.strip()
                 # 如果包含引号，尝试提取引号内的内容作为违规词语
-                if '"' in reason or '"' in reason or '「' in reason or '」' in reason:
+                if '"' in reason_clean or '"' in reason_clean or '「' in reason_clean or '」' in reason_clean:
                     # 提取引号或书名号内的内容
-                    matches = re.findall(r'[""「]([^""」]+)[""」]', reason)
+                    matches = re.findall(r'[""「]([^""」]+)[""」]', reason_clean)
                     if matches:
                         violation_word = matches[0]
-                        reason = f"检测到违规词语「{violation_word}」"
+                else:
+                    # 尝试找到常见违规类型关键词
+                    type_keywords = ['包含', '涉及', '属于', '是']
+                    for keyword in type_keywords:
+                        if keyword in reason_clean:
+                            idx = reason_clean.find(keyword)
+                            violation_word = reason_clean[:idx].strip()
+                            violation_type = reason_clean[idx:].strip()
+                            break
+                    if not violation_word:
+                        violation_word = reason_clean
             
-            # 如果原因为空或太短，使用默认原因
-            if not reason or len(reason) < 2:
+            # 构建最终原因
+            if violation_word:
+                if violation_type:
+                    reason = f'检测到违规词语"{violation_word}"：{violation_type}'
+                else:
+                    reason = f'检测到违规词语"{violation_word}"'
+            elif violation_type:
+                # 如果没有提取到违规词，但有关键词过滤，尝试从原内容中查找
+                reason = f'检测到违规内容：{violation_type}'
+            else:
                 reason = "内容包含不当信息，请检查是否有违规词语"
+            
             return False, reason
         else:
             # 如果返回格式不符合预期，为了安全起见，进行二次判断
