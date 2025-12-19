@@ -8,18 +8,26 @@ import os
 import uuid
 import json
 import logging
+import re
 from datetime import datetime
 
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify
 import mysql.connector
 from mysql.connector import errors as mysql_errors
+import requests
 
 load_dotenv()
 
 logger = logging.getLogger("app.square")
 
 square_blueprint = Blueprint("square", __name__)
+
+# DeepSeek API 配置（用于内容审核）
+DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
+DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions'
+CONNECT_TIMEOUT = 5
+READ_TIMEOUT = 10
 
 DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
@@ -37,6 +45,134 @@ def _get_conn():
     finally:
         cur.close()
     return conn
+
+
+def _check_content_moderation(content):
+    """
+    使用 AI 审核内容，检查是否包含非法内容或辱骂性词语
+    返回: (is_safe: bool, reason: str)
+    """
+    if not content or not content.strip():
+        return True, ""
+    
+    if not DEEPSEEK_API_KEY:
+        logger.warning("DEEPSEEK_API_KEY not configured, skipping content moderation")
+        return True, ""  # 如果未配置 API key，跳过审核
+    
+    try:
+        system_prompt = """你是一个内容审核助手。请仔细检查用户提交的内容，判断是否包含以下违规内容：
+1. 非法内容（如色情、暴力、恐怖主义、毒品等）
+2. 辱骂性词语或人身攻击
+3. 仇恨言论或歧视性内容
+4. 虚假信息或谣言
+5. 其他违反法律法规或社会公德的内容
+
+请用简洁的中文回答，格式如下：
+- 如果内容安全，只回答：安全
+- 如果内容违规，回答：违规：[具体违规的词语或短语]，[违规类型说明]
+
+例如：
+- 违规：傻逼，包含辱骂性词语
+- 违规：去死，包含人身攻击
+- 违规：色情内容，包含不当信息
+
+重要：必须明确指出具体违规的词语或短语，这样用户才能知道哪里有问题。"""
+        
+        data = {
+            "model": "deepseek-chat",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"请审核以下内容：\n\n{content}"}
+            ],
+            "temperature": 0.3,
+            "max_tokens": 100  # 增加token数量以支持返回具体违规词语
+        }
+        
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {DEEPSEEK_API_KEY}'
+        }
+        
+        response = requests.post(
+            DEEPSEEK_API_URL,
+            headers=headers,
+            json=data,
+            timeout=(CONNECT_TIMEOUT, READ_TIMEOUT)
+        )
+        
+        if response.status_code != 200:
+            logger.warning(f"Content moderation API error: {response.status_code}")
+            return True, ""  # API 错误时允许通过，避免影响用户体验
+        
+        result = response.json()
+        reply = result.get('choices', [{}])[0].get('message', {}).get('content', '').strip()
+        
+        logger.info(f"Content moderation result: {reply[:50]}")
+        
+        if reply.startswith('安全'):
+            return True, ""
+        elif reply.startswith('违规'):
+            # 提取违规原因，格式：违规：[具体词语]，[说明]
+            # 移除"违规"关键词
+            reason_part = reply.replace('违规', '').strip()
+            
+            # 处理不同的分隔符格式
+            # 优先处理冒号格式：违规：词语，说明
+            if '：' in reason_part or ':' in reason_part:
+                # 格式：违规：词语，说明 或 违规：词语:说明
+                parts = reason_part.replace('：', ':').split(':', 1)  # 只分割第一个冒号
+                if len(parts) >= 2:
+                    # 提取具体违规词语和说明
+                    violation_word = parts[0].strip()
+                    violation_type = parts[1].replace('，', '').replace(',', '').strip()
+                    if violation_word and violation_type:
+                        reason = f"检测到违规词语「{violation_word}」：{violation_type}"
+                    elif violation_word:
+                        reason = f"检测到违规词语「{violation_word}」"
+                    else:
+                        reason = violation_type if violation_type else "内容包含不当信息"
+                else:
+                    reason = reason_part.replace('，', '').replace(',', '').strip()
+            elif '，' in reason_part or ',' in reason_part:
+                # 格式：违规，词语，说明
+                parts = reason_part.split('，' if '，' in reason_part else ',', 1)
+                if len(parts) >= 2:
+                    violation_word = parts[0].strip()
+                    violation_type = parts[1].strip()
+                    if violation_word and violation_type:
+                        reason = f"检测到违规词语「{violation_word}」：{violation_type}"
+                    elif violation_word:
+                        reason = f"检测到违规词语「{violation_word}」"
+                    else:
+                        reason = violation_type if violation_type else "内容包含不当信息"
+                else:
+                    reason = reason_part.replace('，', '').replace(',', '').strip()
+            else:
+                # 格式：违规 词语 说明（空格分隔）
+                reason = reason_part.strip()
+                # 如果包含引号，尝试提取引号内的内容作为违规词语
+                if '"' in reason or '"' in reason or '「' in reason or '」' in reason:
+                    # 提取引号或书名号内的内容
+                    matches = re.findall(r'[""「]([^""」]+)[""」]', reason)
+                    if matches:
+                        violation_word = matches[0]
+                        reason = f"检测到违规词语「{violation_word}」"
+            
+            # 如果原因为空或太短，使用默认原因
+            if not reason or len(reason) < 2:
+                reason = "内容包含不当信息，请检查是否有违规词语"
+            return False, reason
+        else:
+            # 如果返回格式不符合预期，默认允许通过
+            logger.warning(f"Unexpected moderation result format: {reply}")
+            return True, ""
+            
+    except requests.exceptions.Timeout:
+        logger.warning("Content moderation API timeout")
+        return True, ""  # 超时时允许通过
+    except Exception as e:
+        logger.exception(f"Content moderation error: {e}")
+        return True, ""  # 异常时允许通过，避免影响用户体验
 
 
 def _ensure_table(conn):
@@ -267,6 +403,15 @@ def publish_post():
         if (not text_content) and (not images):
             return jsonify({"success": False, "message": "内容不能为空"}), 400
 
+        # AI 内容审核
+        if text_content:
+            is_safe, reason = _check_content_moderation(text_content)
+            if not is_safe:
+                return jsonify({
+                    "success": False,
+                    "message": f"内容审核未通过：{reason}，请修改后重新发布"
+                }), 400
+
         # Ensure images is JSON-serializable list of strings
         safe_images = []
         if isinstance(images, list):
@@ -422,6 +567,14 @@ def add_comment():
 
         if not text_content:
             return jsonify({"success": False, "message": "评论内容不能为空"}), 400
+
+        # AI 内容审核
+        is_safe, reason = _check_content_moderation(text_content)
+        if not is_safe:
+            return jsonify({
+                "success": False,
+                "message": f"内容审核未通过：{reason}，请修改后重新发送"
+            }), 400
 
         if not (user_id or username):
             return jsonify({"success": False, "message": "缺少用户标识"}), 400
