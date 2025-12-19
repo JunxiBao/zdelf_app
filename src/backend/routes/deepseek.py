@@ -613,18 +613,24 @@ def deepseek_chat():
         
         # 检测医疗主题
         medical_topics = _detect_medical_topic(user_input)
-        citations = _generate_citations(medical_topics)
+        # citations = _generate_citations(medical_topics)  # 暂时注释掉参考资料功能
         
         # 构建系统提示词，包含医疗免责声明 与 日期使用规则
-        system_prompt = """你是一个专业的健康助手。请记住以下重要原则：
+        system_prompt = """你是紫癜精灵，一个活泼、温暖、专业的健康小助手！你的性格特点：
+- 说话活泼有趣，充满正能量，会用轻松愉快的语气和用户交流
+- 善用表情符号和语气词（如"呀"、"哦"、"～"、"✨"等）让对话更生动
+- 保持专业的同时，用亲切友好的方式传递健康知识
+- 像朋友一样关心用户，但始终牢记专业边界
+
+请记住以下重要原则：
 
 1. 你提供的所有健康建议仅供参考，不能替代专业医疗诊断或治疗
 2. 对于任何健康问题，建议用户咨询专业医生
 3. 在回答中，请始终强调"建议咨询专业医生"的重要性
-4. 如果涉及医疗建议，请在回答末尾添加相关参考资料
+# 4. 如果涉及医疗建议，请在回答末尾添加相关参考资料  # 暂时注释掉参考资料功能
 5. 保持对话的连贯性，记住之前的对话内容
-6. 对于任何医疗建议，必须提供权威来源引用
-7. 引用必须与具体建议相关，不能是泛泛的链接
+# 6. 对于任何医疗建议，必须提供权威来源引用  # 暂时注释掉参考资料功能
+# 7. 引用必须与具体建议相关，不能是泛泛的链接  # 暂时注释掉参考资料功能
 8. 始终强调个人差异，建议个性化咨询
 
 【重要的日期规则】
@@ -632,7 +638,7 @@ def deepseek_chat():
 — 如果有用户选择的特定日期(如客户端传来的 selectedDate)，分析与展示时优先以该日期为筛选与描述的基准。
 — 如记录中不存在可用餐次日期，再回退到 exportInfo.recordTime/exportTime；否则最后回退到 created_at。
 
-请用中文回答用户的问题。"""
+请用活泼、亲切的中文回答用户的问题，保持紫癜精灵的可爱形象！"""
         
         # 如果启用了数据分析模式，直接从数据库获取数据
         if analysis_mode:
@@ -761,14 +767,15 @@ def deepseek_chat():
             session['messages'].append({"role": "assistant", "content": reply})
             
             # 基于AI回答内容分析医疗主题并生成引用
-            response_topics = _analyze_response_for_citations(reply, user_input)
-            all_topics = list(set(medical_topics + response_topics))  # 合并用户输入和回答的主题
-            citations = _generate_citations(all_topics)
+            # response_topics = _analyze_response_for_citations(reply, user_input)  # 暂时注释掉参考资料功能
+            # all_topics = list(set(medical_topics + response_topics))  # 合并用户输入和回答的主题
+            # citations = _generate_citations(all_topics)  # 暂时注释掉参考资料功能
             
             # 添加引用信息
-            if citations:
-                citation_html = _format_citations(citations)
-                reply += citation_html
+            # if citations:  # 暂时注释掉参考资料功能
+            #     citation_html = _format_citations(citations)  # 暂时注释掉参考资料功能
+            #     reply += citation_html  # 暂时注释掉参考资料功能
+            citations = []  # 暂时注释掉参考资料功能，返回空列表
             
             # 添加医疗免责声明
             disclaimer = "\n\n⚠️ **重要医疗免责声明**：\n\n" \
@@ -815,21 +822,27 @@ def deepseek_chat_stream():
         
         # 检测医疗主题
         medical_topics = _detect_medical_topic(user_input)
-        citations = _generate_citations(medical_topics)
+        # citations = _generate_citations(medical_topics)  # 暂时注释掉参考资料功能
         
         # 构建系统提示词，包含医疗免责声明
-        system_prompt = """你是一个专业的健康助手。请记住以下重要原则：
+        system_prompt = """你是紫癜精灵，一个活泼、温暖、专业的健康小助手！你的性格特点：
+- 说话活泼有趣，充满正能量，会用轻松愉快的语气和用户交流
+- 善用表情符号和语气词（如"呀"、"哦"、"～"、"✨"等）让对话更生动
+- 保持专业的同时，用亲切友好的方式传递健康知识
+- 像朋友一样关心用户，但始终牢记专业边界
+
+请记住以下重要原则：
 
 1. 你提供的所有健康建议仅供参考，不能替代专业医疗诊断或治疗
 2. 对于任何健康问题，建议用户咨询专业医生
 3. 在回答中，请始终强调"建议咨询专业医生"的重要性
-4. 如果涉及医疗建议，请在回答末尾添加相关参考资料
+# 4. 如果涉及医疗建议，请在回答末尾添加相关参考资料  # 暂时注释掉参考资料功能
 5. 保持对话的连贯性，记住之前的对话内容
-6. 对于任何医疗建议，必须提供权威来源引用
-7. 引用必须与具体建议相关，不能是泛泛的链接
+# 6. 对于任何医疗建议，必须提供权威来源引用  # 暂时注释掉参考资料功能
+# 7. 引用必须与具体建议相关，不能是泛泛的链接  # 暂时注释掉参考资料功能
 8. 始终强调个人差异，建议个性化咨询
 
-请用中文回答用户的问题。"""
+请用活泼、亲切的中文回答用户的问题，保持紫癜精灵的可爱形象！"""
         
         # 如果启用了数据分析模式，直接从数据库获取数据
         if analysis_mode:
@@ -968,14 +981,14 @@ def deepseek_chat_stream():
                                     session['messages'].append({"role": "assistant", "content": full_text})
                                     
                                     # 基于AI回答内容分析医疗主题并生成引用
-                                    response_topics = _analyze_response_for_citations(full_text, user_input)
-                                    all_topics = list(set(medical_topics + response_topics))  # 合并用户输入和回答的主题
-                                    citations = _generate_citations(all_topics)
+                                    # response_topics = _analyze_response_for_citations(full_text, user_input)  # 暂时注释掉参考资料功能
+                                    # all_topics = list(set(medical_topics + response_topics))  # 合并用户输入和回答的主题
+                                    # citations = _generate_citations(all_topics)  # 暂时注释掉参考资料功能
                                     
                                     # 添加引用信息
-                                    if citations:
-                                        citation_html = _format_citations(citations)
-                                        yield f"data: {json.dumps({'content': citation_html, 'type': 'citations'})}\n\n"
+                                    # if citations:  # 暂时注释掉参考资料功能
+                                    #     citation_html = _format_citations(citations)  # 暂时注释掉参考资料功能
+                                    #     yield f"data: {json.dumps({'content': citation_html, 'type': 'citations'})}\n\n"  # 暂时注释掉参考资料功能
                                     
                                     # 添加医疗免责声明
                                     disclaimer = "\n\n⚠️ **重要提醒**：以上建议仅供参考，不能替代专业医疗诊断或治疗。如有健康问题，请及时咨询专业医生。"
