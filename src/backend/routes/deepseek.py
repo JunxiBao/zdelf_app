@@ -190,13 +190,22 @@ def _get_conn():
 
 def _fetch_user_data(user_id, start_date):
     """
-    直接从数据库获取用户三个月的数据
+    直接从数据库获取用户三个月的数据和用户基础信息
     """
     try:
         conn = _get_conn()
         cursor = conn.cursor(dictionary=True)
         
         try:
+            # 获取用户基础信息
+            user_info_query = """
+                SELECT user_id, username, gender, age, region, occupation, purpura_type, first_onset_time
+                FROM users 
+                WHERE user_id = %s
+                LIMIT 1
+            """
+            cursor.execute(user_info_query, (user_id,))
+            user_info = cursor.fetchone()
             
             # 获取健康指标数据
             metrics_query = """
@@ -244,6 +253,7 @@ def _fetch_user_data(user_id, start_date):
             case_data = cursor.fetchall()
             
             return {
+                'user_info': user_info or {},
                 'metrics': metrics_data,
                 'diet': diet_data,
                 'case': case_data
@@ -261,16 +271,17 @@ def _fetch_user_data(user_id, start_date):
                 
     except mysql_errors.Error as e:
         logger.exception("数据库查询错误: %s", e)
-        return {'metrics': [], 'diet': [], 'case': []}
+        return {'user_info': {}, 'metrics': [], 'diet': [], 'case': []}
     except Exception as e:
         logger.exception("获取用户数据错误: %s", e)
-        return {'metrics': [], 'diet': [], 'case': []}
+        return {'user_info': {}, 'metrics': [], 'diet': [], 'case': []}
 
 def _process_user_data(raw_data):
     """
     处理用户数据，提取有用信息
     """
     processed = {
+        'user_info': raw_data.get('user_info', {}),
         'metrics': [],
         'diet': [],
         'case': []
@@ -644,6 +655,9 @@ def deepseek_chat():
             
             logger.info(f"最终处理结果: metrics={len(metrics_data)}, diet={len(diet_data)}, case={len(case_data)}")
             
+            # 获取用户基础信息
+            user_info = processed_data.get('user_info', {})
+            
             system_prompt += f"""
 
 【数据分析模式已启用】
@@ -653,7 +667,29 @@ def deepseek_chat():
 - 病例记录：{len(case_data)}条
 - 数据时间范围：近三个月 ({start_date} 至今)
 
-【具体数据内容】"""
+【用户基本信息】"""
+            
+            # 添加用户基础信息到提示词
+            user_info_parts = []
+            if user_info.get('gender'):
+                user_info_parts.append(f"性别：{user_info['gender']}")
+            if user_info.get('age') is not None:
+                user_info_parts.append(f"年龄：{user_info['age']}岁")
+            if user_info.get('region'):
+                user_info_parts.append(f"地区：{user_info['region']}")
+            if user_info.get('occupation'):
+                user_info_parts.append(f"职业：{user_info['occupation']}")
+            if user_info.get('purpura_type'):
+                user_info_parts.append(f"发病类型：{user_info['purpura_type']}")
+            if user_info.get('first_onset_time'):
+                user_info_parts.append(f"首次发病时间：{user_info['first_onset_time']}")
+            
+            if user_info_parts:
+                system_prompt += "\n" + "、".join(user_info_parts)
+            else:
+                system_prompt += "\n（用户未填写基础信息）"
+            
+            system_prompt += "\n\n【具体数据内容】"""
             
             # 添加健康指标数据
             if metrics_data:
@@ -684,7 +720,12 @@ def deepseek_chat():
             
             system_prompt += """
 
-请基于这些具体数据为用户提供个性化的健康分析和建议。在回答时，可以引用具体的数据记录来支持你的建议。如果用户询问具体的饮食内容、健康指标或病例信息，请从上述数据中查找并引用。
+请基于这些具体数据以及用户的个人信息（年龄、职业、发病类型等）为用户提供个性化的健康分析和建议。在回答时，可以引用具体的数据记录来支持你的建议。如果用户询问具体的饮食内容、健康指标或病例信息，请从上述数据中查找并引用。
+
+在分析和建议时，请充分考虑用户的：
+- 年龄特点（如老年人、中年人、青少年等不同年龄段的健康需求）
+- 职业特点（不同职业的工作强度、生活习惯、潜在健康风险等）
+- 发病类型（不同的紫癜类型可能有不同的注意事项和治疗建议）
 
 注意：用户健康记录中的自我评分满分是10分，请基于这个标准进行分析和建议。"""
         
@@ -811,6 +852,9 @@ def deepseek_chat_stream():
             
             logger.info(f"最终处理结果: metrics={len(metrics_data)}, diet={len(diet_data)}, case={len(case_data)}")
             
+            # 获取用户基础信息
+            user_info = processed_data.get('user_info', {})
+            
             system_prompt += f"""
 
 【数据分析模式已启用】
@@ -820,7 +864,29 @@ def deepseek_chat_stream():
 - 病例记录：{len(case_data)}条
 - 数据时间范围：近三个月 ({start_date} 至今)
 
-【具体数据内容】"""
+【用户基本信息】"""
+            
+            # 添加用户基础信息到提示词
+            user_info_parts = []
+            if user_info.get('gender'):
+                user_info_parts.append(f"性别：{user_info['gender']}")
+            if user_info.get('age') is not None:
+                user_info_parts.append(f"年龄：{user_info['age']}岁")
+            if user_info.get('region'):
+                user_info_parts.append(f"地区：{user_info['region']}")
+            if user_info.get('occupation'):
+                user_info_parts.append(f"职业：{user_info['occupation']}")
+            if user_info.get('purpura_type'):
+                user_info_parts.append(f"发病类型：{user_info['purpura_type']}")
+            if user_info.get('first_onset_time'):
+                user_info_parts.append(f"首次发病时间：{user_info['first_onset_time']}")
+            
+            if user_info_parts:
+                system_prompt += "\n" + "、".join(user_info_parts)
+            else:
+                system_prompt += "\n（用户未填写基础信息）"
+            
+            system_prompt += "\n\n【具体数据内容】"""
             
             # 添加健康指标数据
             if metrics_data:
@@ -851,7 +917,12 @@ def deepseek_chat_stream():
             
             system_prompt += """
 
-请基于这些具体数据为用户提供个性化的健康分析和建议。在回答时，可以引用具体的数据记录来支持你的建议。如果用户询问具体的饮食内容、健康指标或病例信息，请从上述数据中查找并引用。
+请基于这些具体数据以及用户的个人信息（年龄、职业、发病类型等）为用户提供个性化的健康分析和建议。在回答时，可以引用具体的数据记录来支持你的建议。如果用户询问具体的饮食内容、健康指标或病例信息，请从上述数据中查找并引用。
+
+在分析和建议时，请充分考虑用户的：
+- 年龄特点（如老年人、中年人、青少年等不同年龄段的健康需求）
+- 职业特点（不同职业的工作强度、生活习惯、潜在健康风险等）
+- 发病类型（不同的紫癜类型可能有不同的注意事项和治疗建议）
 
 注意：用户健康记录中的自我评分满分是10分，请基于这个标准进行分析和建议。"""
         
