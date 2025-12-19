@@ -55,9 +55,23 @@ def _check_content_moderation(content):
     if not content or not content.strip():
         return True, ""
     
+    # 首先进行简单的关键词过滤（备用机制，确保基本防护）
+    # 注意：这些是明显的辱骂性词语，即使AI审核失败也能拦截
+    banned_keywords = [
+        '傻逼', 'sb', '草泥马', '操', 'fuck', 'shit', '去死', '滚', 
+        '垃圾', '白痴', '智障', '脑残', '弱智', '蠢货', '傻x', '傻X'
+    ]
+    content_lower = content.lower()
+    for keyword in banned_keywords:
+        # 使用更精确的匹配，避免误判（例如"死"这个词单独出现时）
+        if keyword.lower() in content_lower:
+            logger.warning(f"Content moderation: banned keyword detected: {keyword} in content: {content[:50]}")
+            return False, f"检测到违规词语「{keyword}」：包含不当用语"
+    
     if not DEEPSEEK_API_KEY:
-        logger.warning("DEEPSEEK_API_KEY not configured, skipping content moderation")
-        return True, ""  # 如果未配置 API key，跳过审核
+        logger.error("DEEPSEEK_API_KEY not configured! Content moderation will use keyword filter only.")
+        # 如果未配置 API key，只使用关键词过滤（已经在上面完成）
+        return True, ""
     
     try:
         system_prompt = """你是一个内容审核助手。请仔细检查用户提交的内容，判断是否包含以下违规内容：
@@ -101,17 +115,43 @@ def _check_content_moderation(content):
         )
         
         if response.status_code != 200:
-            logger.warning(f"Content moderation API error: {response.status_code}")
-            return True, ""  # API 错误时允许通过，避免影响用户体验
+            error_detail = ""
+            try:
+                error_detail = response.text[:200]
+            except:
+                pass
+            logger.error(f"Content moderation API error: status={response.status_code}, detail={error_detail}")
+            # API 错误时，如果关键词过滤已通过，则允许通过（避免影响用户体验）
+            # 但会记录错误日志，提醒管理员检查API配置
+            return True, ""
         
-        result = response.json()
+        try:
+            result = response.json()
+        except json.JSONDecodeError as e:
+            logger.error(f"Content moderation API JSON decode error: {e}, response text: {response.text[:200]}")
+            # JSON解析错误时，关键词过滤已在函数开头完成
+            return True, ""
+        
+        # 检查API返回结构
+        if 'choices' not in result or not result.get('choices'):
+            logger.error(f"Content moderation API returned invalid structure: {result}")
+            # 如果API返回结构异常，关键词过滤已在函数开头完成
+            return True, ""
+        
         reply = result.get('choices', [{}])[0].get('message', {}).get('content', '').strip()
         
-        logger.info(f"Content moderation result: {reply[:50]}")
-        
-        if reply.startswith('安全'):
+        if not reply:
+            logger.error(f"Content moderation API returned empty reply: {result}")
+            # 如果返回为空，关键词过滤已在函数开头完成
             return True, ""
-        elif reply.startswith('违规'):
+        
+        logger.info(f"Content moderation API result for content '{content[:30]}...': {reply}")
+        
+        # 严格检查回复格式
+        reply_lower = reply.lower()
+        if '安全' in reply or reply_lower.startswith('safe') or reply_lower == '安全':
+            return True, ""
+        elif '违规' in reply or reply_lower.startswith('violat') or '不通过' in reply or '拒绝' in reply:
             # 提取违规原因，格式：违规：[具体词语]，[说明]
             # 移除"违规"关键词
             reason_part = reply.replace('违规', '').strip()
@@ -163,16 +203,37 @@ def _check_content_moderation(content):
                 reason = "内容包含不当信息，请检查是否有违规词语"
             return False, reason
         else:
-            # 如果返回格式不符合预期，默认允许通过
-            logger.warning(f"Unexpected moderation result format: {reply}")
-            return True, ""
+            # 如果返回格式不符合预期，为了安全起见，进行二次判断
+            # 检查回复中是否包含明显的安全词汇
+            safe_keywords = ['安全', '通过', '可以', '允许', 'safe', 'pass', 'ok', '正常']
+            unsafe_keywords = ['违规', '不通过', '拒绝', '禁止', 'violat', 'reject', '禁止']
+            
+            reply_clean = reply.strip()
+            # 如果包含不安全关键词，拒绝通过
+            if any(keyword in reply_clean for keyword in unsafe_keywords):
+                logger.warning(f"Content moderation: unsafe keywords found in reply, rejecting: {reply}")
+                return False, "内容包含不当信息，请修改后重试"
+            # 如果包含安全关键词，允许通过
+            elif any(keyword in reply_clean for keyword in safe_keywords):
+                logger.info(f"Content moderation: safe keywords found, allowing: {reply}")
+                return True, ""
+            else:
+                # 如果格式不符合预期且没有明确的安全/不安全词汇，为了安全起见，拒绝通过
+                logger.warning(f"Unexpected moderation result format, rejecting for safety: {reply}")
+                return False, "内容审核结果不明确，请修改后重试"
             
     except requests.exceptions.Timeout:
-        logger.warning("Content moderation API timeout")
-        return True, ""  # 超时时允许通过
+        logger.error("Content moderation API timeout - content will be checked by keyword filter only")
+        # 超时时，关键词过滤已在函数开头完成，如果通过则允许
+        return True, ""
+    except json.JSONDecodeError as e:
+        logger.error(f"Content moderation API JSON decode error: {e}")
+        # JSON解析错误时，使用关键词过滤结果
+        return True, ""
     except Exception as e:
-        logger.exception(f"Content moderation error: {e}")
-        return True, ""  # 异常时允许通过，避免影响用户体验
+        logger.exception(f"Content moderation unexpected error: {e}")
+        # 异常时，关键词过滤已在函数开头完成，如果通过则允许
+        return True, ""
 
 
 def _ensure_table(conn):
@@ -405,8 +466,11 @@ def publish_post():
 
         # AI 内容审核
         if text_content:
+            logger.info(f"Content moderation check for post: {text_content[:50]}...")
             is_safe, reason = _check_content_moderation(text_content)
+            logger.info(f"Content moderation result: is_safe={is_safe}, reason={reason}")
             if not is_safe:
+                logger.warning(f"Content moderation failed for post: {text_content[:50]}..., reason: {reason}")
                 return jsonify({
                     "success": False,
                     "message": f"内容审核未通过：{reason}，请修改后重新发布"
@@ -569,8 +633,11 @@ def add_comment():
             return jsonify({"success": False, "message": "评论内容不能为空"}), 400
 
         # AI 内容审核
+        logger.info(f"Content moderation check for comment: {text_content[:50]}...")
         is_safe, reason = _check_content_moderation(text_content)
+        logger.info(f"Content moderation result: is_safe={is_safe}, reason={reason}")
         if not is_safe:
+            logger.warning(f"Content moderation failed for comment: {text_content[:50]}..., reason: {reason}")
             return jsonify({
                 "success": False,
                 "message": f"内容审核未通过：{reason}，请修改后重新发送"
