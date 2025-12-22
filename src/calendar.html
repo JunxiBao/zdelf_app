@@ -10,11 +10,7 @@
     <!-- 加载动画覆盖层 -->
     <div id="calendar-loading-overlay" class="calendar-loading-overlay">
         <div class="calendar-loading-container">
-            <div class="calendar-loading-spinner">
-                <div class="calendar-spinner-ring"></div>
-                <div class="calendar-spinner-ring"></div>
-                <div class="calendar-spinner-ring"></div>
-            </div>
+            <div class="calendar-loading-spinner"></div>
             <div class="calendar-loading-text">正在加载日历数据...</div>
         </div>
     </div>
@@ -48,6 +44,24 @@
             </button>
         </div>
 
+        <!-- 视图切换按钮 -->
+        <div class="view-switcher">
+            <div class="view-switcher-indicator" id="view-switcher-indicator"></div>
+            <button id="view-month-btn" class="view-switch-btn active" data-view="month" title="月视图">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 2V6M16 2V6M3 10H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>月视图</span>
+            </button>
+            <button id="view-year-btn" class="view-switch-btn" data-view="year" title="年视图">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 3H21V21H3V3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M3 9H21M9 3V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>年视图</span>
+            </button>
+        </div>
+
         <!-- 年份月份导航 -->
         <div class="month-navigation">
             <button id="prev-month" class="nav-btn" title="上一月">
@@ -66,8 +80,25 @@
             </button>
         </div>
 
-        <!-- 日历主体 -->
-        <div class="calendar-main">
+        <!-- 年份导航（年视图模式） -->
+        <div class="year-navigation" style="display: none;">
+            <button id="prev-year" class="nav-btn" title="上一年">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div class="year-display">
+                <span id="current-year-display" class="year-text">2025</span>
+            </div>
+            <button id="next-year" class="nav-btn" title="下一年">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- 日历主体 - 月视图 -->
+        <div id="month-view" class="calendar-main">
             <!-- 星期标题 -->
             <div class="weekdays">
                 <div class="weekday">一</div>
@@ -85,6 +116,13 @@
             </div>
         </div>
 
+        <!-- 年视图 -->
+        <div id="year-view" class="year-view" style="display: none;">
+            <div id="year-grid" class="year-grid">
+                <!-- 12个月将通过JavaScript动态生成 -->
+            </div>
+        </div>
+
         <!-- 选中日期信息 -->
         <div class="selected-date-info">
             <div class="selected-date-display">
@@ -94,7 +132,7 @@
         
         <!-- 症状图例 -->
         <div class="symptom-legend">
-            <h4 style="margin-bottom: 12px; font-size: 14px; color: #666;">症状图例</h4>
+            <h4>症状图例</h4>
             <div class="legend-items">
                 <div class="legend-item">
                     <div class="legend-color" style="background-color: #FF4444;"></div>
@@ -161,10 +199,10 @@
         </div>
     </div>
 
-    <script src="../statics/js/haptic-manager.js"></script>
-    <script src="../statics/js/animation-utils.js"></script>
-    <script src="../statics/js/animation-performance.js"></script>
-    <script src="../statics/js/status-bar.js"></script>
+    <script src="../statics/js/util/haptic-manager.js"></script>
+    <script src="../statics/js/util/animation-utils.js"></script>
+    <script src="../statics/js/util/animation-performance.js"></script>
+    <script src="../statics/js/util/status-bar.js"></script>
     <script src="../statics/js/calendar.js"></script>
 </body>
 </html>

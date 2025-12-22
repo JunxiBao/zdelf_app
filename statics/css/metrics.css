@@ -30,22 +30,22 @@ body {
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    background: rgba(98, 0, 234, 0.1);
-    border: 1px solid #6200ea;
+    background: rgba(176, 143, 199, 0.1);
+    border: 1px solid #b08fc7;
     border-radius: 8px;
-    color: #6200ea;
+    color: #b08fc7;
     font-size: 0.9em;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 2px 4px rgba(176, 143, 199, 0.1);
 }
 
 .back-btn:hover {
-    background: #6200ea;
+    background: #b08fc7;
     color: #fff;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
+    box-shadow: 0 4px 12px rgba(176, 143, 199, 0.2);
 }
 
 .back-btn:active {
@@ -56,7 +56,7 @@ body {
 .page-title {
     font-size: 1.8em;
     font-weight: 600;
-    color: #6200ea;
+    color: #b08fc7;
     text-align: center;
     margin: 80px 20px 30px 20px;
     letter-spacing: 1px;
@@ -88,10 +88,10 @@ body {
 
 .date-time-picker:hover,
 .date-picker:hover {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     background: #faf7ff;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.15);
+    box-shadow: 0 8px 24px rgba(176, 143, 199, 0.15);
 }
 
 .picker-group {
@@ -106,7 +106,7 @@ body {
 .picker-label {
     font-size: 0.9em;
     font-weight: 600;
-    color: #6200ea;
+    color: #b08fc7;
     text-align: center;
     margin-bottom: 4px;
     letter-spacing: 0.5px;
@@ -129,15 +129,15 @@ body {
 }
 
 .picker-input:focus {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1);
     background: #faf7ff;
 }
 
 .picker-input:hover {
-    border-color: #8b5cf6;
-    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.1);
+    border-color: #9d7ab8;
+    box-shadow: 0 4px 12px rgba(176, 143, 199, 0.1);
 }
 
 /* 指标容器样式 */
@@ -163,10 +163,10 @@ body {
 }
 
 .metric-card:hover {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     background: #faf7ff;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.15);
+    box-shadow: 0 8px 24px rgba(176, 143, 199, 0.15);
 }
 
 /* 指标图标样式 */
@@ -180,12 +180,12 @@ body {
     width: 48px;
     height: 48px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #6200ea, #bb86fc);
+    background: #b08fc7;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5em;
-    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
+    box-shadow: 0 4px 12px rgba(176, 143, 199, 0.2);
 }
 
 /* 指标内容样式 */
@@ -230,10 +230,10 @@ body {
 }
 
 .metric-input textarea:focus {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     background: #fff;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1);
 }
 
 .metric-input textarea::placeholder {
@@ -261,10 +261,10 @@ body {
 }
 
 .input-group input:focus {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     background: #fff;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1);
 }
 
 .input-group input::placeholder {
@@ -274,7 +274,7 @@ body {
 .unit {
     font-size: 1em;
     font-weight: 500;
-    color: #6200ea;
+    color: #b08fc7;
     min-width: 40px;
     text-align: center;
 }
@@ -378,15 +378,15 @@ body {
 @keyframes valueUpdate {
     0% {
         transform: scale(1);
-        background-color: rgba(98, 0, 234, 0.1);
+        background-color: rgba(176, 143, 199, 0.1);
     }
     50% {
         transform: scale(1.05);
-        background-color: rgba(98, 0, 234, 0.2);
+        background-color: rgba(176, 143, 199, 0.2);
     }
     100% {
         transform: scale(1);
-        background-color: rgba(98, 0, 234, 0.1);
+        background-color: rgba(176, 143, 199, 0.1);
     }
 }
 
@@ -424,9 +424,9 @@ body {
 .urinalysis-select:focus,
 .blood-test-select:focus,
 .symptoms-select:focus {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1);
 }
 
 .remove-btn {
@@ -496,9 +496,9 @@ body {
 
 .urinalysis-value:focus,
 .blood-test-value:focus {
-    border-color: #6200ea !important;
+    border-color: #b08fc7 !important;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1) !important;
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1) !important;
 }
 
 /* 确保在各种状态下都保持一致的样式 */
@@ -514,8 +514,8 @@ body {
 .blood-test-value:focus:invalid,
 .urinalysis-value:focus:valid,
 .blood-test-value:focus:valid {
-    border-color: #6200ea !important;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1) !important;
+    border-color: #b08fc7 !important;
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1) !important;
 }
 
 .unit-reference {
@@ -529,9 +529,9 @@ body {
 .unit-display {
     font-size: 0.9em;
     font-weight: 600;
-    color: #6200ea;
+    color: #b08fc7;
     padding: 4px 8px;
-    background: rgba(98, 0, 234, 0.1);
+    background: rgba(176, 143, 199, 0.1);
     border-radius: 4px;
     min-width: 60px;
     text-align: center;
@@ -554,10 +554,10 @@ body {
     gap: 8px;
     width: 100%;
     padding: 16px;
-    border: 2px dashed #6200ea;
+    border: 2px dashed #b08fc7;
     border-radius: 12px;
-    background: rgba(98, 0, 234, 0.05);
-    color: #6200ea;
+    background: rgba(176, 143, 199, 0.05);
+    color: #b08fc7;
     font-size: 1em;
     font-weight: 600;
     cursor: pointer;
@@ -566,10 +566,10 @@ body {
 }
 
 .add-btn:hover {
-    background: rgba(98, 0, 234, 0.1);
+    background: rgba(176, 143, 199, 0.1);
     border-color: #4a00b8;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
+    box-shadow: 0 4px 12px rgba(176, 143, 199, 0.2);
 }
 
 .add-btn:active {
@@ -587,7 +587,7 @@ body {
     }
     50% {
         transform: scale(0.95);
-        background: rgba(98, 0, 234, 0.2);
+        background: rgba(176, 143, 199, 0.2);
     }
     100% {
         transform: scale(1);
@@ -619,9 +619,9 @@ body {
     .blood-test-select,
     .blood-test-value,
     .symptoms-select {
-        background: #1e1e1e;
-        border-color: #444;
-        color: #f9fafb;
+        background: #1e1e1e !important;
+        border-color: #444 !important;
+        color: #f9fafb !important;
     }
     
     .urinalysis-select:focus,
@@ -629,14 +629,31 @@ body {
     .blood-test-select:focus,
     .blood-test-value:focus,
     .symptoms-select:focus {
-        border-color: #a78bfa;
-        box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
-        background: #222;
+        border-color: #b08fc7 !important;
+        box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.2) !important;
+        background: #222 !important;
+    }
+    
+    /* 深色模式下确保 invalid/valid 状态的边框也是灰色 */
+    .urinalysis-value:invalid,
+    .blood-test-value:invalid,
+    .urinalysis-value:valid,
+    .blood-test-value:valid {
+        border-color: #444 !important;
+        box-shadow: none !important;
+    }
+    
+    .urinalysis-value:focus:invalid,
+    .blood-test-value:focus:invalid,
+    .urinalysis-value:focus:valid,
+    .blood-test-value:focus:valid {
+        border-color: #b08fc7 !important;
+        box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.2) !important;
     }
     
     .unit-display {
-        color: #a78bfa;
-        background: rgba(167, 139, 250, 0.2);
+        color: #b08fc7;
+        background: rgba(176, 143, 199, 0.2);
     }
     
     .unit-display.updating, .reference-display.updating {
@@ -646,15 +663,15 @@ body {
     @keyframes valueUpdateDark {
         0% {
             transform: scale(1);
-            background-color: rgba(167, 139, 250, 0.2);
+            background-color: rgba(176, 143, 199, 0.2);
         }
         50% {
             transform: scale(1.05);
-            background-color: rgba(167, 139, 250, 0.4);
+            background-color: rgba(176, 143, 199, 0.4);
         }
         100% {
             transform: scale(1);
-            background-color: rgba(167, 139, 250, 0.2);
+            background-color: rgba(176, 143, 199, 0.2);
         }
     }
     
@@ -663,15 +680,24 @@ body {
         background: #374151;
     }
     
+    .item-input {
+        background: transparent;
+    }
+    
+    .urinalysis-item,
+    .blood-test-item {
+        background: #1e1e1e;
+    }
+    
     .add-btn {
-        border-color: #a78bfa;
-        background: rgba(167, 139, 250, 0.1);
-        color: #a78bfa;
+        border-color: #b08fc7;
+        background: rgba(176, 143, 199, 0.1);
+        color: #b08fc7;
     }
     
     .add-btn:hover {
-        background: rgba(167, 139, 250, 0.2);
-        border-color: #8b5cf6;
+        background: rgba(176, 143, 199, 0.2);
+        border-color: #9d7ab8;
     }
     
     .add-btn.clicking {
@@ -684,7 +710,7 @@ body {
         }
         50% {
             transform: scale(0.95);
-            background: rgba(167, 139, 250, 0.3);
+            background: rgba(176, 143, 199, 0.3);
         }
         100% {
             transform: scale(1);
@@ -778,10 +804,10 @@ body {
 }
 
 .input-item input:focus {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     background: #fff;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 0 0 2px rgba(176, 143, 199, 0.1);
 }
 
 .input-item input::placeholder {
@@ -807,7 +833,7 @@ body {
     align-items: center;
     gap: 12px;
     padding: 16px 32px;
-    background: linear-gradient(135deg, #6200ea, #bb86fc);
+    background: #b08fc7;
     color: #fff;
     border: none;
     border-radius: 12px;
@@ -815,7 +841,7 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 16px rgba(98, 0, 234, 0.3);
+    box-shadow: 0 4px 16px rgba(176, 143, 199, 0.3);
     position: relative;
     overflow: hidden;
     min-width: 200px;
@@ -823,9 +849,9 @@ body {
 }
 
 .global-save-btn:hover {
-    background: linear-gradient(135deg, #4b00b5, #9c66d6);
+    background: #9d7ab8;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.4);
+    box-shadow: 0 8px 24px rgba(176, 143, 199, 0.4);
 }
 
 .global-save-btn:active {
@@ -865,18 +891,18 @@ body {
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
     .back-btn {
-        background: rgba(187, 134, 252, 0.1);
-        border-color: #bb86fc;
-        color: #bb86fc;
+        background: rgba(176, 143, 199, 0.1);
+        border-color: #b08fc7;
+        color: #b08fc7;
     }
 
     .back-btn:hover {
-        background: #bb86fc;
+        background: #b08fc7;
         color: #000;
     }
 
     .page-title {
-        color: #bb86fc;
+        color: #b08fc7;
     }
 
     .metric-card {
@@ -886,9 +912,9 @@ body {
     }
 
     .metric-card:hover {
-        border-color: #bb86fc;
+        border-color: #b08fc7;
         background: #2b2b2b;
-        box-shadow: 0 8px 24px rgba(187, 134, 252, 0.2);
+        box-shadow: 0 8px 24px rgba(176, 143, 199, 0.2);
     }
 
     .metric-title {
@@ -907,7 +933,7 @@ body {
 
     .metric-input textarea:focus {
         background: #222;
-        border-color: #bb86fc;
+        border-color: #b08fc7;
     }
 
     .input-group input {
@@ -918,7 +944,7 @@ body {
 
     .input-group input:focus {
         background: #222;
-        border-color: #bb86fc;
+        border-color: #b08fc7;
     }
 
     .input-item input {
@@ -929,7 +955,7 @@ body {
 
     .input-item input:focus {
         background: #222;
-        border-color: #bb86fc;
+        border-color: #b08fc7;
     }
 
     .input-item label {
@@ -937,7 +963,7 @@ body {
     }
 
     .unit {
-        color: #bb86fc;
+        color: #b08fc7;
     }
 
     .unit-small {
@@ -945,16 +971,16 @@ body {
     }
 
     .save-btn {
-        background: #bb86fc;
+        background: #b08fc7;
         color: #000;
     }
 
     .global-save-btn {
-        background: linear-gradient(135deg, #bb86fc, #6200ea);
+        background: #b08fc7;
     }
 
     .global-save-btn:hover {
-        background: linear-gradient(135deg, #9c66d6, #4b00b5);
+        background: #9d7ab8;
     }
 
     /* 深色模式下的日期时间选择器样式 */
@@ -966,13 +992,13 @@ body {
 
     .date-time-picker:hover,
     .date-picker:hover {
-        border-color: #bb86fc;
+        border-color: #b08fc7;
         background: linear-gradient(135deg, #2b2b2b 0%, #3d3d3d 100%);
-        box-shadow: 0 6px 20px rgba(187, 134, 252, 0.2);
+        box-shadow: 0 6px 20px rgba(176, 143, 199, 0.2);
     }
 
     .picker-label {
-        color: #bb86fc;
+        color: #b08fc7;
     }
 
     .picker-input {
@@ -982,14 +1008,14 @@ body {
     }
 
     .picker-input:focus {
-        border-color: #bb86fc;
+        border-color: #b08fc7;
         background: #2b2b2b;
-        box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.2);
+        box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.2);
     }
 
     .picker-input:hover {
-        border-color: #a78bfa;
-        box-shadow: 0 4px 12px rgba(187, 134, 252, 0.15);
+        border-color: #b08fc7;
+        box-shadow: 0 4px 12px rgba(176, 143, 199, 0.15);
     }
 
     /* 深色模式下的日期时间选择器样式 */
@@ -1002,13 +1028,13 @@ body {
 
     .date-time-picker:hover,
     .date-picker:hover {
-        border-color: #bb86fc !important;
+        border-color: #b08fc7 !important;
         background: #2b2b2b !important;
-        box-shadow: 0 8px 24px rgba(187, 134, 252, 0.2) !important;
+        box-shadow: 0 8px 24px rgba(176, 143, 199, 0.2) !important;
     }
 
     .picker-label {
-        color: #bb86fc !important;
+        color: #b08fc7 !important;
     }
 
     .picker-input {
@@ -1018,14 +1044,14 @@ body {
     }
 
     .picker-input:focus {
-        border-color: #bb86fc !important;
+        border-color: #b08fc7 !important;
         background: #2b2b2b !important;
-        box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.2) !important;
+        box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.2) !important;
     }
 
     .picker-input:hover {
-        border-color: #a78bfa !important;
-        box-shadow: 0 4px 12px rgba(187, 134, 252, 0.15) !important;
+        border-color: #b08fc7 !important;
+        box-shadow: 0 4px 12px rgba(176, 143, 199, 0.15) !important;
     }
 }
 
@@ -1180,8 +1206,8 @@ body {
 }
 
 .bleeding-point-item:hover {
-    border-color: #6200ea;
-    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.1);
+    border-color: #b08fc7;
+    box-shadow: 0 4px 12px rgba(176, 143, 199, 0.1);
 }
 
 .bleeding-point-item.removing {
@@ -1233,10 +1259,10 @@ body {
     gap: 8px;
     width: 100%;
     padding: 16px;
-    border: 2px dashed #6200ea;
+    border: 2px dashed #b08fc7;
     border-radius: 12px;
-    background: rgba(98, 0, 234, 0.05);
-    color: #6200ea;
+    background: rgba(176, 143, 199, 0.05);
+    color: #b08fc7;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
@@ -1245,10 +1271,10 @@ body {
 }
 
 .add-bleeding-point-btn:hover {
-    background: rgba(98, 0, 234, 0.1);
+    background: rgba(176, 143, 199, 0.1);
     border-color: #4a00b8;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
+    box-shadow: 0 4px 12px rgba(176, 143, 199, 0.2);
 }
 
 .add-bleeding-point-btn:active {
@@ -1305,9 +1331,9 @@ body {
     width: 100%;
     max-width: 320px;
     height: 140px;
-    border: 2px dashed #6200ea;
+    border: 2px dashed #b08fc7;
     border-radius: 16px;
-    background: linear-gradient(135deg, rgba(98, 0, 234, 0.08), rgba(139, 92, 246, 0.05));
+    background: linear-gradient(135deg, rgba(176, 143, 199, 0.08), rgba(157, 122, 184, 0.05));
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     margin: 0 auto;
@@ -1331,22 +1357,22 @@ body {
 }
 
 .image-upload-btn:hover {
-    background: linear-gradient(135deg, rgba(98, 0, 234, 0.15), rgba(139, 92, 246, 0.1));
-    border-color: #8b5cf6;
+    background: linear-gradient(135deg, rgba(176, 143, 199, 0.15), rgba(157, 122, 184, 0.1));
+    border-color: #9d7ab8;
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(98, 0, 234, 0.25);
+    box-shadow: 0 8px 25px rgba(176, 143, 199, 0.25);
 }
 
 .image-upload-btn:active {
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(98, 0, 234, 0.2);
+    box-shadow: 0 4px 15px rgba(176, 143, 199, 0.2);
     transition: all 0.1s ease;
 }
 
 .upload-icon {
     font-size: 2.5em;
     font-weight: 300;
-    color: #6200ea;
+    color: #b08fc7;
     margin-bottom: 12px;
     transition: all 0.3s ease;
     position: relative;
@@ -1355,12 +1381,12 @@ body {
 
 .image-upload-btn:hover .upload-icon {
     transform: scale(1.1);
-    color: #8b5cf6;
+    color: #9d7ab8;
 }
 
 .upload-text {
     font-size: 1em;
-    color: #6200ea;
+    color: #b08fc7;
     font-weight: 600;
     margin-bottom: 6px;
     position: relative;
@@ -1369,7 +1395,7 @@ body {
 }
 
 .image-upload-btn:hover .upload-text {
-    color: #8b5cf6;
+    color: #9d7ab8;
 }
 
 .uploaded-images {
@@ -1394,7 +1420,7 @@ body {
 .uploaded-image-item:hover {
     transform: translateY(-2px) scale(1.02);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    border-color: #6200ea;
+    border-color: #b08fc7;
 }
 
 .uploaded-image-item img {
@@ -1474,8 +1500,8 @@ body {
     }
 
     .bleeding-point-item:hover {
-        border-color: #a78bfa;
-        box-shadow: 0 4px 12px rgba(167, 139, 250, 0.2);
+        border-color: #b08fc7;
+        box-shadow: 0 4px 12px rgba(176, 143, 199, 0.2);
     }
 
     .upload-title {
@@ -1483,23 +1509,23 @@ body {
     }
 
     .image-upload-btn {
-        background: linear-gradient(135deg, rgba(187, 134, 252, 0.08), rgba(139, 92, 246, 0.05));
-        border-color: #bb86fc;
+        background: rgba(176, 143, 199, 0.08);
+        border-color: #b08fc7;
     }
 
     .image-upload-btn:hover {
-        background: linear-gradient(135deg, rgba(187, 134, 252, 0.15), rgba(139, 92, 246, 0.1));
-        border-color: #8b5cf6;
+        background: rgba(176, 143, 199, 0.15);
+        border-color: #9d7ab8;
     }
 
     .upload-icon,
     .upload-text {
-        color: #bb86fc;
+        color: #b08fc7;
     }
 
     .image-upload-btn:hover .upload-icon,
     .image-upload-btn:hover .upload-text {
-        color: #8b5cf6;
+        color: #9d7ab8;
     }
 
     .uploaded-image-item {
@@ -1513,8 +1539,8 @@ body {
     }
 
     .other-text-input:focus {
-        border-color: #a78bfa;
-        box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+        border-color: #b08fc7;
+        box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.2);
         background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
     }
 
@@ -1523,18 +1549,18 @@ body {
     }
 
     .input-icon {
-        color: #a78bfa;
+        color: #b08fc7;
     }
 
     .add-bleeding-point-btn {
-        border-color: #a78bfa;
-        background: rgba(167, 139, 250, 0.1);
-        color: #a78bfa;
+        border-color: #b08fc7;
+        background: rgba(176, 143, 199, 0.1);
+        color: #b08fc7;
     }
     
     .add-bleeding-point-btn:hover {
-        background: rgba(167, 139, 250, 0.2);
-        border-color: #8b5cf6;
+        background: rgba(176, 143, 199, 0.2);
+        border-color: #9d7ab8;
     }
     
     .add-bleeding-point-btn.clicking {
@@ -1593,9 +1619,9 @@ body {
 }
 
 .other-text-input:focus {
-    border-color: #6200ea !important;
+    border-color: #b08fc7 !important;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1) !important;
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1) !important;
 }
 
 /* 确保在各种状态下都保持一致的样式 */
@@ -1607,8 +1633,8 @@ body {
 
 .other-text-input:focus:invalid,
 .other-text-input:focus:valid {
-    border-color: #6200ea !important;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1) !important;
+    border-color: #b08fc7 !important;
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1) !important;
 }
 
 /* 自定义输入框样式 */
@@ -1639,9 +1665,9 @@ body {
 .custom-urinalysis-name:focus,
 .custom-symptoms-name:focus,
 .symptoms-detail-input:focus {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1);
 }
 
 .custom-blood-test-name::placeholder,
@@ -1666,9 +1692,9 @@ body {
     .custom-urinalysis-name:focus,
     .custom-symptoms-name:focus,
     .symptoms-detail-input:focus {
-        border-color: #a78bfa;
-        box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
-        background: #222;
+        border-color: #b08fc7;
+        box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.2) !important;
+        background: #222 !important;
     }
 
     .custom-blood-test-name::placeholder,
@@ -1680,8 +1706,8 @@ body {
 }
 
 .other-text-input:focus {
-    border-color: #6200ea;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    border-color: #b08fc7;
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1);
     background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
 }
 
@@ -1701,7 +1727,7 @@ body {
     top: 50%;
     transform: translateY(-50%);
     font-size: 18px;
-    color: #6200ea;
+    color: #b08fc7;
     pointer-events: none;
 }
 

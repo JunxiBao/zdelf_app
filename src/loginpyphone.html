@@ -46,20 +46,25 @@
           background: rgba(0, 0, 0, 0.6);
         }
         .spinner {
-          border: 6px solid #444;
-          border-top-color: #b197fc;
+          border: 3px solid rgba(176, 143, 199, 0.1);
+          border-top: 3px solid #b08fc7;
+          box-shadow: 0 2px 12px rgba(176, 143, 199, 0.2);
         }
       }
       .spinner {
-        width: 50px;
-        height: 50px;
-        border: 6px solid #ccc;
-        border-top-color: #7b2cbf;
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(176, 143, 199, 0.1);
+        border-top: 3px solid #b08fc7;
         border-radius: 50%;
         animation: spin 1s linear infinite;
+        box-shadow: 0 2px 12px rgba(176, 143, 199, 0.2);
       }
       @keyframes spin {
-        to {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
           transform: rotate(360deg);
         }
       }
@@ -115,7 +120,7 @@
 
         <div style="margin-top: 12px; font-size: 0.95em">
           想用密码登录？
-          <a href="login.html" style="text-decoration: none; font-weight: 500"
+          <a href="login.html" style="color: #b08fc7; text-decoration: none; font-weight: 500"
             >前往密码登录！</a
           >
         </div>
@@ -135,7 +140,7 @@
       ></div>
     </div>
     <!-- 震动反馈管理器 -->
-    <script src="../statics/js/haptic-manager.js"></script>
+    <script src="../statics/js/util/haptic-manager.js"></script>
     <script src="../statics/js/loginbyphone.js" defer></script>
     <noscript>
       <div style="padding: 12px; color: #b00020; text-align: center">

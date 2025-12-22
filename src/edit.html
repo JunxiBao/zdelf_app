@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<!--
+  edit.html — Edit Profile page HTML structure
+  
+  Responsibilities:
+  - Displays user profile information for editing
+  - Allows editing of name, gender, age, region, occupation, purpura type, first onset time
+  - Phone number is displayed but read-only
+  - This page is styled via edit.css and controlled by edit.js
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <title>编辑资料</title>
+    <link rel="stylesheet" href="../statics/css/edit.css" />
+  </head>
+  <body>
+    <main class="app" aria-label="编辑资料">
+      <header class="topbar">
+        <button class="back-btn rippleable" id="backBtn" aria-label="返回">
+          <ion-icon
+            ios="chevron-back-sharp"
+            md="chevron-back-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+        </button>
+        <h1 class="title">编辑资料</h1>
+      </header>
+
+      <section class="list" aria-label="个人信息">
+        <div class="li">
+          <div>
+            <div class="label">手机号</div>
+            <div class="desc" id="phoneDisplay">加载中...</div>
+          </div>
+        </div>
+
+        <div class="li">
+          <div>
+            <div class="label">名字</div>
+            <input
+              type="text"
+              id="nameInput"
+              class="input-field"
+              placeholder="请输入名字"
+              maxlength="50"
+            />
+          </div>
+        </div>
+
+        <div class="li rippleable" id="passwordDisplayItem">
+          <div>
+            <div class="label">密码</div>
+            <div class="desc" id="passwordDisplay">****</div>
+          </div>
+        </div>
+
+        <div class="li">
+          <div>
+            <div class="label">性别</div>
+            <select id="genderSelect" class="input-field">
+              <option value="">请选择</option>
+              <option value="男">男</option>
+              <option value="女">女</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="li">
+          <div>
+            <div class="label">年龄</div>
+            <input
+              type="number"
+              id="ageInput"
+              class="input-field"
+              placeholder="请输入年龄"
+              min="0"
+              max="120"
+            />
+          </div>
+        </div>
+
+        <div class="li">
+          <div>
+            <div class="label">地区</div>
+            <input
+              type="text"
+              id="regionInput"
+              class="input-field"
+              placeholder="请输入地区"
+              maxlength="100"
+            />
+          </div>
+        </div>
+
+        <div class="li">
+          <div>
+            <div class="label">职业</div>
+            <input
+              type="text"
+              id="occupationInput"
+              class="input-field"
+              placeholder="请输入职业"
+              maxlength="100"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="list" aria-label="医疗信息">
+        <div class="li">
+          <div>
+            <div class="label">紫癜类型</div>
+            <input
+              type="text"
+              id="purpuraTypeInput"
+              class="input-field"
+              placeholder="请输入紫癜类型"
+              maxlength="100"
+            />
+          </div>
+        </div>
+
+        <div class="li">
+          <div>
+            <div class="label">首次发病时间</div>
+            <div class="date-input-wrapper">
+              <input
+                type="date"
+                id="firstOnsetInput"
+                class="input-field"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="save-section">
+        <button class="save-btn rippleable" id="saveBtn">保存</button>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="../statics/libs/ionicons/ionicons/ionicons.esm.js"
+    ></script>
+    <script nomodule src="../statics/libs/ionicons/ionicons.js"></script>
+    <script src="../statics/js/util/haptic-manager.js"></script>
+    <script src="../statics/js/util/modal-manager.js"></script>
+    <script src="../statics/js/edit.js"></script>
+  </body>
+</html>
+

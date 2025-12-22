@@ -130,21 +130,35 @@
     </div>
 
     <!-- 设备检测和安全区适配 - 必须最先加载 -->
-    <script src="./statics/js/device-detection.js"></script>
+    <script src="./statics/js/util/device-detection.js"></script>
     <!-- URL工具函数 - 解决Android设备URL问题 -->
-    <script src="./statics/js/url-utils.js"></script>
+    <script src="./statics/js/util/url-utils.js"></script>
     <!-- 震动反馈管理器 - 必须最先加载 -->
-    <script src="./statics/js/haptic-manager.js"></script>
+    <script src="./statics/js/util/haptic-manager.js"></script>
     <!-- 动画工具库 -->
-    <script src="./statics/js/animation-utils.js"></script>
+    <script src="./statics/js/util/animation-utils.js"></script>
     <!-- 页面转场动画 -->
-    <script src="./statics/js/page-transitions.js"></script>
+    <script src="./statics/js/util/page-transitions.js"></script>
     <!-- 动画性能监控 -->
-    <script src="./statics/js/animation-performance.js"></script>
+    <script src="./statics/js/util/animation-performance.js"></script>
+    <!-- 主题偏好管理（调用原生插件切换深浅色） -->
+    <script src="./statics/js/util/theme-preference.js"></script>
     <!-- 状态栏管理 -->
-    <script src="./statics/js/status-bar.js"></script>
+    <script src="./statics/js/util/status-bar.js"></script>
+    <!-- 统一弹窗管理器 -->
+    <script src="./statics/js/util/modal-manager.js"></script>
     <!-- 官方Capacitor评分插件 -->
     <script src="./statics/js/official-rating.js"></script>
+    <!-- 连胜庆祝动画 -->
+    <script src="./statics/js/streak-celebration.js"></script>
+    <!-- 浏览器通知封装（在 Capacitor 之前加载，提供浏览器环境下的通知支持） -->
+    <script src="./statics/js/util/browser-notifications.js"></script>
+    <!-- 打卡提醒日志系统（独立模块，必须在所有页面加载前可用） -->
+    <script src="./statics/js/util/checkin-reminder-logger.js"></script>
+    <!-- 打卡提醒核心函数（提前加载，确保提交页面可用） -->
+    <script src="./statics/js/util/checkin-reminder-core.js"></script>
+    <!-- 打卡提醒设置功能（提前加载，确保即使用户不打开设置页面也能预约提醒） -->
+    <script src="./statics/js/settings.js"></script>
     <!-- App shell JavaScript: handles navigation, page loading, and modal interactions -->
     <script src="./statics/js/index.js"></script>
     <!-- Global AI heart + modal (outside Shadow DOM) -->

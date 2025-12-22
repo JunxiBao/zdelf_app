@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<!--
+  settings.html — Settings page HTML structure
+ 
+  Responsibilities:
+  - Displays settings options (vibration, theme, checkin reminder, etc.)
+  - Provides account actions (logout, delete account)
+  - This page is styled via settings.css and controlled by settings.js
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <title>设置</title>
+    <link rel="stylesheet" href="../statics/css/settings.css" />
+  </head>
+  <body>
+    <main class="app" aria-label="设置">
+      <header class="topbar">
+        <button class="back-btn rippleable" id="backBtn" aria-label="返回">
+          <ion-icon
+            ios="chevron-back-sharp"
+            md="chevron-back-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+        </button>
+        <h1 class="title">设置</h1>
+      </header>
+
+      <section class="list" aria-label="设置列表">
+        <div class="li rippleable" data-action="vibration">
+          <ion-icon
+            ios="cellular-sharp"
+            md="cellular-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+          <div>
+            <div class="label">震动反馈</div>
+            <div class="desc">开启或关闭触觉反馈</div>
+          </div>
+          <ion-icon
+            ios="chevron-forward-sharp"
+            md="chevron-forward-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+        </div>
+
+        <div class="li rippleable" data-action="theme-preference">
+          <ion-icon
+            ios="color-palette-sharp"
+            md="color-palette-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+          <div>
+            <div class="label">主题模式</div>
+            <div class="desc">深色 / 浅色 / 跟随系统</div>
+          </div>
+          <ion-icon
+            ios="chevron-forward-sharp"
+            md="chevron-forward-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+        </div>
+
+        <div class="li rippleable" data-action="checkin-reminder">
+          <ion-icon
+            ios="notifications-sharp"
+            md="notifications-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+          <div>
+            <div class="label">打卡提醒</div>
+            <div class="desc">设置每日打卡提醒时间</div>
+          </div>
+          <ion-icon
+            ios="chevron-forward-sharp"
+            md="chevron-forward-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+        </div>
+
+        <div class="li rippleable" data-action="streak-celebration">
+          <ion-icon
+            ios="sparkles-sharp"
+            md="sparkles-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+          <div>
+            <div class="label">连胜庆祝动画</div>
+            <div class="desc">开启或关闭连胜庆祝动画</div>
+          </div>
+          <ion-icon
+            ios="chevron-forward-sharp"
+            md="chevron-forward-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+        </div>
+      </section>
+
+      <section class="list" aria-label="其他设置">
+        <div class="li rippleable" data-action="check-update">
+          <ion-icon
+            ios="refresh-sharp"
+            md="refresh-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+          <div>
+            <div class="label">检查更新</div>
+            <div class="desc">检查应用是否有新版本</div>
+          </div>
+          <ion-icon
+            ios="chevron-forward-sharp"
+            md="chevron-forward-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+        </div>
+
+        <div class="li rippleable" data-action="blocked-users">
+          <ion-icon
+            ios="ban-sharp"
+            md="ban-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+          <div>
+            <div class="label">屏蔽用户</div>
+            <div class="desc">管理已屏蔽的用户列表</div>
+          </div>
+          <ion-icon
+            ios="chevron-forward-sharp"
+            md="chevron-forward-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+        </div>
+
+        <div class="li rippleable" data-action="debug-tools">
+          <ion-icon
+            ios="construct-sharp"
+            md="construct-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+          <div>
+            <div class="label">调试工具</div>
+            <div class="desc">开发者调试和测试工具</div>
+          </div>
+          <ion-icon
+            ios="chevron-forward-sharp"
+            md="chevron-forward-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+        </div>
+
+        <div class="li rippleable" data-action="disclaimer">
+          <ion-icon
+            ios="information-circle-sharp"
+            md="information-circle-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+          <div>
+            <div class="label">关于与帮助</div>
+            <div class="desc">了解应用信息和使用帮助</div>
+          </div>
+          <ion-icon
+            ios="chevron-forward-sharp"
+            md="chevron-forward-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+        </div>
+      </section>
+
+      <section class="account-actions" aria-label="账号操作">
+        <button class="account-action-btn rippleable" data-action="logout">
+          退出登录
+        </button>
+        <button class="account-action-btn rippleable" data-action="delete-account">
+          注销账号
+        </button>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="../statics/libs/ionicons/ionicons/ionicons.esm.js"
+    ></script>
+    <script nomodule src="../statics/libs/ionicons/ionicons.js"></script>
+    <script src="../statics/js/util/haptic-manager.js"></script>
+    <script src="../statics/js/util/modal-manager.js"></script>
+    <script src="../statics/js/util/theme-preference.js"></script>
+    <script src="../statics/js/settings.js"></script>
+  </body>
+</html>

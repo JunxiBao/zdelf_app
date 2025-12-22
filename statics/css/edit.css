@@ -1,0 +1,372 @@
+:host,
+:root {
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --text: #111827;
+  --text-secondary: #6b7280;
+  --brand: #1a73e8;
+  --brand-700: #1558b3;
+  --danger: #e53935;
+  --divider: #e5e7eb;
+  --surface: rgba(0, 0, 0, 0.04);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-2: 0 6px 18px rgba(0, 0, 0, 0.08);
+  --radius: 14px;
+}
+* {
+  box-sizing: border-box;
+}
+body,
+html {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family:
+    Roboto,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Helvetica,
+    Arial,
+    "Apple Color Emoji",
+    "Segoe UI Emoji";
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.app {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 10px 16px 40px;
+  animation: 0.6s both fadeIn;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 8px 0;
+}
+.back-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: 0 0;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.back-btn:hover {
+  background: var(--surface);
+}
+.back-btn ion-icon {
+  width: 24px;
+  height: 24px;
+}
+.topbar .title {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.2px;
+  margin: 0;
+  color: var(--text);
+}
+.list {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--divider);
+  position: relative;
+  overflow: hidden;
+}
+.li:last-child {
+  border-bottom: none;
+}
+.li > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.li .label {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+.li .desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-align: right;
+  flex: 1;
+  min-width: 0;
+}
+.li.rippleable {
+  cursor: pointer;
+}
+.li.rippleable:hover {
+  background: var(--surface);
+}
+.li.rippleable:active {
+  background: rgba(0, 0, 0, 0.06);
+}
+@media (prefers-color-scheme: dark) {
+  .li.rippleable:active {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+.input-field {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  text-align: right;
+}
+.input-field::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+.input-field:focus {
+  color: var(--text);
+}
+select.input-field {
+  cursor: pointer;
+  appearance: none;
+  text-align: right;
+  text-align-last: right;
+}
+select.input-field option {
+  text-align: left;
+}
+.date-input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+}
+input[type="date"].input-field {
+  cursor: pointer;
+  position: relative;
+  text-align: right;
+  direction: ltr;
+}
+input[type="date"].input-field::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  margin-left: 8px;
+  position: absolute;
+  right: 0;
+}
+input[type="date"].input-field::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+input[type="date"].input-field::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+  text-align: right;
+  direction: ltr;
+}
+input[type="date"].input-field::-webkit-datetime-edit-text {
+  padding: 0 2px;
+  text-align: right;
+}
+input[type="date"].input-field::-webkit-datetime-edit-month-field,
+input[type="date"].input-field::-webkit-datetime-edit-day-field,
+input[type="date"].input-field::-webkit-datetime-edit-year-field {
+  padding: 0 2px;
+  text-align: right;
+  direction: ltr;
+}
+.input-with-toggle-wrapper {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+}
+.input-with-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-with-toggle .input-field {
+  width: 100%;
+  padding-right: 44px;
+  box-sizing: border-box;
+}
+.toggle-password {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  transition: background-color 120ms ease, transform 120ms ease, opacity 120ms ease;
+  opacity: 0.8;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 2;
+}
+.toggle-password:hover {
+  background: rgba(98, 0, 234, 0.08);
+  opacity: 1;
+}
+.toggle-password:active {
+  transform: translateY(-50%) scale(0.96);
+}
+.toggle-password:focus-visible {
+  outline: 2px solid var(--brand, #1a73e8);
+  outline-offset: 2px;
+}
+.toggle-password .icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+.toggle-password .icon.visible {
+  display: block;
+}
+.toggle-password .icon.hidden {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  .toggle-password:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+.save-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+.save-btn {
+  width: 100%;
+  max-width: 200px;
+  height: 47px;
+  background: #F5E4FF;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.save-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0px 6px 6px rgba(0, 0, 0, 0.3);
+}
+.save-btn:active {
+  transform: translateY(0);
+  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.2);
+}
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+.rippleable {
+  position: relative;
+  overflow: hidden;
+}
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.15);
+  transform: scale(0);
+  animation: 0.6s ease-out ripple-animation;
+  pointer-events: none;
+}
+@media (prefers-color-scheme: dark) {
+  :host,
+  :root {
+    --bg: #0f1115;
+    --card: #151924;
+    --text: #e5e7eb;
+    --text-secondary: #9aa3af;
+    --brand: #8ab4f8;
+    --brand-700: #7aa2de;
+    --danger: #f28b82;
+    --divider: #232836;
+    --surface: rgba(255, 255, 255, 0.04);
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.6);
+    --shadow-2: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+  .li.rippleable:active {
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .save-btn {
+    background: #F5E4FF;
+    color: #111827;
+  }
+  .ripple {
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* Modal password inputs - force left alignment */
+#modalNewPassword,
+#modalConfirmPassword {
+  text-align: left !important;
+  direction: ltr !important;
+}
+#modalNewPassword::placeholder,
+#modalConfirmPassword::placeholder {
+  text-align: left !important;
+  direction: ltr !important;
+}
+input[id="modalNewPassword"],
+input[id="modalConfirmPassword"] {
+  text-align: left !important;
+  direction: ltr !important;
+}
+input[id="modalNewPassword"]::placeholder,
+input[id="modalConfirmPassword"]::placeholder {
+  text-align: left !important;
+  direction: ltr !important;
+}
+

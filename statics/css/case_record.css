@@ -24,13 +24,13 @@ body {
     }
 
     .date-time-picker:hover {
-        border-color: #bb86fc !important;
+        border-color: #b08fc7 !important;
         background: #2b2b2b !important;
-        box-shadow: 0 8px 24px rgba(187, 134, 252, 0.2) !important;
+        box-shadow: 0 8px 24px rgba(176, 143, 199, 0.2) !important;
     }
 
     .picker-label {
-        color: #bb86fc !important;
+        color: #b08fc7 !important;
     }
 
     .picker-input {
@@ -40,14 +40,14 @@ body {
     }
 
     .picker-input:focus {
-        border-color: #bb86fc !important;
+        border-color: #b08fc7 !important;
         background: #2b2b2b !important;
-        box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.2) !important;
+        box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.2) !important;
     }
 
     .picker-input:hover {
-        border-color: #a78bfa !important;
-        box-shadow: 0 4px 12px rgba(187, 134, 252, 0.15) !important;
+        border-color: #b08fc7 !important;
+        box-shadow: 0 4px 12px rgba(176, 143, 199, 0.15) !important;
     }
 }
 
@@ -65,10 +65,10 @@ body {
 }
 
 .metric-card:hover {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     background: #faf7ff;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.15);
+    box-shadow: 0 8px 24px rgba(176, 143, 199, 0.15);
 }
 
 /* 指标图标样式 */
@@ -82,13 +82,13 @@ body {
     width: 48px;
     height: 48px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #6200ea, #bb86fc);
+    background: #b08fc7;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px;
     color: white;
-    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(176, 143, 199, 0.3);
 }
 
 /* 指标内容样式 */
@@ -129,22 +129,22 @@ body {
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    background: rgba(98, 0, 234, 0.1);
-    border: 1px solid #6200ea;
+    background: rgba(176, 143, 199, 0.1);
+    border: 1px solid #b08fc7;
     border-radius: 8px;
-    color: #6200ea;
+    color: #b08fc7;
     font-size: 0.9em;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 2px 4px rgba(176, 143, 199, 0.1);
 }
 
 .back-btn:hover {
-    background: #6200ea;
+    background: #b08fc7;
     color: #fff;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
+    box-shadow: 0 4px 12px rgba(176, 143, 199, 0.2);
 }
 
 .back-btn:active {
@@ -155,7 +155,7 @@ body {
 .page-title {
     font-size: 1.8em;
     font-weight: 600;
-    color: #6200ea;
+    color: #b08fc7;
     text-align: center;
     margin: 80px 20px 30px 20px;
     letter-spacing: 1px;
@@ -185,10 +185,10 @@ body {
 }
 
 .date-time-picker:hover {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     background: #faf7ff;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.15);
+    box-shadow: 0 8px 24px rgba(176, 143, 199, 0.15);
 }
 
 .picker-group {
@@ -203,7 +203,7 @@ body {
 .picker-label {
     font-size: 0.9em;
     font-weight: 600;
-    color: #6200ea;
+    color: #b08fc7;
     text-align: center;
     margin-bottom: 4px;
     letter-spacing: 0.5px;
@@ -226,15 +226,15 @@ body {
 }
 
 .picker-input:focus {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1);
     background: #faf7ff;
 }
 
 .picker-input:hover {
-    border-color: #8b5cf6;
-    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.1);
+    border-color: #9d7ab8;
+    box-shadow: 0 4px 12px rgba(176, 143, 199, 0.1);
 }
 
 /* 病例容器样式 */
@@ -260,10 +260,10 @@ body {
 }
 
 .form-group:hover {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     background: #faf7ff;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.15);
+    box-shadow: 0 8px 24px rgba(176, 143, 199, 0.15);
 }
 
 /* 表单标签样式 */
@@ -291,10 +291,10 @@ body {
 }
 
 .form-input:focus {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     background: #fff;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1);
 }
 
 .form-input::placeholder {
@@ -323,9 +323,9 @@ body {
     width: 100%;
     max-width: 320px;
     height: 140px;
-    border: 2px dashed #6200ea;
+    border: 2px dashed #b08fc7;
     border-radius: 16px;
-    background: linear-gradient(135deg, rgba(98, 0, 234, 0.08), rgba(139, 92, 246, 0.05));
+    background: linear-gradient(135deg, rgba(176, 143, 199, 0.08), rgba(157, 122, 184, 0.05));
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     margin: 0 auto;
@@ -349,22 +349,22 @@ body {
 }
 
 .image-upload-btn:hover {
-    background: linear-gradient(135deg, rgba(98, 0, 234, 0.15), rgba(139, 92, 246, 0.1));
-    border-color: #8b5cf6;
+    background: linear-gradient(135deg, rgba(176, 143, 199, 0.15), rgba(157, 122, 184, 0.1));
+    border-color: #9d7ab8;
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(98, 0, 234, 0.25);
+    box-shadow: 0 8px 25px rgba(176, 143, 199, 0.25);
 }
 
 .image-upload-btn:active {
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(98, 0, 234, 0.2);
+    box-shadow: 0 4px 15px rgba(176, 143, 199, 0.2);
     transition: all 0.1s ease;
 }
 
 .upload-icon {
     font-size: 2.5em;
     font-weight: 300;
-    color: #6200ea;
+    color: #b08fc7;
     margin-bottom: 12px;
     transition: all 0.3s ease;
     position: relative;
@@ -373,12 +373,12 @@ body {
 
 .image-upload-btn:hover .upload-icon {
     transform: scale(1.1);
-    color: #8b5cf6;
+    color: #9d7ab8;
 }
 
 .upload-text {
     font-size: 1em;
-    color: #6200ea;
+    color: #b08fc7;
     font-weight: 600;
     margin-bottom: 6px;
     position: relative;
@@ -387,7 +387,7 @@ body {
 }
 
 .image-upload-btn:hover .upload-text {
-    color: #8b5cf6;
+    color: #9d7ab8;
 }
 
 .upload-hint {
@@ -476,7 +476,7 @@ body {
     align-items: center;
     gap: 12px;
     padding: 16px 32px;
-    background: linear-gradient(135deg, #6200ea, #bb86fc);
+    background: #b08fc7;
     color: #fff;
     border: none;
     border-radius: 12px;
@@ -484,7 +484,7 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 16px rgba(98, 0, 234, 0.3);
+    box-shadow: 0 4px 16px rgba(176, 143, 199, 0.3);
     position: relative;
     overflow: hidden;
     min-width: 200px;
@@ -492,9 +492,9 @@ body {
 }
 
 .global-save-btn:hover {
-    background: linear-gradient(135deg, #4b00b5, #9c66d6);
+    background: #9d7ab8;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.4);
+    box-shadow: 0 8px 24px rgba(176, 143, 199, 0.4);
 }
 
 .global-save-btn:active {
@@ -534,18 +534,18 @@ body {
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
     .back-btn {
-        background: rgba(187, 134, 252, 0.1);
-        border-color: #bb86fc;
-        color: #bb86fc;
+        background: rgba(176, 143, 199, 0.1);
+        border-color: #b08fc7;
+        color: #b08fc7;
     }
 
     .back-btn:hover {
-        background: #bb86fc;
+        background: #b08fc7;
         color: #000;
     }
 
     .page-title {
-        color: #bb86fc;
+        color: #b08fc7;
     }
 
     .form-group {
@@ -555,9 +555,9 @@ body {
     }
 
     .form-group:hover {
-        border-color: #bb86fc;
+        border-color: #b08fc7;
         background: #2b2b2b;
-        box-shadow: 0 8px 24px rgba(187, 134, 252, 0.2);
+        box-shadow: 0 8px 24px rgba(176, 143, 199, 0.2);
     }
 
     .form-label {
@@ -572,27 +572,27 @@ body {
 
     .form-input:focus {
         background: #222;
-        border-color: #bb86fc;
+        border-color: #b08fc7;
     }
 
     .image-upload-btn {
-        background: linear-gradient(135deg, rgba(187, 134, 252, 0.08), rgba(139, 92, 246, 0.05));
-        border-color: #bb86fc;
+        background: rgba(176, 143, 199, 0.08);
+        border-color: #b08fc7;
     }
 
     .image-upload-btn:hover {
-        background: linear-gradient(135deg, rgba(187, 134, 252, 0.15), rgba(139, 92, 246, 0.1));
-        border-color: #8b5cf6;
+        background: rgba(176, 143, 199, 0.15);
+        border-color: #9d7ab8;
     }
 
     .upload-icon,
     .upload-text {
-        color: #bb86fc;
+        color: #b08fc7;
     }
 
     .image-upload-btn:hover .upload-icon,
     .image-upload-btn:hover .upload-text {
-        color: #8b5cf6;
+        color: #9d7ab8;
     }
 
     .upload-hint {
@@ -605,11 +605,11 @@ body {
 
 
     .global-save-btn {
-        background: linear-gradient(135deg, #bb86fc, #6200ea);
+        background: #b08fc7;
     }
 
     .global-save-btn:hover {
-        background: linear-gradient(135deg, #9c66d6, #4b00b5);
+        background: #9d7ab8;
     }
 }
 
@@ -678,9 +678,9 @@ body {
     }
 
     .metric-card:hover {
-        border-color: #bb86fc;
+        border-color: #b08fc7;
         background: #2b2b2b;
-        box-shadow: 0 8px 24px rgba(187, 134, 252, 0.2);
+        box-shadow: 0 8px 24px rgba(176, 143, 199, 0.2);
     }
 
     .metric-title {
@@ -699,7 +699,7 @@ body {
 
     .form-input:focus {
         background: #222;
-        border-color: #bb86fc;
+        border-color: #b08fc7;
     }
 
     .form-input::placeholder {

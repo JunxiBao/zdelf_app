@@ -14,12 +14,12 @@
       #aiAssistantModal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 2147483646; backdrop-filter: blur(12px); }
       #aiAssistantModal .ai-modal-box { width: min(740px, 96vw); height: min(86vh, 820px); background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%); border-radius: 28px; overflow: hidden; box-shadow: 0 32px 64px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.6); position: relative; transform: translateZ(0); }
       @media (prefers-color-scheme: dark) { #aiAssistantModal .ai-modal-box { background: linear-gradient(145deg, #1f2937 0%, #111827 100%); box-shadow: 0 32px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.08); } }
-      #aiAssistantModal .ai-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 28px 28px 0 0; }
+      #aiAssistantModal .ai-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; background: var(--brand, #b08fc7); color: #111827; border-radius: 28px 28px 0 0; }
       #aiAssistantModal .ai-title { margin: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px; }
-      #aiAssistantModal .ai-close { width: 44px; height: 44px; border-radius: 16px; background: rgba(255,255,255,0.2); color: #fff; display: grid; place-items: center; cursor: pointer; box-shadow: none; transition: transform 160ms ease, background 160ms ease; position: relative; }
-      #aiAssistantModal .ai-close:hover { transform: translateY(-1px); background: rgba(255,255,255,0.28); }
+      #aiAssistantModal .ai-close { width: 44px; height: 44px; border-radius: 16px; background: rgba(17,24,39,0.14); color: #111827; display: grid; place-items: center; cursor: pointer; box-shadow: none; transition: transform 160ms ease, background 160ms ease; position: relative; }
+      #aiAssistantModal .ai-close:hover { transform: translateY(-1px); background: rgba(17,24,39,0.20); }
       #aiAssistantModal .ai-close:active { transform: scale(0.96); }
-      #aiAssistantModal .ai-close::before, #aiAssistantModal .ai-close::after { content: ''; width: 18px; height: 2px; background: #fff; border-radius: 2px; position: absolute; }
+      #aiAssistantModal .ai-close::before, #aiAssistantModal .ai-close::after { content: ''; width: 18px; height: 2px; background: #111827; border-radius: 2px; position: absolute; }
       #aiAssistantModal .ai-close::before { transform: rotate(45deg); }
       #aiAssistantModal .ai-close::after { transform: rotate(-45deg); }
       #aiAssistantModal .ai-body { position: relative; padding: 8px; height: calc(100% - 72px); }

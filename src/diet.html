@@ -72,7 +72,7 @@
     </div>
 
     <!-- 底部操作区域 -->
-    <div class="bottom-actions">
+    <div class="global-actions">
         <button class="global-save-btn" onclick="saveAllMeals()">
             <span class="btn-text">保存记录</span>
             <div class="loading-spinner" id="global-spinner"></div>
@@ -80,30 +80,22 @@
     </div>
 
 
-    <!-- 自定义删除确认弹窗 -->
-    <div id="delete-modal" class="delete-modal">
-        <div class="delete-modal-overlay"></div>
-        <div class="delete-modal-content">
-            <div class="delete-modal-header">
-                <h3>确认删除</h3>
-            </div>
-            <div class="delete-modal-body">
-                <p>确定要删除这个餐次记录吗？</p>
-                <p class="delete-modal-warning">此操作无法撤销</p>
-            </div>
-            <div class="delete-modal-actions">
-                <button class="delete-modal-cancel" onclick="cancelDelete()">取消</button>
-                <button class="delete-modal-confirm" onclick="confirmDelete()">确定删除</button>
-            </div>
-        </div>
-    </div>
-
     <!-- 加载脚本 -->
     <!-- 震动反馈管理器 - 必须先加载 -->
-    <script src="../statics/js/haptic-manager.js"></script>
+    <script src="../statics/js/util/haptic-manager.js"></script>
+    <!-- 连胜庆祝动画 -->
+    <script src="../statics/js/streak-celebration.js"></script>
+    <!-- 打卡提醒日志系统（独立模块，确保日志功能可用） -->
+    <script src="../statics/js/util/checkin-reminder-logger.js"></script>
+    <!-- 打卡提醒核心函数（确保关键函数可用） -->
+    <script src="../statics/js/util/checkin-reminder-core.js"></script>
+    <!-- 打卡提醒设置和调度功能（提交后需要重新调度提醒） -->
+    <script src="../statics/js/settings.js"></script>
+    <!-- 统一弹窗管理器 -->
+    <script src="../statics/js/util/modal-manager.js"></script>
     <!-- 输入框体验增强 -->
-    <script src="../statics/js/input-enhancement.js"></script>
-    <script src="../statics/js/camera-utils.js"></script>
+    <script src="../statics/js/util/input-enhancement.js"></script>
+    <script src="../statics/js/util/camera-utils.js"></script>
     <script src="../statics/js/diet.js"></script>
 </body>
 </html>

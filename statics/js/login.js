@@ -72,9 +72,9 @@
     style.id = styleId;
     style.textContent = `
 #loading-overlay{position:fixed;inset:0;width:100%;height:100%;background:rgba(255,255,255,0.8);z-index:9999;display:none;align-items:center;justify-content:center;transition:background .3s ease}
-@media (prefers-color-scheme: dark){#loading-overlay{background:rgba(0,0,0,0.6)}.spinner{border:6px solid #444;border-top-color:#b197fc}}
-.spinner{width:50px;height:50px;border:6px solid #ccc;border-top-color:#7b2cbf;border-radius:50%;animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}`;
+@media (prefers-color-scheme: dark){#loading-overlay{background:rgba(0,0,0,0.6)}.spinner{border:3px solid rgba(176,143,199,0.1);border-top:3px solid #b08fc7;box-shadow:0 2px 12px rgba(176,143,199,0.2)}}
+.spinner{width:40px;height:40px;border:3px solid rgba(176,143,199,0.1);border-top:3px solid #b08fc7;border-radius:50%;animation:spin 1s linear infinite;box-shadow:0 2px 12px rgba(176,143,199,0.2)}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}`;
     document.head.appendChild(style);
   })();
 
@@ -188,7 +188,42 @@
       if (res.ok && data && data.success) {
         hideLoading();
         try {
-          localStorage.setItem("userId", data.userId);
+          const oldUserId = localStorage.getItem("userId");
+          const newUserId = data.userId;
+          
+          // 如果切换了用户，清除旧的用户名缓存
+          if (oldUserId && oldUserId !== newUserId) {
+            console.log('[login] 检测到用户切换，清除旧的用户名缓存');
+            localStorage.removeItem('username');
+            localStorage.removeItem('Username');
+            localStorage.removeItem('cached_username_userId');
+            sessionStorage.removeItem('username');
+            sessionStorage.removeItem('Username');
+            // 清除提交状态缓存
+            if (typeof window.clearSubmissionCache === 'function') {
+              window.clearSubmissionCache();
+            }
+            // 清除所有打卡提醒通知（用户切换时）
+            if (typeof window.cancelAllCheckinReminders === 'function') {
+              try {
+                await window.cancelAllCheckinReminders();
+                console.log('[login] 用户切换，已清除所有打卡提醒通知');
+              } catch (e) {
+                console.warn('[login] 清除打卡提醒通知失败:', e);
+              }
+            } else if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+              // 后备方案
+              try {
+                const LocalNotifications = window.Capacitor.Plugins.LocalNotifications;
+                await LocalNotifications.cancel({ notifications: [{ id: 10001 }, { id: 10002 }] });
+                console.log('[login] 用户切换，已通过后备方案清除所有打卡提醒通知');
+              } catch (e) {
+                console.warn('[login] 后备方案清除打卡提醒通知失败:', e);
+              }
+            }
+          }
+          
+          localStorage.setItem("userId", newUserId);
         } catch (_) {}
         window.location.href = "../index.html";
       } else {

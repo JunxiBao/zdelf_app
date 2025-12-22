@@ -38,12 +38,18 @@
     Capacitor = window.Capacitor;
     if (Capacitor && Capacitor.Plugins && Capacitor.Plugins.LocalNotifications) {
       LocalNotifications = Capacitor.Plugins.LocalNotifications;
-      console.log('✅ Capacitor LocalNotifications 插件已加载');
+      // 检查是否是浏览器通知封装
+      const isBrowserNotification = LocalNotifications && typeof LocalNotifications._showNotification === 'function';
+      if (isBrowserNotification) {
+        console.log('✅ 浏览器通知封装已加载，将使用浏览器原生通知');
+      } else {
+        console.log('✅ Capacitor LocalNotifications 插件已加载');
+      }
     } else {
-      console.warn('⚠️ Capacitor LocalNotifications 插件未找到，将使用浏览器原生通知');
+      console.warn('⚠️ LocalNotifications 插件未找到');
     }
   } catch (error) {
-    console.warn('⚠️ 无法加载Capacitor插件，将使用浏览器原生通知:', error);
+    console.warn('⚠️ 无法加载通知插件:', error);
   }
 
   // Array of teardown callbacks to run when leaving the page
@@ -177,19 +183,36 @@
   }
 
   // 取消某个提醒下的所有待触发原生通知（优先使用 getPending）
+  // 重要：此函数只取消用药提醒，绝不取消打卡提醒
   async function cancelAllScheduledForReminder(reminderId) {
     if (!LocalNotifications) return;
     try {
       if (typeof LocalNotifications.getPending === 'function') {
         const pending = await LocalNotifications.getPending();
         const toCancel = (pending && pending.notifications ? pending.notifications : [])
-          .filter(n => n && n.extra && n.extra.reminderId === reminderId)
+          .filter(n => {
+            // 严格过滤：只取消用药提醒，绝不取消打卡提醒
+            if (!n || !n.extra) return false;
+            // 确保是用药提醒（有 reminderId 且不是打卡提醒）
+            if (n.extra.type === 'checkin_reminder') {
+              console.warn('[notification] ⚠️ 保护：检测到打卡提醒，跳过取消', n.id);
+              return false;
+            }
+            // 只取消匹配 reminderId 的用药提醒
+            return n.extra.reminderId === reminderId;
+          })
           .map(n => ({ id: n.id }));
         if (toCancel.length > 0) {
-          try { await LocalNotifications.cancel({ notifications: toCancel }); } catch (_) { }
+          try { 
+            await LocalNotifications.cancel({ notifications: toCancel }); 
+            console.log('[notification] ✅ 已取消', toCancel.length, '个用药提醒通知（reminderId:', reminderId, '）');
+          } catch (e) { 
+            console.error('[notification] ❌ 取消用药提醒失败:', e);
+          }
         }
       } else {
         // 兜底：无法获取待排队列表时，按日期+时间规则推断一批未来ID进行取消
+        // 注意：此方法只取消用药提醒的ID，不会影响打卡提醒
         const r = reminders.find(x => x.id === reminderId);
         if (r && Array.isArray(r.dailyTimes) && r.dailyTimes.length > 0) {
           const occ = enumerateOccurrencesAllTimes(r, new Date(), CANCEL_LOOKAHEAD_DAYS, 256);
@@ -202,11 +225,18 @@
           cancelIds.push({ id: stableIdFromString(reminderId) });
           r.dailyTimes.filter(Boolean).forEach(t => cancelIds.push({ id: stableIdFromString(reminderId + '|' + t) }));
           if (cancelIds.length > 0) {
-            try { await LocalNotifications.cancel({ notifications: cancelIds }); } catch (_) { }
+            try { 
+              await LocalNotifications.cancel({ notifications: cancelIds }); 
+              console.log('[notification] ✅ 已取消', cancelIds.length, '个用药提醒通知（兜底方案，reminderId:', reminderId, '）');
+            } catch (e) { 
+              console.error('[notification] ❌ 取消用药提醒失败（兜底方案）:', e);
+            }
           }
         }
       }
-    } catch (_) { }
+    } catch (e) { 
+      console.error('[notification] ❌ cancelAllScheduledForReminder 执行失败:', e);
+    }
   }
 
   // 分批调度，避免一次性过大数组
@@ -240,15 +270,8 @@
       // 清理允许窗口
       if (allowedFireAt.has(reminderId)) allowedFireAt.delete(reminderId);
       // 取消原生通知（包括日期+时间预排程）
+      // cancelAllScheduledForReminder 已经处理了所有相关的通知取消，包括通过 getPending 过滤和兜底方案
       await cancelAllScheduledForReminder(reminderId);
-      if (LocalNotifications) {
-        // 兼容旧ID的清理
-        const cancelIds = [{ id: stableIdFromString(reminderId) }];
-        if (target && Array.isArray(target.dailyTimes)) {
-          target.dailyTimes.filter(Boolean).forEach(t => cancelIds.push({ id: stableIdFromString(reminderId + '|' + t) }));
-        }
-        try { await LocalNotifications.cancel({ notifications: cancelIds }); } catch (_) { }
-      }
       // 移除数据、保存并刷新
       reminders = reminders.filter(r => r.id !== reminderId);
       saveReminders();
@@ -287,7 +310,7 @@
     if (hour >= 12 && hour < 14) return "🌞 中午好，吃药时间到"; // Noon
     if (hour >= 14 && hour < 17) return "⛅ 下午好，不要忘记吃药哦"; // Afternoon
     if (hour >= 17 && hour < 19) return "🌆 黄昏好，坚持吃药哦"; // Evening
-    if (hour >= 19 && hour < 22) return "🌙 晚上好，准备前记得吃药哦"; // Night
+    if (hour >= 19 && hour < 22) return "🌙 晚上好，睡觉前记得吃药哦"; // Night
     if (hour >= 22 || hour < 2) return "🌃 夜深了，赶紧吃药睡觉哦"; // Late night
     return "🕐 嘿，时间过得真快，又该吃药啦"; // Default
   }
@@ -301,7 +324,7 @@
       if (hour >= 12 && hour < 14) return "🌞 中午好，吃药时间到";
       if (hour >= 14 && hour < 17) return "⛅ 下午好，不要忘记吃药哦";
       if (hour >= 17 && hour < 19) return "🌆 黄昏好，坚持吃药哦";
-      if (hour >= 19 && hour < 22) return "🌙 晚上好，准备前记得吃药哦";
+      if (hour >= 19 && hour < 22) return "🌙 晚上好，睡觉前记得吃药哦";
       if (hour >= 22 || hour < 2) return "🌃 夜深了，赶紧吃药睡觉哦";
       return "🕐 嘿，时间过得真快，又该吃药啦";
     } catch (_) {
@@ -366,145 +389,6 @@
       });
   }
 
-  /**
-   * 检测是否在Capacitor原生App环境中运行
-   */
-  function isCapacitorApp() {
-    try {
-      // 检查Capacitor对象是否存在
-      if (typeof window.Capacitor === 'undefined') {
-        return false;
-      }
-
-      // 检查是否为原生平台
-      if (typeof window.Capacitor.isNativePlatform === 'function') {
-        return window.Capacitor.isNativePlatform();
-      }
-
-      // 备选检查：检查Capacitor对象的基本结构
-      return !!(window.Capacitor && window.Capacitor.Plugins);
-    } catch (error) {
-      console.warn('检测Capacitor环境时出错:', error);
-      return false;
-    }
-  }
-
-  /**
-   * 添加点击跳转到 zdelf.cn 的功能
-   */
-  function addClickToRedirectFunctionality(root) {
-    // 检查是否在app环境中，如果是则不添加跳转功能
-    if (isCapacitorApp()) {
-      console.log('📱 在app环境中，跳过添加跳转功能');
-      return;
-    }
-
-    // 获取引导提示元素
-    const redirectHint = root.querySelector('.redirect-hint');
-    const emptyHint = root.querySelector('.empty-hint');
-
-    // 在非app环境下显示跳转提示
-    if (redirectHint) {
-      redirectHint.style.display = 'block';
-    }
-    if (emptyHint) {
-      emptyHint.style.display = 'flex';
-    }
-
-    // 为整个页面添加点击事件监听器
-    const handlePageClick = (event) => {
-      // 检查是否点击了按钮、输入框或其他交互元素
-      const interactiveElements = ['button', 'input', 'select', 'textarea', 'a'];
-      const clickedElement = event.target;
-
-      // 如果点击的是交互元素，不执行跳转
-      if (interactiveElements.includes(clickedElement.tagName.toLowerCase())) {
-        return;
-      }
-
-      // 如果点击的是交互元素的父元素，也不执行跳转
-      const isInsideInteractive = clickedElement.closest('button, input, select, textarea, a, .btn, .modal, .confirm-modal');
-      if (isInsideInteractive) {
-        return;
-      }
-
-      // 执行跳转到 zdelf.cn
-      console.log('🔄 点击页面，跳转到 zdelf.cn');
-      hapticFeedback('Light');
-
-      // 隐藏引导提示
-      if (redirectHint) {
-        redirectHint.style.opacity = '0';
-        redirectHint.style.transform = 'translateX(-50%) translateY(-20px)';
-        setTimeout(() => {
-          redirectHint.style.display = 'none';
-        }, 300);
-      }
-
-      // 在新标签页中打开 zdelf.cn
-      window.open('https://zdelf.cn', '_blank');
-    };
-
-    // 添加点击事件监听器
-    root.addEventListener('click', handlePageClick);
-
-    // 记录清理函数
-    cleanupFns.push(() => {
-      root.removeEventListener('click', handlePageClick);
-    });
-
-    console.log('✅ 已添加点击跳转到 zdelf.cn 的功能');
-  }
-
-  /**
-   * 显示浏览器限制提示
-   */
-  function showBrowserRestriction(root) {
-    const container = root.getElementById('remindersContainer');
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="browser-restriction">
-        <div class="restriction-icon">📱</div>
-        <h2 class="restriction-title">请在App中使用</h2>
-        <p class="restriction-message">
-          用药提醒功能需要在移动App中才能正常工作，以确保提醒通知的可靠性和持久性。
-        </p>
-        <div class="restriction-details">
-          <div class="detail-item">
-            <div class="detail-icon">🔔</div>
-            <div class="detail-text">
-              <strong>可靠的通知</strong><br>
-              App中的本地通知更加可靠，不会被浏览器限制
-            </div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-icon">⚡</div>
-            <div class="detail-text">
-              <strong>后台运行</strong><br>
-              App可以持续在后台运行，确保提醒按时触发
-            </div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-icon">🔄</div>
-            <div class="detail-text">
-              <strong>自动同步</strong><br>
-              App中的数据会自动同步和持久保存
-            </div>
-          </div>
-        </div>
-        <div class="restriction-footer">
-          <p>请下载我们的移动App来使用完整的用药提醒功能。</p>
-        </div>
-      </div>
-    `;
-
-    // 隐藏添加按钮
-    const addBtn = root.getElementById('addReminderBtn');
-    if (addBtn) {
-      addBtn.style.display = 'none';
-    }
-  }
 
   /**
    * Initialize the "Reminder" page UI.
@@ -515,16 +399,6 @@
     const root = rootEl || document;
     currentRoot = root; // 存储当前的root引用
     isActiveReminderView = true;
-
-    // 添加点击跳转到 zdelf.cn 的功能
-    addClickToRedirectFunctionality(root);
-
-    // 检查是否在Capacitor App环境中
-    if (!isCapacitorApp()) {
-      console.warn('⚠️ 检测到非Capacitor环境，显示浏览器限制提示');
-      showBrowserRestriction(root);
-      return;
-    }
 
     // 加载保存的提醒数据
     loadReminders();
@@ -782,12 +656,12 @@
       : "background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%); border-radius: 28px; box-shadow: 0 32px 64px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6); max-width: 90vw; max-height: calc(100vh - 120px); width: 100%; max-width: 700px; overflow: hidden; border: none; margin: 0 auto; transform: translateZ(0);";
 
     const headerStyle = isDarkMode
-      ? "display: flex; justify-content: space-between; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(135deg, #374151 0%, #1f2937 100%); color: #f9fafb; border-radius: 28px 28px 0 0;"
-      : "display: flex; justify-content: space-between; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(0, 0, 0, 0.06); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 28px 28px 0 0;";
+      ? "display: flex; justify-content: space-between; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(17, 24, 39, 0.12); background: var(--brand, #b08fc7); color: #111827; border-radius: 28px 28px 0 0;"
+      : "display: flex; justify-content: space-between; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(17, 24, 39, 0.12); background: var(--brand, #b08fc7); color: #111827; border-radius: 28px 28px 0 0;";
 
     const closeBtnStyle = isDarkMode
-      ? "background: rgba(255, 255, 255, 0.1); border: none; font-size: 1.6rem; color: #d1d5db; cursor: pointer; padding: 12px; border-radius: 16px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;"
-      : "background: rgba(255, 255, 255, 0.2); border: none; font-size: 1.6rem; color: white; cursor: pointer; padding: 12px; border-radius: 16px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;";
+      ? "background: rgba(17, 24, 39, 0.14); border: none; font-size: 1.6rem; color: #111827; cursor: pointer; padding: 12px; border-radius: 16px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;"
+      : "background: rgba(17, 24, 39, 0.14); border: none; font-size: 1.6rem; color: #111827; cursor: pointer; padding: 12px; border-radius: 16px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;";
 
     editingReminderId = reminderId;
     const isEditMode = !!reminderId;
@@ -867,8 +741,8 @@
       : "padding: 12px 24px; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; margin-right: 12px;";
 
     const primaryButtonStyle = isDarkMode
-      ? buttonStyle + ' background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);'
-      : buttonStyle + ' background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);';
+      ? buttonStyle + ' background: var(--brand, #b08fc7); color: #111827; box-shadow: 0 4px 12px rgba(176, 143, 199, 0.35);'
+      : buttonStyle + ' background: var(--brand, #b08fc7); color: #111827; box-shadow: 0 4px 12px rgba(176, 143, 199, 0.35);';
 
     const secondaryButtonStyle = isDarkMode
       ? buttonStyle + ' background: rgba(255, 255, 255, 0.1); color: #d1d5db; border: 1px solid rgba(255, 255, 255, 0.2);'
@@ -1483,133 +1357,25 @@
   }
 
   /**
-   * 显示删除确认弹窗
+   * 显示删除确认弹窗（使用统一的弹窗管理器）
    */
-  function showDeleteModal(root) {
-    // 检测深色模式
-    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    // 创建弹窗 - 完全使用内联样式
-    const modal = document.createElement('div');
-
-    // 弹窗容器样式
-    modal.style.cssText = `
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      z-index: 999999 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 20px !important;
-      box-sizing: border-box !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      margin: 0 !important;
-      overflow: hidden !important;
-    `;
-
-    // 根据深色模式选择样式
-    const backdropStyle = isDarkMode
-      ? "background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(12px);"
-      : "background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(12px);";
-
-    const modalContentStyle = isDarkMode
-      ? "background: linear-gradient(145deg, #1f2937 0%, #111827 100%); border-radius: 28px; box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1); max-width: 90vw; max-height: calc(100vh - 120px); width: 100%; max-width: 500px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); margin: 0 auto; transform: translateZ(0);"
-      : "background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%); border-radius: 28px; box-shadow: 0 32px 64px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6); max-width: 90vw; max-height: calc(100vh - 120px); width: 100%; max-width: 500px; overflow: hidden; border: none; margin: 0 auto; transform: translateZ(0);";
-
-    const headerStyle = isDarkMode
-      ? "display: flex; justify-content: center; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(135deg, #374151 0%, #1f2937 100%); color: #f9fafb; border-radius: 28px 28px 0 0;"
-      : "display: flex; justify-content: center; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(0, 0, 0, 0.06); background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border-radius: 28px 28px 0 0;";
-
-    const warningIconStyle = isDarkMode
-      ? "font-size: 3rem; margin-bottom: 16px; color: #fca5a5;"
-      : "font-size: 3rem; margin-bottom: 16px; color: #fef2f2;";
-
-    const warningTextStyle = isDarkMode
-      ? "color: #f1f5f9; font-size: 1.1rem; font-weight: 600; margin: 0 0 8px 0; text-align: center;"
-      : "color: #1e293b; font-size: 1.1rem; font-weight: 600; margin: 0 0 8px 0; text-align: center;";
-
-    const warningDetailStyle = isDarkMode
-      ? "color: #cbd5e1; font-size: 0.9rem; margin: 0; text-align: center; line-height: 1.5;"
-      : "color: #64748b; font-size: 0.9rem; margin: 0; text-align: center; line-height: 1.5;";
-
-    const buttonStyle = isDarkMode
-      ? "padding: 12px 24px; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; margin: 0 8px;"
-      : "padding: 12px 24px; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; margin: 0 8px;";
-
-    const cancelButtonStyle = isDarkMode
-      ? buttonStyle + ' background: rgba(255, 255, 255, 0.1); color: #d1d5db; border: 1px solid rgba(255, 255, 255, 0.2);'
-      : buttonStyle + ' background: rgba(0, 0, 0, 0.05); color: #64748b; border: 1px solid rgba(0, 0, 0, 0.1);';
-
-    const confirmButtonStyle = isDarkMode
-      ? buttonStyle + ' background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);'
-      : buttonStyle + ' background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);';
-
-    modal.innerHTML = '<div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; ' + backdropStyle + '"></div>' +
-      '<div style="position: relative; ' + modalContentStyle + '">' +
-      '<div style="' + headerStyle + '">' +
-      '<h3 style="margin: 0; font-size: 1.5rem; font-weight: 700;">确认删除</h3>' +
-      '</div>' +
-      '<div style="padding: 32px; text-align: center;">' +
-      '<div style="' + warningIconStyle + '">⚠️</div>' +
-      '<p style="' + warningTextStyle + '">确定要删除这个用药提醒吗？</p>' +
-      '<p style="' + warningDetailStyle + '">此操作无法撤销，相关的定时提醒也将被取消。</p>' +
-      '</div>' +
-      '<div style="display: flex; justify-content: center; align-items: center; padding: 0 32px 32px; gap: 16px;">' +
-      '<button id="deleteCancelBtn" style="' + cancelButtonStyle + '">取消</button>' +
-      '<button id="deleteConfirmBtn" style="' + confirmButtonStyle + '">确认删除</button>' +
-      '</div>' +
-      '</div>';
-
-    // 将弹窗添加到主文档
-    document.body.appendChild(modal);
-
-    // 禁用页面滚动
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-
-    // 绑定关闭事件
-    const cancelBtn = modal.querySelector('#deleteCancelBtn');
-    const confirmBtn = modal.querySelector('#deleteConfirmBtn');
-    const backdrop = modal.querySelector('div[style*="backdrop-filter"]');
-
-    const closeModal = () => {
-      // 恢复页面滚动
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-      modal.remove();
-    };
-
-    cancelBtn.addEventListener('click', () => {
-      hapticFeedback('Light');
-      closeModal();
-    });
-
-    confirmBtn.addEventListener('click', () => {
-      hapticFeedback('Medium');
-      confirmDelete(root);
-      closeModal();
-    });
-
-    backdrop.addEventListener('click', () => {
-      hapticFeedback('Light');
-      closeModal();
-    });
-  }
-
-  /**
-   * 关闭删除确认弹窗
-   */
-  function closeDeleteModal(root) {
-    const modal = root.getElementById('deleteConfirmModal');
-    if (modal) {
-      modal.classList.remove('show');
+  async function showDeleteModal(root) {
+    if (!window.ModalManager) {
+      console.error('ModalManager 未加载');
+      return;
     }
-    pendingDeleteId = null;
+
+    const confirmed = await window.ModalManager.confirmDelete(
+      '确定要删除这个用药提醒吗？',
+      {
+        detail: '此操作无法撤销，相关的定时提醒也将被取消。',
+        onConfirm: () => {
+          confirmDelete(root);
+        }
+      }
+    );
   }
+
 
   /**
    * 确认删除提醒
@@ -1631,16 +1397,9 @@
       });
 
       // 取消Capacitor通知（包括日期+时间预排程）
+      // cancelAllScheduledForReminder 已经处理了所有相关的通知取消，包括通过 getPending 过滤和兜底方案
       await cancelAllScheduledForReminder(reminderId);
-      if (LocalNotifications) {
-        // 兼容旧ID的清理
-        const cancelIds = [{ id: stableIdFromString(reminderId) }];
-        if (target && Array.isArray(target.dailyTimes)) {
-          target.dailyTimes.filter(Boolean).forEach(t => cancelIds.push({ id: stableIdFromString(reminderId + '|' + t) }));
-        }
-        try { await LocalNotifications.cancel({ notifications: cancelIds }); } catch (_) { }
-        console.log('🔔 已取消Capacitor通知:', reminderId);
-      }
+      console.log('🔔 已取消Capacitor通知:', reminderId);
 
       // 从数组中移除提醒
       reminders = reminders.filter(r => r.id !== reminderId);
@@ -1663,9 +1422,6 @@
       renderReminders(root);
       hapticFeedback('Medium');
     }
-
-    // 关闭弹窗
-    closeDeleteModal(root);
   }
 
   /**
@@ -1698,6 +1454,48 @@
       scheduledNotificationIds.clear(); // 清除已调度的通知ID
 
       if (LocalNotifications) {
+        // 在调度用药提醒之前，先保存所有现有的打卡提醒（多重保险）
+        let savedCheckinReminders = [];
+        let savedCheckinRemindersBackup = []; // 备份
+        try {
+          if (typeof LocalNotifications.getPending === 'function') {
+            const pending = await LocalNotifications.getPending();
+            const pendingNotifications = pending && pending.notifications ? pending.notifications : [];
+            // 严格过滤：只保存打卡提醒
+            savedCheckinReminders = pendingNotifications
+              .filter(n => {
+                if (!n || !n.extra) return false;
+                // 确保是打卡提醒
+                return n.extra.type === 'checkin_reminder';
+              })
+              .map(n => ({
+                id: n.id,
+                title: n.title,
+                body: n.body,
+                schedule: n.schedule,
+                sound: n.sound || 'default',
+                actionTypeId: n.actionTypeId || 'checkin_reminder',
+                extra: { ...n.extra } // 深拷贝 extra，避免引用问题
+              }));
+            // 创建备份
+            savedCheckinRemindersBackup = savedCheckinReminders.map(n => ({ ...n }));
+            console.log('[notification] 📋 保存了', savedCheckinReminders.length, '个打卡提醒，将在用药提醒调度后重新调度');
+            if (savedCheckinReminders.length > 0) {
+              console.log('[notification] 📋 打卡提醒详情:', savedCheckinReminders.map(n => ({
+                id: n.id,
+                targetDate: n.extra?.targetDate,
+                scheduleAt: n.schedule?.at
+              })));
+            }
+          }
+        } catch (e) {
+          console.warn('[notification] ⚠️ 获取现有打卡提醒失败:', e);
+        }
+        
+        // 将保存的打卡提醒存储到函数上下文中，供 finally 块使用
+        setupReminders._savedCheckinReminders = savedCheckinReminders;
+        setupReminders._savedCheckinRemindersBackup = savedCheckinRemindersBackup;
+
         // 使用原生本地通知进行滚动预排程
         const notifications = [];
 
@@ -1730,8 +1528,68 @@
           if (totalScheduled >= MAX_SCHEDULE_TOTAL) break;
         }
 
+        // 只调度用药提醒，不包含打卡提醒
+        // 因为 Capacitor 的 schedule() 可能会替换所有通知，所以我们分开调度
         if (notifications.length > 0) {
-          try { await scheduleNotificationsChunked(notifications, 16); }
+          try { 
+            // 在调度前再次验证打卡提醒是否还在
+            let checkinCountBeforeSchedule = 0;
+            if (typeof LocalNotifications.getPending === 'function') {
+              try {
+                const pendingBefore = await LocalNotifications.getPending();
+                const pendingBeforeNotifications = pendingBefore && pendingBefore.notifications ? pendingBefore.notifications : [];
+                checkinCountBeforeSchedule = pendingBeforeNotifications.filter(n => 
+                  n && n.extra && n.extra.type === 'checkin_reminder'
+                ).length;
+                console.log('[notification] 📊 调度用药提醒前，打卡提醒数量:', checkinCountBeforeSchedule);
+              } catch (e) {
+                console.warn('[notification] ⚠️ 调度前验证打卡提醒失败:', e);
+              }
+            }
+            
+            await scheduleNotificationsChunked(notifications, 16);
+            console.log('[notification] ✅ 已调度', notifications.length, '个用药提醒');
+            
+            // 调度后立即验证打卡提醒是否还在
+            if (typeof LocalNotifications.getPending === 'function') {
+              try {
+                await new Promise(resolve => setTimeout(resolve, 200)); // 等待200ms让系统处理
+                const pendingAfter = await LocalNotifications.getPending();
+                const pendingAfterNotifications = pendingAfter && pendingAfter.notifications ? pendingAfter.notifications : [];
+                const checkinCountAfterSchedule = pendingAfterNotifications.filter(n => 
+                  n && n.extra && n.extra.type === 'checkin_reminder'
+                ).length;
+                console.log('[notification] 📊 调度用药提醒后，打卡提醒数量:', checkinCountAfterSchedule);
+                
+                if (checkinCountAfterSchedule < checkinCountBeforeSchedule) {
+                  console.warn('[notification] ⚠️ 警告：调度用药提醒后，打卡提醒数量减少了！', 
+                    '调度前:', checkinCountBeforeSchedule, '调度后:', checkinCountAfterSchedule);
+                  // 如果打卡提醒减少了，标记需要重新调度
+                  if (savedCheckinReminders.length === 0 && checkinCountBeforeSchedule > 0) {
+                    console.warn('[notification] ⚠️ 检测到打卡提醒被清除，将在 finally 块中重新调度');
+                    // 尝试从 pending 中重新获取打卡提醒
+                    const currentCheckinReminders = pendingAfterNotifications
+                      .filter(n => n && n.extra && n.extra.type === 'checkin_reminder')
+                      .map(n => ({
+                        id: n.id,
+                        title: n.title,
+                        body: n.body,
+                        schedule: n.schedule,
+                        sound: n.sound || 'default',
+                        actionTypeId: n.actionTypeId || 'checkin_reminder',
+                        extra: { ...n.extra }
+                      }));
+                    if (currentCheckinReminders.length > 0) {
+                      setupReminders._savedCheckinReminders = currentCheckinReminders;
+                      console.log('[notification] 📋 从当前待触发列表中重新获取了', currentCheckinReminders.length, '个打卡提醒');
+                    }
+                  }
+                }
+              } catch (e) {
+                console.warn('[notification] ⚠️ 调度后验证打卡提醒失败:', e);
+              }
+            }
+          }
           catch (e) { console.error('❌ Capacitor通知调度失败:', e); throw e; }
         }
       } else {
@@ -1788,6 +1646,228 @@
     } finally {
       // 重置设置标志位
       isSettingUpReminders = false;
+      
+      // 重新调度打卡提醒，因为 LocalNotifications.schedule 可能会清除所有现有通知
+      // 如果之前保存了打卡提醒，直接重新调度它们；否则调用 scheduleCheckinReminder
+      Promise.resolve().then(async () => {
+        try {
+          // 检查是否有保存的打卡提醒（优先使用主备份，如果主备份为空则使用备份）
+          let savedCheckinReminders = setupReminders._savedCheckinReminders || [];
+          const savedCheckinRemindersBackup = setupReminders._savedCheckinRemindersBackup || [];
+          
+          // 如果主备份为空但备份不为空，使用备份
+          if (savedCheckinReminders.length === 0 && savedCheckinRemindersBackup.length > 0) {
+            console.log('[notification] 📋 主备份为空，使用备份恢复', savedCheckinRemindersBackup.length, '个打卡提醒');
+            savedCheckinReminders = savedCheckinRemindersBackup.map(n => ({ ...n }));
+            setupReminders._savedCheckinReminders = savedCheckinReminders;
+          }
+          
+          // 如果仍然为空，尝试从当前待触发列表中获取
+          if (savedCheckinReminders.length === 0 && typeof LocalNotifications.getPending === 'function') {
+            try {
+              await new Promise(resolve => setTimeout(resolve, 200));
+              const pending = await LocalNotifications.getPending();
+              const pendingNotifications = pending && pending.notifications ? pending.notifications : [];
+              const currentCheckinReminders = pendingNotifications
+                .filter(n => n && n.extra && n.extra.type === 'checkin_reminder')
+                .map(n => ({
+                  id: n.id,
+                  title: n.title,
+                  body: n.body,
+                  schedule: n.schedule,
+                  sound: n.sound || 'default',
+                  actionTypeId: n.actionTypeId || 'checkin_reminder',
+                  extra: { ...n.extra }
+                }));
+              if (currentCheckinReminders.length > 0) {
+                console.log('[notification] 📋 从当前待触发列表中获取了', currentCheckinReminders.length, '个打卡提醒');
+                savedCheckinReminders = currentCheckinReminders;
+                setupReminders._savedCheckinReminders = savedCheckinReminders;
+              }
+            } catch (e) {
+              console.warn('[notification] ⚠️ 从待触发列表获取打卡提醒失败:', e);
+            }
+          }
+          
+          if (savedCheckinReminders.length > 0) {
+            console.log('[notification] ⏰ 用药提醒调度完成，开始重新调度', savedCheckinReminders.length, '个打卡提醒...');
+            // 稍微延迟一下，确保用药提醒的调度操作完全完成
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // 验证并重新调度保存的打卡提醒
+            const now = new Date();
+            const validCheckinReminders = savedCheckinReminders
+              .map(n => {
+                let scheduleAt = n.schedule?.at;
+                const originalScheduleAt = scheduleAt;
+                
+                if (typeof scheduleAt === 'string') {
+                  scheduleAt = new Date(scheduleAt);
+                } else if (!(scheduleAt instanceof Date)) {
+                  scheduleAt = new Date(scheduleAt);
+                }
+                
+                console.log('[notification] 处理打卡提醒:', {
+                  id: n.id,
+                  originalScheduleAt: originalScheduleAt,
+                  parsedScheduleAt: scheduleAt.toISOString(),
+                  isValid: !isNaN(scheduleAt.getTime()),
+                  isFuture: scheduleAt > now,
+                  now: now.toISOString()
+                });
+                
+                if (!scheduleAt || isNaN(scheduleAt.getTime())) {
+                  console.warn('[notification] 打卡提醒时间无效:', n.id, '原始时间:', originalScheduleAt);
+                  return null;
+                }
+                
+                if (scheduleAt <= now) {
+                  console.warn('[notification] 打卡提醒时间已过期:', n.id, '时间:', scheduleAt.toISOString(), '现在:', now.toISOString());
+                  return null;
+                }
+                
+                const notification = {
+                  id: n.id,
+                  title: n.title,
+                  body: n.body,
+                  schedule: { at: scheduleAt },
+                  sound: n.sound || 'default',
+                  actionTypeId: n.actionTypeId || 'checkin_reminder',
+                  extra: n.extra
+                };
+                
+                console.log('[notification] 准备调度打卡提醒:', {
+                  id: notification.id,
+                  title: notification.title,
+                  scheduleAt: scheduleAt.toISOString(),
+                  targetDate: notification.extra?.targetDate
+                });
+                
+                return notification;
+              })
+              .filter(n => n !== null);
+            
+            if (validCheckinReminders.length > 0 && LocalNotifications) {
+              try {
+                console.log('[notification] 开始调度', validCheckinReminders.length, '个打卡提醒...');
+                
+                // 直接调度，不使用 scheduleCheckinReminder（因为它会先取消所有打卡提醒）
+                // 批量调度，而不是逐个调度，避免 Capacitor 的 schedule() 替换所有通知
+                try {
+                  await scheduleNotificationsChunked(validCheckinReminders, 16);
+                  console.log('[notification] ✅ 已重新调度', validCheckinReminders.length, '个打卡提醒');
+                } catch (e) {
+                  console.error('[notification] ❌ 批量调度失败，尝试逐个调度:', e);
+                  // 如果批量调度失败，尝试逐个调度
+                  for (const notification of validCheckinReminders) {
+                    try {
+                      await LocalNotifications.schedule({ notifications: [notification] });
+                      console.log('[notification] ✅ 已调度打卡提醒:', notification.id, '时间:', notification.schedule.at.toISOString());
+                    } catch (err) {
+                      console.error('[notification] ❌ 调度单个打卡提醒失败:', notification.id, err);
+                    }
+                  }
+                }
+                
+                // 多重验证调度是否成功（验证3次，每次间隔500ms）
+                let verificationPassed = false;
+                for (let verifyAttempt = 1; verifyAttempt <= 3; verifyAttempt++) {
+                  await new Promise(resolve => setTimeout(resolve, 500));
+                  if (typeof LocalNotifications.getPending === 'function') {
+                    try {
+                      const pending = await LocalNotifications.getPending();
+                      const pendingNotifications = pending && pending.notifications ? pending.notifications : [];
+                      const checkinCount = pendingNotifications.filter(n => 
+                        n && n.extra && n.extra.type === 'checkin_reminder'
+                      ).length;
+                      console.log('[notification] 验证', verifyAttempt, '/3：当前待触发的打卡提醒数量:', checkinCount);
+                      
+                      if (checkinCount > 0) {
+                        verificationPassed = true;
+                        console.log('[notification] ✅ 验证成功（第', verifyAttempt, '次）：打卡提醒已正确调度');
+                        break;
+                      } else if (verifyAttempt === 3) {
+                        console.warn('[notification] ⚠️ 警告：3次验证后仍然没有找到打卡提醒，可能调度失败或被清除');
+                        // 最后一次验证失败，尝试重新调度
+                        if (savedCheckinReminders.length > 0) {
+                          console.log('[notification] 🔄 尝试重新调度打卡提醒...');
+                          try {
+                            // 逐个调度，确保每个都能成功
+                            let successCount = 0;
+                            for (const notification of validCheckinReminders) {
+                              try {
+                                await LocalNotifications.schedule({ notifications: [notification] });
+                                successCount++;
+                                console.log('[notification] ✅ 重新调度成功:', notification.id);
+                              } catch (err) {
+                                console.error('[notification] ❌ 重新调度失败:', notification.id, err);
+                              }
+                            }
+                            if (successCount > 0) {
+                              console.log('[notification] ✅ 重新调度完成，成功', successCount, '个');
+                              verificationPassed = true;
+                            }
+                          } catch (e) {
+                            console.error('[notification] ❌ 重新调度失败:', e);
+                          }
+                        }
+                      }
+                    } catch (e) {
+                      console.warn('[notification] ⚠️ 验证失败（第', verifyAttempt, '次）:', e);
+                    }
+                  }
+                }
+                
+                // 如果所有验证都失败，记录严重警告
+                if (!verificationPassed) {
+                  console.error('[notification] ❌ 严重警告：所有验证都失败，打卡提醒可能已被清除！');
+                  // 最后尝试调用 scheduleCheckinReminder（但要注意它会先取消所有打卡提醒）
+                  if (typeof window.scheduleCheckinReminder === 'function') {
+                    console.log('[notification] 🔄 最后尝试：调用 scheduleCheckinReminder...');
+                    try {
+                      await window.scheduleCheckinReminder();
+                      console.log('[notification] ✅ scheduleCheckinReminder 执行完成');
+                    } catch (e) {
+                      console.error('[notification] ❌ scheduleCheckinReminder 执行失败:', e);
+                    }
+                  }
+                }
+              } catch (e) {
+                console.error('[notification] ❌ 重新调度打卡提醒失败:', e);
+                // 如果直接调度失败，回退到调用 scheduleCheckinReminder
+                // 但要注意，这会先取消所有打卡提醒
+                if (typeof window.scheduleCheckinReminder === 'function') {
+                  console.log('[notification] 回退到 scheduleCheckinReminder...');
+                  await window.scheduleCheckinReminder();
+                }
+              }
+            } else {
+              console.log('[notification] 没有有效的打卡提醒需要重新调度，validCheckinReminders.length:', validCheckinReminders.length);
+              // 如果没有有效的打卡提醒，调用 scheduleCheckinReminder 来创建新的
+              if (typeof window.scheduleCheckinReminder === 'function') {
+                console.log('[notification] 调用 scheduleCheckinReminder 创建新的打卡提醒...');
+                await window.scheduleCheckinReminder();
+              }
+            }
+            
+            // 清除保存的打卡提醒（但保留备份，以防万一）
+            setupReminders._savedCheckinReminders = null;
+            // 延迟清除备份，给系统更多时间稳定
+            setTimeout(() => {
+              setupReminders._savedCheckinRemindersBackup = null;
+            }, 5000);
+          } else if (typeof window.scheduleCheckinReminder === 'function') {
+            console.log('[notification] ⏰ 用药提醒调度完成，调用 scheduleCheckinReminder 重新调度打卡提醒...');
+            await new Promise(resolve => setTimeout(resolve, 300));
+            await window.scheduleCheckinReminder();
+            console.log('[notification] ✅ 打卡提醒重新调度完成');
+          } else {
+            console.warn('[notification] ⚠️ scheduleCheckinReminder 函数不可用，且没有保存的打卡提醒');
+          }
+        } catch (e) {
+          console.error('[notification] ❌ 重新调度打卡提醒失败:', e);
+        }
+      });
     }
   }
 
@@ -1995,25 +2075,10 @@
     }
 
     try {
-      // 仅在提醒页激活且页面可见时允许浏览器/回退发送
+      // 检查通知是否可用（Capacitor 或浏览器通知）
       if (!LocalNotifications) {
-        if (!isActiveReminderView || (typeof document !== 'undefined' && document.visibilityState !== 'visible')) {
-          console.warn('跳过浏览器通知：当前不在提醒页面或页面不可见');
-          return;
-        }
-        // 严格时间窗口校验：仅在计划时间附近发送
-        const planned = allowedFireAt.get(reminder.id);
-        if (!planned) {
-          console.warn('跳过浏览器通知：未登记的允许触发窗口');
-          return;
-        }
-        const now = Date.now();
-        const EARLY = 90 * 1000; // 最早提前90秒
-        const LATE = 5 * 60 * 1000; // 最迟滞后5分钟
-        if (now < planned - EARLY || now > planned + LATE) {
-          console.warn('跳过浏览器通知：超出允许触发窗口');
-          return;
-        }
+        console.warn('⚠️ LocalNotifications 不可用，无法发送通知');
+        return;
       }
 
       // 获取用户名
@@ -2049,15 +2114,8 @@
           throw error;
         }
       } else {
-        // 回退到浏览器原生通知
-        if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification(notificationTitle, {
-            body: notificationBody,
-            icon: '/favicon.ico',
-            tag: `medication-${reminder.id}`
-          });
-          console.log('🔔 浏览器通知已发送:', reminder.name);
-        }
+        // 通知不可用
+        console.warn('⚠️ LocalNotifications 不可用，无法发送通知');
       }
 
       // 记录发送时间和冷却期
@@ -2253,20 +2311,9 @@
           return false;
         }
       } else {
-        // 回退到浏览器原生通知
-        if ('Notification' in window) {
-          if (Notification.permission === 'default') {
-            const permission = await Notification.requestPermission();
-            return permission === 'granted';
-          } else if (Notification.permission === 'granted') {
-            return true;
-          } else {
-            return false;
-          }
-        } else {
-          console.warn('⚠️ 浏览器不支持通知API');
-          return false;
-        }
+        // 通知不可用
+        console.warn('⚠️ LocalNotifications 不可用，无法请求通知权限');
+        return false;
       }
     } catch (error) {
       console.error('❌ 请求通知权限失败:', error);

@@ -173,40 +173,49 @@ function goBack() {
 }
 
 
-// 显示提示消息
-function showToast(message) {
-    // 创建toast元素
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(98, 0, 234, 0.9);
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 0.9em;
-        font-weight: 500;
-        box-shadow: 0 4px 12px rgba(98, 0, 234, 0.3);
-        z-index: 1000;
-        animation: toastIn 0.3s ease-out;
-    `;
-
-    // 添加深色模式适配
-    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        toast.style.background = 'rgba(187, 134, 252, 0.9)';
+/**
+ * 显示提示弹窗（使用统一的弹窗管理器）
+ * @param {string} message - 提示消息
+ * @param {string} title - 弹窗标题，默认为 '提示'
+ * @param {string} type - 弹窗类型 ('success' | 'error' | 'warning' | 'info')，默认为 'info'
+ * @returns {Promise<void>}
+ */
+async function showAlert(message, title = '提示', type = 'info') {
+    if (window.ModalManager && window.ModalManager.alert) {
+        // 根据类型选择按钮样式
+        let confirmType = 'primary';
+        if (type === 'error' || type === 'danger') {
+            confirmType = 'danger';
+        }
+        
+        // 根据类型设置标题
+        let alertTitle = title;
+        if (title === '提示') {
+            switch(type) {
+                case 'success':
+                    alertTitle = '成功';
+                    break;
+                case 'error':
+                    alertTitle = '错误';
+                    break;
+                case 'warning':
+                    alertTitle = '警告';
+                    break;
+                default:
+                    alertTitle = '提示';
+            }
+        }
+        
+        return window.ModalManager.alert(message, {
+            title: alertTitle,
+            confirmText: '我知道了',
+            confirmType: confirmType
+        });
+    } else {
+        // 降级处理：如果 ModalManager 未加载，使用原生 alert
+        alert(message);
+        return Promise.resolve();
     }
-
-    document.body.appendChild(toast);
-
-    // 3秒后自动移除
-    setTimeout(() => {
-        toast.style.animation = 'toastOut 0.3s ease-out';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
 }
 
 // 添加CSS动画

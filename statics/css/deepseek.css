@@ -90,7 +90,7 @@ body {
 .message {
   display: flex;
   align-items: flex-end;
-  padding: 18px 24px;
+  padding: 20px 24px;
   border-radius: 20px;
   word-wrap: break-word;
   line-height: 1.6;
@@ -101,12 +101,12 @@ body {
 }
 
 .message.user {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #b08fc7 0%, #9d7ab8 100%);
   color: white;
   text-align: right;
   align-self: flex-end;
   border-radius: 20px 20px 6px 20px;
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 6px 20px rgba(176, 143, 199, 0.3);
   display: flex;
   align-items: flex-end;
   max-width: 85%;
@@ -152,13 +152,81 @@ body {
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal; /* avoid preserving stray newlines after markdown blocks */
-  padding: 4px 0 4px 5px;
+  padding: 8px 0 8px 5px;
   margin-left: 0;
+  line-height: 1.8; /* 增加行高，让文字更舒适 */
 }
 
-/* Remove default paragraph margins inside bubbles to avoid "extra blank line" */
-.message .msg-content > p { margin: 0; }
-.message .msg-content > p + p { margin-top: 0.5em; }
+/* 优化段落间距，让重要信息之间有足够的空白 */
+.message .msg-content > p { 
+  margin: 0 0 1em 0; /* 每个段落底部留1em间距 */
+}
+.message .msg-content > p:last-child {
+  margin-bottom: 0; /* 最后一个段落不需要底部间距 */
+}
+
+/* 标题和段落之间的间距 */
+.message .msg-content > h1,
+.message .msg-content > h2,
+.message .msg-content > h3,
+.message .msg-content > h4,
+.message .msg-content > h5,
+.message .msg-content > h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.8em;
+  line-height: 1.4;
+}
+.message .msg-content > h1:first-child,
+.message .msg-content > h2:first-child,
+.message .msg-content > h3:first-child,
+.message .msg-content > h4:first-child,
+.message .msg-content > h5:first-child,
+.message .msg-content > h6:first-child {
+  margin-top: 0;
+}
+
+/* 列表项之间的间距 */
+.message .msg-content > ul,
+.message .msg-content > ol {
+  margin: 1em 0;
+  padding-left: 1.5em;
+}
+.message .msg-content > ul > li,
+.message .msg-content > ol > li {
+  margin: 0.6em 0; /* 列表项之间增加间距 */
+  line-height: 1.7;
+}
+
+/* 代码块和段落之间的间距 */
+.message .msg-content > pre,
+.message .msg-content > code {
+  margin: 1em 0;
+}
+
+/* 引用块和段落之间的间距 */
+.message .msg-content > blockquote {
+  margin: 1.2em 0;
+  padding: 0.8em 1em;
+  border-left: 4px solid rgba(59, 130, 246, 0.3);
+}
+
+/* 分隔线和段落之间的间距 */
+.message .msg-content > hr {
+  margin: 1.5em 0;
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* 深色模式下的分隔线 */
+@media (prefers-color-scheme: dark) {
+  .message .msg-content > hr {
+    border-top-color: rgba(255, 255, 255, 0.15);
+  }
+  
+  .message .msg-content > blockquote {
+    border-left-color: rgba(59, 130, 246, 0.4);
+  }
+}
 
 /* For user messages (plain text), preserve manual line breaks */
 .message.user .msg-content { white-space: pre-wrap; }
@@ -418,7 +486,7 @@ button:active {
   }
   
   .message.user {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #b08fc7 0%, #9d7ab8 100%);
     color: white;
   }
   

@@ -2428,10 +2428,13 @@ function getDateYMD(value) {
   }
   try {
     const d = new Date(value);
-    const y = d.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric' });
-    const mo = d.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', month: '2-digit' });
-    const da = d.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', day: '2-digit' });
-    return `${y}-${mo}-${da}`;
+    // 使用 toLocaleString 获取 Asia/Shanghai 时区的日期组件
+    // 但需要确保格式为数字，而不是中文
+    const shanghaiDate = new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
+    const year = shanghaiDate.getFullYear();
+    const month = String(shanghaiDate.getMonth() + 1).padStart(2, '0');
+    const day = String(shanghaiDate.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   } catch (_) {
     return '';
   }
@@ -2724,16 +2727,26 @@ function showDetailModal(fileId, type) {
     : "background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%); border-radius: 28px; box-shadow: 0 32px 64px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6); max-width: 90vw; max-height: calc(100vh - 120px); width: 100%; max-width: 700px; overflow: hidden; border: none; margin: 0 auto; transform: translateZ(0);";
     
   const headerStyle = isDarkMode
-    ? "display: flex; justify-content: space-between; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(135deg, #374151 0%, #1f2937 100%); color: #f9fafb; border-radius: 28px 28px 0 0;"
-    : "display: flex; justify-content: space-between; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(0, 0, 0, 0.06); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 28px 28px 0 0;";
+    ? "display: flex; justify-content: space-between; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #b08fc7; color: #111827; border-radius: 28px 28px 0 0;"
+    : "display: flex; justify-content: space-between; align-items: center; padding: 28px 32px 24px; border-bottom: 1px solid rgba(0, 0, 0, 0.06); background: #b08fc7; color: #111827; border-radius: 28px 28px 0 0;";
     
   const closeBtnStyle = isDarkMode
-    ? "background: rgba(255, 255, 255, 0.1); border: none; font-size: 1.6rem; color: #d1d5db; cursor: pointer; padding: 12px; border-radius: 16px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;"
-    : "background: rgba(255, 255, 255, 0.2); border: none; font-size: 1.6rem; color: white; cursor: pointer; padding: 12px; border-radius: 16px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;";
+    ? "background: rgba(17, 24, 39, 0.1); border: none; font-size: 1.6rem; color: #111827; cursor: pointer; padding: 12px; border-radius: 16px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;"
+    : "background: rgba(17, 24, 39, 0.1); border: none; font-size: 1.6rem; color: #111827; cursor: pointer; padding: 12px; border-radius: 16px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;";
     
   const loadingTextStyle = isDarkMode
-    ? "color: #9ca3af; font-size: 1rem; font-weight: 500;"
-    : "color: #64748b; font-size: 1rem; font-weight: 500;";
+    ? "color: #d1d5db; font-size: 0.9rem; font-weight: 500; opacity: 0.8; letter-spacing: -0.01em;"
+    : "color: #666; font-size: 0.9rem; font-weight: 500; opacity: 0.8; letter-spacing: -0.01em;";
+  
+  const spinnerBorderColor = isDarkMode 
+    ? "rgba(176, 143, 199, 0.1)" 
+    : "rgba(176, 143, 199, 0.1)";
+  const spinnerTopColor = isDarkMode 
+    ? "#b08fc7" 
+    : "#b08fc7";
+  const spinnerShadow = isDarkMode
+    ? "0 2px 12px rgba(176, 143, 199, 0.2)"
+    : "0 2px 12px rgba(176, 143, 199, 0.2)";
   
   modal.innerHTML = `
     <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; ${backdropStyle}"></div>
@@ -2743,8 +2756,8 @@ function showDetailModal(fileId, type) {
         <button style="${closeBtnStyle}">&times;</button>
       </div>
       <div style="padding: 32px; max-height: calc(100vh - 240px); overflow-y: auto;">
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; min-height: 200px;">
-          <div style="width: 48px; height: 48px; border: 4px solid rgba(102, 126, 234, 0.2); border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; min-height: 200px; background: transparent; border: none; box-shadow: none; margin: 0;">
+          <div style="width: 40px; height: 40px; border: 3px solid ${spinnerBorderColor}; border-top: 3px solid ${spinnerTopColor}; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; box-shadow: ${spinnerShadow};"></div>
           <div style="${loadingTextStyle}">正在加载详情...</div>
         </div>
       </div>
@@ -3236,8 +3249,8 @@ function renderDetailContent(data, container) {
     : "font-weight: 700; color: #1e293b; font-size: 0.95rem; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; min-width: 100px;";
     
   const valueStyle = isDarkMode
-    ? "color: #cbd5e1; font-size: 0.9rem; font-weight: 500; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: right;"
-    : "color: #475569; font-size: 0.9rem; font-weight: 500; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: right;";
+    ? "color: #b08fc7; font-size: 0.9rem; font-weight: 500; text-align: right;"
+    : "color: #b08fc7; font-size: 0.9rem; font-weight: 500; text-align: right;";
     
   const contentStyle = isDarkMode
     ? "color: #f1f5f9;"
@@ -3249,7 +3262,7 @@ function renderDetailContent(data, container) {
   
   container.innerHTML = `
     <div style="${infoCardStyle}">
-      <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);"></div>
+      <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #b08fc7;"></div>
       <div style="${infoItemStyle}">
         <label style="${labelStyle}">● 记录类型:</label>
         <span style="${valueStyle}">${getTypeTitle(dataType)}</span>
@@ -3262,7 +3275,7 @@ function renderDetailContent(data, container) {
     <div style="${contentStyle}">
       <h4 style="${titleStyle}">
         详细内容:
-        <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60px; height: 3px; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 2px;"></div>
+        <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60px; height: 3px; background: #b08fc7; border-radius: 2px;"></div>
       </h4>
       <div style="${contentStyle}">
         ${formatContentForDisplay(content, dataType, isDarkMode)}
@@ -3325,8 +3338,8 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
     : "color: #64748b; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em;";
     
   const gridValueStyle = isDarkMode
-    ? "color: #f1f5f9; font-weight: 700; font-size: 0.95rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"
-    : "color: #1e293b; font-weight: 700; font-size: 0.95rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;";
+    ? "color: #b08fc7; font-weight: 700; font-size: 0.95rem;"
+    : "color: #b08fc7; font-weight: 700; font-size: 0.95rem;";
 
   // 症状（支持新格式）
   if (metricsData.symptoms?.items && Array.isArray(metricsData.symptoms.items)) {
@@ -3335,14 +3348,15 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
       let symptomHtml = '';
       
       if (symptom.type === 'other' && symptom.description) {
-        symptomHtml = `<span style="display: inline-block; margin: 2px 6px 2px 0; padding: 4px 8px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 12px; font-size: 0.85em;">${typeText}: ${symptom.description}</span>`;
+        symptomHtml = `<span style="display: inline-block; margin: 2px 6px 2px 0; color: #b08fc7; font-size: 0.95rem;">${typeText}: ${symptom.description}</span>`;
       } else {
-        symptomHtml = `<span style="display: inline-block; margin: 2px 6px 2px 0; padding: 4px 8px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 12px; font-size: 0.85em;">${typeText}</span>`;
+        symptomHtml = `<span style="display: inline-block; margin: 2px 6px 2px 0; color: #b08fc7; font-size: 0.95rem;">${typeText}</span>`;
       }
       
       // 如果有详细信息，添加到症状下方
       if (symptom.detail && symptom.detail.trim()) {
-        symptomHtml += `<div style="margin: 6px 0 8px 0; padding: 8px 12px; background: rgba(102, 126, 234, 0.1); border-left: 3px solid #667eea; border-radius: 4px; font-size: 0.9em; color: #4a5568; line-height: 1.4;">详细信息：${symptom.detail}</div>`;
+        const detailTextColor = isDarkMode ? '#e2e8f0' : '#1e293b';
+        symptomHtml += `<div style="margin: 6px 0 8px 0; padding: 8px 12px; background: rgba(176, 143, 199, 0.1); border-left: 3px solid #b08fc7; border-radius: 4px; font-size: 0.95rem; color: ${detailTextColor}; line-height: 1.6; font-weight: 500;">详细信息：${symptom.detail}</div>`;
       }
       
       return symptomHtml;
@@ -3351,8 +3365,8 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
     if (symptomItems) {
       html += `
         <div style="${sectionStyle}">
-          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-          <h5 style="${titleStyle}">▶ 症状记录</h5>
+          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+          <h5 style="${titleStyle}">症状记录</h5>
           <div style="${textStyle}">${symptomItems}</div>
         </div>
       `;
@@ -3363,8 +3377,8 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
   else if (metricsData.symptoms?.symptoms) {
     html += `
       <div style="${sectionStyle}">
-        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-        <h5 style="${titleStyle}">▶ 症状描述</h5>
+        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+        <h5 style="${titleStyle}">症状描述</h5>
         <p style="${textStyle}">${metricsData.symptoms.symptoms}</p>
       </div>
     `;
@@ -3375,8 +3389,8 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
   if (metricsData.temperature?.temperature) {
     html += `
       <div style="${sectionStyle}">
-        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-        <h5 style="${titleStyle}">▶ 体温</h5>
+        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+        <h5 style="${titleStyle}">体温</h5>
         <p style="${textStyle}">${metricsData.temperature.temperature}°C</p>
       </div>
     `;
@@ -3390,8 +3404,8 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
     if (hasUrinalysisData) {
       html += `
         <div style="${sectionStyle}">
-          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-          <h5 style="${titleStyle}">▶ 尿常规检查</h5>
+          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+          <h5 style="${titleStyle}">尿常规检查</h5>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 8px;">
             ${urinalysis.protein ? `<div style="${gridItemStyle}"><span style="${gridLabelStyle}">蛋白质:</span><span style="${gridValueStyle}">${urinalysis.protein}</span></div>` : ''}
             ${urinalysis.glucose ? `<div style="${gridItemStyle}"><span style="${gridLabelStyle}">葡萄糖:</span><span style="${gridValueStyle}">${urinalysis.glucose}</span></div>` : ''}
@@ -3408,8 +3422,8 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
   if (metricsData.proteinuria?.proteinuria24h) {
     html += `
       <div style="${sectionStyle}">
-        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-        <h5 style="${titleStyle}">▶ 24小时尿蛋白</h5>
+        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+        <h5 style="${titleStyle}">24小时尿蛋白</h5>
         <p style="${textStyle}">${metricsData.proteinuria.proteinuria24h}g/24h</p>
       </div>
     `;
@@ -3423,8 +3437,8 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
     if (hasBloodData) {
       html += `
         <div style="${sectionStyle}">
-          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-          <h5 style="${titleStyle}">▶ 血常规检查</h5>
+          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+          <h5 style="${titleStyle}">血常规检查</h5>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 8px;">
             ${blood.wbc ? `<div style="${gridItemStyle}"><span style="${gridLabelStyle}">白细胞:</span><span style="${gridValueStyle}">${blood.wbc}×10⁹/L</span></div>` : ''}
             ${blood.rbc ? `<div style="${gridItemStyle}"><span style="${gridLabelStyle}">红细胞:</span><span style="${gridValueStyle}">${blood.rbc}×10¹²/L</span></div>` : ''}
@@ -3450,17 +3464,17 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
         : "color: #64748b; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em;";
         
       const matrixValueStyle = isDarkMode
-        ? "color: #f1f5f9; font-weight: 700; font-size: 0.95rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"
-        : "color: #1e293b; font-weight: 700; font-size: 0.95rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;";
+        ? "color: #b08fc7; font-weight: 700; font-size: 0.95rem;"
+        : "color: #b08fc7; font-weight: 700; font-size: 0.95rem;";
         
       html += `
         <div style="${sectionStyle}">
-          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-          <h5 style="${titleStyle}">▶ 血常规检测指标</h5>
+          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+          <h5 style="${titleStyle}">血常规检测指标</h5>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 8px;">
             ${matrix.map(item => `
               <div style="${matrixItemStyle}">
-                <div style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
+                <div style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: #b08fc7;"></div>
                 <span style="${matrixLabelStyle}">${getBloodTestItemText(item.item, item.customName)}</span>
                 <span style="${matrixValueStyle}">${item.value}</span>
               </div>
@@ -3497,8 +3511,8 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
       
       html += `
         <div style="${sectionStyle}">
-          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-          <h5 style="${titleStyle}">▶ 出血点 (${bleedingPoints.length}个)</h5>
+          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+          <h5 style="${titleStyle}">出血点 (${bleedingPoints.length}个)</h5>
           <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
             ${bleedingTexts.map(text => `<p style="${textStyle}">• ${text}</p>`).join('')}
           </div>
@@ -3515,8 +3529,8 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
         
       html += `
         <div style="${sectionStyle}">
-          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-          <h5 style="${titleStyle}">▶ 出血点图片 (${bleeding.bleedingImages.length}张)</h5>
+          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+          <h5 style="${titleStyle}">出血点图片 (${bleeding.bleedingImages.length}张)</h5>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 8px;">
             ${bleeding.bleedingImages.map((imageSrc, index) => {
               // 确保图片URL是完整的URL
@@ -3539,8 +3553,8 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
   if (metricsData['self-rating']?.selfRating !== undefined) {
     html += `
       <div style="${sectionStyle}">
-        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-        <h5 style="${titleStyle}">▶ 自我评分</h5>
+        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+        <h5 style="${titleStyle}">自我评分</h5>
         <p style="${textStyle}">${metricsData['self-rating'].selfRating}/10分</p>
       </div>
     `;
@@ -3560,17 +3574,17 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
         : "color: #64748b; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em;";
         
       const matrixValueStyle = isDarkMode
-        ? "color: #f1f5f9; font-weight: 700; font-size: 0.95rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"
-        : "color: #1e293b; font-weight: 700; font-size: 0.95rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;";
+        ? "color: #b08fc7; font-weight: 700; font-size: 0.95rem;"
+        : "color: #b08fc7; font-weight: 700; font-size: 0.95rem;";
         
       html += `
         <div style="${sectionStyle}">
-          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-          <h5 style="${titleStyle}">▶ 尿液检测指标</h5>
+          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+          <h5 style="${titleStyle}">尿液检测指标</h5>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 8px;">
             ${matrix.map(item => `
               <div style="${matrixItemStyle}">
-                <div style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
+                <div style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: #b08fc7;"></div>
                 <span style="${matrixLabelStyle}">${getUrinalysisItemText(item.item, item.customName)}</span>
                 <span style="${matrixValueStyle}">${item.value}</span>
               </div>
@@ -3590,8 +3604,8 @@ function formatMetricsForDisplay(metricsData, isDarkMode = false) {
       
     html += `
       <div style="${sectionStyle}">
-        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-        <h5 style="${titleStyle}">▶ 原始数据</h5>
+        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+        <h5 style="${titleStyle}">原始数据</h5>
         <pre style="${preStyle}">${JSON.stringify(metricsData, null, 2)}</pre>
       </div>
     `;
@@ -3830,8 +3844,8 @@ function formatCaseForDisplay(content, isDarkMode = false) {
     : "color: #64748b; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em;";
     
   const gridValueStyle = isDarkMode
-    ? "color: #f1f5f9; font-weight: 700; font-size: 0.95rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"
-    : "color: #1e293b; font-weight: 700; font-size: 0.95rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;";
+    ? "color: #b08fc7; font-weight: 700; font-size: 0.95rem;"
+    : "color: #b08fc7; font-weight: 700; font-size: 0.95rem;";
     
   const imageStyle = isDarkMode
     ? "max-width: 100%; height: auto; border-radius: 12px; border: 2px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin: 8px 0; cursor: pointer; transition: all 0.3s ease;"
@@ -3839,25 +3853,27 @@ function formatCaseForDisplay(content, isDarkMode = false) {
   
   let html = '<div style="display: flex; flex-direction: column; gap: 20px;">';
   
-  // 基本信息
-  html += `
-    <div style="${sectionStyle}">
-      <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-      <h5 style="${titleStyle}">▶ 基本信息</h5>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 8px;">
-        ${caseData.hospital ? `<div style="${gridItemStyle}"><span style="${gridLabelStyle}">医院:</span><span style="${gridValueStyle}">${caseData.hospital}</span></div>` : ''}
-        ${caseData.department ? `<div style="${gridItemStyle}"><span style="${gridLabelStyle}">科室:</span><span style="${gridValueStyle}">${caseData.department}</span></div>` : ''}
-        ${caseData.doctor ? `<div style="${gridItemStyle}"><span style="${gridLabelStyle}">医生:</span><span style="${gridValueStyle}">${caseData.doctor}</span></div>` : ''}
+  // 基本信息 - 只在至少有一个字段有值时显示
+  if (caseData.hospital || caseData.department || caseData.doctor) {
+    html += `
+      <div style="${sectionStyle}">
+        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+        <h5 style="${titleStyle}">基本信息</h5>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 8px;">
+          ${caseData.hospital ? `<div style="${gridItemStyle}"><span style="${gridLabelStyle}">医院:</span><span style="${gridValueStyle}">${caseData.hospital}</span></div>` : ''}
+          ${caseData.department ? `<div style="${gridItemStyle}"><span style="${gridLabelStyle}">科室:</span><span style="${gridValueStyle}">${caseData.department}</span></div>` : ''}
+          ${caseData.doctor ? `<div style="${gridItemStyle}"><span style="${gridLabelStyle}">医生:</span><span style="${gridValueStyle}">${caseData.doctor}</span></div>` : ''}
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  }
   
   // 诊断信息
   if (caseData.diagnosis) {
     html += `
       <div style="${sectionStyle}">
-        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-        <h5 style="${titleStyle}">▶ 诊断结果</h5>
+        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+        <h5 style="${titleStyle}">诊断结果</h5>
         <p style="${textStyle}">${caseData.diagnosis}</p>
       </div>
     `;
@@ -3867,8 +3883,8 @@ function formatCaseForDisplay(content, isDarkMode = false) {
   if (caseData.prescription) {
     html += `
       <div style="${sectionStyle}">
-        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-        <h5 style="${titleStyle}">▶ 医嘱</h5>
+        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+        <h5 style="${titleStyle}">医嘱</h5>
         <p style="${textStyle}">${caseData.prescription}</p>
       </div>
     `;
@@ -3878,8 +3894,8 @@ function formatCaseForDisplay(content, isDarkMode = false) {
   if (caseData.images && caseData.images.length > 0) {
     html += `
       <div style="${sectionStyle}">
-        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #667eea, #764ba2);"></div>
-        <h5 style="${titleStyle}">▶ 病例单图片 (${caseData.images.length}张)</h5>
+        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #b08fc7;"></div>
+        <h5 style="${titleStyle}">病例单图片 (${caseData.images.length}张)</h5>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 8px;">
           ${caseData.images.map((imageSrc, index) => {
             // 确保图片URL是完整的URL

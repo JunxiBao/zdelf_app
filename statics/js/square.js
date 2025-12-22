@@ -684,14 +684,14 @@ async function handleImageSelect(event) {
   
   // 检查文件类型
   if (!file.type.startsWith('image/')) {
-    alert('请选择图片文件');
+    await showAlert('请选择图片文件');
     return;
   }
   
   // 检查文件大小（原始文件不超过10MB）
   const maxOriginalSizeMB = 10;
   if (file.size > maxOriginalSizeMB * 1024 * 1024) {
-    alert(`图片文件过大，请选择小于${maxOriginalSizeMB}MB的图片`);
+    await showAlert(`图片文件过大，请选择小于${maxOriginalSizeMB}MB的图片`);
     return;
   }
 
@@ -718,7 +718,7 @@ async function handleImageSelect(event) {
       errorMessage = error;
     }
     
-    alert('图片处理失败: ' + errorMessage);
+    await showAlert('图片处理失败: ' + errorMessage);
     
     // 确保清空文件输入
     if (imageFileInput) {
@@ -739,7 +739,7 @@ async function handleSquareImageDataUrl(dataUrl) {
     const maxOriginalSizeMB = 10;
     if (file.size > maxOriginalSizeMB * 1024 * 1024) {
       hideCompressionProgress();
-      alert(`图片文件过大，请选择小于${maxOriginalSizeMB}MB的图片`);
+      await showAlert(`图片文件过大，请选择小于${maxOriginalSizeMB}MB的图片`);
       return;
     }
 
@@ -751,12 +751,12 @@ async function handleSquareImageDataUrl(dataUrl) {
     const originalSizeKB = (file.size / 1024).toFixed(1);
     const compressedSizeKB = ((compressedDataUrl.length * 0.75) / 1024).toFixed(1);
     const compressionRatio = ((1 - compressedDataUrl.length * 0.75 / file.size) * 100).toFixed(1);
-    showToast(`图片上传成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`);
+    await showAlert(`图片上传成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`, '上传成功');
   } catch (error) {
     hideCompressionProgress();
     const msg = error?.message || error?.toString() || '图片处理失败';
     console.error('[square] 图片处理失败:', msg);
-    showToast('图片处理失败: ' + msg);
+    await showAlert('图片处理失败: ' + msg);
   }
 }
 
@@ -780,35 +780,7 @@ function dataURLToFile(dataUrl, filename) {
   });
 }
 
-// 显示toast（复制diet实现）
-function showToast(message) {
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.textContent = message;
-  toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(98, 0, 234, 0.9);
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 0.9em;
-        font-weight: 500;
-        box-shadow: 0 4px 12px rgba(98, 0, 234, 0.3);
-        z-index: 1000;
-        animation: toastIn 0.3s ease-out;
-    `;
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    toast.style.background = 'rgba(187, 134, 252, 0.9)';
-  }
-  document.body.appendChild(toast);
-  setTimeout(() => {
-    toast.style.animation = 'toastOut 0.3s ease-out';
-    setTimeout(() => { try { document.body.removeChild(toast); } catch (_) {} }, 280);
-  }, 3000);
-}
+// showToast 函数已移除，所有提示都使用统一的弹窗方案 (showAlert)
 
 /**
  * 添加图片到上传区域
@@ -856,12 +828,106 @@ function addImageToUploadArea(imageSrc, fileName) {
 }
 
 /**
+ * 显示内容审核加载遮罩
+ */
+function showContentModerationLoading() {
+  let overlay = document.getElementById('content-moderation-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'content-moderation-overlay';
+    
+    // 内联样式，避免 Shadow DOM 样式隔离问题
+    const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const bgColor = isDark ? 'rgba(15, 17, 21, 0.85)' : 'rgba(255, 255, 255, 0.85)';
+    const textColor = isDark ? '#d1d5db' : '#666';
+    
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      background: ${bgColor};
+      backdrop-filter: blur(8px) saturate(120%);
+      -webkit-backdrop-filter: blur(8px) saturate(120%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    `;
+    
+    const spinner = document.createElement('div');
+    spinner.style.cssText = `
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(176, 143, 199, 0.1);
+      border-top: 3px solid #b08fc7;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(176, 143, 199, 0.2);
+    `;
+    
+    const text = document.createElement('div');
+    text.style.cssText = `
+      color: ${textColor};
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-align: center;
+      opacity: 0.8;
+      letter-spacing: -0.01em;
+    `;
+    text.textContent = '正在检查内容...';
+    
+    // 添加旋转动画（如果还没有）
+    if (!document.getElementById('content-moderation-spin-style')) {
+      const style = document.createElement('style');
+      style.id = 'content-moderation-spin-style';
+      style.textContent = `
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    overlay.appendChild(spinner);
+    overlay.appendChild(text);
+    document.body.appendChild(overlay);
+  }
+  // 使用 requestAnimationFrame 确保样式已应用
+  requestAnimationFrame(() => {
+    overlay.style.opacity = '1';
+    overlay.style.pointerEvents = 'auto';
+  });
+}
+
+/**
+ * 隐藏内容审核加载遮罩
+ */
+function hideContentModerationLoading() {
+  const overlay = document.getElementById('content-moderation-overlay');
+  if (overlay) {
+    overlay.style.opacity = '0';
+    overlay.style.pointerEvents = 'none';
+    // 等待动画完成后移除元素
+    setTimeout(() => {
+      if (overlay && overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+    }, 200);
+  }
+}
+
+/**
  * 处理发布消息
  */
 async function handlePublish() {
   const identity = await resolveUserIdentity();
   if (!identity.user_id && !identity.username) {
-    alert('未获取到用户身份，请先登录');
+    await showAlert('未获取到用户身份，请先登录');
     return;
   }
 
@@ -869,7 +935,7 @@ async function handlePublish() {
   const uploadedImageItems = uploadedImages ? uploadedImages.querySelectorAll('.uploaded-image-item') : [];
   const hasImages = uploadedImageItems.length > 0;
   if (!text && !hasImages) {
-    alert('请输入消息内容或添加图片');
+    await showAlert('请输入消息内容或添加图片');
     return;
   }
 
@@ -884,48 +950,63 @@ async function handlePublish() {
       }
     }
 
-    // 2) 调用 /square/publish 写入数据库
-    const API_BASE = getApiBase();
-  const isAnon = !!isAnonymous;
-  const payload = {
-    user_id: identity.user_id || undefined, // 匿名时也记录user_id，但前端显示时隐藏
-    username: isAnon ? '匿名用户' : (identity.username || undefined),
-    avatar_url: isAnon ? undefined : (identity.avatar_url || undefined),
-    text: text || undefined,
-    images: uploadedUrls,
-    tags: selectedTagList.length > 0 ? selectedTagList : undefined
-  };
-    const resp = await fetch(API_BASE + '/square/publish', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const resJson = await resp.json();
-    if (!resJson.success) throw new Error(resJson.message || '发布失败');
+    // 2) 显示内容审核加载动画
+    showContentModerationLoading();
 
-    // 3) 成功后刷新列表并清空表单
-    clearPublishForm();
-    if (publishSection) {
-      // 取消所有动画
-      try {
-        const animations = publishSection.getAnimations();
-        animations.forEach(anim => anim.cancel());
-      } catch (e) {
-        // 忽略错误
+    try {
+      // 3) 调用 /square/publish 写入数据库（会检查违规词）
+      const API_BASE = getApiBase();
+      const isAnon = !!isAnonymous;
+      const payload = {
+        user_id: identity.user_id || undefined, // 匿名时也记录user_id，但前端显示时隐藏
+        username: isAnon ? '匿名用户' : (identity.username || undefined),
+        avatar_url: isAnon ? undefined : (identity.avatar_url || undefined),
+        text: text || undefined,
+        images: uploadedUrls,
+        tags: selectedTagList.length > 0 ? selectedTagList : undefined
+      };
+      const resp = await fetch(API_BASE + '/square/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${resp.status}`);
       }
-      publishSection.style.display = 'none';
-      publishSection.style.opacity = '1';
+      const resJson = await resp.json();
+      if (!resJson.success) throw new Error(resJson.message || '发布失败');
+
+      // 4) 成功后刷新列表并清空表单
+      clearPublishForm();
+      if (publishSection) {
+        // 取消所有动画
+        try {
+          const animations = publishSection.getAnimations();
+          animations.forEach(anim => anim.cancel());
+        } catch (e) {
+          // 忽略错误
+        }
+        publishSection.style.display = 'none';
+        publishSection.style.opacity = '1';
+      }
+      if (publishTriggerBtn) publishTriggerBtn.style.display = 'flex';
+      if (window.__hapticImpact__) window.__hapticImpact__('Medium');
+      
+      // 匿名发布时不再需要本地存储记录，因为后端会记录user_id
+      
+      await loadMessages();
+    } finally {
+      // 隐藏加载动画
+      hideContentModerationLoading();
     }
-    if (publishTriggerBtn) publishTriggerBtn.style.display = 'flex';
-    if (window.__hapticImpact__) window.__hapticImpact__('Medium');
-    
-    // 匿名发布时不再需要本地存储记录，因为后端会记录user_id
-    
-    await loadMessages();
   } catch (error) {
+    // 隐藏加载动画
+    hideContentModerationLoading();
     console.error('发布消息失败:', error);
-    alert('发布失败，请重试');
+    // 显示具体的错误信息（包括审核失败的原因）
+    const errorMessage = error.message || '发布失败，请重试';
+    await showAlert(errorMessage);
   }
 }
 
@@ -2373,7 +2454,7 @@ async function loadComments(postId) {
   } catch (error) {
     console.error('加载评论失败:', error);
     console.error('错误详情:', error.message, error.stack);
-    showToast('加载评论失败');
+    await showAlert('加载评论失败');
   }
 }
 
@@ -2915,63 +2996,78 @@ async function submitComment(postId) {
   
   const text = commentInput.value.trim();
   if (!text) {
-    showToast('请输入评论内容');
+    await showAlert('请输入评论内容');
     return;
   }
   
   try {
     const identity = await resolveUserIdentity();
     if (!identity.user_id && !identity.username) {
-      alert('未获取到用户身份，请先登录');
+      await showAlert('未获取到用户身份，请先登录');
       return;
     }
     
-    const API_BASE = getApiBase();
-    const payload = {
-      post_id: postId,
-      user_id: identity.user_id || undefined, // 匿名时也记录user_id
-      username: identity.username || undefined,
-      avatar_url: identity.avatar_url || undefined,
-      text: text
-    };
+    // 显示内容审核加载动画
+    showContentModerationLoading();
     
-    const resp = await fetch(API_BASE + '/square/comment', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-    
-    if (!data.success) throw new Error(data.message || '评论失败');
-    
-    // 匿名评论时不再需要本地存储记录，因为后端会记录user_id
-    
-    // 清空输入框
-    commentInput.value = '';
-    
-    // 隐藏输入框，显示"增加评论"按钮
-    const inputSection = squareRoot.getElementById(`comment-input-section-${postId}`);
-    const addCommentSection = squareRoot.querySelector(`button[onclick="showCommentInput('${postId}')"]`)?.parentElement;
-    
-    if (inputSection && addCommentSection) {
-      inputSection.style.display = 'none';
-      addCommentSection.style.display = 'block';
+    try {
+      const API_BASE = getApiBase();
+      const payload = {
+        post_id: postId,
+        user_id: identity.user_id || undefined, // 匿名时也记录user_id
+        username: identity.username || undefined,
+        avatar_url: identity.avatar_url || undefined,
+        text: text
+      };
+      
+      const resp = await fetch(API_BASE + '/square/comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${resp.status}`);
+      }
+      const data = await resp.json();
+      
+      if (!data.success) throw new Error(data.message || '评论失败');
+      
+      // 匿名评论时不再需要本地存储记录，因为后端会记录user_id
+      
+      // 清空输入框
+      commentInput.value = '';
+      
+      // 隐藏输入框，显示"增加评论"按钮
+      const inputSection = squareRoot.getElementById(`comment-input-section-${postId}`);
+      const addCommentSection = squareRoot.querySelector(`button[onclick="showCommentInput('${postId}')"]`)?.parentElement;
+      
+      if (inputSection && addCommentSection) {
+        inputSection.style.display = 'none';
+        addCommentSection.style.display = 'block';
+      }
+      
+      // 重新加载评论
+      await loadComments(postId);
+      
+      // 触觉反馈
+      if (window.__hapticImpact__) {
+        window.__hapticImpact__('Medium');
+      }
+      
+      await showAlert('评论成功', '成功');
+    } finally {
+      // 隐藏加载动画
+      hideContentModerationLoading();
     }
-    
-    // 重新加载评论
-    await loadComments(postId);
-    
-    // 触觉反馈
-    if (window.__hapticImpact__) {
-      window.__hapticImpact__('Medium');
-    }
-    
-    showToast('评论成功');
   } catch (error) {
+    // 隐藏加载动画
+    hideContentModerationLoading();
     console.error('评论失败:', error);
-    showToast('评论失败，请重试');
+    // 显示具体的错误信息（包括审核失败的原因）
+    const errorMessage = error.message || '评论失败，请重试';
+    await showAlert(errorMessage);
   }
 }
 
@@ -3035,7 +3131,7 @@ async function submitReply(commentId) {
   
   const text = replyInput.value.trim();
   if (!text) {
-    showToast('请输入回复内容');
+    await showAlert('请输入回复内容');
     return;
   }
   
@@ -3047,21 +3143,21 @@ async function submitReply(commentId) {
   try {
     const identity = await resolveUserIdentity();
     if (!identity.user_id && !identity.username) {
-      alert('未获取到用户身份，请先登录');
+      await showAlert('未获取到用户身份，请先登录');
       return;
     }
     
     // 获取帖子ID
     const commentElement = squareRoot.querySelector(`[data-comment-id="${commentId}"]`);
     if (!commentElement) {
-      showToast('找不到评论信息');
+      await showAlert('找不到评论信息');
       return;
     }
     
     // 从评论元素向上查找帖子ID
     const commentsSection = commentElement.closest('.comments-section');
     if (!commentsSection) {
-      showToast('找不到帖子信息');
+      await showAlert('找不到帖子信息');
       return;
     }
     const postId = commentsSection.id.replace('comments-', '');
@@ -3089,7 +3185,10 @@ async function submitReply(commentId) {
       body: JSON.stringify(payload)
     });
     
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    if (!resp.ok) {
+      const errorData = await resp.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP ${resp.status}`);
+    }
     const data = await resp.json();
     
     if (!data.success) throw new Error(data.message || '回复失败');
@@ -3113,10 +3212,12 @@ async function submitReply(commentId) {
       window.__hapticImpact__('Medium');
     }
     
-    showToast('回复成功');
+    await showAlert('回复成功', '成功');
   } catch (error) {
     console.error('回复失败:', error);
-    showToast('回复失败，请重试');
+    // 显示具体的错误信息（包括审核失败的原因）
+    const errorMessage = error.message || '回复失败，请重试';
+    await showAlert(errorMessage);
   }
 }
 
@@ -3179,7 +3280,7 @@ async function deleteComment(commentId) {
     
     if (!data.success) throw new Error(data.message || '删除失败');
     
-    showToast('删除成功');
+    await showAlert('删除成功', '成功');
     
     // 触觉反馈
     if (window.__hapticImpact__) {
@@ -3187,7 +3288,7 @@ async function deleteComment(commentId) {
     }
   } catch (error) {
     console.error('删除评论失败:', error);
-    showToast('删除失败，请重试');
+    await showAlert('删除失败，请重试');
   }
 }
 
@@ -3285,7 +3386,7 @@ async function deletePost(postId) {
     
     if (!data.success) throw new Error(data.message || '删除失败');
     
-    showToast('删除成功');
+    await showAlert('删除成功', '成功');
     
     // 触觉反馈
     if (window.__hapticImpact__) {
@@ -3301,7 +3402,7 @@ async function deletePost(postId) {
     await loadMessages();
   } catch (error) {
     console.error('删除消息失败:', error);
-    showToast('删除失败，请重试');
+    await showAlert('删除失败，请重试');
   }
 }
 
@@ -3327,7 +3428,7 @@ async function deleteCommentWithRefresh(commentId) {
     if (!data.success) throw new Error(data.message || '删除失败');
     
     console.log('删除成功，开始刷新评论');
-    showToast('删除成功');
+    await showAlert('删除成功', '成功');
     
     // 触觉反馈
     if (window.__hapticImpact__) {
@@ -3364,7 +3465,7 @@ async function deleteCommentWithRefresh(commentId) {
     await Promise.all(refreshPromises);
   } catch (error) {
     console.error('删除评论失败:', error);
-    showToast('删除失败，请重试');
+    await showAlert('删除失败，请重试');
   }
 }
 
@@ -3387,198 +3488,41 @@ function setupGlobalMenuClose() {
 /**
  * 确保确认弹窗样式已加载
  */
-function ensureConfirmStyles() {
-  if (document.getElementById("app-confirm-style")) return;
-  const s = document.createElement("style");
-  s.id = "app-confirm-style";
-  s.textContent = `
-    .app-confirm-mask {
-      position: fixed; 
-      inset: 0; 
-      background: color-mix(in srgb, var(--text, #000) 20%, transparent); 
-      backdrop-filter: saturate(120%) blur(2px); 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      opacity: 0; 
-      transition: opacity .18s ease; 
-      z-index: 10000;
-    }
-    .app-confirm-mask.show {
-      opacity: 1;
-    }
-    .app-confirm { 
-      width: min(92vw, 360px); 
-      background: var(--card, #fff); 
-      color: var(--text, #111); 
-      border-radius: 16px; 
-      box-shadow: var(--shadow-2, 0 10px 30px rgba(0,0,0,.15)); 
-      transform: translateY(12px) scale(.98); 
-      opacity: 0; 
-      transition: transform .2s ease, opacity .2s ease; 
-      border: 1px solid var(--divider, rgba(0,0,0,.06));
-    }
-    .app-confirm.show { 
-      transform: translateY(0) scale(1); 
-      opacity: 1; 
-    }
-    .app-confirm__body { 
-      padding: 18px 18px 8px; 
-      font-size: 15px; 
-      line-height: 1.5; 
-    }
-    .app-confirm__footer { 
-      display: flex; 
-      gap: 10px; 
-      justify-content: flex-end; 
-      padding: 0 12px 12px; 
-    }
-    .app-confirm__btn { 
-      appearance: none; 
-      border: 0; 
-      padding: 9px 14px; 
-      border-radius: 12px; 
-      cursor: pointer; 
-      font-size: 14px; 
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-    .app-confirm__btn--ghost { 
-      background: var(--divider, rgba(0,0,0,.04)); 
-      color: var(--text, #111); 
-    }
-    .app-confirm__btn--ghost:hover {
-      background: var(--text-secondary, rgba(0,0,0,.08));
-    }
-    .app-confirm__btn--primary { 
-      background: var(--brand, #6200ea); 
-      color: #fff; 
-    }
-    .app-confirm__btn--primary:hover {
-      background: var(--brand-700, #4b00b5);
-      transform: translateY(-1px);
-    }
-    .app-confirm__btn--danger { 
-      background: var(--danger, #e53935); 
-      color: #fff; 
-    }
-    .app-confirm__btn--danger:hover {
-      background: #d32f2f;
-      transform: translateY(-1px);
-    }
-    .app-confirm__btn:focus { 
-      outline: 2px solid var(--brand, #6200ea); 
-      outline-offset: 2px; 
-    }
-    @media (prefers-color-scheme: dark) { 
-      .app-confirm-mask { 
-        background: color-mix(in srgb, #000 50%, transparent); 
-      }
-      .app-confirm { 
-        background: var(--card, #1e1f22); 
-        color: var(--text, #e6e6e6); 
-        border-color: var(--divider, rgba(255,255,255,.08)); 
-      }
-      .app-confirm__btn--ghost { 
-        background: var(--divider, rgba(255,255,255,.08)); 
-        color: var(--text, #e6e6e6); 
-      }
-      .app-confirm__btn--ghost:hover {
-        background: var(--text-secondary, rgba(255,255,255,.12));
-      }
-    }
-  `;
-  document.head.appendChild(s);
-  cleanupFns.push(() => {
-    if (s.parentNode) s.remove();
-  });
+/**
+ * 显示提示弹窗（使用统一的弹窗管理器）
+ * @param {string} message - 提示消息
+ * @param {string} title - 弹窗标题，默认为 '提示'
+ * @returns {Promise<void>}
+ */
+async function showAlert(message, title = '提示') {
+  if (window.ModalManager && window.ModalManager.alert) {
+    return window.ModalManager.alert(message, {
+      title: title,
+      confirmText: '我知道了',
+      confirmType: 'primary'
+    });
+  } else {
+    // 降级处理：如果 ModalManager 未加载，使用原生 alert
+    alert(message);
+    return Promise.resolve();
+  }
 }
 
 /**
- * 自定义确认弹窗
+ * 自定义确认弹窗（使用统一的弹窗管理器）
  * @param {string} message - 确认消息
- * @param {string} type - 弹窗类型 ('danger' | 'warning' | 'info')
+ * @param {string} type - 弹窗类型 ('danger' | 'primary' | 'warning')
  * @returns {Promise<boolean>} 用户是否确认
  */
 function confirmDialog(message, type = 'danger') {
-  ensureConfirmStyles();
-  return new Promise((resolve) => {
-    const mask = document.createElement('div');
-    mask.className = 'app-confirm-mask';
-
-    const box = document.createElement('div');
-    box.className = 'app-confirm';
-
-    const body = document.createElement('div');
-    body.className = 'app-confirm__body';
-    body.textContent = message || '确定要执行此操作吗？';
-
-    const footer = document.createElement('div');
-    footer.className = 'app-confirm__footer';
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'app-confirm__btn app-confirm__btn--ghost';
-    cancelBtn.textContent = '取消';
-
-    const okBtn = document.createElement('button');
-    okBtn.className = `app-confirm__btn app-confirm__btn--${type}`;
-    okBtn.textContent = '确定';
-
-    footer.append(cancelBtn, okBtn);
-    box.append(body, footer);
-    mask.appendChild(box);
-    document.body.appendChild(mask);
-
-    // 显示动画
-    requestAnimationFrame(() => {
-      mask.classList.add('show');
-      box.classList.add('show');
+  if (window.ModalManager) {
+    return window.ModalManager.confirm(message, {
+      confirmType: type === 'danger' ? 'danger' : 'primary'
     });
-
-    const close = (result) => {
-      box.classList.remove('show');
-      mask.classList.remove('show');
-      const onEnd = () => {
-        mask.removeEventListener('transitionend', onEnd);
-        if (mask.parentNode) mask.remove();
-      };
-      mask.addEventListener('transitionend', onEnd);
-      resolve(result);
-    };
-
-    // 事件处理
-    cancelBtn.addEventListener('click', () => {
-      if (window.__hapticImpact__) {
-        window.__hapticImpact__('Light');
-      }
-      close(false);
-    }, { once: true });
-
-    okBtn.addEventListener('click', () => {
-      if (window.__hapticImpact__) {
-        window.__hapticImpact__('Medium');
-      }
-      close(true);
-    }, { once: true });
-
-    mask.addEventListener('click', (e) => {
-      if (e.target === mask) {
-        close(false);
-      }
-    }, { once: true });
-
-    // ESC键关闭
-    const handleEsc = (e) => {
-      if (e.key === 'Escape') {
-        close(false);
-        document.removeEventListener('keydown', handleEsc);
-      }
-    };
-    document.addEventListener('keydown', handleEsc);
-
-    // 聚焦到确定按钮
-    setTimeout(() => okBtn.focus(), 0);
-  });
+  } else {
+    // 降级处理：如果 ModalManager 未加载，使用原生 confirm
+    return Promise.resolve(confirm(message));
+  }
 }
 
 /**
@@ -3604,7 +3548,7 @@ async function reportContent(contentType, contentId, reportedUserId) {
   try {
     const identity = await resolveUserIdentity();
     if (!identity.user_id) {
-      showToast('请先登录');
+      await showAlert('请先登录');
       return;
     }
     
@@ -3629,7 +3573,7 @@ async function reportContent(contentType, contentId, reportedUserId) {
     
     if (!data.success) throw new Error(data.message || '举报失败');
     
-    showToast('举报已提交，感谢您的反馈');
+    await showAlert('举报已提交，感谢您的反馈', '成功');
     
     // 触觉反馈
     if (window.__hapticImpact__) {
@@ -3637,7 +3581,7 @@ async function reportContent(contentType, contentId, reportedUserId) {
     }
   } catch (error) {
     console.error('举报失败:', error);
-    showToast(error.message || '举报失败，请重试');
+    await showAlert(error.message || '举报失败，请重试');
   }
 }
 
@@ -3665,7 +3609,7 @@ async function blockUser(blockedId, blockedName) {
   try {
     const identity = await resolveUserIdentity();
     if (!identity.user_id) {
-      showToast('请先登录');
+      await showAlert('请先登录');
       return;
     }
     
@@ -3686,7 +3630,7 @@ async function blockUser(blockedId, blockedName) {
     
     if (!data.success) throw new Error(data.message || '屏蔽失败');
     
-    showToast('已屏蔽该用户');
+    await showAlert('已屏蔽该用户', '成功');
     
     // 触觉反馈
     if (window.__hapticImpact__) {
@@ -3697,7 +3641,7 @@ async function blockUser(blockedId, blockedName) {
     await loadMessages();
   } catch (error) {
     console.error('屏蔽用户失败:', error);
-    showToast(error.message || '屏蔽失败，请重试');
+    await showAlert(error.message || '屏蔽失败，请重试');
   }
 }
 
@@ -4087,15 +4031,15 @@ function updateTagSelectOptions() {
  * 添加tag
  * @param {string} tag - tag名称
  */
-function addTag(tag) {
+async function addTag(tag) {
   if (!tag || tag.length === 0) return;
   if (selectedTagList.length >= 5) {
-    showToast('最多只能添加5个标签');
+    await showAlert('最多只能添加5个标签');
     updateTagSelectOptions(); // 更新选择器状态
     return;
   }
   if (selectedTagList.includes(tag)) {
-    showToast('该标签已添加');
+    await showAlert('该标签已添加');
     updateTagSelectOptions(); // 更新选择器状态
     return;
   }

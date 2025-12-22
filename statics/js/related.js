@@ -97,22 +97,25 @@
           localStorage.setItem('open_square_post_id', String(it.post_id || ''));
           localStorage.setItem('global_loading', '1');
         } catch(_) {}
-        // 显示本页全屏加载覆盖，避免中间过程闪烁
+        // 显示本页全屏加载覆盖，避免中间过程闪烁（使用与daily页面一致的加载动画）
         try {
           const ov = document.createElement('div');
           ov.id = 'route-loading-overlay';
-          ov.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9999;';
+          ov.style.cssText = 'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;';
           ov.innerHTML = `
             <style>
-              #route-loading-overlay{background:#ffffff}
-              #route-loading-overlay .spinner{width:44px;height:44px;border:3px solid rgba(98,0,234,0.18);border-top-color:#7c4dff;border-radius:50%;animation:spin .8s linear infinite}
+              #route-loading-overlay{background:var(--bg, #ffffff)}
+              #route-loading-overlay .spinner{width:40px;height:40px;border:3px solid rgba(176,143,199,0.1);border-top:3px solid #b08fc7;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px;box-shadow:0 2px 12px rgba(176,143,199,0.2)}
+              #route-loading-overlay .loading-text{color:#666;font-size:0.9rem;font-weight:500;opacity:0.8;letter-spacing:-0.01em}
               @media (prefers-color-scheme: dark){
-                #route-loading-overlay{background:#0f1115}
-                #route-loading-overlay .spinner{border-color:rgba(167,139,250,0.22);border-top-color:#a78bfa}
+                #route-loading-overlay{background:var(--bg, #0f1115)}
+                #route-loading-overlay .spinner{border:3px solid rgba(176,143,199,0.1);border-top:3px solid #b08fc7;box-shadow:0 2px 12px rgba(176,143,199,0.2)}
+                #route-loading-overlay .loading-text{color:#d1d5db}
               }
-              @keyframes spin{to{transform:rotate(360deg)}}
+              @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
             </style>
             <div class="spinner"></div>
+            <div class="loading-text">正在跳转...</div>
           `;
           document.body.appendChild(ov);
         } catch(_) {}

@@ -1,0 +1,233 @@
+:host,
+:root {
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --text: #111827;
+  --text-secondary: #6b7280;
+  --brand: #1a73e8;
+  --brand-700: #1558b3;
+  --danger: #e53935;
+  --divider: #e5e7eb;
+  --surface: rgba(0, 0, 0, 0.04);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-2: 0 6px 18px rgba(0, 0, 0, 0.08);
+  --radius: 14px;
+}
+* {
+  box-sizing: border-box;
+}
+body,
+html {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family:
+    Roboto,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Helvetica,
+    Arial,
+    "Apple Color Emoji",
+    "Segoe UI Emoji";
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.app {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 10px 16px 40px;
+  animation: 0.6s both fadeIn;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 8px 0;
+}
+.back-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: 0 0;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.back-btn:hover {
+  background: var(--surface);
+}
+.back-btn ion-icon {
+  width: 24px;
+  height: 24px;
+}
+.topbar .title {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.2px;
+  margin: 0;
+  color: var(--text);
+}
+.list {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--divider);
+  cursor: pointer;
+  transition: background 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.li:last-child {
+  border-bottom: none;
+}
+.li:hover {
+  background: var(--surface);
+}
+.li:active {
+  background: rgba(0, 0, 0, 0.06);
+}
+.li ion-icon:first-child {
+  width: 24px;
+  height: 24px;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.li > div {
+  flex: 1;
+  min-width: 0;
+}
+.li .label {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.li .desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.li ion-icon:last-child {
+  width: 20px;
+  height: 20px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.li.danger,
+.li.danger .label,
+.li.danger ion-icon:first-child {
+  color: var(--danger);
+}
+.rippleable {
+  position: relative;
+  overflow: hidden;
+}
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.15);
+  transform: scale(0);
+  animation: 0.6s ease-out ripple-animation;
+  pointer-events: none;
+}
+@media (prefers-color-scheme: dark) {
+  :host,
+  :root {
+    --bg: #0f1115;
+    --card: #151924;
+    --text: #e5e7eb;
+    --text-secondary: #9aa3af;
+    --brand: #8ab4f8;
+    --brand-700: #7aa2de;
+    --danger: #f28b82;
+    --divider: #232836;
+    --surface: rgba(255, 255, 255, 0.04);
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.6);
+    --shadow-2: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+  }
+  .li:active {
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .ripple {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  .account-action-btn {
+    background: #F5E4FF;
+    color: var(--text);
+  }
+}
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.account-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+.account-action-btn {
+  width: 115px;
+  height: 47px;
+  background: #F5E4FF;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.account-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0px 6px 6px rgba(0, 0, 0, 0.3);
+}
+.account-action-btn:active {
+  transform: translateY(0);
+  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.2);
+}
+@media (prefers-color-scheme: dark) {
+  .account-action-btn {
+    background: #F5E4FF;
+    color: #111827;
+  }
+}

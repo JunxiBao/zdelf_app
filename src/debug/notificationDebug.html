@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<!--
+  notificationDebug.html — Debug tools page
+  
+  Responsibilities:
+  - Display all scheduled notifications
+  - Provide debugging utilities for developers
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <title>调试工具</title>
+    <link rel="stylesheet" href="../../statics/css/settings.css" />
+    <style>
+      .debug-section {
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-2);
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+      .debug-section h2 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0 0 16px 0;
+        color: var(--text);
+      }
+      .notification-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .notification-item {
+        background: var(--surface);
+        border: 1px solid var(--divider);
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .notification-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .notification-id {
+        font-family: monospace;
+        font-size: 14px;
+        color: var(--brand);
+        font-weight: 600;
+      }
+      .notification-type {
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        background: var(--brand);
+        color: #fff;
+        font-weight: 500;
+      }
+      .notification-type.checkin {
+        background: #9333ea;
+      }
+      .notification-type.reminder {
+        background: #059669;
+      }
+      .notification-type.other {
+        background: var(--text-secondary);
+      }
+      .notification-details {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 14px;
+      }
+      .notification-detail-row {
+        display: flex;
+        gap: 8px;
+      }
+      .notification-detail-label {
+        color: var(--text-secondary);
+        font-weight: 500;
+        min-width: 80px;
+      }
+      .notification-detail-value {
+        color: var(--text);
+        flex: 1;
+        word-break: break-word;
+      }
+      .notification-schedule {
+        font-family: monospace;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-secondary);
+      }
+      .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+      }
+      .empty-state-text {
+        font-size: 16px;
+      }
+      .refresh-btn {
+        background: var(--brand);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 16px;
+      }
+      .refresh-btn:hover {
+        background: var(--brand-700);
+        transform: translateY(-1px);
+      }
+      .refresh-btn:active {
+        transform: translateY(0);
+      }
+      .loading {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-secondary);
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .stat-card {
+        background: var(--surface);
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+      }
+      .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--brand);
+        margin-bottom: 4px;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app" aria-label="调试工具">
+      <header class="topbar">
+        <button class="back-btn rippleable" id="backBtn" aria-label="返回">
+          <ion-icon
+            ios="chevron-back-sharp"
+            md="chevron-back-sharp"
+            aria-hidden="true"
+          ></ion-icon>
+        </button>
+        <h1 class="title">调试工具</h1>
+      </header>
+
+      <section class="debug-section">
+        <h2>预约通知列表</h2>
+        <div class="stats" id="statsContainer"></div>
+        <div id="notificationsContainer">
+          <div class="loading">正在加载...</div>
+        </div>
+        <button class="refresh-btn" id="refreshBtn" style="margin-top: 16px;">刷新列表</button>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="../../statics/libs/ionicons/ionicons/ionicons.esm.js"
+    ></script>
+    <script nomodule src="../../statics/libs/ionicons/ionicons.js"></script>
+    <script src="../../statics/js/util/haptic-manager.js"></script>
+    <script src="../../statics/js/settings.js"></script>
+    <script src="../../statics/js/debug.js"></script>
+  </body>
+</html>
+

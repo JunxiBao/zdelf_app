@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (permissions.camera === 'denied' || permissions.photos === 'denied') {
                 const newPermissions = await window.cameraUtils.requestPermissions();
                 if (newPermissions.camera === 'denied' || newPermissions.photos === 'denied') {
-                    showMessage('需要相机和相册权限才能上传图片', 'error');
+                    await showMessage('需要相机和相册权限才能上传图片', 'error');
                     return;
                 }
             }
@@ -66,14 +66,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     // 成功获取图片
                     handleImageDataUrl(dataUrl);
                 },
-                (error) => {
+                async (error) => {
                     // 错误处理
-                    showMessage('图片选择失败: ' + error, 'error');
+                    await showMessage('图片选择失败: ' + error, 'error');
                 }
             );
         } catch (error) {
             console.error('图片上传失败:', error);
-            showMessage('图片上传失败: ' + error.message, 'error');
+            await showMessage('图片上传失败: ' + error.message, 'error');
         }
     });
     
@@ -104,34 +104,34 @@ document.addEventListener('DOMContentLoaded', function() {
             const compressedSizeKB = ((compressedDataUrl.length * 0.75) / 1024).toFixed(1);
             const compressionRatio = ((1 - compressedDataUrl.length * 0.75 / file.size) * 100).toFixed(1);
             
-            showMessage(`图片上传成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`, 'success');
+            await showMessage(`图片上传成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`, 'success');
         } catch (error) {
             hideCompressionProgress();
-            showMessage(`图片处理失败: ${error.message}`, 'error');
+            await showMessage(`图片处理失败: ${error.message}`, 'error');
         }
     }
 
     // 处理图片上传（保留用于兼容性）
-    function handleImageUpload(files) {
+    async function handleImageUpload(files) {
         // 处理所有文件
-        Array.from(files).forEach(file => {
+        for (const file of Array.from(files)) {
             // 检查文件类型
             if (!file.type.startsWith('image/')) {
-                showMessage('请选择图片文件', 'error');
-                return;
+                await showMessage('请选择图片文件', 'error');
+                continue;
             }
             
             // 检查文件大小（原始文件不超过10MB）
             const maxOriginalSizeMB = 10;
             if (file.size > maxOriginalSizeMB * 1024 * 1024) {
-                showMessage(`图片文件过大，请选择小于${maxOriginalSizeMB}MB的图片`, 'error');
-                return;
+                await showMessage(`图片文件过大，请选择小于${maxOriginalSizeMB}MB的图片`, 'error');
+                continue;
             }
             
             // 显示压缩进度
             showCompressionProgress(file.name);
             
-            compressImage(file, (compressedDataUrl) => {
+            compressImage(file, async (compressedDataUrl) => {
                 hideCompressionProgress();
                 
                 // 添加新图片到容器（不清空现有图片）
@@ -142,12 +142,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const compressedSizeKB = ((compressedDataUrl.length * 0.75) / 1024).toFixed(1);
                 const compressionRatio = ((1 - compressedDataUrl.length * 0.75 / file.size) * 100).toFixed(1);
                 
-                showMessage(`图片 ${file.name} 压缩成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`, 'success');
-            }, (error) => {
+                await showMessage(`图片 ${file.name} 压缩成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`, 'success');
+            }, async (error) => {
                 hideCompressionProgress();
-                showMessage(`图片 ${file.name} 压缩失败: ${error}`, 'error');
+                await showMessage(`图片 ${file.name} 压缩失败: ${error}`, 'error');
             }, 500); // 限制为500KB
-        });
+        }
     }
 
     // 将DataURL转换为File对象
@@ -401,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // 保存病例记录
-function saveCaseRecord() {
+async function saveCaseRecord() {
     // 点击保存按钮时的震动反馈
     try { window.__hapticImpact__ && window.__hapticImpact__('Light'); } catch(_) {}
     
@@ -413,7 +413,7 @@ function saveCaseRecord() {
     
     // 检查是否有任何数据填写
     if (!hospital && !department && !doctor && !diagnosis && !prescription) {
-        showMessage('请至少填写一项信息', 'error');
+        await showMessage('请至少填写一项信息', 'error');
         return;
     }
     
@@ -498,7 +498,29 @@ function saveCaseRecord() {
             const user_id = identity.user_id || '';
             const username = identity.username || '';
 
+            // 在上传前先检查是否是今天第一次提交
+            let shouldShowAnimation = false;
+            let preCheckResult = null;
+            try {
+                if (window.StreakCelebration && user_id) {
+                    preCheckResult = await window.StreakCelebration.checkFirstSubmissionToday(user_id);
+                    console.log('[case_record] 上传前检查结果:', preCheckResult);
+                    if (preCheckResult && preCheckResult.isFirst && preCheckResult.newStreak > 0) {
+                        shouldShowAnimation = true;
+                        console.log('[case_record] ✅ 确认是今天第一次提交，上传后将显示动画');
+                    } else {
+                        console.log('[case_record] ⚠️ 不是今天第一次提交，上传后不显示动画');
+                    }
+                }
+            } catch (error) {
+                console.warn('[case_record] 上传前检查失败:', error);
+            }
 
+            // 记录开始提交日志
+            if (window.writeCheckinReminderLog) {
+                window.writeCheckinReminderLog('log', `开始提交病例记录（日期: ${__selectedDate}）`);
+            }
+            
             var API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
             if (API_BASE && API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
 
@@ -510,28 +532,161 @@ function saveCaseRecord() {
             const resJson = await resp.json();
             if (!resp.ok || !resJson.success) {
                 console.warn('上传到服务器失败:', resJson.message || '未知错误');
-                showMessage('本地保存成功，但服务器同步失败', 'warning');
+                // 记录日志
+                if (window.writeCheckinReminderLog) {
+                    window.writeCheckinReminderLog('warn', `病例记录提交失败: ${resJson.message || '未知错误'}`);
+                }
+                await showMessage('本地保存成功，但服务器同步失败', 'warning');
             } else {
                 console.log('病例记录上传成功:', resJson);
-                showMessage('病例记录保存成功！', 'success');
+                // 记录日志
+                if (window.writeCheckinReminderLog) {
+                    window.writeCheckinReminderLog('log', `病例记录提交成功（日期: ${__selectedDate}）`);
+                }
+                await showMessage('病例记录保存成功！', 'success');
+                
+                // 取消今天的打卡提醒并预约明天的提醒（如果用户已提交数据）
+                // 必须在跳转前完成，否则页面跳转会中断执行
+                if (window.writeCheckinReminderLog) {
+                    window.writeCheckinReminderLog('log', `========== 开始处理打卡提醒调度（日期: ${__selectedDate}）==========`);
+                }
+                try {
+                    const todayStr = window.getTodayDateString ? window.getTodayDateString() : __selectedDate;
+                    
+                    // 1. 先取消今天的提醒（优先使用 cancelCheckinReminderForDate，避免定时器冲突）
+                    if (window.cancelCheckinReminderForDate) {
+                        if (window.writeCheckinReminderLog) {
+                            window.writeCheckinReminderLog('log', `取消今天的打卡提醒（日期: ${todayStr}）`);
+                        }
+                        await window.cancelCheckinReminderForDate(todayStr);
+                    } else if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+                        // 后备方案：直接使用 LocalNotifications API 取消提醒
+                        const LocalNotifications = window.Capacitor.Plugins.LocalNotifications;
+                        try {
+                            const pending = await LocalNotifications.getPending();
+                            const pendingNotifications = pending && pending.notifications ? pending.notifications : [];
+                            const notificationsToCancel = pendingNotifications
+                                .filter(n => n && n.extra && n.extra.type === 'checkin_reminder')
+                                .map(n => ({ id: n.id }));
+                            if (notificationsToCancel.length > 0) {
+                                await LocalNotifications.cancel({ notifications: notificationsToCancel });
+                                if (window.writeCheckinReminderLog) {
+                                    window.writeCheckinReminderLog('log', `✅ 已取消 ${notificationsToCancel.length} 个今天的打卡提醒`);
+                                }
+                            }
+                        } catch (e) {
+                            if (window.writeCheckinReminderLog) {
+                                window.writeCheckinReminderLog('warn', `取消提醒失败: ${e.message || e}`);
+                            }
+                        }
+                    }
+                    
+                    // 2. 清除今天的提交状态缓存
+                    if (window.clearSubmissionCache) {
+                        if (window.writeCheckinReminderLog) {
+                            window.writeCheckinReminderLog('log', `清除提交状态缓存（日期: ${todayStr}）`);
+                        }
+                        window.clearSubmissionCache(todayStr);
+                    }
+                    
+                    // 3. 清除可能存在的延迟定时器（如果之前调用了 cancelCheckinReminderForToday）
+                    if (window.scheduleTimeout) {
+                        clearTimeout(window.scheduleTimeout);
+                        window.scheduleTimeout = null;
+                        if (window.writeCheckinReminderLog) {
+                            window.writeCheckinReminderLog('log', '已清除之前的延迟定时器');
+                        }
+                    }
+                    
+                    // 4. 直接调用 scheduleCheckinReminder 预约明天的提醒
+                    // 因为数据已经上传成功，不需要等待延迟定时器
+                    if (window.scheduleCheckinReminder) {
+                        if (window.writeCheckinReminderLog) {
+                            window.writeCheckinReminderLog('log', '直接调用 scheduleCheckinReminder 预约明天的提醒');
+                        }
+                        // 等待一小段时间确保数据已同步到服务器（1秒应该足够）
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        await window.scheduleCheckinReminder({ forceTodaySubmitted: true });
+                        if (window.writeCheckinReminderLog) {
+                            window.writeCheckinReminderLog('log', '✅ 提醒调度完成，明天的提醒已预约');
+                            window.writeCheckinReminderLog('log', '========== 打卡完成后的提醒处理流程结束 ==========');
+                        }
+                    } else {
+                        if (window.writeCheckinReminderLog) {
+                            window.writeCheckinReminderLog('warn', 'scheduleCheckinReminder 函数不存在，无法预约提醒');
+                        }
+                        console.warn('[case_record] scheduleCheckinReminder 函数不存在');
+                    }
+                } catch (error) {
+                    const errorMsg = `处理打卡提醒失败: ${error.message || error}`;
+                    console.warn('[case_record]', errorMsg);
+                    if (window.writeCheckinReminderLog) {
+                        window.writeCheckinReminderLog('error', errorMsg);
+                        if (error.stack) {
+                            window.writeCheckinReminderLog('error', `错误堆栈: ${error.stack}`);
+                        }
+                    }
+                }
+                
+                // 显示连胜庆祝动画（如果是今天第一次提交）
+                let animationShown = false;
+                try {
+                    if (window.StreakCelebration && user_id && shouldShowAnimation && preCheckResult) {
+                        // 上传前已检查过，跳过后端检查，使用上传前检查的结果直接显示动画
+                        const animationPromise = window.StreakCelebration.handleUploadSuccess(user_id, { 
+                            skipBackendCheck: true,
+                            checkResult: preCheckResult
+                        });
+                        if (animationPromise && animationPromise.then) {
+                            // 如果返回了Promise，说明显示了动画，等待动画完成
+                            animationShown = true;
+                            await animationPromise;
+                            console.log('[case_record] 庆祝动画已完成');
+                        }
+                    } else if (window.StreakCelebration && user_id) {
+                        // 上传前未检查或检查失败，使用原来的逻辑
+                        const animationPromise = window.StreakCelebration.handleUploadSuccess(user_id);
+                        if (animationPromise && animationPromise.then) {
+                            animationShown = true;
+                            await animationPromise;
+                            console.log('[case_record] 庆祝动画已完成');
+                        }
+                    }
+                } catch (error) {
+                    console.warn('[case_record] 显示庆祝动画失败:', error);
+                }
                 
                 // 保存成功时的强震动反馈
                 try { window.__hapticImpact__ && window.__hapticImpact__('Heavy'); } catch(_) {}
+                
+                // 如果显示了动画，动画完成后立即跳转；否则等待2秒后跳转
+                // 注意：跳转前确保 cancelCheckinReminderForToday 已完成（已在上面 await）
+                if (!animationShown) {
+                    setTimeout(() => {
+                        window.location.href = '../index.html';
+                    }, 2000);
+                } else {
+                    // 动画已完成，立即跳转
+                    window.location.href = '../index.html';
+                }
             }
         } catch (error) {
             console.error('上传到服务器失败:', error);
-            showMessage('本地保存成功，但服务器同步失败', 'warning');
+            // 记录日志
+            if (window.writeCheckinReminderLog) {
+                window.writeCheckinReminderLog('error', `病例记录提交异常: ${error.message || error}`);
+            }
+            await showMessage('本地保存成功，但服务器同步失败', 'warning');
+            // 出错时也跳转
+            setTimeout(() => {
+                window.location.href = '../index.html';
+            }, 2000);
         } finally {
             // 恢复按钮状态
             hideSaveLoading(saveState, '保存病例记录');
             
             // 重置表单
             resetForm();
-            
-            // 延迟2秒后自动跳转到首页（无论上传是否成功）
-            setTimeout(() => {
-                window.location.href = '../index.html';
-            }, 2000);
         }
     })();
 }
@@ -561,89 +716,49 @@ function resetForm() {
     uploadedImages.innerHTML = '';
 }
 
-// 显示消息提示
-function showMessage(message, type = 'info') {
-    // 创建消息元素
-    const messageEl = document.createElement('div');
-    messageEl.className = `message-toast message-${type}`;
-    messageEl.textContent = message;
-    
-    // 根据类型选择颜色
-    let backgroundColor;
-    switch(type) {
-        case 'success':
-            backgroundColor = '#4caf50';
-            break;
-        case 'error':
-            backgroundColor = '#f44336';
-            break;
-        case 'warning':
-            backgroundColor = '#ff9800';
-            break;
-        default:
-            backgroundColor = '#2196f3';
+/**
+ * 显示提示弹窗（使用统一的弹窗管理器）
+ * @param {string} message - 提示消息
+ * @param {string} type - 弹窗类型 ('success' | 'error' | 'warning' | 'info')，默认为 'info'
+ * @param {string} title - 弹窗标题，如果不提供则根据 type 自动设置
+ * @returns {Promise<void>}
+ */
+async function showMessage(message, type = 'info', title = null) {
+    if (window.ModalManager && window.ModalManager.alert) {
+        // 根据类型选择按钮样式
+        let confirmType = 'primary';
+        if (type === 'error' || type === 'danger') {
+            confirmType = 'danger';
+        }
+        
+        // 根据类型设置标题
+        let alertTitle = title;
+        if (!alertTitle) {
+            switch(type) {
+                case 'success':
+                    alertTitle = '成功';
+                    break;
+                case 'error':
+                    alertTitle = '错误';
+                    break;
+                case 'warning':
+                    alertTitle = '警告';
+                    break;
+                default:
+                    alertTitle = '提示';
+            }
+        }
+        
+        return window.ModalManager.alert(message, {
+            title: alertTitle,
+            confirmText: '我知道了',
+            confirmType: confirmType
+        });
+    } else {
+        // 降级处理：如果 ModalManager 未加载，使用原生 alert
+        alert(message);
+        return Promise.resolve();
     }
-    
-    // 添加样式
-    messageEl.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: ${backgroundColor};
-        color: white;
-        padding: 16px 24px;
-        border-radius: 8px;
-        font-size: 1em;
-        font-weight: 500;
-        z-index: 10000;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        animation: messageSlideIn 0.3s ease-out;
-        max-width: 90vw;
-        word-wrap: break-word;
-    `;
-    
-    // 添加动画样式
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes messageSlideIn {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.8);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
-            }
-        }
-        @keyframes messageSlideOut {
-            from {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
-            }
-            to {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.8);
-            }
-        }
-    `;
-    document.head.appendChild(style);
-    
-    // 添加到页面
-    document.body.appendChild(messageEl);
-    
-    // 自动移除
-    setTimeout(() => {
-        messageEl.style.animation = 'messageSlideOut 0.3s ease-in';
-        setTimeout(() => {
-            if (messageEl.parentNode) {
-                messageEl.parentNode.removeChild(messageEl);
-            }
-            if (style.parentNode) {
-                style.parentNode.removeChild(style);
-            }
-        }, 300);
-    }, 3000);
 }
 
 // 解析用户身份：本地缓存优先，不足则通过 /readdata 查询

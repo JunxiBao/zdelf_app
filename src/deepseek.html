@@ -179,7 +179,7 @@
       }
       
       /* 深度美化的完美圆形按钮 */
-      #dataAnalysisBtn, #clearBtn, #sendBtn {
+      #dataAnalysisBtn, #sendBtn {
         width: 48px;
         height: 48px;
         min-width: 48px;
@@ -243,26 +243,6 @@
                     inset 0 1px 0 rgba(255, 255, 255, 0.3);
       }
       
-      /* 清除按钮 - 深度美化 */
-      #clearBtn {
-        background: linear-gradient(145deg, #fafafa 0%, #f0f0f0 100%);
-        color: #5f6368;
-        margin-right: 12px;
-        border: 2px solid transparent;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-      }
-      
-      #clearBtn:hover {
-        background: linear-gradient(145deg, #ffebee 0%, #ffcdd2 100%);
-        color: #d32f2f;
-        transform: translateY(-3px) scale(1.08);
-        box-shadow: 0 8px 24px rgba(211, 47, 47, 0.25),
-                    0 4px 8px rgba(0, 0, 0, 0.1),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-        border-color: rgba(211, 47, 47, 0.2);
-      }
-      
       /* 发送按钮 - 深度美化 */
       #sendBtn {
         background: linear-gradient(145deg, #1a73e8 0%, #1557b0 100%);
@@ -317,7 +297,6 @@
       
       /* 高级涟漪效果 */
       #dataAnalysisBtn::before,
-      #clearBtn::before,
       #sendBtn::before {
         content: '';
         position: absolute;
@@ -333,7 +312,6 @@
       }
       
       #dataAnalysisBtn:active::before,
-      #clearBtn:active::before,
       #sendBtn:active::before {
         width: 120%;
         height: 120%;
@@ -342,7 +320,6 @@
       
       /* 按钮按下效果 */
       #dataAnalysisBtn:active,
-      #clearBtn:active,
       #sendBtn:active {
         transform: translateY(-1px) scale(0.98);
         transition: all 0.1s ease;
@@ -350,7 +327,6 @@
       
       /* 图标悬停效果 */
       #dataAnalysisBtn:hover .icon,
-      #clearBtn:hover .icon,
       #sendBtn:hover .icon {
         transform: scale(1.1);
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
@@ -358,141 +334,15 @@
       
       /* SVG图标悬停效果 */
       #dataAnalysisBtn:hover .icon svg,
-      #clearBtn:hover .icon svg,
       #sendBtn:hover .icon svg,
       #dataAnalysisBtn:hover .icon ion-icon,
-      #clearBtn:hover .icon ion-icon,
       #sendBtn:hover .icon ion-icon {
         transform: scale(1.1);
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
       }
       
-      /* 弹窗样式 */
-      .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        backdrop-filter: blur(4px);
-        animation: fadeIn 0.3s ease;
-      }
-      
-      .modal-content {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        max-width: 400px;
-        width: 90%;
-        overflow: hidden;
-        animation: slideIn 0.3s ease;
-      }
-      
-      .modal-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      
-      .modal-header h3 {
-        margin: 0;
-        font-size: 1.2rem;
-        font-weight: 600;
-      }
-      
-      
-      .modal-body {
-        padding: 30px 20px;
-        text-align: center;
-      }
-      
-      .modal-icon {
-        font-size: 48px;
-        margin-bottom: 16px;
-        animation: bounce 0.6s ease;
-      }
-      
-      .modal-body p {
-        margin: 8px 0;
-        color: #333;
-        line-height: 1.5;
-      }
-      
-      .modal-footer {
-        padding: 20px;
-        background: #f8f9fa;
-        display: flex;
-        justify-content: center;
-      }
-      
-      .confirm-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 12px 32px;
-        border-radius: 25px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-      }
-      
-      .confirm-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-      }
-      
-      .confirm-btn:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-      }
-      
-      /* 动画效果 */
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      
-      @keyframes slideIn {
-        from { 
-          opacity: 0;
-          transform: scale(0.8) translateY(-20px);
-        }
-        to { 
-          opacity: 1;
-          transform: scale(1) translateY(0);
-        }
-      }
-      
-      @keyframes bounce {
-        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-        40% { transform: translateY(-10px); }
-        60% { transform: translateY(-5px); }
-      }
-      
       /* 深色模式适配 - 深度美化 */
       @media (prefers-color-scheme: dark) {
-        .modal-content {
-          background: #1a202c;
-          color: #e2e8f0;
-        }
-        
-        .modal-body p {
-          color: #e2e8f0;
-        }
-        
-        .modal-footer {
-          background: #2d3748;
-        }
         #dataAnalysisBtn {
           background: linear-gradient(145deg, #2d3748 0%, #1a202c 100%);
           color: #a0aec0;
@@ -512,21 +362,6 @@
           background: linear-gradient(145deg, #8b5cf6 0%, #7c3aed 100%);
           color: white;
           box-shadow: 0 12px 32px rgba(139, 92, 246, 0.4),
-                      0 4px 8px rgba(0, 0, 0, 0.2),
-                      inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-        
-        #clearBtn {
-          background: linear-gradient(145deg, #4a5568 0%, #2d3748 100%);
-          color: #a0aec0;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
-                      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        }
-        
-        #clearBtn:hover {
-          background: linear-gradient(145deg, #742a2a 0%, #5a1a1a 100%);
-          color: #feb2b2;
-          box-shadow: 0 8px 24px rgba(116, 42, 42, 0.3),
                       0 4px 8px rgba(0, 0, 0, 0.2),
                       inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
@@ -561,6 +396,8 @@
       src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"
       defer
     ></script>
+    <!-- 统一弹窗管理器 -->
+    <script src="../statics/js/util/modal-manager.js"></script>
   </head>
 
   <body>
@@ -575,22 +412,6 @@
         aria-relevant="additions"
       ></div>
 
-      <!-- 弹窗容器 -->
-      <div id="modalOverlay" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>数据分析模式</h3>
-          </div>
-          <div class="modal-body">
-            <div class="modal-icon">📊</div>
-            <p>数据分析模式已启用！</p>
-            <p>AI将直接从数据库获取您近三个月的健康数据进行分析。</p>
-          </div>
-          <div class="modal-footer">
-            <button id="confirmModal" class="confirm-btn">确定</button>
-          </div>
-        </div>
-      </div>
 
       <!-- Input area 输入区 -->
       <div class="input-container">
@@ -612,15 +433,6 @@
           rows="1"
         ></textarea>
         <div class="button-group">
-          <button
-            type="button"
-            id="clearBtn"
-            onclick="clearSession()"
-            aria-label="清除会话"
-            title="清除对话历史"
-          >
-            <span class="icon" aria-hidden="true"><ion-icon ios="trash-outline" md="trash-sharp"></ion-icon></span>
-          </button>
           <button
             type="button"
             id="sendBtn"
@@ -659,20 +471,6 @@
         // 检查震动反馈是否从父窗口传递
         console.log('🔊 检查震动反馈:', typeof window.__hapticImpact__);
 
-        // 弹窗事件监听器
-        const modal = document.getElementById('modalOverlay');
-        const confirmBtn = document.getElementById('confirmModal');
-        
-        if (confirmBtn) {
-          confirmBtn.addEventListener('click', function() {
-            // 添加震动反馈
-            if (window.__hapticImpact__) {
-              window.__hapticImpact__('Light');
-            }
-            analysisConfirmed = true;
-            hideDataAnalysisModal();
-          });
-        }
         
 
         // 监听所有链接点击事件，确保在默认浏览器中打开
@@ -789,58 +587,41 @@
         console.log('数据分析模式已启用，后端将直接读取数据库');
       }
       
-      // 显示数据分析模式弹窗
-      function showDataAnalysisModal() {
-        const modal = document.getElementById('modalOverlay');
-        modal.style.display = 'flex';
-        
-        // 添加震动反馈
-        if (window.__hapticImpact__) {
-          window.__hapticImpact__('Light');
+      // 显示数据分析模式弹窗（使用统一的弹窗管理器）
+      async function showDataAnalysisModal() {
+        if (!window.ModalManager) {
+          console.error('ModalManager 未加载');
+          analysisConfirmed = true; // 降级处理：直接确认
+          return;
         }
+        
+        await window.ModalManager.alert(
+          '数据分析模式已启用！<br><br>AI将直接从数据库获取您近三个月的健康数据和您的相关个人信息进行分析。',
+          {
+            title: '数据分析模式',
+            confirmText: '我知道了',
+            onConfirm: () => {
+              analysisConfirmed = true;
+            }
+          }
+        );
+        // 用户点击确定后，analysisConfirmed 已在 onConfirm 中设置
       }
       
-      // 隐藏弹窗
-      function hideDataAnalysisModal() {
-        const modal = document.getElementById('modalOverlay');
-        modal.style.display = 'none';
-        
-        // 重置弹窗内容为启用状态（默认状态）
-        const modalBody = modal.querySelector('.modal-body');
-        const modalIcon = modal.querySelector('.modal-icon');
-        const modalHeader = modal.querySelector('.modal-header h3');
-        
-        modalHeader.textContent = '数据分析模式';
-        modalIcon.textContent = '📊';
-        modalBody.innerHTML = `
-          <div class="modal-icon">📊</div>
-          <p>数据分析模式已启用！</p>
-          <p>AI将直接从数据库获取您近三个月的健康数据进行分析。</p>
-        `;
-      }
-      
-      // 显示禁用数据分析模式弹窗
-      function showDisableDataAnalysisModal() {
-        const modal = document.getElementById('modalOverlay');
-        const modalBody = modal.querySelector('.modal-body');
-        const modalIcon = modal.querySelector('.modal-icon');
-        const modalHeader = modal.querySelector('.modal-header h3');
-        
-        // 更新弹窗内容
-        modalHeader.textContent = '数据分析模式已关闭';
-        modalIcon.textContent = '📊';
-        modalBody.innerHTML = `
-          <div class="modal-icon">📊</div>
-          <p>数据分析模式已关闭！</p>
-          <p>AI将不再分析您的健康数据，仅进行普通对话。</p>
-        `;
-        
-        modal.style.display = 'flex';
-        
-        // 添加震动反馈
-        if (window.__hapticImpact__) {
-          window.__hapticImpact__('Light');
+      // 显示禁用数据分析模式弹窗（使用统一的弹窗管理器）
+      async function showDisableDataAnalysisModal() {
+        if (!window.ModalManager) {
+          console.error('ModalManager 未加载');
+          return;
         }
+        
+        await window.ModalManager.alert(
+          '数据分析模式已关闭！<br><br>AI将不再分析您的健康数据，仅进行普通对话。',
+          {
+            title: '数据分析模式已关闭',
+            confirmText: '我知道了'
+          }
+        );
       }
       
       
@@ -886,17 +667,17 @@
         const hour = now.getHours();
         console.log('当前时间:', now.toLocaleString(), '小时:', hour);
         
-        let greet = "您好！我是您的健康助手，有什么健康问题尽管问我哦~";
+        let greet = "嗨！我是紫癜精灵 ✨ 你的专属健康小助手～有什么健康问题尽管问我哦！";
         if (hour >= 5 && hour < 11) {
-          greet = "早上好 ☀️，祝你有愉快的一天！有什么健康问题可以问我";
+          greet = "早上好呀 ☀️ 我是紫癜精灵！新的一天开始啦，有什么健康问题尽管问我～";
         } else if (hour >= 11 && hour < 14) {
-          greet = "中午好 🍵，注意补水，有什么健康问题想问的？";
+          greet = "中午好 🍵 我是紫癜精灵！记得多喝水哦～有什么健康问题想问的？我随时都在！";
         } else if (hour >= 14 && hour < 18) {
-          greet = "下午好 🌿，上午过得如何呢？有什么健康问题可以咨询我";
+          greet = "下午好 🌿 我是紫癜精灵！上午过得怎么样呀？有什么健康问题可以咨询我，我会认真帮你解答的～";
         } else if (hour >= 18 && hour < 22) {
-          greet = "晚上好 🌙，今天感觉怎么样？可以准备休息喽～有什么健康问题可以问我";
+          greet = "晚上好 🌙 我是紫癜精灵！今天感觉怎么样？可以准备放松休息啦～有什么健康问题尽管问我！";
         } else {
-          greet = "夜深了 🌃，美好的一天过去了，早点休息哦～有什么健康问题可以问我";
+          greet = "夜深了 🌃 我是紫癜精灵！美好的一天要结束啦，早点休息哦～如果有什么健康问题，我随时都在！";
         }
         addMessage(greet, "bot");
       }
@@ -983,7 +764,6 @@
         } finally {
           inputEl.disabled = false;
           btn.disabled = false;
-          inputEl.focus();
         }
       }
 
@@ -1081,14 +861,14 @@
                     // 滚动到底部
                     const msgList = document.getElementById("messageList");
                     msgList.scrollTop = msgList.scrollHeight;
-                  } else if (data.type === "citations" && data.content) {
-                    // 处理引用信息
-                    fullText += data.content;
-                    content.innerHTML = renderMarkdownSafe(fullText);
-                    
-                    // 滚动到底部
-                    const msgList = document.getElementById("messageList");
-                    msgList.scrollTop = msgList.scrollHeight;
+                  // } else if (data.type === "citations" && data.content) {
+                  //   // 处理引用信息
+                  //   fullText += data.content;
+                  //   content.innerHTML = renderMarkdownSafe(fullText);
+                  //   
+                  //   // 滚动到底部
+                  //   const msgList = document.getElementById("messageList");
+                  //   msgList.scrollTop = msgList.scrollHeight;
                   } else if (data.type === "disclaimer" && data.content) {
                     // 处理免责声明
                     fullText += data.content;

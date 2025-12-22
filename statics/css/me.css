@@ -1,21 +1,10 @@
-/* -----------------------------------------------------------------------------
- * me.css - CSS for the "Me" profile page
- *
- * This stylesheet is scoped for Shadow DOM and can also be used standalone.
- * It defines CSS variables and component styles for the Me/profile page UI,
- * including cards, profile info, quick actions, lists, logout, ripple effects,
- * animations, and responsive tweaks.
- * -------------------------------------------------------------------------- */
-
 :host,
 :root {
-  /* Color and UI variables for light mode */
   --bg: #f6f7fb;
   --card: #ffffff;
   --text: #111827;
   --text-secondary: #6b7280;
   --brand: #1a73e8;
-  /* Google-ish blue */
   --brand-700: #1558b3;
   --danger: #e53935;
   --divider: #e5e7eb;
@@ -23,8 +12,307 @@
   --shadow-2: 0 6px 18px rgba(0, 0, 0, 0.08);
   --radius: 14px;
 }
-
-/* Dark mode overrides for variables */
+* {
+  box-sizing: border-box;
+}
+body,
+html {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family:
+    Roboto,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Helvetica,
+    Arial,
+    "Apple Color Emoji",
+    "Segoe UI Emoji";
+  color: var(--text);
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.app {
+  max-width: 402px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0;
+  background: #fff;
+  animation: fadeInUp var(--duration-slow, 0.5s)
+    var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1)) both;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.topbar ion-icon {
+  width: 22px;
+  height: 22px;
+}
+.topbar .title {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.2px;
+}
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  transform: translateY(0);
+  transition:
+    transform 0.25s,
+    box-shadow 0.25s;
+  position: relative;
+  color: var(--text);
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.1);
+}
+.profile-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 402px;
+  min-height: 189px;
+  background: #fff;
+  border: 1px solid #fff;
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  border-radius: 15px;
+  overflow: hidden;
+  margin: 0 auto 16px;
+  padding: 0;
+  position: relative;
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+  will-change: opacity, transform;
+}
+.profile-card.animate-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+.profile-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  position: relative;
+  width: 100%;
+  min-height: 189px;
+  padding: 13px;
+}
+.profile {
+  display: grid;
+  grid-template-columns: 88px 1fr auto;
+  gap: 16px;
+  padding: 20px;
+  align-items: center;
+}
+.avatar {
+  width: 89px;
+  height: 91px;
+  border-radius: 50%;
+  background: #427ea4;
+  padding: 0;
+  box-shadow: none;
+  position: relative;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+  overflow: visible;
+  flex-shrink: 0;
+}
+.avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+.avatar-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #427ea4;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 28px;
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.8);
+  transition:
+    opacity var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+  will-change: opacity, transform;
+}
+.avatar-inner.loaded {
+  opacity: 1;
+  transform: scale(1);
+}
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.8);
+  transition:
+    opacity var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+  will-change: opacity, transform;
+}
+.avatar-image.loaded {
+  opacity: 1;
+  transform: scale(1);
+}
+.avatar-upload-btn {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--brand);
+  border: 2px solid var(--card);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: var(--shadow-1);
+  z-index: 10;
+  pointer-events: auto;
+}
+.avatar-upload-btn:hover {
+  background: var(--brand-700);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+}
+.avatar-upload-btn ion-icon {
+  width: 16px;
+  height: 16px;
+}
+.avatar-crop-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 10000;
+}
+.avatar-crop-mask.show {
+  opacity: 1;
+}
+.avatar-crop-dialog {
+  width: min(90vw, 400px);
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  transform: scale(0.9);
+  opacity: 0;
+  transition:
+    transform 0.3s,
+    opacity 0.3s;
+  overflow: hidden;
+}
+.avatar-crop-dialog.show {
+  transform: scale(1);
+  opacity: 1;
+}
+.avatar-crop-header {
+  padding: 20px 24px 16px;
+  text-align: center;
+  border-bottom: 1px solid var(--divider);
+}
+.avatar-crop-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+.avatar-crop-body {
+  padding: 20px 24px;
+}
+.avatar-crop-preview {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--brand);
+  position: relative;
+  background: var(--surface);
+}
+.avatar-crop-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: move;
+}
+.avatar-crop-controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+}
+.avatar-crop-btn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 14px;
+}
+.avatar-crop-btn-cancel {
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--divider);
+}
+.avatar-crop-btn-cancel:hover {
+  background: var(--divider);
+  color: var(--text);
+}
+.avatar-crop-btn-confirm {
+  background: var(--brand);
+  color: #fff;
+}
+.avatar-crop-btn-confirm:hover {
+  background: var(--brand-700);
+  transform: translateY(-1px);
+}
+.avatar-crop-instructions {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
 @media (prefers-color-scheme: dark) {
   :host,
   :root {
@@ -39,354 +327,593 @@
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.6);
     --shadow-2: 0 10px 30px rgba(0, 0, 0, 0.5);
   }
-}
-
-/* Global box-sizing */
-* {
-  box-sizing: border-box;
-}
-
-/* Set 100% height for html and body */
-html,
-body {
-  height: 100%;
-}
-
-/* Body base styles and background gradients */
-body {
-  margin: 0;
-  font-family: Roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial,
-    "Apple Color Emoji", "Segoe UI Emoji";
-  color: var(--text);
-  background: radial-gradient(
-      1200px 800px at 80% -10%,
-      rgba(26, 115, 232, 0.08),
-      transparent 65%
-    ),
-    radial-gradient(
-      800px 600px at -10% 0%,
-      rgba(234, 67, 53, 0.06),
-      transparent 60%
-    ),
-    var(--bg);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* App container */
-.app {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 10px 16px 40px;
-  animation: fadeIn 0.6s ease both;
-}
-
-/* Top bar (title and icon row) */
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.topbar ion-icon {
-  width: 22px;
-  height: 22px;
-}
-
-.topbar .title {
-  font-weight: 700;
-  font-size: 20px;
-  letter-spacing: 0.2px;
-}
-
-/* Card container styles (for main sections) */
-.card {
-  background: var(--card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-2);
-  overflow: hidden;
-  transform: translateY(0);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  position: relative;
-  /* 防止深色模式闪烁 */
-  color: var(--text);
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.1);
-}
-
-/* Profile section: avatar, info, edit button */
-.profile {
-  display: grid;
-  grid-template-columns: 88px 1fr auto;
-  gap: 16px;
-  padding: 20px;
-  align-items: center;
-}
-
-/* Profile avatar (with gradient border) */
-.avatar {
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 180deg,
-    #1a73e8,
-    #34a853,
-    #fbbc05,
-    #ea4335,
-    #1a73e8
-  );
-  padding: 3px;
-  box-shadow: var(--shadow-2);
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  overflow: visible;
-}
-
-.avatar:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.avatar-inner {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: linear-gradient(180deg, #fff, #f3f4f6);
-  display: grid;
-  place-items: center;
-  color: #1f2937;
-  font-weight: 700;
-  font-size: 28px;
-  position: relative;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.avatar-image {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-}
-
-.avatar-upload-btn {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--brand);
-  border: 2px solid var(--card);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: var(--shadow-1);
-  z-index: 10;
-  pointer-events: auto;
-}
-
-.avatar-upload-btn:hover {
-  background: var(--brand-700);
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
-}
-
-.avatar-upload-btn ion-icon {
-  width: 16px;
-  height: 16px;
-}
-
-/* 头像裁剪模态框样式 */
-.avatar-crop-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 10000;
-}
-
-.avatar-crop-mask.show {
-  opacity: 1;
-}
-
-.avatar-crop-dialog {
-  width: min(90vw, 400px);
-  background: var(--card);
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  transform: scale(0.9);
-  opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  overflow: hidden;
-}
-
-.avatar-crop-dialog.show {
-  transform: scale(1);
-  opacity: 1;
-}
-
-.avatar-crop-header {
-  padding: 20px 24px 16px;
-  text-align: center;
-  border-bottom: 1px solid var(--divider);
-}
-
-.avatar-crop-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0;
-}
-
-.avatar-crop-body {
-  padding: 20px 24px;
-}
-
-.avatar-crop-preview {
-  width: 200px;
-  height: 200px;
-  margin: 0 auto 20px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 3px solid var(--brand);
-  position: relative;
-  background: var(--surface);
-}
-
-.avatar-crop-canvas {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  cursor: move;
-}
-
-.avatar-crop-controls {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.avatar-crop-btn {
-  padding: 10px 20px;
-  border-radius: 12px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 14px;
-}
-
-.avatar-crop-btn-cancel {
-  background: var(--surface);
-  color: var(--text-secondary);
-  border: 1px solid var(--divider);
-}
-
-.avatar-crop-btn-cancel:hover {
-  background: var(--divider);
-  color: var(--text);
-}
-
-.avatar-crop-btn-confirm {
-  background: var(--brand);
-  color: white;
-}
-
-.avatar-crop-btn-confirm:hover {
-  background: var(--brand-700);
-  transform: translateY(-1px);
-}
-
-.avatar-crop-instructions {
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 14px;
-  margin-bottom: 16px;
-}
-
-@media (prefers-color-scheme: dark) {
+  /* Shadow DOM 内部的深色模式样式 - 强制覆盖基础样式 */
+  :host * {
+    box-sizing: border-box;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+  }
+  .app {
+    /* 关键：不要在页面容器上再铺一层“不同于壳背景”的颜色，否则底部会出现一整块深色矩形 */
+    background: transparent;
+  }
+  .topbar {
+    color: var(--text);
+  }
+  .topbar .title {
+    color: var(--text);
+  }
+  .topbar ion-icon {
+    color: var(--text);
+  }
+  .profile-card {
+    background: var(--card);
+    border: 1px solid var(--divider);
+    box-shadow: var(--shadow-2);
+  }
+  .profile-content {
+    background: var(--card);
+  }
+  .avatar {
+    background: #427ea4;
+  }
+  .avatar-upload-btn {
+    background: var(--brand);
+    border-color: var(--card);
+  }
+  .avatar-upload-btn:hover {
+    background: var(--brand-700);
+  }
+  .profile-info .name {
+    color: #ffffff !important;
+  }
+  .profile-info .meta {
+    color: #ffffff !important;
+  }
+  .profile-info .disease-info {
+    color: #ffffff !important;
+  }
+  .profile-info .checkin-status-text {
+    color: var(--text-secondary);
+  }
+  .edit-profile-btn {
+    background: #e4d8eb;
+    border: 1px solid var(--divider);
+    color: #111827;
+  }
+  .edit-profile-btn:hover {
+    background: #9d7ab8;
+    color: #111827;
+  }
+  .settings-btn {
+    color: #ffffff;
+  }
+  .settings-btn ion-icon {
+    color: #ffffff;
+  }
   .avatar-crop-dialog {
     background: var(--card, #1e1f22);
     color: var(--text, #e6e6e6);
   }
-  
   .avatar-crop-title {
     color: var(--text, #e6e6e6);
   }
-  
   .avatar-crop-preview {
     background: var(--surface, #232428);
   }
-}
-
-/* Avatar dark mode background */
-@media (prefers-color-scheme: dark) {
   .avatar-inner {
     background: linear-gradient(180deg, #0f1115, #0b0d12);
     color: #e5e7eb;
   }
+  /* 我的帖子区域 - 完全透明，不要外层框 */
+  :host .my-posts-section,
+  section.my-posts-section,
+  .my-posts-section,
+  main .my-posts-section,
+  .app .my-posts-section {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    /* 保持 overflow: hidden; 和其他所有属性不变 */
+  }
+  /* 帖子头部 - 保持所有属性，包括 border-radius（和浅色模式完全一致） */
+  /* 帖子标题 - 保持颜色不变（和浅色模式完全一致） */
+  /* 注意：posts-header 和 posts-title 在深色模式下不需要改变，所以不需要覆盖 */
+  /* 帖子网格 - 保持 padding 和其他属性不变，背景完全透明 */
+  :host .posts-grid,
+  .posts-grid,
+  .my-posts-section .posts-grid,
+  section.my-posts-section .posts-grid {
+    /* 保持 padding: 16px 22px; （和浅色模式一样） */
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+  /* 帖子卡片 - 只改变颜色相关属性，保持其他所有属性不变 */
+  :host .post-card,
+  .post-card {
+    /* 浅色模式: background: #fff; 深色模式: var(--card) */
+    background: var(--card) !important;
+    /* 浅色模式: border: 1px solid #fffaff; 深色模式: var(--divider) */
+    border-color: var(--divider) !important;
+    /* 浅色模式: box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25); 深色模式: var(--shadow-2) */
+    box-shadow: var(--shadow-2) !important;
+    /* 保持 border-width, border-style, border-radius, padding 等所有其他属性不变 */
+  }
+  .post-date {
+    color: var(--text);
+  }
+  .post-content {
+    color: var(--text);
+  }
+  .post-comment-icon {
+    color: #ffffff !important;
+  }
+  .post-comment-count {
+    color: #ffffff !important;
+  }
+  .posts-empty-text {
+    color: var(--text-secondary) !important;
+  }
+  .profile-info .disease-info {
+    color: #ffffff !important;
+  }
+  .profile-info .streak-display .streak-icon {
+    color: #9d7ab8;
+  }
+  .profile-info .streak-display .streak-label {
+    color: #9d7ab8;
+  }
+  .profile-info .streak-display .streak-value {
+    color: #9d7ab8;
+  }
+  .profile-info .streak-display .streak-unit {
+    color: #9d7ab8;
+  }
+  .profile-info .checkin-status-text {
+    color: var(--text-secondary);
+  }
+  .edit-profile-btn {
+    color: var(--text);
+  }
+  .card {
+    background: var(--card);
+    color: var(--text);
+  }
+  .list {
+    background: var(--card);
+    color: var(--text);
+  }
+  .li {
+    border-top-color: var(--divider);
+  }
+  .li .label {
+    color: var(--text);
+  }
+  .li .desc {
+    color: var(--text-secondary);
+  }
+  .logout button {
+    background: var(--card);
+    color: var(--text);
+    border-color: var(--divider);
+  }
+  #logoutBtn {
+    color: #a78bfa;
+  }
+  #logoutBtn:hover {
+    background: linear-gradient(180deg, rgba(167, 139, 250, 0.15), transparent), var(--card);
+  }
+  #deleteAccountBtn:hover {
+    background: linear-gradient(180deg, rgba(242, 139, 130, 0.15), transparent), var(--card);
+  }
+  .footer {
+    background: var(--card);
+    border-color: var(--divider);
+  }
+  .footer p {
+    color: var(--text-secondary);
+  }
+  .footer a {
+    color: var(--text-secondary);
+  }
+  .footer a:hover {
+    color: var(--brand);
+  }
+  .questionnaire-card {
+    background: var(--card);
+    border-color: var(--divider);
+    color: var(--text);
+  }
+  .questionnaire-label {
+    color: var(--text);
+  }
+  .questionnaire-desc {
+    color: var(--text-secondary);
+  }
+  .version-card {
+    background: var(--card);
+    border-color: var(--divider);
+    color: var(--text);
+  }
+  .version-label {
+    color: var(--text);
+  }
+  .version-number {
+    color: var(--text-secondary);
+  }
+  .reminder-debug-card {
+    background: var(--card);
+    border-color: var(--divider);
+  }
+  .reminder-debug-title {
+    color: var(--text);
+  }
+  .reminder-debug-desc {
+    color: var(--text-secondary);
+  }
+  .reminder-debug-refresh {
+    background: var(--surface);
+    border-color: var(--divider);
+    color: var(--text);
+  }
+  .reminder-debug-label {
+    color: var(--text-secondary);
+  }
+  .reminder-debug-value {
+    color: var(--text);
+  }
+  .topbar {
+    color: #ffffff;
+  }
+  .topbar .title {
+    color: #ffffff;
+  }
+  .topbar ion-icon {
+    color: #ffffff;
+  }
+  .profile-content {
+    background: var(--card);
+  }
+  .avatar {
+    background: #427ea4;
+  }
+  .avatar-upload-btn {
+    background: var(--brand);
+    border-color: var(--card);
+  }
+  .avatar-upload-btn:hover {
+    background: var(--brand-700);
+    box-shadow: 0 4px 12px rgba(138, 180, 248, 0.3);
+  }
+  .post-date > div:first-child {
+    color: var(--text);
+  }
+  .post-date > div:last-child {
+    color: var(--text-secondary);
+  }
+  .post-footer {
+    color: var(--text-secondary);
+  }
+  .post-image {
+    border: 1px solid var(--divider);
+  }
+  .profile-actions {
+    background: transparent;
+  }
+  .avatar-upload-btn ion-icon {
+    color: #fff;
+  }
+  .post-date {
+    color: var(--text) !important;
+  }
+  .post-content {
+    color: var(--text) !important;
+  }
+  /* 媒体查询中的 posts-grid - 保持和浅色模式一样的 padding，背景完全透明 */
+  @media (min-width: 768px) {
+    :host .posts-grid,
+    .posts-grid {
+      /* 浅色模式: padding: 20px 28px; 深色模式: 保持一致，只改背景 */
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+  }
+  @media (min-width: 1200px) {
+    :host .posts-grid,
+    .posts-grid {
+      /* 浅色模式: padding: 24px 32px; 深色模式: 保持一致，只改背景 */
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+  }
+  /* Footer 链接焦点样式 */
+  .footer a:focus-visible {
+    box-shadow: 0 0 0 3px rgba(138, 180, 248, 0.35);
+  }
 }
-
-/* Profile info (name and email) */
 .profile-info {
-  display: grid;
-  gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  margin-left: 16px;
+  margin-top: 0;
+  min-width: 154px;
 }
-
 .profile-info .name {
-  font-weight: 700;
-  font-size: 18px;
+  font-family: Alkalami, serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 45px;
+  color: #000;
+  margin: 0;
+  width: 157px;
+  height: 39px;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+  will-change: opacity, transform;
 }
-
-.profile-info .email {
+.profile-info .name:not(.loaded) {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.profile-info .name.loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+.profile-info .meta {
+  font-family: Itim, cursive;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 24px;
+  color: #000;
+  margin-top: 0;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+  will-change: opacity, transform;
+}
+.profile-info .meta:not(.loaded) {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.profile-info .meta.loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+.profile-info .disease-info {
+  font-family: Itim, cursive;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 24px;
+  color: #000;
+  margin-top: 0;
+}
+.profile-info .streak-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: auto;
+  height: auto;
+  background: 0 0;
+  border-radius: 0;
+  padding: 0;
+  box-sizing: border-box;
+  margin-top: 4px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+  will-change: opacity, transform;
+}
+.profile-info .streak-display.loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+.profile-info .streak-display .streak-icon {
+  width: 20px;
+  height: 20px;
+    color: #9d7ab8;
+  margin-right: 4px;
+}
+.profile-info .streak-display .streak-label {
+  font-family: Itim, cursive;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 24px;
+    color: #9d7ab8;
+  margin-right: 2px;
+}
+.profile-info .streak-display .streak-value {
+  font-family: Itim, cursive;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 24px;
+    color: #9d7ab8;
+}
+.profile-info .streak-display .streak-unit {
+  font-family: Itim, cursive;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 24px;
+    color: #9d7ab8;
+  margin-left: 2px;
+}
+.profile-info .checkin-status {
+  margin-top: 4px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+  will-change: opacity, transform;
+}
+.profile-info .checkin-status.loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+.profile-info .checkin-status-text {
+  font-family: Itim, cursive;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20px;
+  color: #000;
+}
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}
+.edit-profile-btn {
+  box-sizing: border-box;
+  width: 91px;
+  height: 27px;
+  background: #e4d8eb;
+  border: 1px solid #fff;
+  border-radius: 10px;
+  color: #000;
+  font-family: Itim, cursive;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 22px;
+  padding: 0;
+  cursor: pointer;
+  outline: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-fast, 0.15s)
+    var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+  transform: translateZ(0);
+  will-change: transform, background;
+}
+.edit-profile-btn:hover {
+    background: #9d7ab8;
+  transform: translateY(-1px) translateZ(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.edit-profile-btn:active {
+  transform: translateY(0) translateZ(0);
+  transition-duration: var(--duration-fast, 0.15s);
+}
+.settings-btn {
+  width: 25px;
+  height: 25px;
+  border: none;
+  background: 0 0;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: 0;
+  color: #000;
+  padding: 0;
+  transition: all var(--duration-fast, 0.15s)
+    var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+.settings-btn:hover {
+  opacity: 0.8;
+  transform: translateY(-1px) rotate(15deg) translateZ(0);
+}
+.settings-btn:active {
+  transform: translateY(0) rotate(0) translateZ(0);
+  transition-duration: var(--duration-fast, 0.15s);
+}
+.settings-btn ion-icon {
+  width: 25px;
+  height: 25px;
+}
+.profile-info .streak-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--divider);
+  flex-wrap: wrap;
+}
+.streak-info .streak-label {
   color: var(--text-secondary);
   font-size: 13px;
 }
-
-/* Edit profile button */
+.streak-info .streak-value {
+  color: var(--brand);
+  font-weight: 700;
+  font-size: 14px;
+}
+.streak-info .streak-separator {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-right: 2px;
+}
+.streak-info .streak-divider {
+  color: var(--divider);
+  font-size: 13px;
+  margin: 0 6px;
+}
+#checkinStatus {
+  margin-top: 4px;
+}
+.checkin-status-text {
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
 .edit-btn {
   border: none;
-  outline: none;
+  outline: 0;
   cursor: pointer;
-  background: transparent;
+  background: 0 0;
   color: var(--brand);
   font-weight: 500;
   padding: 8px 10px;
   border-radius: 10px;
 }
-
-
-/* List section (for settings, details, etc.) */
 .list {
   margin-top: 16px;
+  max-width: 402px;
+  margin-left: auto;
+  margin-right: auto;
   overflow: hidden;
   border-radius: var(--radius);
   box-shadow: var(--shadow-2);
   background: var(--card);
-  /* 防止深色模式闪烁 */
   color: var(--text);
 }
-
-/* List item row */
 .li {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -396,80 +923,77 @@ body {
   border-top: 1px solid var(--divider);
   position: relative;
 }
-
 .li:first-child {
   border-top: none;
 }
-
 .li ion-icon {
   width: 22px;
   height: 22px;
   color: var(--text-secondary);
 }
-
 .li .label {
   font-weight: 500;
 }
-
 .li .desc {
   font-size: 12px;
   color: var(--text-secondary);
   margin-top: 2px;
 }
-
-/* Logout section as two independent card buttons */
 .logout {
   margin-top: 18px;
+  max-width: 402px;
+  margin-left: auto;
+  margin-right: auto;
   display: flex;
-  gap: 12px;                 /* 间距由 gap 控制，不再使用白色底板 */
-  background: transparent;   /* 移除整体白色背景 */
-  box-shadow: none;          /* 移除整体阴影 */
+  gap: 12px;
+  background: 0 0;
+  box-shadow: none;
   border-radius: 0;
   overflow: visible;
   justify-content: stretch;
 }
-
 .logout button {
-  flex: 1;                   /* 两个按钮均分宽度 */
+  flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   border: 1px solid var(--divider);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-2);               /* 每个按钮各自的卡片阴影 */
-  background: var(--card);                   /* 独立卡片底色 */
+  box-shadow: var(--shadow-2);
+  background: var(--card);
   padding: 14px 18px;
   font-weight: 700;
   cursor: pointer;
-  outline: none;
-  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+  outline: 0;
+  transition:
+    transform 0.15s,
+    box-shadow 0.2s,
+    background 0.2s;
   color: var(--text);
 }
-
 .logout button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
 }
-
-/* Variant styles for different actions */
 #logoutBtn {
-  color: #7e3ff2; /* 紫色主色调（符合项目要求） */
-  background: linear-gradient(180deg, rgba(126, 63, 242, 0.08), transparent), var(--card);
+  color: #7e3ff2;
+  background:
+    linear-gradient(180deg, rgba(126, 63, 242, 0.08), transparent), var(--card);
 }
 #logoutBtn:hover {
-  background: linear-gradient(180deg, rgba(126, 63, 242, 0.12), transparent), var(--card);
+  background:
+    linear-gradient(180deg, rgba(126, 63, 242, 0.12), transparent), var(--card);
 }
-
 #deleteAccountBtn {
   color: var(--danger);
-  background: linear-gradient(180deg, rgba(229, 57, 53, 0.08), transparent), var(--card);
+  background:
+    linear-gradient(180deg, rgba(229, 57, 53, 0.08), transparent), var(--card);
 }
 #deleteAccountBtn:hover {
-  background: linear-gradient(180deg, rgba(229, 57, 53, 0.12), transparent), var(--card);
+  background:
+    linear-gradient(180deg, rgba(229, 57, 53, 0.12), transparent), var(--card);
 }
-
-/* ICP / record footer */
 .footer {
   margin-top: 18px;
   display: flex;
@@ -480,11 +1004,9 @@ body {
   padding: 12px 16px;
   border: 1px solid var(--divider);
 }
-
 .footer p {
   margin: 0;
 }
-
 .footer a {
   display: inline-flex;
   align-items: center;
@@ -495,82 +1017,67 @@ body {
   padding: 8px 10px;
   border-radius: 10px;
   text-decoration: none;
-  transition: color 0.2s ease, background-color 0.2s ease, transform 0.15s ease,
-    box-shadow 0.2s ease;
+  transition:
+    color 0.2s,
+    background-color 0.2s,
+    transform 0.15s,
+    box-shadow 0.2s;
 }
-
 .footer a:hover {
   color: var(--brand);
   background: linear-gradient(180deg, rgba(26, 115, 232, 0.08), transparent);
   transform: translateY(-1px);
 }
-
 .footer a:focus-visible {
-  outline: none;
+  outline: 0;
   box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.25);
 }
-
-/* External-link hint (subtle) */
 .footer a::after {
   content: "↗";
   font-size: 12px;
   opacity: 0.6;
 }
-
-@media (prefers-color-scheme: dark) {
-  .footer a:focus-visible {
-    box-shadow: 0 0 0 3px rgba(138, 180, 248, 0.35);
-  }
-}
-
-/* Keep footer tidy on small screens */
 @media (max-width: 420px) {
   .footer a {
     font-size: 11px;
     padding: 8px;
   }
 }
-
-/* Ripple effect (Material-like) for interactive elements */
 .rippleable {
   position: relative;
   overflow: hidden;
 }
-
 .ripple {
   position: absolute;
   border-radius: 999px;
   transform: scale(0);
-  animation: ripple 0.6s ease-out forwards;
+  animation: 0.6s ease-out forwards ripple;
   pointer-events: none;
   background: currentColor;
   opacity: 0.18;
   mix-blend-mode: multiply;
 }
-
-/* Animations (ripple, fade-in) */
 @keyframes ripple {
   to {
     transform: scale(12);
     opacity: 0;
   }
 }
-
 @keyframes fadeIn {
   from {
     opacity: 0;
     translate: 0 6px;
   }
-
   to {
     opacity: 1;
     translate: 0 0;
   }
 }
-
-/* Questionnaire card styles - 与页面其他元素统一 */
 .questionnaire-card {
   margin-top: 18px;
+  max-width: 402px;
+  margin-left: auto;
+  margin-right: auto;
   background: var(--card);
   border-radius: var(--radius);
   padding: 16px 18px;
@@ -578,56 +1085,52 @@ body {
   border: 1px solid var(--divider);
   position: relative;
   overflow: hidden;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    transform 0.25s,
+    box-shadow 0.25s;
   color: var(--text);
   cursor: pointer;
 }
-
 .questionnaire-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.1);
 }
-
 .questionnaire-content {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 14px;
   align-items: center;
 }
-
 .questionnaire-content ion-icon:first-child {
   width: 22px;
   height: 22px;
   color: var(--text-secondary);
 }
-
 .questionnaire-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-
 .questionnaire-label {
   font-weight: 500;
   font-size: 15px;
   color: var(--text);
 }
-
 .questionnaire-desc {
   font-size: 13px;
   color: var(--text-secondary);
   font-weight: 400;
 }
-
 .questionnaire-content ion-icon:last-child {
   width: 22px;
   height: 22px;
   color: var(--text-secondary);
 }
-
-/* Version card styles - 与页面其他元素统一 */
 .version-card {
   margin-top: 18px;
+  max-width: 402px;
+  margin-left: auto;
+  margin-right: auto;
   background: var(--card);
   border-radius: var(--radius);
   padding: 16px 18px;
@@ -635,76 +1138,475 @@ body {
   border: 1px solid var(--divider);
   position: relative;
   overflow: hidden;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    transform 0.25s,
+    box-shadow 0.25s;
   color: var(--text);
   cursor: pointer;
 }
-
 .version-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.1);
 }
-
 .version-content {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 14px;
   align-items: center;
 }
-
 .version-icon-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .version-icon {
   width: 22px;
   height: 22px;
   color: var(--text-secondary);
 }
-
 .version-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-
 .version-label {
   font-weight: 500;
   font-size: 15px;
   color: var(--text);
 }
-
 .version-number {
   font-size: 13px;
   color: var(--text-secondary);
   font-weight: 400;
 }
-
 .version-arrow {
   width: 22px;
   height: 22px;
   color: var(--text-secondary);
 }
-
-/* Responsive tweaks for small screens */
-@media (max-width: 420px) {
+.my-posts-section {
+  width: 100%;
+  max-width: 402px;
+  margin: 0 auto 16px;
+  background: #fff;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+  will-change: opacity, transform;
+}
+.my-posts-section.animate-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+.posts-header {
+  width: 100%;
+  height: 31px;
+  background: #b08fc7;
+  display: flex;
+  align-items: center;
+  padding-left: 22px;
+  box-sizing: border-box;
+  border-radius: 15px 15px 0 0;
+}
+.posts-title {
+  font-family: Itim, cursive;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 20px;
+  color: #000;
+}
+.posts-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 18px;
+  padding: 16px 22px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  align-items: start;
+}
+.posts-empty {
+  padding: 40px 22px;
+  text-align: center;
+  box-sizing: border-box;
+  width: 100%;
+}
+.posts-empty-text {
+  font-family: Itim, cursive;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 24px;
+  color: var(--text-secondary);
+}
+.post-card {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: auto;
+  max-height: none;
+  background: #fff;
+  border: 1px solid #fffaff;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 17px;
+  padding: 17px;
+  padding-bottom: 50px;
+  position: relative;
+  cursor: pointer;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  transition:
+    opacity var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--duration-normal, 0.3s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+    box-shadow var(--duration-fast, 0.15s)
+      var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+  will-change: opacity, transform;
+  height: auto;
+}
+.post-card.animate-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+  .post-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  }
+  .version-card:hover {
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.3);
+  }
+  .questionnaire-card:hover {
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.3);
+  }
+.post-card:active {
+  transform: translateY(-2px) scale(1);
+  transition-duration: var(--duration-fast, 0.15s);
+}
+.post-date {
+  font-family: Itim, cursive;
+  font-style: normal;
+  font-weight: 400;
+  color: #000;
+  margin-bottom: 8px;
+  white-space: normal;
+}
+.post-date > div:first-child {
+  font-family: Itim, cursive;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 400;
+}
+.post-date > div:last-child {
+  font-family: Itim, cursive;
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 400;
+  opacity: 0.7;
+}
+.post-content {
+  font-family: Itim, cursive;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 24px;
+  color: #100c0c;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  word-break: break-word;
+  overflow: visible;
+  white-space: pre-wrap;
+  flex: 0 1 auto;
+}
+.post-image {
+  width: 100%;
+  max-width: 100%;
+  max-height: 80px;
+  height: 80px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+}
+.post-footer {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 1;
+}
+.post-comment-icon {
+  width: 26px;
+  height: 26px;
+  color: #000;
+}
+.post-comment-count {
+  font-family: Itim, cursive;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 18px;
+  color: #0d0c0c;
+}
+@media (max-width: 280px) {
   .profile {
     grid-template-columns: 72px 1fr auto;
     gap: 12px;
   }
-
   .avatar {
     width: 72px;
     height: 72px;
   }
-  
-  .questionnaire-card {
-    padding: 14px 16px;
-  }
-  
+  .questionnaire-card,
   .version-card {
     padding: 14px 16px;
   }
+  .posts-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  .post-card {
+    max-width: 100%;
+  }
+}
+/* 宽屏适配 */
+@media (min-width: 768px) {
+  .app {
+    max-width: 800px;
+    padding: 20px;
+  }
+  .profile-card {
+    max-width: 100%;
+    min-height: 220px;
+  }
+  .profile-content {
+    min-height: 220px;
+    padding: 20px;
+  }
+  .avatar {
+    width: 120px;
+    height: 120px;
+  }
+  .avatar-inner {
+    font-size: 36px;
+  }
+  .avatar-upload-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .avatar-upload-btn ion-icon {
+    width: 20px;
+    height: 20px;
+  }
+  .profile-info {
+    margin-left: 24px;
+  }
+  .profile-info .name {
+    font-size: 28px;
+    line-height: 50px;
+    width: auto;
+  }
+  .profile-info .meta {
+    font-size: 22px;
+    line-height: 28px;
+  }
+  .profile-info .disease-info {
+    font-size: 22px;
+    line-height: 28px;
+  }
+  .profile-info .streak-display .streak-icon {
+    width: 24px;
+    height: 24px;
+  }
+  .profile-info .streak-display .streak-label {
+    font-size: 20px;
+  }
+  .profile-info .streak-display .streak-value {
+    font-size: 22px;
+  }
+  .profile-info .streak-display .streak-unit {
+    font-size: 22px;
+  }
+  .profile-actions {
+    bottom: 24px;
+    right: 24px;
+    gap: 10px;
+  }
+  .edit-profile-btn {
+    width: 110px;
+    height: 32px;
+    font-size: 20px;
+    line-height: 24px;
+  }
+  .settings-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .settings-btn ion-icon {
+    width: 28px;
+    height: 28px;
+  }
+  .my-posts-section {
+    max-width: 100%;
+  }
+  .posts-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 24px;
+    padding: 20px 28px;
+  }
+  .post-card {
+    padding: 20px;
+    padding-bottom: 60px;
+  }
+  .post-date > div:first-child {
+    font-size: 28px;
+    line-height: 36px;
+  }
+  .post-date > div:last-child {
+    font-size: 16px;
+    line-height: 20px;
+  }
+  .post-content {
+    font-size: 22px;
+    line-height: 28px;
+  }
+  .post-image {
+    max-height: 120px;
+    height: 120px;
+  }
+  .post-footer {
+    bottom: 16px;
+    right: 16px;
+  }
+  .post-comment-icon {
+    width: 28px;
+    height: 28px;
+  }
+  .post-comment-count {
+    font-size: 16px;
+    line-height: 20px;
+  }
+  .list,
+  .logout,
+  .questionnaire-card,
+  .version-card {
+    max-width: 100%;
+  }
+}
+/* 超大屏适配 */
+@media (min-width: 1200px) {
+  .app {
+    max-width: 1200px;
+    padding: 24px;
+  }
+  .profile-card {
+    min-height: 240px;
+  }
+  .profile-content {
+    min-height: 240px;
+    padding: 24px;
+  }
+  .avatar {
+    width: 140px;
+    height: 140px;
+  }
+  .avatar-inner {
+    font-size: 42px;
+  }
+  .profile-info {
+    margin-left: 32px;
+  }
+  .profile-info .name {
+    font-size: 32px;
+    line-height: 56px;
+  }
+  .profile-info .meta {
+    font-size: 24px;
+    line-height: 32px;
+  }
+  .posts-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 28px;
+    padding: 24px 32px;
+  }
+  .post-card {
+    padding: 24px;
+    padding-bottom: 70px;
+  }
+}
+.reminder-debug-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 12px 16px;
+  padding: 16px;
+}
+.reminder-debug-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.reminder-debug-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+.reminder-debug-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.reminder-debug-refresh {
+  border: 1px solid var(--divider, rgba(0, 0, 0, 0.12));
+  background: var(--surface, #f3f4f6);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.reminder-debug-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.reminder-debug-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+}
+.reminder-debug-row.column {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.reminder-debug-label {
+  color: var(--text-secondary);
+}
+.reminder-debug-value {
+  color: var(--text);
+  text-align: right;
+  flex: 1;
+}
+.reminder-debug-value.multiline {
+  width: 100%;
+  text-align: left;
+  background: var(--surface, rgba(0, 0, 0, 0.02));
+  border-radius: 8px;
+  padding: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }

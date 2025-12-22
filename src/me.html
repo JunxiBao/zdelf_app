@@ -1,12 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <!--
   me.html — "My" / Profile page HTML structure
-
+ 
   Responsibilities:
   - Displays user's profile info and avatar
-  - Provides quick action shortcuts (favorites, history, follow, footprint)
-  - Lists settings options
-  - Allows user to logout
+  - Provides quick action shortcuts
+  - Lists user's posts
   - This page is styled via me.css and controlled by me.js (initMe/destroyMe)
 -->
 <html lang="zh-CN">
@@ -18,129 +17,115 @@
     />
     <meta name="theme-color" content="#ffffff" />
     <title>个人中心</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Alkalami&family=Itim&family=Akatab:wght@400&family=Inter:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Global Animation System -->
+    <link rel="stylesheet" href="../statics/css/animations.css" />
     <!-- Page-specific stylesheet for the "My" profile page -->
-    <!-- Optional: existing project stylesheet -->
     <link rel="stylesheet" href="../statics/css/me.css" />
   </head>
   <body>
     <!-- Main application container for the profile page -->
     <main class="app" aria-label="我的">
       <!-- Top bar with title -->
-      <header class="topbar">
-      </header>
+      <header class="topbar"></header>
 
       <!-- Profile Card -->
-      <!-- Profile Card: shows avatar, name, email, and edit button -->
-      <section class="card" aria-label="用户资料">
-        <div class="profile">
+      <!-- Profile Card: shows avatar, name, age, disease days, streak, and action buttons -->
+      <section class="profile-card" aria-label="用户资料">
+        <div class="profile-content">
           <div class="avatar" aria-hidden="true" id="avatarContainer">
             <div class="avatar-inner" id="avatarInitials">JB</div>
-            <img id="avatarImage" class="avatar-image" style="display: none;" alt="用户头像">
-            <button class="avatar-upload-btn" id="avatarUploadBtn" aria-label="上传头像">
-              <ion-icon ios="camera-outline" md="camera-sharp" aria-hidden="true"></ion-icon>
+            <img
+              id="avatarImage"
+              class="avatar-image"
+              style="display: none"
+              alt="用户头像"
+            />
+            <button
+              class="avatar-upload-btn"
+              id="avatarUploadBtn"
+              aria-label="上传头像"
+            >
+              <ion-icon
+                ios="camera-outline"
+                md="camera-sharp"
+                aria-hidden="true"
+              ></ion-icon>
             </button>
           </div>
           <div class="profile-info">
-            <div class="name" id="displayName">Junxi Bao</div>
-            <div class="meta"><span id="displayAge">年龄：无</span></div>
-            <div class="meta"><span id="displayPhone">手机号：无</span></div>
+            <div class="name" id="displayName">加载中...</div>
+            <div class="meta">
+              <span id="displayAge">年龄 : 加载中...</span>
+            </div>
+            <div class="disease-info" id="diseaseInfo" style="display: none">
+              <span id="diseaseText"></span>
+            </div>
+            <div class="streak-display" id="streakDisplay">
+              <ion-icon
+                ios="hourglass-outline"
+                md="hourglass-sharp"
+                class="streak-icon"
+              ></ion-icon>
+              <span class="streak-label">连续打卡</span>
+              <span class="streak-value" id="currentStreakDisplay">0</span>
+              <span class="streak-unit">天</span>
+            </div>
+            <div
+              class="checkin-status"
+              id="checkinStatus"
+              style="display: none"
+            >
+              <span class="checkin-status-text" id="checkinStatusText"
+                >○ 今日未打卡</span
+              >
+            </div>
           </div>
-          <button class="edit-btn rippleable" id="editProfileBtn">
-            <ion-icon ios="create-outline" md="create-sharp" aria-hidden="true"></ion-icon>
-            编辑
-          </button>
-        </div>
-
-      </section>
-
-      <!-- Questionnaire Card -->
-      <!-- Questionnaire section: click to open survey URL -->
-      <section class="questionnaire-card rippleable" data-action="questionnaire" aria-label="填写问卷">
-        <div class="questionnaire-content">
-          <ion-icon ios="clipboard-outline" md="clipboard-sharp" aria-hidden="true"></ion-icon>
-          <div class="questionnaire-info">
-            <div class="questionnaire-label">用户问卷</div>
-            <div class="questionnaire-desc">分享您的使用体验和建议</div>
+          <div class="profile-actions">
+            <button class="edit-profile-btn rippleable" id="editProfileBtn">
+              编辑资料
+            </button>
+            <button
+              class="settings-btn rippleable"
+              id="settingsBtn"
+              aria-label="设置"
+            >
+              <ion-icon
+                ios="settings-outline"
+                md="settings-sharp"
+                aria-hidden="true"
+              ></ion-icon>
+            </button>
           </div>
-          <ion-icon ios="chevron-forward-outline" md="chevron-forward-sharp" aria-hidden="true"></ion-icon>
-        </div>
-      </section>
-
-      <!-- Settings List -->
-      <!-- Settings list: help -->
-      <section class="list" aria-label="设置列表">
-        <!-- Vibration Feedback -->
-        <div class="li rippleable" data-action="vibration">
-          <ion-icon ios="cellular-outline" md="cellular-sharp" aria-hidden="true"></ion-icon>
-          <div>
-            <div class="label">震动反馈</div>
-            <div class="desc">开启或关闭触觉反馈</div>
-          </div>
-          <ion-icon ios="chevron-forward-outline" md="chevron-forward-sharp" aria-hidden="true"></ion-icon>
-        </div>
-
-        <!-- Blocked Users Management -->
-        <div class="li rippleable" data-action="blocked-users">
-          <ion-icon ios="ban-outline" md="ban-sharp" aria-hidden="true"></ion-icon>
-          <div>
-            <div class="label">屏蔽用户管理</div>
-            <div class="desc">查看和管理已屏蔽的用户</div>
-          </div>
-          <ion-icon ios="chevron-forward-outline" md="chevron-forward-sharp" aria-hidden="true"></ion-icon>
-        </div>
-
-        <!-- Help & About -->
-        <div class="li rippleable" data-action="help">
-          <ion-icon ios="information-circle-outline" md="information-circle-sharp" aria-hidden="true"></ion-icon>
-          <div>
-            <div class="label">关于与帮助</div>
-            <div class="desc">帮助反馈、免责声明、使用条款</div>
-          </div>
-          <ion-icon ios="chevron-forward-outline" md="chevron-forward-sharp" aria-hidden="true"></ion-icon>
         </div>
       </section>
-      <!-- <footer class="footer">
-        <p>
-          <a
-            href="https://beian.miit.gov.cn"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            浙ICP备2023040285号
-          </a>
-        </p>
-      </footer> -->
-      
-      <!-- 版本信息 -->
-      <div class="version-card rippleable" id="versionCard" role="button" tabindex="0" aria-label="查看下载链接">
-        <div class="version-content">
-          <div class="version-icon-wrapper">
-            <ion-icon ios="information-circle-outline" md="information-circle-sharp" class="version-icon" aria-hidden="true"></ion-icon>
-          </div>
-          <div class="version-info">
-            <div class="version-label">应用版本</div>
-            <div class="version-number">加载中...</div>
-          </div>
-          <ion-icon ios="chevron-forward-outline" md="chevron-forward-sharp" class="version-arrow" aria-hidden="true"></ion-icon>
-        </div>
-      </div>
 
-      <!-- Logout -->
-      <!-- Logout button section -->
-      <div class="logout">
-        <button class="rippleable logout-btn" id="logoutBtn" aria-label="退出登录">
-          <ion-icon ios="log-out-outline" md="log-out-sharp" aria-hidden="true"></ion-icon>
-          退出登录
-        </button>
-        <button class="rippleable delete-btn" id="deleteAccountBtn" aria-label="注销账号">
-          <ion-icon ios="trash-bin-outline" md="trash-bin-sharp" aria-hidden="true"></ion-icon>
-          注销账号
-        </button>
-      </div>
+      <!-- My Posts Section -->
+      <section class="my-posts-section" aria-label="我的帖子">
+        <div class="posts-header">
+          <span class="posts-title">我的帖子</span>
+        </div>
+        <div class="posts-grid" id="postsGrid">
+          <!-- Posts will be dynamically inserted here -->
+        </div>
+        <div class="posts-empty" id="postsEmpty" style="display: none;">
+          <div class="posts-empty-text">还未发帖，快来发帖吧</div>
+        </div>
+      </section>
 
       <!-- 隐藏的文件输入 -->
-      <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
-
+      <input
+        type="file"
+        id="avatarFileInput"
+        accept="image/*"
+        style="display: none"
+      />
     </main>
   </body>
 </html>

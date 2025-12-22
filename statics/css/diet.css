@@ -6,7 +6,7 @@ body {
     padding: 0;
     color: #222;
     min-height: 100vh;
-    padding-bottom: 100px; /* 为底部按钮留出空间 */
+    padding-bottom: 20px;
 }
 
 /* 深色模式适配 */
@@ -24,13 +24,13 @@ body {
     }
 
     .date-picker:hover {
-        border-color: #bb86fc !important;
+        border-color: #b08fc7 !important;
         background: #2b2b2b !important;
-        box-shadow: 0 8px 24px rgba(187, 134, 252, 0.2) !important;
+        box-shadow: 0 8px 24px rgba(176, 143, 199, 0.2) !important;
     }
 
     .picker-label {
-        color: #bb86fc !important;
+        color: #b08fc7 !important;
     }
 
     .picker-input {
@@ -40,14 +40,14 @@ body {
     }
 
     .picker-input:focus {
-        border-color: #bb86fc !important;
+        border-color: #b08fc7 !important;
         background: #2b2b2b !important;
-        box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.2) !important;
+        box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.2) !important;
     }
 
     .picker-input:hover {
-        border-color: #a78bfa !important;
-        box-shadow: 0 4px 12px rgba(187, 134, 252, 0.15) !important;
+        border-color: #b08fc7 !important;
+        box-shadow: 0 4px 12px rgba(176, 143, 199, 0.15) !important;
     }
 }
 
@@ -64,22 +64,22 @@ body {
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    background: rgba(98, 0, 234, 0.1);
-    border: 1px solid #6200ea;
+    background: rgba(176, 143, 199, 0.1);
+    border: 1px solid #b08fc7;
     border-radius: 8px;
-    color: #6200ea;
+    color: #b08fc7;
     font-size: 0.9em;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 2px 4px rgba(176, 143, 199, 0.1);
 }
 
 .back-btn:hover {
-    background: #6200ea;
+    background: #b08fc7;
     color: #fff;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
+    box-shadow: 0 4px 12px rgba(176, 143, 199, 0.2);
 }
 
 .back-btn:active {
@@ -90,7 +90,7 @@ body {
 .page-title {
     font-size: 1.8em;
     font-weight: 600;
-    color: #6200ea;
+    color: #b08fc7;
     text-align: center;
     margin: 80px 20px 30px 20px;
     letter-spacing: 1px;
@@ -120,10 +120,10 @@ body {
 }
 
 .date-picker:hover {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     background: #faf7ff;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.15);
+    box-shadow: 0 8px 24px rgba(176, 143, 199, 0.15);
 }
 
 .picker-group {
@@ -138,7 +138,7 @@ body {
 .picker-label {
     font-size: 0.9em;
     font-weight: 600;
-    color: #6200ea;
+    color: #b08fc7;
     text-align: center;
     margin-bottom: 4px;
     letter-spacing: 0.5px;
@@ -161,15 +161,15 @@ body {
 }
 
 .picker-input:focus {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1);
     background: #faf7ff;
 }
 
 .picker-input:hover {
-    border-color: #8b5cf6;
-    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.1);
+    border-color: #9d7ab8;
+    box-shadow: 0 4px 12px rgba(176, 143, 199, 0.1);
 }
 
 /* 食物记录容器样式 */
@@ -195,10 +195,10 @@ body {
 }
 
 .meal-record:hover {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     background: #faf7ff;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.15);
+    box-shadow: 0 8px 24px rgba(176, 143, 199, 0.15);
 }
 
 /* 餐次头部样式 */
@@ -228,7 +228,7 @@ body {
     border-radius: 10px;
     background: #fafaff;
     color: #222;
-    box-shadow: 0 2px 6px rgba(98, 0, 234, 0.05);
+    box-shadow: 0 2px 6px rgba(176, 143, 199, 0.05);
     outline: none;
     transition: all 0.2s;
     appearance: none;
@@ -243,9 +243,9 @@ body {
 }
 
 .time-input:focus {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     background: #fff;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1);
 }
 
 .time-input::placeholder {
@@ -274,10 +274,10 @@ body {
 }
 
 .meal-content textarea:focus {
-    border-color: #6200ea;
+    border-color: #b08fc7;
     background: #fff;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(98, 0, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1);
 }
 
 .meal-content textarea::placeholder {
@@ -314,13 +314,12 @@ body {
     transform: translateY(0);
 }
 
-/* 底部操作区域样式 */
-.bottom-actions {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 100;
+/* 全局操作按钮样式 */
+.global-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
+    padding: 20px 0;
 }
 
 .global-save-btn {
@@ -328,7 +327,7 @@ body {
     align-items: center;
     gap: 12px;
     padding: 16px 32px;
-    background: linear-gradient(135deg, #6200ea, #bb86fc);
+    background: #b08fc7;
     color: #fff;
     border: none;
     border-radius: 12px;
@@ -336,15 +335,15 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 16px rgba(98, 0, 234, 0.3);
+    box-shadow: 0 4px 16px rgba(176, 143, 199, 0.3);
     min-width: 200px;
     justify-content: center;
 }
 
 .global-save-btn:hover {
-    background: linear-gradient(135deg, #4b00b5, #9c66d6);
+    background: #9d7ab8;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(98, 0, 234, 0.4);
+    box-shadow: 0 8px 24px rgba(176, 143, 199, 0.4);
 }
 
 .global-save-btn:active {
@@ -499,8 +498,8 @@ body {
 .image-upload-section { margin: 10px 0 16px 0; }
 .image-upload-section .upload-title { margin: 0 0 8px 0; font-size: 0.95em; color: #555; }
 .image-upload-container { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
-.image-upload-btn { width: 100px; height: 100px; border: 2px dashed #6200ea; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #6200ea; cursor: pointer; transition: all 0.2s ease; background: rgba(98,0,234,0.05); }
-.image-upload-btn:hover { background: rgba(98,0,234,0.1); transform: translateY(-1px); }
+.image-upload-btn { width: 100px; height: 100px; border: 2px dashed #b08fc7; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #b08fc7; cursor: pointer; transition: all 0.2s ease; background: rgba(176, 143, 199,0.05); }
+.image-upload-btn:hover { background: rgba(176, 143, 199,0.1); transform: translateY(-1px); }
 .image-upload-btn .upload-icon { font-size: 24px; font-weight: 700; }
 .image-upload-btn .upload-text { font-size: 12px; opacity: 0.8; }
 .uploaded-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; flex: 1; min-width: 200px; }
@@ -544,10 +543,10 @@ body {
     gap: 8px;
     width: 100%;
     padding: 16px;
-    border: 2px dashed #6200ea;
+    border: 2px dashed #b08fc7;
     border-radius: 12px;
-    background: rgba(98, 0, 234, 0.05);
-    color: #6200ea;
+    background: rgba(176, 143, 199, 0.05);
+    color: #b08fc7;
     font-size: 1em;
     font-weight: 600;
     cursor: pointer;
@@ -556,10 +555,10 @@ body {
 }
 
 .add-meal-btn:hover {
-    background: rgba(98, 0, 234, 0.1);
+    background: rgba(176, 143, 199, 0.1);
     border-color: #4a00b8;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(98, 0, 234, 0.2);
+    box-shadow: 0 4px 12px rgba(176, 143, 199, 0.2);
 }
 
 .add-meal-btn:active {
@@ -577,7 +576,7 @@ body {
     }
     50% {
         transform: scale(0.95);
-        background: rgba(98, 0, 234, 0.2);
+        background: rgba(176, 143, 199, 0.2);
     }
     100% {
         transform: scale(1);
@@ -597,18 +596,18 @@ body {
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
     .back-btn {
-        background: rgba(187, 134, 252, 0.1);
-        border-color: #bb86fc;
-        color: #bb86fc;
+        background: rgba(176, 143, 199, 0.1);
+        border-color: #b08fc7;
+        color: #b08fc7;
     }
 
     .back-btn:hover {
-        background: #bb86fc;
+        background: #b08fc7;
         color: #000;
     }
 
     .page-title {
-        color: #bb86fc;
+        color: #b08fc7;
     }
 
     .meal-record {
@@ -618,26 +617,26 @@ body {
     }
 
     .meal-record:hover {
-        border-color: #bb86fc;
+        border-color: #b08fc7;
         background: #2b2b2b;
-        box-shadow: 0 8px 24px rgba(187, 134, 252, 0.2);
+        box-shadow: 0 8px 24px rgba(176, 143, 199, 0.2);
     }
 
     .time-input {
         background: #1e1e1e;
         border-color: #444;
         color: #eee;
-        box-shadow: 0 2px 6px rgba(187, 134, 252, 0.1);
+        box-shadow: 0 2px 6px rgba(176, 143, 199, 0.1);
     }
 
     .time-input:hover {
-        border-color: #bb86fc;
+        border-color: #b08fc7;
     }
 
     .time-input:focus {
         background: #222;
-        border-color: #bb86fc;
-        box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.1);
+        border-color: #b08fc7;
+        box-shadow: 0 0 0 3px rgba(176, 143, 199, 0.1);
     }
 
     .meal-content textarea {
@@ -648,7 +647,7 @@ body {
 
     .meal-content textarea:focus {
         background: #222;
-        border-color: #bb86fc;
+        border-color: #b08fc7;
     }
 
     .meal-time label {
@@ -656,22 +655,22 @@ body {
     }
 
     .global-save-btn {
-        background: linear-gradient(135deg, #bb86fc, #6200ea);
+        background: #b08fc7;
     }
 
     .global-save-btn:hover {
-        background: linear-gradient(135deg, #9c66d6, #4b00b5);
+        background: #9d7ab8;
     }
 
     .add-meal-btn {
-        border-color: #a78bfa;
+        border-color: #b08fc7;
         background: rgba(167, 139, 250, 0.1);
-        color: #a78bfa;
+        color: #b08fc7;
     }
 
     .add-meal-btn:hover {
         background: rgba(167, 139, 250, 0.2);
-        border-color: #8b5cf6;
+        border-color: #9d7ab8;
     }
 
     .add-meal-btn.clicking {
@@ -757,11 +756,6 @@ body {
         font-size: 0.95em;
     }
 
-    .bottom-actions {
-        bottom: 100px;
-        left: 50%;
-        transform: translateX(-50%);
-    }
 
     .global-save-btn {
         padding: 14px 24px;

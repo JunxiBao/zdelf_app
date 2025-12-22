@@ -1,7 +1,6 @@
 // 全局变量
 let mealCounter = 1; // 餐次计数器
 let dietData = {}; // 存储饮食数据
-let pendingDeleteMealId = null; // 待删除的餐次ID
 let dietImagesMap = {}; // { mealId: [dataUrl,...] }
 
 // 统一的保存状态管理函数
@@ -184,88 +183,41 @@ function addNewMeal(silent = false) {
 }
 
 // 删除餐次
-function deleteMeal(mealId) {
-    try {
-        window.__hapticImpact__ && window.__hapticImpact__('Heavy');
-    } catch(_) {}
+async function deleteMeal(mealId) {
+    // 使用统一的弹窗管理器
+    if (!window.ModalManager) {
+        console.error('ModalManager 未加载');
+        return;
+    }
 
-    // 显示自定义确认弹窗
-    pendingDeleteMealId = mealId;
-    showDeleteModal();
-}
+    const confirmed = await window.ModalManager.confirmDelete(
+        '确定要删除这个餐次记录吗？',
+        {
+            detail: '此操作无法撤销',
+            onConfirm: () => {
+                // 执行删除操作
+                const mealElement = document.querySelector(`[data-meal-id="${mealId}"]`);
+                if (mealElement) {
+                    // 添加删除动画
+                    mealElement.style.animation = 'fadeOut 0.3s ease-out';
+                    setTimeout(() => {
+                        mealElement.remove();
 
-// 显示删除确认弹窗
-function showDeleteModal() {
-    const modal = document.getElementById('delete-modal');
-    modal.classList.add('show');
+                        // 如果只剩一个餐次，隐藏删除按钮
+                        const remainingMeals = document.querySelectorAll('.meal-record');
+                        if (remainingMeals.length === 1) {
+                            const deleteBtn = remainingMeals[0].querySelector('.delete-meal-btn');
+                            if (deleteBtn) {
+                                deleteBtn.style.display = 'none';
+                            }
+                        }
 
-    // 添加遮罩层点击关闭功能
-    const overlay = modal.querySelector('.delete-modal-overlay');
-    overlay.onclick = cancelDelete;
-
-    // 添加ESC键关闭功能
-    document.addEventListener('keydown', handleModalKeydown);
-}
-
-// 隐藏删除确认弹窗
-function hideDeleteModal() {
-    const modal = document.getElementById('delete-modal');
-    modal.classList.remove('show');
-    pendingDeleteMealId = null;
-
-    // 移除事件监听器
-    document.removeEventListener('keydown', handleModalKeydown);
-}
-
-// 取消删除
-function cancelDelete() {
-    try {
-        window.__hapticImpact__ && window.__hapticImpact__('Light');
-    } catch(_) {}
-
-    hideDeleteModal();
-}
-
-// 确认删除
-function confirmDelete() {
-    try {
-        window.__hapticImpact__ && window.__hapticImpact__('Heavy');
-    } catch(_) {}
-
-    if (pendingDeleteMealId === null) return;
-
-    const mealId = pendingDeleteMealId;
-    const mealElement = document.querySelector(`[data-meal-id="${mealId}"]`);
-
-    if (mealElement) {
-        // 添加删除动画
-        mealElement.style.animation = 'fadeOut 0.3s ease-out';
-        setTimeout(() => {
-            mealElement.remove();
-
-            // 如果只剩一个餐次，隐藏删除按钮
-            const remainingMeals = document.querySelectorAll('.meal-record');
-            if (remainingMeals.length === 1) {
-                const deleteBtn = remainingMeals[0].querySelector('.delete-meal-btn');
-                if (deleteBtn) {
-                    deleteBtn.style.display = 'none';
+                        console.log(`删除餐次: ${mealId}`);
+                    }, 300);
                 }
             }
-
-            console.log(`删除餐次: ${mealId}`);
-        }, 300);
-    }
-
-    hideDeleteModal();
-}
-
-// 处理弹窗键盘事件
-function handleModalKeydown(event) {
-    if (event.key === 'Escape') {
-        cancelDelete();
-    } else if (event.key === 'Enter') {
-        confirmDelete();
-    }
+        }
+    );
 }
 
 // 保存所有餐次数据
@@ -311,14 +263,14 @@ async function saveAllMeals() {
 
         // 验证输入
         if (validMealsCount === 0) {
-            showToast('请至少记录一餐的食物或上传图片');
+            await showMessage('请至少记录一餐的食物或上传图片', 'error');
             return;
         }
 
         // 如果有空的餐次，提醒用户
         if (emptyMeals.length > 0) {
             const emptyMealNumbers = emptyMeals.join('、');
-            showToast(`第${emptyMealNumbers}餐没有输入食物内容，将跳过这些餐次`);
+            await showMessage(`第${emptyMealNumbers}餐没有输入食物内容，将跳过这些餐次`, 'warning');
         }
 
         // 保存到全局数据
@@ -391,10 +343,152 @@ async function saveAllMeals() {
             dietData: allMealsData
         };
 
+        // 获取身份：优先从本地缓存，缺失时调用 /readdata 补全
+        const identity = await resolveUserIdentity();
+        const user_id = identity.user_id || '';
+
+        // 在上传前先检查是否是今天第一次提交
+        let shouldShowAnimation = false;
+        let preCheckResult = null;
+        try {
+            if (window.StreakCelebration && user_id) {
+                preCheckResult = await window.StreakCelebration.checkFirstSubmissionToday(user_id);
+                console.log('[diet] 上传前检查结果:', preCheckResult);
+                if (preCheckResult && preCheckResult.isFirst && preCheckResult.newStreak > 0) {
+                    shouldShowAnimation = true;
+                    console.log('[diet] ✅ 确认是今天第一次提交，上传后将显示动画');
+                } else {
+                    console.log('[diet] ⚠️ 不是今天第一次提交，上传后不显示动画');
+                }
+            }
+        } catch (error) {
+            console.warn('[diet] 上传前检查失败:', error);
+        }
+
+        // 记录开始提交日志
+        if (window.writeCheckinReminderLog) {
+            window.writeCheckinReminderLog('log', `开始提交饮食数据（日期: ${__dietSelectedDate}，${validMealsCount}餐）`);
+        }
+        
         // 上传到后端数据库
         try {
             await uploadDietToServer(exportData);
-            showToast(`成功保存 ${validMealsCount} 餐食物记录并上传云端！`);
+            // 记录日志
+            if (window.writeCheckinReminderLog) {
+                window.writeCheckinReminderLog('log', `饮食数据提交成功（日期: ${__dietSelectedDate}，${validMealsCount}餐）`);
+            }
+            await showMessage(`成功保存 ${validMealsCount} 餐食物记录并上传云端！`, 'success');
+            
+            // 取消今天的打卡提醒并预约明天的提醒（如果用户已提交数据）
+            // 必须在跳转前完成，否则页面跳转会中断执行
+            if (window.writeCheckinReminderLog) {
+                window.writeCheckinReminderLog('log', `========== 开始处理打卡提醒调度（日期: ${__dietSelectedDate}）==========`);
+            }
+            try {
+                const todayStr = window.getTodayDateString ? window.getTodayDateString() : __dietSelectedDate;
+                
+                // 1. 先取消今天的提醒（优先使用 cancelCheckinReminderForDate，避免定时器冲突）
+                if (window.cancelCheckinReminderForDate) {
+                    if (window.writeCheckinReminderLog) {
+                        window.writeCheckinReminderLog('log', `取消今天的打卡提醒（日期: ${todayStr}）`);
+                    }
+                    await window.cancelCheckinReminderForDate(todayStr);
+                } else if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+                    // 后备方案：直接使用 LocalNotifications API 取消提醒
+                    const LocalNotifications = window.Capacitor.Plugins.LocalNotifications;
+                    try {
+                        const pending = await LocalNotifications.getPending();
+                        const pendingNotifications = pending && pending.notifications ? pending.notifications : [];
+                        const notificationsToCancel = pendingNotifications
+                            .filter(n => n && n.extra && n.extra.type === 'checkin_reminder')
+                            .map(n => ({ id: n.id }));
+                        if (notificationsToCancel.length > 0) {
+                            await LocalNotifications.cancel({ notifications: notificationsToCancel });
+                            if (window.writeCheckinReminderLog) {
+                                window.writeCheckinReminderLog('log', `✅ 已取消 ${notificationsToCancel.length} 个今天的打卡提醒`);
+                            }
+                        }
+                    } catch (e) {
+                        if (window.writeCheckinReminderLog) {
+                            window.writeCheckinReminderLog('warn', `取消提醒失败: ${e.message || e}`);
+                        }
+                    }
+                }
+                
+                // 2. 清除今天的提交状态缓存
+                if (window.clearSubmissionCache) {
+                    if (window.writeCheckinReminderLog) {
+                        window.writeCheckinReminderLog('log', `清除提交状态缓存（日期: ${todayStr}）`);
+                    }
+                    window.clearSubmissionCache(todayStr);
+                }
+                
+                // 3. 清除可能存在的延迟定时器（如果之前调用了 cancelCheckinReminderForToday）
+                if (window.scheduleTimeout) {
+                    clearTimeout(window.scheduleTimeout);
+                    window.scheduleTimeout = null;
+                    if (window.writeCheckinReminderLog) {
+                        window.writeCheckinReminderLog('log', '已清除之前的延迟定时器');
+                    }
+                }
+                
+                // 4. 直接调用 scheduleCheckinReminder 预约明天的提醒
+                // 因为数据已经上传成功，不需要等待延迟定时器
+                if (window.scheduleCheckinReminder) {
+                    if (window.writeCheckinReminderLog) {
+                        window.writeCheckinReminderLog('log', '直接调用 scheduleCheckinReminder 预约明天的提醒');
+                    }
+                    // 等待一小段时间确保数据已同步到服务器（1秒应该足够）
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await window.scheduleCheckinReminder({ forceTodaySubmitted: true });
+                    if (window.writeCheckinReminderLog) {
+                        window.writeCheckinReminderLog('log', '✅ 提醒调度完成，明天的提醒已预约');
+                        window.writeCheckinReminderLog('log', '========== 打卡完成后的提醒处理流程结束 ==========');
+                    }
+                } else {
+                    if (window.writeCheckinReminderLog) {
+                        window.writeCheckinReminderLog('warn', 'scheduleCheckinReminder 函数不存在，无法预约提醒');
+                    }
+                    console.warn('[diet] scheduleCheckinReminder 函数不存在');
+                }
+            } catch (error) {
+                const errorMsg = `处理打卡提醒失败: ${error.message || error}`;
+                console.warn('[diet]', errorMsg);
+                if (window.writeCheckinReminderLog) {
+                    window.writeCheckinReminderLog('error', errorMsg);
+                    if (error.stack) {
+                        window.writeCheckinReminderLog('error', `错误堆栈: ${error.stack}`);
+                    }
+                }
+            }
+            
+            // 显示连胜庆祝动画（如果是今天第一次提交）
+            let animationShown = false;
+            try {
+                if (window.StreakCelebration && user_id && shouldShowAnimation && preCheckResult) {
+                    // 上传前已检查过，跳过后端检查，使用上传前检查的结果直接显示动画
+                    const animationPromise = window.StreakCelebration.handleUploadSuccess(user_id, { 
+                        skipBackendCheck: true,
+                        checkResult: preCheckResult
+                    });
+                    if (animationPromise && animationPromise.then) {
+                        // 如果返回了Promise，说明显示了动画，等待动画完成
+                        animationShown = true;
+                        await animationPromise;
+                        console.log('[diet] 庆祝动画已完成');
+                    }
+                } else if (window.StreakCelebration && user_id) {
+                    // 上传前未检查或检查失败，使用原来的逻辑
+                    const animationPromise = window.StreakCelebration.handleUploadSuccess(user_id);
+                    if (animationPromise && animationPromise.then) {
+                        animationShown = true;
+                        await animationPromise;
+                        console.log('[diet] 庆祝动画已完成');
+                    }
+                }
+            } catch (error) {
+                console.warn('[diet] 显示庆祝动画失败:', error);
+            }
             
             // 清除表单数据和本地存储
             clearAllDietData();
@@ -403,13 +497,23 @@ async function saveAllMeals() {
             // 强制清除全局数据变量
             dietData = {};
             
-            // 跳转到daily页面
-            setTimeout(() => {
+            // 如果显示了动画，动画完成后立即跳转；否则等待1.5秒后跳转
+            // 注意：跳转前确保 cancelCheckinReminderForToday 已完成（已在上面 await）
+            if (!animationShown) {
+                setTimeout(() => {
+                    window.location.href = '../index.html';
+                }, 1500);
+            } else {
+                // 动画已完成，立即跳转
                 window.location.href = '../index.html';
-            }, 1500);
+            }
         } catch (uploadError) {
             console.warn('饮食记录上传失败:', uploadError);
-            showToast(`已保存本地，云端上传失败`);
+            // 记录日志
+            if (window.writeCheckinReminderLog) {
+                window.writeCheckinReminderLog('warn', `饮食数据提交失败: ${uploadError.message || uploadError}`);
+            }
+            await showMessage(`已保存本地，云端上传失败`, 'warning');
         }
 
         // 成功保存的强震动反馈
@@ -421,7 +525,11 @@ async function saveAllMeals() {
 
     } catch (error) {
         console.error('保存数据失败:', error);
-        showToast('保存失败，请重试');
+        // 记录日志
+        if (window.writeCheckinReminderLog) {
+            window.writeCheckinReminderLog('error', `饮食数据保存失败: ${error.message || error}`);
+        }
+        await showMessage('保存失败，请重试', 'error');
     } finally {
         // 恢复按钮状态
         setTimeout(() => {
@@ -446,18 +554,18 @@ function initDietImageUploadForMeal(mealId) {
             if (permissions.camera === 'denied' || permissions.photos === 'denied') {
                 const newPermissions = await window.cameraUtils.requestPermissions();
                 if (newPermissions.camera === 'denied' || newPermissions.photos === 'denied') {
-                    showToast('需要相机和相册权限才能上传图片');
+                    await showMessage('需要相机和相册权限才能上传图片', 'error');
                     return;
                 }
             }
 
             await window.cameraUtils.showImageOptions(
                 (dataUrl) => handleDietImageDataUrl(mealId, dataUrl),
-                (err) => showToast('图片选择失败: ' + err)
+                async (err) => await showMessage('图片选择失败: ' + err, 'error')
             );
         } catch (e) {
             console.error('[diet] 图片选择异常:', e);
-            showToast('图片上传失败: ' + (e?.message || e));
+            await showMessage('图片上传失败: ' + (e?.message || e), 'error');
         }
     });
 }
@@ -472,7 +580,7 @@ async function handleDietImageDataUrl(mealId, dataUrl) {
         const maxOriginalSizeMB = 10;
         if (file.size > maxOriginalSizeMB * 1024 * 1024) {
             hideDietCompressionProgress();
-            showToast(`图片文件过大，请选择小于${maxOriginalSizeMB}MB的图片`);
+            await showMessage(`图片文件过大，请选择小于${maxOriginalSizeMB}MB的图片`, 'error');
             return;
         }
         
@@ -492,10 +600,10 @@ async function handleDietImageDataUrl(mealId, dataUrl) {
         const compressedSizeKB = ((compressedDataUrl.length * 0.75) / 1024).toFixed(1);
         const compressionRatio = ((1 - compressedDataUrl.length * 0.75 / file.size) * 100).toFixed(1);
         
-        showToast(`图片上传成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`);
+        await showMessage(`图片上传成功！原始: ${originalSizeKB}KB → 压缩后: ${compressedSizeKB}KB (压缩率: ${compressionRatio}%)`, 'success');
     } catch (error) {
         hideDietCompressionProgress();
-        showToast('图片处理失败: ' + (error?.message || error));
+        await showMessage('图片处理失败: ' + (error?.message || error), 'error');
     }
 }
 
@@ -739,40 +847,49 @@ function saveDietData() {
     }
 }
 
-// 显示提示消息
-function showToast(message) {
-    // 创建toast元素
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(98, 0, 234, 0.9);
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 0.9em;
-        font-weight: 500;
-        box-shadow: 0 4px 12px rgba(98, 0, 234, 0.3);
-        z-index: 1000;
-        animation: toastIn 0.3s ease-out;
-    `;
-
-    // 添加深色模式适配
-    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        toast.style.background = 'rgba(187, 134, 252, 0.9)';
+/**
+ * 显示提示弹窗（使用统一的弹窗管理器）
+ * @param {string} message - 提示消息
+ * @param {string} type - 弹窗类型 ('success' | 'error' | 'warning' | 'info')，默认为 'info'
+ * @param {string} title - 弹窗标题，如果不提供则根据 type 自动设置
+ * @returns {Promise<void>}
+ */
+async function showMessage(message, type = 'info', title = null) {
+    if (window.ModalManager && window.ModalManager.alert) {
+        // 根据类型选择按钮样式
+        let confirmType = 'primary';
+        if (type === 'error' || type === 'danger') {
+            confirmType = 'danger';
+        }
+        
+        // 根据类型设置标题
+        let alertTitle = title;
+        if (!alertTitle) {
+            switch(type) {
+                case 'success':
+                    alertTitle = '成功';
+                    break;
+                case 'error':
+                    alertTitle = '错误';
+                    break;
+                case 'warning':
+                    alertTitle = '警告';
+                    break;
+                default:
+                    alertTitle = '提示';
+            }
+        }
+        
+        return window.ModalManager.alert(message, {
+            title: alertTitle,
+            confirmText: '我知道了',
+            confirmType: confirmType
+        });
+    } else {
+        // 降级处理：如果 ModalManager 未加载，使用原生 alert
+        alert(message);
+        return Promise.resolve();
     }
-
-    document.body.appendChild(toast);
-
-    // 3秒后自动移除
-    setTimeout(() => {
-        toast.style.animation = 'toastOut 0.3s ease-out';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
 }
 
 // 为按钮添加涟漪效果
@@ -978,10 +1095,18 @@ async function uploadDietToServer(exportData) {
             console.log('[diet] 饮食数据上传成功:', result);
         } else {
             console.warn('[diet] 饮食数据上传失败:', result.message);
+            // 记录日志
+            if (window.writeCheckinReminderLog) {
+                window.writeCheckinReminderLog('warn', `饮食数据上传失败: ${result.message || '未知错误'}`);
+            }
             throw new Error(result.message || '上传失败');
         }
     } catch (error) {
         console.warn('[diet] 上传饮食数据异常:', error);
+        // 记录日志
+        if (window.writeCheckinReminderLog) {
+            window.writeCheckinReminderLog('error', `饮食数据上传异常: ${error.message || error}`);
+        }
         throw error; // 重新抛出异常，让调用者处理
     }
 }
@@ -1039,13 +1164,8 @@ document.addEventListener('DOMContentLoaded', initDietPage);
 // 支持键盘导航
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
-        // 如果弹窗正在显示，关闭弹窗；否则返回上一页
-        const modal = document.getElementById('delete-modal');
-        if (modal.classList.contains('show')) {
-            cancelDelete();
-        } else {
-            goBack();
-        }
+        // ESC键返回上一页（弹窗管理器会自动处理ESC键）
+        goBack();
     }
 });
 

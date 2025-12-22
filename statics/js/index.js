@@ -61,6 +61,8 @@ function applyStatusBarTheme() {
     // ignore if not supported
   }
 }
+// 允许其他模块复用状态栏同步
+window.applyStatusBarTheme = applyStatusBarTheme;
 
 // 智能StoreKit评分管理
 function initRating() {
@@ -354,10 +356,195 @@ function loadPage(index) {
     });
 }
 
+// 检查昨天是否提交，如果没提交则重置连续打卡
+// 已移至后端定时任务，每天0点自动执行，前端不再需要此检查
+/*
+async function checkYesterdaySubmissionAndResetStreak() {
+  try {
+    const userId = localStorage.getItem('userId') || 
+                  sessionStorage.getItem('userId') || 
+                  localStorage.getItem('UserID') || 
+                  sessionStorage.getItem('UserID');
+    
+    if (!userId) {
+      console.log('[index] 未找到用户ID，跳过检查昨天提交');
+      return;
+    }
+
+    // 获取昨天的日期字符串（格式：YYYY-MM-DD）
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    
+    console.log('[index] 开始检查昨天（' + yesterdayStr + '）是否提交');
+
+    // 等待 checkUserHasSubmissionForDate 函数可用（最多等待 3 秒）
+    let retryCount = 0;
+    const maxRetries = 6; // 6 * 500ms = 3秒
+    
+    const tryCheck = async () => {
+      if (typeof window.checkUserHasSubmissionForDate === 'function') {
+        try {
+          // 检查昨天是否有提交（不使用缓存，确保获取最新数据）
+          const hasYesterdaySubmission = await window.checkUserHasSubmissionForDate(yesterdayStr, false);
+          
+          console.log('[index] 昨天提交状态:', hasYesterdaySubmission ? '已提交' : '未提交');
+          
+          if (!hasYesterdaySubmission) {
+            // 昨天没有提交，调用后端重置连续打卡
+            console.log('[index] 昨天未提交，开始重置连续打卡为 0');
+            
+            const API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || 'https://app.zdelf.cn';
+            const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+            
+            const response = await fetch(`${baseUrl}/stats/update_streak`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: userId })
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              if (result.success) {
+                console.log('[index] ✅ 连续打卡已重置为 0');
+              } else {
+                console.warn('[index] ⚠️ 重置连续打卡失败:', result.message);
+              }
+            } else {
+              console.warn('[index] ⚠️ 重置连续打卡请求失败:', response.status);
+            }
+          } else {
+            console.log('[index] 昨天已提交，无需重置连续打卡');
+          }
+        } catch (error) {
+          console.error('[index] 检查昨天提交状态失败:', error);
+        }
+      } else if (retryCount < maxRetries) {
+        retryCount++;
+        setTimeout(tryCheck, 500);
+      } else {
+        console.warn('[index] checkUserHasSubmissionForDate 函数未加载，跳过检查');
+      }
+    };
+    
+    tryCheck();
+  } catch (error) {
+    console.error('[index] 检查昨天提交并重置连续打卡失败:', error);
+  }
+}
+*/
+
+// 初始化打卡提醒（在 app 启动时）
+async function initCheckinReminderOnAppStart() {
+  try {
+    // 检查是否是第一次打开软件
+    const isFirstLaunch = !localStorage.getItem('checkin_reminder_first_launch_completed');
+    
+    if (isFirstLaunch) {
+      console.log('[index] 🎉 检测到首次启动，自动启用打卡提醒并请求通知权限');
+      
+      // 自动启用打卡提醒
+      localStorage.setItem('checkin_reminder_enabled', 'true');
+      console.log('[index] ✅ 已自动启用打卡提醒');
+      
+      // 请求通知权限
+      let permissionGranted = false;
+      try {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+          const LocalNotifications = window.Capacitor.Plugins.LocalNotifications;
+          const result = await LocalNotifications.requestPermissions();
+          permissionGranted = result.display === 'granted';
+          console.log('[index] 📱 Capacitor 通知权限请求结果:', result.display);
+        } else if ('Notification' in window) {
+          const permission = await Notification.requestPermission();
+          permissionGranted = permission === 'granted';
+          console.log('[index] 🌐 浏览器通知权限请求结果:', permission);
+        }
+        
+        if (permissionGranted) {
+          console.log('[index] ✅ 通知权限已授予');
+        } else {
+          console.log('[index] ⚠️ 通知权限被拒绝');
+        }
+      } catch (error) {
+        console.warn('[index] ⚠️ 请求通知权限失败:', error);
+      }
+      
+      // 标记已经完成首次启动流程
+      localStorage.setItem('checkin_reminder_first_launch_completed', 'true');
+    }
+    
+    // 检查提醒是否启用（从 localStorage 读取）
+    const getCheckinReminderSetting = () => {
+      const stored = localStorage.getItem('checkin_reminder_enabled');
+      return stored !== null ? stored === 'true' : true; // 默认打开
+    };
+
+    const enabled = getCheckinReminderSetting();
+    if (!enabled) {
+      console.log('[index] 打卡提醒未启用，跳过初始化');
+      return;
+    }
+
+    // 检查是否有通知权限
+    let hasPermission = false;
+    try {
+      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+        const LocalNotifications = window.Capacitor.Plugins.LocalNotifications;
+        const result = await LocalNotifications.checkPermissions();
+        hasPermission = result.display === 'granted';
+      } else if ('Notification' in window) {
+        hasPermission = Notification.permission === 'granted';
+      }
+    } catch (error) {
+      console.warn('[index] 检查通知权限失败:', error);
+    }
+
+    if (!hasPermission) {
+      console.log('[index] 没有通知权限，跳过打卡提醒初始化');
+      return;
+    }
+
+    // 新的逻辑：清理过期通知，然后检查今天是否已打卡
+    // 如果今天已打卡，预约明天的提醒；如果未打卡，不预约
+    // 等待 me.js 加载完成（最多等待 3 秒）
+    let retryCount = 0;
+    const maxRetries = 6; // 6 * 500ms = 3秒
+    
+    const tryInit = async () => {
+      if (typeof window.initCheckinReminder === 'function') {
+        try {
+          await window.initCheckinReminder();
+          console.log('[index] ✅ 打卡提醒初始化完成');
+        } catch (error) {
+          console.error('[index] 调用 initCheckinReminder 失败:', error);
+        }
+      } else if (retryCount < maxRetries) {
+        retryCount++;
+        setTimeout(tryInit, 500);
+      } else {
+        console.warn('[index] me.js 未加载，打卡提醒将在进入"我的"页面时初始化');
+      }
+    };
+    
+    tryInit();
+  } catch (error) {
+    console.error('[index] 初始化打卡提醒失败:', error);
+  }
+}
+
 // 使用新的高性能涟漪效果系统
 document.addEventListener('DOMContentLoaded', () => {
   // 初始化原生StoreKit评分管理
   initRating();
+  
+  // 检查昨天是否提交，如果没提交则重置连续打卡
+  // 已移至后端定时任务，每天0点自动执行，前端不再需要此检查
+  // checkYesterdaySubmissionAndResetStreak();
+  
+  // 初始化打卡提醒（在 app 启动时）
+  initCheckinReminderOnAppStart();
   
   // 为导航按钮添加涟漪效果
   document.querySelectorAll(".nav-item .icon").forEach((button) => {
@@ -389,30 +576,51 @@ document.addEventListener('DOMContentLoaded', () => {
       // Switch to Square tab (index 2)
       updateActive(2);
     } else {
-      // Load default tab on first open
-      updateActive(activeIndex || 0);
+      // Check if we need to switch to a specific tab (e.g., from edit page)
+      const switchToTab = localStorage.getItem('switchToTab');
+      if (switchToTab) {
+        const tabIndex = parseInt(switchToTab, 10);
+        if (!isNaN(tabIndex) && tabIndex >= 0 && tabIndex < pageMap.length) {
+          localStorage.removeItem('switchToTab');
+          updateActive(tabIndex);
+        } else {
+          updateActive(activeIndex || 0);
+        }
+      } else {
+        // Check URL hash for tab navigation
+        const hash = window.location.hash;
+        if (hash === '#me') {
+          updateActive(3); // me tab index
+        } else {
+          // Load default tab on first open
+          updateActive(activeIndex || 0);
+        }
+      }
     }
   } catch (_) {
     updateActive(activeIndex || 0);
   }
 
-  // Global route loading overlay helpers
+  // Global route loading overlay helpers (使用与daily页面一致的加载动画)
   function showGlobalLoading() {
     if (document.getElementById('global-loading-overlay')) return;
     const ov = document.createElement('div');
     ov.id = 'global-loading-overlay';
-    ov.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:99999';
+    ov.style.cssText = 'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999';
     ov.innerHTML = `
       <style>
-        #global-loading-overlay{background:#ffffff}
-        #global-loading-overlay .spinner{width:48px;height:48px;border:3px solid rgba(98,0,234,0.18);border-top-color:#7c4dff;border-radius:50%;animation:spin .8s linear infinite}
+        #global-loading-overlay{background:var(--bg, #ffffff)}
+        #global-loading-overlay .spinner{width:40px;height:40px;border:3px solid rgba(176,143,199,0.1);border-top:3px solid #b08fc7;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px;box-shadow:0 2px 12px rgba(176,143,199,0.2)}
+        #global-loading-overlay .loading-text{color:#666;font-size:0.9rem;font-weight:500;opacity:0.8;letter-spacing:-0.01em}
         @media (prefers-color-scheme: dark){
-          #global-loading-overlay{background:#0f1115}
-          #global-loading-overlay .spinner{border-color:rgba(167,139,250,0.22);border-top-color:#a78bfa}
+          #global-loading-overlay{background:var(--bg, #0f1115)}
+          #global-loading-overlay .spinner{border:3px solid rgba(176,143,199,0.1);border-top:3px solid #b08fc7;box-shadow:0 2px 12px rgba(176,143,199,0.2)}
+          #global-loading-overlay .loading-text{color:#d1d5db}
         }
-        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
       </style>
       <div class="spinner"></div>
+      <div class="loading-text">正在加载...</div>
     `;
     document.body.appendChild(ov);
   }

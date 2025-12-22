@@ -46,9 +46,15 @@
         5: '其他症状'
     };
 
+    // 当前视图模式：'month' 或 'year'
+    let currentView = 'month';
+    
     // DOM 元素
     let yearElement, monthElement, calendarGrid, selectedDateText;
     let prevMonthBtn, nextMonthBtn, backBtn, colorSettingsBtn;
+    let viewMonthBtn, viewYearBtn, monthView, yearView, yearGrid;
+    let prevYearBtn, nextYearBtn, yearNavigation, currentYearDisplay;
+    let viewSwitcherIndicator;
     
     /**
      * 加载用户自定义颜色配置
@@ -127,14 +133,28 @@
     function showLoadingAnimation(customText = '正在加载日历数据...') {
         const loadingOverlay = document.getElementById('calendar-loading-overlay');
         const loadingText = document.querySelector('.calendar-loading-text');
+        const spinner = document.querySelector('.calendar-loading-spinner');
         
         if (loadingOverlay) {
-            loadingOverlay.style.display = 'flex';
+            // 先移除hidden类，确保元素可见
             loadingOverlay.classList.remove('hidden');
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.style.opacity = '1';
+            loadingOverlay.style.visibility = 'visible';
             
             // 更新加载文本
             if (loadingText) {
                 loadingText.textContent = customText;
+            }
+            
+            // 强制重新触发动画
+            if (spinner) {
+                // 先移除动画，然后重新添加，确保动画重新开始
+                spinner.style.animation = 'none';
+                // 使用requestAnimationFrame确保DOM更新后再添加动画
+                requestAnimationFrame(() => {
+                    spinner.style.animation = 'calendarSpin 1s linear infinite';
+                });
             }
         }
     }
@@ -168,6 +188,18 @@
         nextMonthBtn = document.getElementById('next-month');
         backBtn = document.getElementById('back-btn');
         colorSettingsBtn = document.getElementById('color-settings-btn');
+        
+        // 年视图相关元素
+        viewMonthBtn = document.getElementById('view-month-btn');
+        viewYearBtn = document.getElementById('view-year-btn');
+        monthView = document.getElementById('month-view');
+        yearView = document.getElementById('year-view');
+        yearGrid = document.getElementById('year-grid');
+        prevYearBtn = document.getElementById('prev-year');
+        nextYearBtn = document.getElementById('next-year');
+        yearNavigation = document.querySelector('.year-navigation');
+        currentYearDisplay = document.getElementById('current-year-display');
+        viewSwitcherIndicator = document.getElementById('view-switcher-indicator');
 
         if (!yearElement || !monthElement || !calendarGrid || !selectedDateText) {
             console.error('❌ 日历页面DOM元素未找到');
@@ -219,13 +251,355 @@
         // 初始化颜色设置弹窗
         initColorSettingsModal();
         
-        // 初始化显示
-        updateCalendarDisplay();
+        // 初始化视图切换
+        initViewSwitcher();
         
-        // 更新症状图例颜色
-        updateSymptomLegend();
+        // 预加载整年数据，实现无缝切换
+        preloadYearData().then(() => {
+            // 初始化显示
+            updateCalendarDisplay();
+            
+            // 更新症状图例颜色
+            updateSymptomLegend();
+            
+            console.log('✅ 日历初始化完成');
+        });
+    }
+    
+    /**
+     * 预加载整年数据
+     */
+    async function preloadYearData() {
+        try {
+            console.log(`📅 开始预加载${currentYear}年整年数据...`);
+            
+            // 并行加载12个月的数据
+            const loadPromises = [];
+            for (let month = 0; month < 12; month++) {
+                loadPromises.push(loadMonthlySymptomData(currentYear, month));
+            }
+            
+            // 等待所有月份数据加载完成
+            await Promise.all(loadPromises);
+            
+            console.log(`✅ ${currentYear}年整年数据预加载完成`);
+        } catch (e) {
+            console.error('预加载整年数据失败:', e);
+        }
+    }
+    
+    /**
+     * 更新视图切换指示器位置
+     */
+    function updateViewSwitcherIndicator(view) {
+        if (!viewSwitcherIndicator) return;
         
-        console.log('✅ 日历初始化完成');
+        // 移除之前的类
+        viewSwitcherIndicator.classList.remove('move-to-right');
+        
+        // 根据视图添加相应的类
+        if (view === 'year') {
+            viewSwitcherIndicator.classList.add('move-to-right');
+        }
+    }
+    
+    /**
+     * 初始化视图切换
+     */
+    function initViewSwitcher() {
+        // 初始化指示器位置
+        if (viewSwitcherIndicator) {
+            updateViewSwitcherIndicator(currentView);
+        }
+        
+        if (viewMonthBtn) {
+            viewMonthBtn.addEventListener('click', () => {
+                addHapticFeedback('Light');
+                switchView('month');
+            });
+        }
+        
+        if (viewYearBtn) {
+            viewYearBtn.addEventListener('click', () => {
+                addHapticFeedback('Light');
+                switchView('year');
+            });
+        }
+        
+        if (prevYearBtn) {
+            prevYearBtn.addEventListener('click', () => {
+                addHapticFeedback('Light');
+                navigateYear(-1);
+            });
+        }
+        
+        if (nextYearBtn) {
+            nextYearBtn.addEventListener('click', () => {
+                addHapticFeedback('Light');
+                navigateYear(1);
+            });
+        }
+    }
+    
+    /**
+     * 切换视图
+     */
+    function switchView(view) {
+        if (currentView === view) return;
+        
+        currentView = view;
+        
+        // 更新按钮状态
+        if (viewMonthBtn && viewYearBtn) {
+            viewMonthBtn.classList.toggle('active', view === 'month');
+            viewYearBtn.classList.toggle('active', view === 'year');
+        }
+        
+        // 更新滑动指示器位置
+        updateViewSwitcherIndicator(view);
+        
+        // 显示/隐藏选中日期信息
+        const selectedDateInfo = document.querySelector('.selected-date-info');
+        if (selectedDateInfo) {
+            selectedDateInfo.style.display = view === 'month' ? 'block' : 'none';
+        }
+        
+        // 显示/隐藏对应的视图
+        if (monthView && yearView) {
+            if (view === 'month') {
+                monthView.style.display = 'block';
+                yearView.style.display = 'none';
+                if (yearNavigation) yearNavigation.style.display = 'none';
+                if (document.querySelector('.month-navigation')) {
+                    document.querySelector('.month-navigation').style.display = 'flex';
+                }
+                // 月视图使用缓存数据，无需重新加载
+                updateCalendarDisplay();
+            } else {
+                monthView.style.display = 'none';
+                yearView.style.display = 'block';
+                if (yearNavigation) yearNavigation.style.display = 'flex';
+                if (document.querySelector('.month-navigation')) {
+                    document.querySelector('.month-navigation').style.display = 'none';
+                }
+                // 年视图使用缓存数据，如果已预加载则无需显示加载动画
+                updateYearView();
+            }
+        }
+    }
+    
+    /**
+     * 导航年份
+     */
+    async function navigateYear(direction) {
+        currentYear += direction;
+        if (currentYearDisplay) {
+            currentYearDisplay.textContent = currentYear;
+        }
+        
+        // 显示加载动画
+        showLoadingAnimation('正在加载年视图数据...');
+        
+        // 预加载新年份的数据
+        await preloadYearData();
+        
+        // 更新年视图（不显示加载动画，因为已经在navigateYear中显示了）
+        await updateYearView(false);
+        
+        // 隐藏加载动画
+        hideLoadingAnimation();
+    }
+    
+    /**
+     * 更新年视图
+     * @param {boolean} showLoading - 是否显示加载动画（默认false，由调用者控制）
+     */
+    async function updateYearView(showLoading = false) {
+        if (!yearGrid) return;
+        
+        // 检查是否已有缓存数据
+        let hasAllData = true;
+        for (let month = 0; month < 12; month++) {
+            const monthKey = `${currentYear}-${String(month + 1).padStart(2, '0')}`;
+            if (!monthlySymptomData[monthKey]) {
+                hasAllData = false;
+                break;
+            }
+        }
+        
+        // 如果没有完整数据，显示加载动画并加载
+        if (!hasAllData) {
+            if (showLoading) {
+                showLoadingAnimation('正在加载年视图数据...');
+            }
+            
+            // 加载缺失的月份数据
+            const loadPromises = [];
+            for (let month = 0; month < 12; month++) {
+                const monthKey = `${currentYear}-${String(month + 1).padStart(2, '0')}`;
+                if (!monthlySymptomData[monthKey]) {
+                    loadPromises.push(loadMonthlySymptomData(currentYear, month));
+                }
+            }
+            
+            // 等待所有缺失数据加载完成
+            if (loadPromises.length > 0) {
+                await Promise.all(loadPromises);
+            }
+            
+            if (showLoading) {
+                hideLoadingAnimation();
+            }
+        }
+        
+        // 从缓存中获取整年的症状数据
+        const yearSymptomData = {};
+        for (let month = 0; month < 12; month++) {
+            const monthKey = `${currentYear}-${String(month + 1).padStart(2, '0')}`;
+            yearSymptomData[monthKey] = monthlySymptomData[monthKey] || {};
+        }
+        
+        // 生成年视图
+        generateYearView(yearSymptomData);
+    }
+    
+    /**
+     * 生成年视图
+     */
+    function generateYearView(yearSymptomData = {}) {
+        if (!yearGrid) return;
+        
+        yearGrid.innerHTML = '';
+        
+        const today = new Date();
+        const isCurrentYear = today.getFullYear() === currentYear;
+        
+        for (let month = 0; month < 12; month++) {
+            const monthCard = document.createElement('div');
+            monthCard.className = 'year-month-card';
+            if (isCurrentYear && month === today.getMonth()) {
+                monthCard.classList.add('active');
+            }
+            
+            const monthKey = `${currentYear}-${String(month + 1).padStart(2, '0')}`;
+            const symptomData = yearSymptomData[monthKey] || {};
+            
+            // 月份标题
+            const title = document.createElement('div');
+            title.className = 'year-month-title';
+            title.textContent = monthNames[month];
+            monthCard.appendChild(title);
+            
+            // 月份日历网格
+            const monthGrid = document.createElement('div');
+            monthGrid.className = 'year-month-grid';
+            
+            // 生成该月的日历
+            const firstDay = new Date(currentYear, month, 1);
+            const lastDay = new Date(currentYear, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            let firstDayOfWeek = firstDay.getDay();
+            firstDayOfWeek = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+            
+            const prevMonth = new Date(currentYear, month, 0);
+            const daysInPrevMonth = prevMonth.getDate();
+            
+            let dayIndex = 0;
+            
+            // 添加上个月的尾部日期
+            for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+                const dayNum = daysInPrevMonth - i;
+                const dayElement = createYearMonthDay(dayNum, true, false, currentYear, month - 1, symptomData, dayIndex % 7);
+                monthGrid.appendChild(dayElement);
+                dayIndex++;
+            }
+            
+            // 添加当月日期
+            for (let day = 1; day <= daysInMonth; day++) {
+                const isToday = isCurrentYear && month === today.getMonth() && day === today.getDate();
+                const dayElement = createYearMonthDay(day, false, isToday, currentYear, month, symptomData, dayIndex % 7);
+                monthGrid.appendChild(dayElement);
+                dayIndex++;
+            }
+            
+            // 添加下个月的开头日期
+            const totalCells = monthGrid.children.length;
+            const remainingCells = 42 - totalCells;
+            for (let day = 1; day <= remainingCells && day <= 14; day++) {
+                const dayElement = createYearMonthDay(day, true, false, currentYear, month + 1, symptomData, dayIndex % 7);
+                monthGrid.appendChild(dayElement);
+                dayIndex++;
+            }
+            
+            monthCard.appendChild(monthGrid);
+            
+            // 点击月份卡片切换到月视图
+            monthCard.addEventListener('click', () => {
+                addHapticFeedback('Medium');
+                currentMonth = month;
+                switchView('month');
+            });
+            
+            yearGrid.appendChild(monthCard);
+        }
+    }
+    
+    /**
+     * 创建年视图中的日期元素
+     */
+    function createYearMonthDay(dayNum, isOtherMonth, isToday, year, month, symptomData = {}, dayIndex = 0) {
+        const dayElement = document.createElement('div');
+        dayElement.className = 'year-month-day';
+        dayElement.textContent = dayNum;
+        
+        if (isOtherMonth) {
+            dayElement.classList.add('other-month');
+        }
+        
+        if (isToday) {
+            dayElement.classList.add('today');
+        }
+        
+        // 判断是否为周末
+        if (dayIndex === 5 || dayIndex === 6) {
+            dayElement.classList.add('weekend');
+        }
+        
+        // 应用症状高亮
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+        const symptomInfo = getDateSymptomInfo(dateStr, symptomData);
+        
+        if (symptomInfo.hasSymptoms) {
+            dayElement.classList.add('has-symptoms');
+            if (symptomInfo.primaryColor) {
+                dayElement.style.backgroundColor = symptomInfo.primaryColor;
+                // 确保文字可见
+                if (symptomInfo.primaryColor === '#FFD700') {
+                    dayElement.style.color = '#1a1a1a';
+                } else {
+                    dayElement.style.color = '#ffffff';
+                }
+            }
+            
+            // 添加症状指示器
+            if (symptomInfo.allSymptoms.length > 1) {
+                const indicator = document.createElement('div');
+                indicator.className = 'symptom-indicator';
+                indicator.style.cssText = `
+                    position: absolute;
+                    bottom: 1px;
+                    right: 1px;
+                    width: 3px;
+                    height: 3px;
+                    border-radius: 50%;
+                    background-color: ${symptomInfo.primaryColor || '#666'};
+                    border: 0.5px solid rgba(0,0,0,0.2);
+                `;
+                dayElement.appendChild(indicator);
+            }
+        }
+        
+        return dayElement;
     }
     
     /**
