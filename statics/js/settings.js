@@ -17,7 +17,7 @@
     { value: "dark", label: "深色模式", desc: "始终使用深色界面" },
   ];
   // ==================== 应用版本配置 ====================
-  const APP_VERSION = "2.0.0.0";
+  const APP_VERSION = "2.0.0.1";
   const BUILD_TIMESTAMP = Date.now();
   const VERSION_CHECK_CONFIG = {
     enabled: true,

@@ -285,6 +285,37 @@ function initDaily(shadowRoot) {
   // 启动前中止可能在途的请求
   abortInFlight();
 
+  // 清除搜索状态，确保从其他页面返回时退出搜索模式
+  console.log('🔄 清除搜索状态，退出搜索模式');
+  isSearchMode = false;
+  searchKeyword = '';
+  searchDataCards = null;
+  
+  // 取消正在进行的搜索请求
+  if (searchAbortController) {
+    searchAbortController.abort();
+    searchAbortController = null;
+  }
+  
+  // 清除搜索输入框的值
+  const searchInput = dailyRoot.querySelector('#search-input');
+  const clearSearchBtn = dailyRoot.querySelector('#clear-search-btn');
+  if (searchInput) {
+    searchInput.value = '';
+  }
+  if (clearSearchBtn) {
+    clearSearchBtn.classList.add('hidden');
+  }
+  
+  // 清除选中的日期，让 initDatePicker 重新设置为今天
+  // 这样从其他页面返回时会显示当天数据
+  selectedDate = null;
+  console.log('📅 清除选中日期，将在 initDatePicker 中设置为今天');
+  
+  // 重置动画标志，确保每次页面初始化时都会播放入场动画
+  hasPlayedInitialAnimation = false;
+  console.log('✨ 重置动画标志，将播放入场动画');
+
   // 初始化日期选择器
   initDatePicker();
 
@@ -311,6 +342,11 @@ let dataCardsLoadPromise = null;
 // 搜索状态管理
 let isSearchMode = false;
 let searchDataCards = null;
+let currentSearchPromise = null; // 当前正在进行的搜索 Promise，用于取消旧搜索
+let searchAbortController = null; // 用于取消正在进行的搜索请求
+
+// 动画状态管理
+let hasPlayedInitialAnimation = false; // 是否已经播放过初始入场动画
 
 // 当前选择的日期
 let selectedDate = null;
@@ -356,66 +392,179 @@ function initSearchBox() {
     
     // 防抖：延迟300ms执行搜索
     searchTimeout = setTimeout(async () => {
+      // 取消之前的搜索请求
+      if (searchAbortController) {
+        console.log('🛑 取消之前的搜索请求');
+        searchAbortController.abort();
+      }
+      
+      // 创建新的 AbortController 用于取消这个搜索
+      searchAbortController = new AbortController();
+      const thisSearchAbortController = searchAbortController;
+      
       // 显示搜索加载动画
       showSearchLoadingState();
       
-      try {
-        // 如果有搜索关键字，执行完整搜索流程
-        if (searchKeyword.trim()) {
-          console.log('🔍 搜索时直接获取三个月内数据...');
-          isSearchMode = true;
+      // 创建搜索 Promise
+      const searchPromise = (async () => {
+        try {
+          // 如果有搜索关键字，执行完整搜索流程
+          if (searchKeyword.trim()) {
+            console.log('🔍 开始新的搜索...');
+            isSearchMode = true;
+            
+            // 立即显示搜索加载状态，防止显示中间状态
+            const cardsContainer = dailyRoot.querySelector('#data-cards-container');
+            if (cardsContainer) {
+              cardsContainer.innerHTML = `
+                <div class="search-loading">
+                  <div class="search-loading-spinner"></div>
+                  <div class="search-loading-text">正在搜索记录...</div>
+                </div>
+              `;
+            }
+            
+            // 检查是否已被取消
+            if (thisSearchAbortController.signal.aborted) {
+              console.log('🛑 搜索已被取消（在加载数据前）');
+              return;
+            }
+            
+            // 1. 加载搜索数据（不触发其他渲染）
+            await loadUserDataCardsForSearch();
+            
+            // 检查是否已被取消
+            if (thisSearchAbortController.signal.aborted) {
+              console.log('🛑 搜索已被取消（在加载数据后）');
+              return;
+            }
+            
+            // 1.5. 确保 searchDataCards 已完全加载（双重检查）
+            if (!searchDataCards || searchDataCards.length === 0) {
+              console.warn('⚠️ 搜索数据加载后仍为空');
+              // 如果还是空的，可能是真的没有数据
+              if (!searchDataCards || searchDataCards.length === 0) {
+                console.log('⚠️ 确认没有搜索数据');
+                // 渲染"未找到"结果
+                await renderFinalSearchResults([]);
+                hideSearchLoadingState();
+                return;
+              }
+            }
+            
+            // 检查是否已被取消
+            if (thisSearchAbortController.signal.aborted) {
+              console.log('🛑 搜索已被取消（在预过滤前）');
+              return;
+            }
+            
+            // 2. 预过滤数据（在动画期间完成所有搜索操作）
+            // 确保所有数据都已准备好，再进行搜索
+            const filteredData = await preFilterSearchData(searchKeyword, thisSearchAbortController.signal);
+            
+            // 检查是否已被取消
+            if (thisSearchAbortController.signal.aborted) {
+              console.log('🛑 搜索已被取消（在预过滤后）');
+              return;
+            }
+            
+            // 3. 等待所有搜索操作完全完成后，再渲染最终结果
+            // 使用 requestAnimationFrame 确保 DOM 更新完成
+            await new Promise(resolve => {
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  resolve();
+                });
+              });
+            });
+            
+            // 再次检查是否已被取消
+            if (thisSearchAbortController.signal.aborted) {
+              console.log('🛑 搜索已被取消（在渲染前）');
+              return;
+            }
+            
+            // 4. 验证搜索结果的完整性（确保这是最终结果）
+            console.log(`✅ 搜索完成，找到 ${filteredData.length} 条匹配记录`);
+            console.log(`📋 这是最终且完整的结果，不会再有变动`);
+            
+            // 5. 渲染最终结果（此时所有数据已准备完毕，所有搜索操作都已完成）
+            await renderFinalSearchResults(filteredData);
+            
+            // 再次检查是否已被取消
+            if (thisSearchAbortController.signal.aborted) {
+              console.log('🛑 搜索已被取消（在渲染后）');
+              return;
+            }
+            
+            // 6. 等待 DOM 渲染完成后再隐藏加载动画
+            await new Promise(resolve => {
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  resolve();
+                });
+              });
+            });
+            
+            // 最后检查是否已被取消
+            if (thisSearchAbortController.signal.aborted) {
+              console.log('🛑 搜索已被取消（在隐藏动画前）');
+              return;
+            }
+            
+            // 7. 隐藏搜索加载动画（此时结果已完全渲染，这是最终结果）
+            hideSearchLoadingState();
+            
+            // 8. 最终确认：这是完整的搜索结果，不会再有变动
+            console.log(`🎯 搜索流程完全结束，结果已固定: ${filteredData.length} 条记录`);
+            
+            // 确保搜索模式标志正确设置
+            isSearchMode = true;
           
-          // 立即显示搜索加载状态，防止显示中间状态
+          } else {
+            // 清除搜索时，恢复正常模式
+            if (isSearchMode) {
+              console.log('🔄 退出搜索模式，恢复正常数据');
+              isSearchMode = false;
+              searchDataCards = null;
+            }
+            await filterAndRenderCards();
+            // 恢复正常模式后也隐藏加载动画
+            hideSearchLoadingState();
+          }
+        } catch (error) {
+          // 如果是因为取消导致的错误，不显示错误信息
+          if (error.name === 'AbortError' || thisSearchAbortController.signal.aborted) {
+            console.log('🛑 搜索被取消');
+            return;
+          }
+          
+          console.error('搜索过程中发生错误:', error);
+          // 检查是否已被取消
+          if (thisSearchAbortController.signal.aborted) {
+            return;
+          }
+          
+          // 出错时显示错误状态
           const cardsContainer = dailyRoot.querySelector('#data-cards-container');
           if (cardsContainer) {
             cardsContainer.innerHTML = `
-              <div class="search-loading">
-                <div class="search-loading-spinner"></div>
-                <div class="search-loading-text">正在搜索记录...</div>
+              <div class="no-data-message">
+                <h3>搜索过程中发生错误</h3>
+                <p>请稍后重试</p>
               </div>
             `;
           }
-          
-          // 设置搜索标志，防止其他函数干扰
-          const originalIsSearchMode = isSearchMode;
-          
-          // 1. 加载搜索数据（不触发其他渲染）
-          await loadUserDataCardsForSearch();
-          
-          // 2. 预过滤数据（在动画期间完成）
-          const filteredData = await preFilterSearchData(searchKeyword);
-          
-          // 3. 直接渲染最终结果，跳过中间状态
-          await renderFinalSearchResults(filteredData);
-          
-          // 确保搜索模式标志正确设置
-          isSearchMode = true;
-          
-        } else {
-          // 清除搜索时，恢复正常模式
-          if (isSearchMode) {
-            console.log('🔄 退出搜索模式，恢复正常数据');
-            isSearchMode = false;
-            searchDataCards = null;
-          }
-          await filterAndRenderCards();
+          // 出错后也隐藏加载动画
+          hideSearchLoadingState();
         }
-      } catch (error) {
-        console.error('搜索过程中发生错误:', error);
-        // 出错时显示错误状态
-        const cardsContainer = dailyRoot.querySelector('#data-cards-container');
-        if (cardsContainer) {
-          cardsContainer.innerHTML = `
-            <div class="no-data-message">
-              <h3>搜索过程中发生错误</h3>
-              <p>请稍后重试</p>
-            </div>
-          `;
-        }
-      } finally {
-        // 隐藏搜索加载动画
-        hideSearchLoadingState();
-      }
+      })();
+      
+      // 保存当前搜索 Promise
+      currentSearchPromise = searchPromise;
+      
+      // 等待搜索完成（但不阻塞，因为我们已经处理了取消逻辑）
+      await searchPromise;
     }, 300);
   });
 
@@ -424,6 +573,13 @@ function initSearchBox() {
     // 添加震动反馈
     if (window.__hapticImpact__) {
       window.__hapticImpact__('Light');
+    }
+    
+    // 取消正在进行的搜索
+    if (searchAbortController) {
+      console.log('🛑 清除搜索时取消正在进行的搜索');
+      searchAbortController.abort();
+      searchAbortController = null;
     }
     
     searchKeyword = '';
@@ -507,8 +663,32 @@ function initDataTypeSwitcher() {
         if (isSearchMode && searchKeyword.trim()) {
           // 搜索模式下，重新执行搜索
           console.log(`🔍 搜索模式下切换数据类型，重新执行搜索: "${searchKeyword}"`);
-          preFilterSearchData(searchKeyword).then(filteredData => {
+          
+          // 取消之前的搜索
+          if (searchAbortController) {
+            searchAbortController.abort();
+          }
+          
+          // 创建新的搜索
+          searchAbortController = new AbortController();
+          const thisSearchAbortController = searchAbortController;
+          
+          // 显示加载状态
+          const cardsContainer = dailyRoot.querySelector('#data-cards-container');
+          if (cardsContainer) {
+            showLocalLoadingState(cardsContainer, selectedDataType, '正在搜索...');
+          }
+          
+          preFilterSearchData(searchKeyword, thisSearchAbortController.signal).then(filteredData => {
+            // 检查是否已被取消
+            if (thisSearchAbortController.signal.aborted) {
+              return;
+            }
             renderFinalSearchResults(filteredData);
+          }).catch(error => {
+            if (error.name !== 'AbortError') {
+              console.error('搜索失败:', error);
+            }
           });
         } else {
           // 正常模式下，重新过滤渲染
@@ -1463,74 +1643,163 @@ function searchInCaseContentOptimized(content, keyword) {
 /**
  * preFilterSearchData — 预过滤搜索数据，在动画期间完成所有搜索操作
  * @param {string} keyword - 搜索关键字
+ * @param {AbortSignal} abortSignal - 取消信号，用于取消搜索
  * @returns {Promise<Array>} - 过滤后的数据
  */
-async function preFilterSearchData(keyword) {
+async function preFilterSearchData(keyword, abortSignal = null) {
   console.log(`🔍 预过滤搜索数据: "${keyword}"`);
   console.log(`📊 搜索数据卡片数量: ${searchDataCards ? searchDataCards.length : 0}`);
   
+  // 确保 searchDataCards 已完全加载
   if (!searchDataCards || searchDataCards.length === 0) {
     console.log('⚠️ 没有搜索数据可过滤');
+    // 等待一小段时间，确保数据有时间加载
+    await new Promise(resolve => setTimeout(resolve, 50));
+    // 再次检查
+    if (!searchDataCards || searchDataCards.length === 0) {
+      console.log('⚠️ 确认没有搜索数据');
+      return [];
+    }
+  }
+  
+  // 确保使用最新的 searchDataCards（防止在等待期间数据被更新）
+  const currentSearchData = searchDataCards;
+  if (!currentSearchData || currentSearchData.length === 0) {
+    console.log('⚠️ 当前搜索数据为空');
     return [];
   }
   
   const filteredCards = [];
   
   // 按数据类型过滤
-  let dataToFilter = searchDataCards;
+  let dataToFilter = currentSearchData;
   if (selectedDataType) {
-    dataToFilter = searchDataCards.filter(item => item.dataType === selectedDataType);
-    console.log(`🏷️ 按数据类型 "${selectedDataType}" 过滤，从 ${searchDataCards.length} 条记录中筛选出 ${dataToFilter.length} 条`);
+    dataToFilter = currentSearchData.filter(item => item.dataType === selectedDataType);
+    console.log(`🏷️ 按数据类型 "${selectedDataType}" 过滤，从 ${currentSearchData.length} 条记录中筛选出 ${dataToFilter.length} 条`);
+  }
+  
+  if (dataToFilter.length === 0) {
+    console.log('⚠️ 过滤后没有数据可搜索');
+    return [];
   }
   
   console.log(`🔍 开始处理 ${dataToFilter.length} 条记录进行搜索匹配`);
   
   // 并行处理所有记录，提高搜索速度
+  // 使用 Promise.allSettled 确保所有请求都完成，即使某些失败也不影响其他
   const searchPromises = dataToFilter.map(async (item) => {
+    // 检查是否已被取消
+    if (abortSignal && abortSignal.aborted) {
+      return null;
+    }
+    
     try {
       console.log(`🔍 处理记录: ${item.dataType} - ${item.id}`);
       
-      // 获取完整数据
-      const response = await fetch(`${__API_BASE__}/getjson/${item.dataType}/${item.id}`);
-      const detailData = await response.json();
+      // 获取完整数据，添加超时处理
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
       
-      if (detailData.success) {
-        const content = detailData.data.content || {};
-        console.log(`📄 获取到内容:`, content);
+      // 如果提供了取消信号，监听它
+      if (abortSignal) {
+        abortSignal.addEventListener('abort', () => {
+          controller.abort();
+        });
+      }
+      
+      try {
+        const response = await fetch(`${__API_BASE__}/getjson/${item.dataType}/${item.id}`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
         
-        // 进行搜索匹配
-        const matches = searchInCardContent(content, item.dataType, keyword);
-        console.log(`🔍 搜索匹配结果: ${matches}`);
-        
-        if (matches) {
-          console.log(`✅ 搜索匹配: ${item.dataType} - ${item.id}`);
-          return {
-            ...item,
-            content: content,
-            detailData: detailData.data
-          };
-        } else {
-          console.log(`❌ 搜索不匹配: ${item.dataType} - ${item.id}`);
+        // 再次检查是否已被取消
+        if (abortSignal && abortSignal.aborted) {
           return null;
         }
-      } else {
-        console.warn(`❌ 获取数据失败: ${item.dataType} - ${item.id}`, detailData);
+        
+        const detailData = await response.json();
+        
+        if (detailData.success) {
+          const content = detailData.data.content || {};
+          console.log(`📄 获取到内容: ${item.dataType} - ${item.id}`);
+          
+          // 进行搜索匹配
+          const matches = searchInCardContent(content, item.dataType, keyword);
+          console.log(`🔍 搜索匹配结果: ${matches ? '匹配' : '不匹配'} - ${item.dataType} - ${item.id}`);
+          
+          if (matches) {
+            console.log(`✅ 搜索匹配: ${item.dataType} - ${item.id}`);
+            return {
+              ...item,
+              content: content,
+              detailData: detailData.data
+            };
+          } else {
+            return null;
+          }
+        } else {
+          console.warn(`❌ 获取数据失败: ${item.dataType} - ${item.id}`, detailData);
+          return null;
+        }
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          console.warn(`⏱️ 获取 ${item.dataType} - ${item.id} 超时`);
+        } else {
+          throw fetchError;
+        }
         return null;
       }
     } catch (error) {
-      console.warn(`获取 ${item.dataType} 数据失败:`, error);
+      console.warn(`获取 ${item.dataType} - ${item.id} 数据失败:`, error);
       return null;
     }
   });
   
-  // 等待所有搜索完成
-  const searchResults = await Promise.all(searchPromises);
+  // 等待所有搜索完成（使用 allSettled 确保所有 Promise 都完成）
+  console.log(`⏳ 等待 ${searchPromises.length} 个搜索操作完成...`);
+  const startTime = Date.now();
   
-  // 过滤掉 null 结果
-  const validResults = searchResults.filter(result => result !== null);
+  // 检查是否已被取消
+  if (abortSignal && abortSignal.aborted) {
+    console.log('🛑 搜索已被取消，停止等待');
+    return [];
+  }
+  
+  const searchResults = await Promise.allSettled(searchPromises);
+  const endTime = Date.now();
+  console.log(`⏱️ 所有搜索操作完成，耗时: ${endTime - startTime}ms`);
+  
+  // 再次检查是否已被取消
+  if (abortSignal && abortSignal.aborted) {
+    console.log('🛑 搜索已被取消，丢弃结果');
+    return [];
+  }
+  
+  // 统计结果
+  const fulfilledCount = searchResults.filter(r => r.status === 'fulfilled').length;
+  const rejectedCount = searchResults.filter(r => r.status === 'rejected').length;
+  console.log(`📊 搜索完成统计: 成功 ${fulfilledCount} 个，失败 ${rejectedCount} 个`);
+  
+  // 处理结果，只保留成功且匹配的记录
+  const validResults = searchResults
+    .filter(result => {
+      if (result.status === 'fulfilled' && result.value !== null) {
+        return true;
+      } else if (result.status === 'rejected') {
+        console.warn('⚠️ 搜索请求被拒绝:', result.reason);
+      }
+      return false;
+    })
+    .map(result => result.value);
+  
   filteredCards.push(...validResults);
   
-  console.log(`🔍 预过滤完成，从 ${dataToFilter.length} 条记录中筛选出 ${filteredCards.length} 条匹配记录`);
+  console.log(`✅ 预过滤完成，从 ${dataToFilter.length} 条记录中筛选出 ${filteredCards.length} 条匹配记录`);
+  console.log(`📋 最终结果数量: ${filteredCards.length}，这是完整且最终的结果`);
+  
+  // 确保这是最终结果，不会再有变动
   return filteredCards;
 }
 
@@ -1551,13 +1820,22 @@ async function renderFinalSearchResults(filteredData) {
   console.log(`🎯 找到数据卡片容器:`, cardsContainer);
   
   if (filteredData.length === 0) {
-    // 显示无搜索结果
+    // 显示无搜索结果（此时所有搜索操作已完成，这是最终结果）
+    console.log('❌ 搜索完成，未找到匹配的记录');
     cardsContainer.innerHTML = `
       <div class="no-data-message">
         <h3>未找到匹配的记录</h3>
         <p>请尝试其他关键字或调整搜索条件</p>
       </div>
     `;
+    // 确保 DOM 更新完成
+    await new Promise(resolve => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          resolve();
+        });
+      });
+    });
     return;
   }
   
@@ -1665,6 +1943,15 @@ async function renderFinalSearchResults(filteredData) {
   console.log(`📝 时间线HTML:`, timelineHTML);
   
   cardsContainer.innerHTML = timelineHTML;
+  
+  // 搜索结果渲染时，移除动画（因为这是搜索后的结果，不是初始加载）
+  const timelineItemsElements = cardsContainer.querySelectorAll('.timeline-item');
+  timelineItemsElements.forEach(item => {
+    item.style.animation = 'none';
+    item.style.opacity = '1';
+    item.style.transform = 'translate3d(0, 0, 0)';
+  });
+  console.log('🔍 搜索结果渲染，已移除动画');
   
   // 绑定事件
   const timelineContainer = cardsContainer.querySelector('.timeline-container');
@@ -2130,6 +2417,21 @@ async function renderTimelineItems(items, container) {
   
   container.innerHTML = timelineHTML;
   
+  // 如果已经播放过初始动画，移除后续渲染的动画
+  if (hasPlayedInitialAnimation) {
+    const timelineItems = container.querySelectorAll('.timeline-item');
+    timelineItems.forEach(item => {
+      item.style.animation = 'none';
+      item.style.opacity = '1';
+      item.style.transform = 'translate3d(0, 0, 0)';
+    });
+    console.log('🔄 后续渲染，已移除动画');
+  } else {
+    // 标记已播放过初始动画
+    hasPlayedInitialAnimation = true;
+    console.log('✨ 首次渲染，保留入场动画');
+  }
+  
   // 添加点击事件监听器
   container.querySelectorAll('.timeline-content').forEach(content => {
     // 饮食记录/个人病例按需求直接在时间线上完全展开，不再弹出详情
@@ -2338,6 +2640,21 @@ async function renderDietTimeline(items, container) {
   html += '</div>';
 
   container.innerHTML = html;
+  
+  // 如果已经播放过初始动画，移除后续渲染的动画
+  if (hasPlayedInitialAnimation) {
+    const timelineItems = container.querySelectorAll('.timeline-item');
+    timelineItems.forEach(item => {
+      item.style.animation = 'none';
+      item.style.opacity = '1';
+      item.style.transform = 'translate3d(0, 0, 0)';
+    });
+    console.log('🔄 后续渲染（饮食），已移除动画');
+  } else {
+    // 标记已播放过初始动画
+    hasPlayedInitialAnimation = true;
+    console.log('✨ 首次渲染（饮食），保留入场动画');
+  }
 }
 
 /**

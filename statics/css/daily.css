@@ -723,7 +723,8 @@ body {
 .search-results-header {
   margin-bottom: 24px; /* 增加底部间距 */
   padding: 0 20px;
-  animation: fadeInUp 0.5s ease-out; /* 添加动画 */
+  /* 已移除入场动画以实现更稳定的显示 */
+  animation: none;
 }
 
 @keyframes fadeInUp {
